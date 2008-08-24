@@ -1214,7 +1214,7 @@ Strophe.Connection = function (service)
     /* The connected JID. */
     this.jid = "";
     /* The connected JID's resource. */
-    this.resource = "strophe";
+    this.resource = null;
     /* request id for body tags */
     this.rid = Math.floor(Math.random() * 4294967295);
     /* The current session ID. */
@@ -1352,8 +1352,9 @@ Strophe.Connection.prototype = {
      *  parameters below.
      *
      *  Parameters:
-     *    (String) jid - The user's JID.  This may be a full JID.  If a
-     *      resource is not supplied, it will default to "strophe".
+     *    (String) jid - The user's JID.  This may be a bare JID,
+     *      or a full JID.  If a node is not supplied SASL ANONYMOUS
+     *      authentication will be attempted.
      *    (String) pass - The user's password.
      *    (Function) callback The connect callback function.
      *    (Integer) wait - The optional HTTPBIND wait value.  This is the 
@@ -2290,6 +2291,11 @@ Strophe.Connection.prototype = {
 	} else {
 	    iq.up().c('password', {}).t(this.pass);
 	}
+	if (!this.resource) {
+	    Strophe.info("Resource required for legacy authentication.");
+	    this.connect_callback(Strophe.Status.AUTHFAIL, null);
+	    return false;
+	}
 	iq.up().c('resource', {}).t(this.resource);
 
 	this._addSysHandler(this._auth2_cb.bind(this), null, 
@@ -2350,9 +2356,14 @@ Strophe.Connection.prototype = {
 	    this._addSysHandler(this._sasl_bind_cb.bind(this), null, null, 
 				null, "_bind_auth_2");
 	    
-	    this.send($iq({type: "set", id: "_bind_auth_2"})
+	    if (this.resource)
+		this.send($iq({type: "set", id: "_bind_auth_2"})
 		          .c('bind', {xmlns: Strophe.NS.BIND})
 		          .c('resource', {}).t(this.resource).tree());
+	    else
+		this.send($iq({type: "set", id: "_bind_auth_2"})
+		          .c('bind', {xmlns: Strophe.NS.BIND})
+		          .tree());
 	}
 
 	return false;
