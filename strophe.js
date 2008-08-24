@@ -1097,6 +1097,16 @@ Strophe.Request = function (data, func, rid, sends)
     this.sends = (arguments.length > 3 ? sends : 0);
     this.abort = false;
     this.dead = null;
+    this.age = function () {
+	if (!this.date) return 0;
+	var now = new Date();
+	return (now - this.date) / 1000;
+    };
+    this.timeDead = function () {
+	if (!this.dead) return 0;
+	var now = new Date();
+	return (now - this.dead) / 1000;
+    };
     this.xhr = this._newXHR();
 };
 
@@ -1674,16 +1684,16 @@ Strophe.Connection.prototype = {
 	}
 
 	var now = new Date();
-	var time_elapsed = (now - req.date) / 1000;
+	var time_elapsed = req.age();
 
 	var oldreq;
 	if ((req.dead !== null && 
-	     (((now - req.dead) / 1000) > Strophe.SECONDARY_TIMEOUT)) || 
+	     ((req.timeDead() / 1000) > Strophe.SECONDARY_TIMEOUT)) || 
 	    (!isNaN(time_elapsed) && time_elapsed > Strophe.TIMEOUT) || 
 	    (req.xhr.readyState == 4 && (reqStatus < 1 || 
 					 reqStatus >= 500))) {
 	    if (req.dead !== null && 
-		((now - req.dead) / 1000) > Strophe.SECONDARY_TIMEOUT) {
+		(req.timeDead() / 1000) > Strophe.SECONDARY_TIMEOUT) {
 		Strophe.error("Request " + 
 			      this._requests[i].id + 
 			      " timed out (secondary), restarting");
@@ -1702,7 +1712,16 @@ Strophe.Connection.prototype = {
 			  "." + req.sends + " posting");
 
 	    req.date = new Date();
-	    req.xhr.open("POST", this.service, true);
+	    try {
+		req.xhr.open("POST", this.service, true);
+	    } catch (e) {
+		Strophe.error("XHR open failed.");
+		if (!this.connected)
+		    this.connect_callback(Strophe.Status.CONNFAIL, 
+					  "bad-service");
+		this._onDisconnectTimeout();
+		return;
+	    }
 	    req.xhr.send(req.data);
 	    req.sends++;
 
@@ -1792,6 +1811,7 @@ Strophe.Connection.prototype = {
 		return;
 	    }
 
+	    var reqIs0 = (this._requests[0] == req);
 	    var reqIs1 = (this._requests[1] == req);
 	    
 	    if ((reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
@@ -1804,7 +1824,13 @@ Strophe.Connection.prototype = {
 	    
 	    // request succeeded
 	    if (reqStatus == 200) {
-		if (reqIs1) {
+		// if request 1 finished, or request 0 finished and request
+		// 1 is over XMPP_SECONDARY_TIMEOUT seconds old, we need to
+		// restart the other - both will be in the first spot, as the
+		// completed request has been removed from the queue already
+		if (reqIs1 || 
+		    (reqIs0 && this._requests.length > 0 && 
+ 		     this._requests[0].age() > XMPP_SECONDARY_TIMEOUT)) {
 		    this._restartRequest(0);
 		}
 		// call handler
@@ -2055,10 +2081,6 @@ Strophe.Connection.prototype = {
 	var mechanisms = bodyWrap.getElementsByTagName("mechanism");
 	var i, mech, auth_str, hashed_auth_str;
 	if (mechanisms.length > 0) {
-	    // FIXME: why is this commented out?
-	    //this._addSysHandler("_sasl_failure_cb", this, null, 
-	    //"failure", null, null);
-
 	    for (i = 0; i < mechanisms.length; i++) {
 		mech = Strophe.getText(mechanisms[i]);
 		if (mech == 'DIGEST-MD5') {
@@ -2090,6 +2112,8 @@ Strophe.Connection.prototype = {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
 	    this._addSysHandler(this._sasl_success_cb.bind(this), null, 
 				"success", null, null);
+	    this._addSysHandler(this._sasl_failure_cb.bind(this), null,
+				"failure", null, null);
 
 	    hashed_auth_str = encode64(auth_str);
 	    this.send($build("auth", {
@@ -2122,9 +2146,6 @@ Strophe.Connection.prototype = {
      */
     _sasl_challenge1_cb: function (elem)
     {
-	// FIXME: why would elem ever be null?
-	if (!elem) return this.disconnect();
-
 	var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
         var challenge = decode64(Strophe.getText(elem));
@@ -2553,12 +2574,10 @@ Strophe.Connection.prototype = {
 	    }
 
 	    if (this._requests.length > 0) {
-		now = new Date();
-		time_elapsed = (now - 
-				this._requests[0].date) / 1000;
+		time_elapsed = this._requests[0].age();
 		if (this._requests[0].dead !== null) {
-		    if (((now - this._requests[0].dead) / 
-			 1000) > Strophe.SECONDARY_TIMEOUT) {
+		    if (this._requests[0].timeDead() > 
+			Strophe.SECONDARY_TIMEOUT) {
 			this._throttledRequestHandler();
 		    }
 		}
