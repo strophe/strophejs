@@ -476,6 +476,8 @@ Strophe = {
      */
     getNodeFromJid: function (jid)
     {
+	if (jid.indexOf("@") < 0)
+	    return null;
 	return this.escapeJid(jid).split("@")[0];
     },
 
@@ -1222,7 +1224,6 @@ Strophe.Connection = function (service)
     // SASL
     this.do_session = false;
     this.do_bind = false;
-    this.do_sasl_plain = false;
     
     // handler lists
     this.timedHandlers = [];
@@ -1267,7 +1268,6 @@ Strophe.Connection.prototype = {
 	// SASL
 	this.do_session = false;
 	this.do_bind = false;
-	this.do_sasl_plain = false;
 	
 	// handler lists
 	this.timedHandlers = [];
@@ -2077,6 +2077,7 @@ Strophe.Connection.prototype = {
 	// TODO - add SASL anonymous for guest accounts
 	var do_sasl_plain = false;
 	var do_sasl_digest_md5 = false;
+	var do_sasl_anonymous = false;
 
 	var mechanisms = bodyWrap.getElementsByTagName("mechanism");
 	var i, mech, auth_str, hashed_auth_str;
@@ -2087,11 +2088,30 @@ Strophe.Connection.prototype = {
 		    do_sasl_digest_md5 = true;
 		} else if (mech == 'PLAIN') {
 		    do_sasl_plain = true;
+		} else if (mech == 'ANONYMOUS') {
+		    do_sasl_anonymous = true;
 		}
 	    }
 	}
+	
+	if (Strophe.getNodeFromJid(this.jid) !== null && 
+	    do_sasl_anonymous) {
+	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
+	    this._addSysHandler(this._sasl_success_cb.bind(this), null,
+				"success", null, null);
+	    this._addSysHandler(this._sasl_failure_cb.bind(this), null,
+				"failure", null, null);
 
-	if (do_sasl_digest_md5) {
+	    this.send($build("auth", {
+		xmlns: Strophe.NS.SASL,
+		mechanism: "ANONYMOUS"
+	    }).tree());
+	} else if (Strophe.getNodeFromJid(this.jid) !== null) {
+	    // we don't have a node, which is required for non-anonymous
+	    // client connections
+	    this.connect_callback(Strophe.Status.CONNFAIL, null);
+	    this._onDisconnectTimeout();
+	} else if (do_sasl_digest_md5) {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
 	    this._addSysHandler(this._sasl_challenge1_cb.bind(this), null, 
 				"challenge", null, null);
