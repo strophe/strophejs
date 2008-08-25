@@ -1689,12 +1689,12 @@ Strophe.Connection.prototype = {
 
 	var oldreq;
 	if ((req.dead !== null && 
-	     ((req.timeDead() / 1000) > Strophe.SECONDARY_TIMEOUT)) || 
+	     (req.timeDead() > Strophe.SECONDARY_TIMEOUT)) || 
 	    (!isNaN(time_elapsed) && time_elapsed > Strophe.TIMEOUT) || 
 	    (req.xhr.readyState == 4 && (reqStatus < 1 || 
 					 reqStatus >= 500))) {
 	    if (req.dead !== null && 
-		(req.timeDead() / 1000) > Strophe.SECONDARY_TIMEOUT) {
+		req.timeDead() > Strophe.SECONDARY_TIMEOUT) {
 		Strophe.error("Request " + 
 			      this._requests[i].id + 
 			      " timed out (secondary), restarting");
