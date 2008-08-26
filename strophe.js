@@ -1398,7 +1398,6 @@ Strophe.Connection.prototype = {
 	    wait: wait,
 	    hold: hold,
 	    window: this.window,
-	    //secure: "true",
 	    content: "text/xml; charset=utf-8",
 	    ver: "1.6",
 	    xmlns: Strophe.NS.HTTPBIND,
