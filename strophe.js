@@ -131,6 +131,7 @@ Strophe = {
      *  Common namespace constants from the XMPP RFCs and XEPs.
      *
      *  NS.HTTPBIND - HTTP BIND namespace from XEP 124.
+     *  NS.BOSH - BOSH namespace from XEP 206.
      *  NS.CLIENT - Main XMPP client namespace.
      *  NS.AUTH - Legacy authentication namespace.
      *  NS.ROSTER - Roster operations namespace.
@@ -145,6 +146,7 @@ Strophe = {
      */
     NS: {
 	HTTPBIND: "http://jabber.org/protocol/httpbind",
+	BOSH: "urn:xmpp:xbosh",
 	CLIENT: "jabber:client",
 	AUTH: "jabber:iq:auth",
 	ROSTER: "jabber:iq:roster",
@@ -1395,7 +1397,13 @@ Strophe.Connection.prototype = {
 	    "xml:lang": "en",
 	    wait: wait,
 	    hold: hold,
-	    window: this.window
+	    window: this.window,
+	    //secure: "true",
+	    content: "text/xml; charset=utf-8",
+	    ver: "1.6",
+	    xmlns: Strophe.NS.HTTPBIND,
+	    "xmpp:version": "1.0",
+	    "xmlns:xmpp": Strophe.NS.BOSH
 	});
 
 	this.connect_callback(Strophe.Status.CONNECTING, null);
@@ -1461,6 +1469,18 @@ Strophe.Connection.prototype = {
 	} else {
 	    this._data.push(elem);
 	}
+
+	this._throttledRequestHandler();
+	clearTimeout(this._idleTimeout);
+	this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    },
+
+    /** PrivateFunction: _sendRestart
+     *  Send an xmpp:restart stanza.
+     */
+    _sendRestart: function ()
+    {
+	this._data.push("restart");
 
 	this._throttledRequestHandler();
 	clearTimeout(this._idleTimeout);
@@ -1969,28 +1989,26 @@ Strophe.Connection.prototype = {
 	if (elem.hasChildNodes()) {
 	    for (i = 0; i < elem.childNodes.length; i++) {
 		child = elem.childNodes[i];
-		Strophe.debug("<child>" + Strophe.serialize(child) + 
-			      "</child>");
-		
+
 		// set all handlers active
 		for (j = 0; j < this.handlers.length; j++) {
 		    this.handlers[j].active = true;
 		}
 
 		// process handlers
-		newList = [];
-		for (j = 0; j < this.handlers.length; j++) {
-		    hand = this.handlers[j];
+		newList = this.handlers;
+		this.handlers = [];
+		for (j = 0; j < newList.length; j++) {
+		    hand = newList[j];
 		    if (hand.isMatch(child) && 
 			(this.authenticated || !hand.user)) {
 			if (hand.run(child)) {
-			    newList.push(hand);
+			    this.handlers.push(hand);
 			}
 		    } else {
-			newList.push(hand);
+			this.handlers.push(hand);
 		    }
 		}
-		this.handlers = newList;
 	    }
 	}
     },
@@ -2119,6 +2137,8 @@ Strophe.Connection.prototype = {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
 	    this._addSysHandler(this._sasl_challenge1_cb.bind(this), null, 
 				"challenge", null, null);
+            this._addSysHandler(this._sasl_failure_cb.bind(this), null, 
+				"failure", null, null);
 
 	    this.send($build("auth", {
 		xmlns: Strophe.NS.SASL,
@@ -2227,6 +2247,8 @@ Strophe.Connection.prototype = {
 
         this._addSysHandler(this._sasl_challenge2_cb.bind(this), null, 
 			    "challenge", null, null);
+	this._addSysHandler(this._sasl_success_cb.bind(this), null, 
+			    "success", null, null);
         this._addSysHandler(this._sasl_failure_cb.bind(this), null, 
 			    "failure", null, null);
 
@@ -2323,7 +2345,9 @@ Strophe.Connection.prototype = {
 	Strophe.info("SASL authentication succeeded.");
 	this._addSysHandler(this._sasl_auth1_cb.bind(this), null, 
 			    "stream:features", null, null);
-	this.send(null);
+
+	// we must send an xmpp:restart now
+	this._sendRestart();
 
 	return false;
     },
@@ -2584,7 +2608,7 @@ Strophe.Connection.prototype = {
 
 	// if no requests are in progress, poll
 	if (this.authenticated && this._requests.length === 0 && 
-	    this._data.length === 0) {
+	    this._data.length === 0 && !this.disconnecting) {
 	    Strophe.info("no requests during idle cycle, sending " + 
 			 "blank request");
 	    this.send(null);
@@ -2594,7 +2618,17 @@ Strophe.Connection.prototype = {
 		body = this._buildBody();
 		for (i = 0; i < this._data.length; i++) {
 		    if (this._data[i] !== null) {
-			body.cnode(this._data[i]).up();
+			if (this._data[i] === "restart") {
+			    body.attrs({
+				to: this.domain,
+				"xml:lang": "en",
+				"xmpp:restart": "true",
+				xmlns: Strophe.NS.HTTPBIND,
+				"xmlns:xmpp": Strophe.NS.BOSH
+			    })
+			} else {
+			    body.cnode(this._data[i]).up();
+			}
 		    }
 		}
 		delete this._data;
