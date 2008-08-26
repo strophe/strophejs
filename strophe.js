@@ -662,7 +662,13 @@ Strophe = {
 	}
 
 	return result;
-    }
+    },
+
+    /** PrivateVariable: _requestId
+     *  _Private_ variable that keeps track of the request ids for 
+     *  connections.
+     */
+    _requestId: 0
 };
 
 /** Class: Strophe.Builder
@@ -1088,7 +1094,7 @@ Strophe.TimedHandler.prototype = {
  */
 Strophe.Request = function (data, func, rid, sends)
 {
-    this.id = ++Strophe.Request._requestId;
+    this.id = ++Strophe._requestId;
     this.data = data;
     // save original function in case we need to make a new request
     // from this one.
@@ -1113,9 +1119,6 @@ Strophe.Request = function (data, func, rid, sends)
 };
 
 Strophe.Request.prototype = {
-    // Request ID counter.
-    _requestId: 0,
-
     /** PrivateFunction: getResponse
      *  Get a response from the underlying XMLHttpRequest.
      *
@@ -2095,7 +2098,7 @@ Strophe.Connection.prototype = {
 	    }
 	}
 	
-	if (Strophe.getNodeFromJid(this.jid) !== null && 
+	if (Strophe.getNodeFromJid(this.jid) === null && 
 	    do_sasl_anonymous) {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
 	    this._addSysHandler(this._sasl_success_cb.bind(this), null,
@@ -2107,7 +2110,7 @@ Strophe.Connection.prototype = {
 		xmlns: Strophe.NS.SASL,
 		mechanism: "ANONYMOUS"
 	    }).tree());
-	} else if (Strophe.getNodeFromJid(this.jid) !== null) {
+	} else if (Strophe.getNodeFromJid(this.jid) === null) {
 	    // we don't have a node, which is required for non-anonymous
 	    // client connections
 	    this.connect_callback(Strophe.Status.CONNFAIL, null);

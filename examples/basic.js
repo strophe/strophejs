@@ -42,7 +42,7 @@ $(document).ready(function () {
     connection = new Strophe.Connection(BOSH_SERVICE);
     connection.rawInput = rawInput;
     connection.rawOutput = rawOutput;
-    connection.log = strophe_log;
+    Strophe.log = strophe_log;
 
     $('#connect').bind('click', function () {
 	var button = $('#connect').get(0);
