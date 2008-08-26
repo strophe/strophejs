@@ -16,10 +16,6 @@ function rawOutput(data)
     log('SENT: ' + data);
 }
 
-function strophe_log(level, msg) {
-    log('LOG: ' + msg);
-}
-
 function onConnect(status)
 {
     if (status == Strophe.Status.CONNECTING) {
@@ -42,7 +38,6 @@ $(document).ready(function () {
     connection = new Strophe.Connection(BOSH_SERVICE);
     connection.rawInput = rawInput;
     connection.rawOutput = rawOutput;
-    Strophe.log = strophe_log;
 
     $('#connect').bind('click', function () {
 	var button = $('#connect').get(0);
