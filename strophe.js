@@ -1228,10 +1228,10 @@ Strophe.Connection = function (service)
     // handler lists
     this.timedHandlers = [];
     this.handlers = [];
-    this.removeTimed = [];
-    this.removeHandler = [];
-    this.addTimed = [];
-    this.addHandler = [];
+    this.removeTimeds = [];
+    this.removeHandlers = [];
+    this.addTimeds = [];
+    this.addHandlers = [];
     
     this._idleTimeout = null;
     this._disconnectTimeout = null;
@@ -1280,10 +1280,10 @@ Strophe.Connection.prototype = {
 	// handler lists
 	this.timedHandlers = [];
 	this.handlers = [];
-	this.removeTimed = [];
-	this.removeHandler = [];
-	this.addTimed = [];
-	this.addHandler = [];
+	this.removeTimeds = [];
+	this.removeHandlers = [];
+	this.addTimeds = [];
+	this.addHandlers = [];
 	
 	this.authenticated = false;
 	this.disconnecting = false;
@@ -1518,7 +1518,7 @@ Strophe.Connection.prototype = {
     addTimedHandler: function (period, handler)
     {
 	var thand = new Strophe.TimedHandler(period, handler);
-	this.addTimed.push(thand);
+	this.addTimeds.push(thand);
 	return thand;
     },
 
@@ -1536,7 +1536,7 @@ Strophe.Connection.prototype = {
     {
 	// this must be done in the Idle loop so that we don't change
 	// the handlers during iteration
-	this.removeTimed.push(handRef);
+	this.removeTimeds.push(handRef);
     },
     
     /** Function: addHandler
@@ -1572,7 +1572,7 @@ Strophe.Connection.prototype = {
     addHandler: function (handler, ns, name, type, id, from)
     {
 	var hand = new Strophe.Handler(handler, ns, name, type, id, from);
-	this.addHandler.push(hand);
+	this.addHandlers.push(hand);
 	return hand;
     },
 
@@ -1590,7 +1590,7 @@ Strophe.Connection.prototype = {
     {
 	// this must be done in the Idle loop so that we don't change
 	// the handlers during iteration
-	this.removeHandler.push(handRef);
+	this.removeHandlers.push(handRef);
     },
 
     /** Function: disconnect
@@ -1925,10 +1925,10 @@ Strophe.Connection.prototype = {
 	// delete handlers
 	this.handlers = [];
 	this.timedHandlers = [];
-	this.removeTimed = [];
-	this.removeHandler = [];
-	this.addTimed = [];
-	this.addHandler = [];
+	this.removeTimeds = [];
+	this.removeHandlers = [];
+	this.addTimeds = [];
+	this.addHandlers = [];
     },
     
     /** PrivateFunction: _dataRecv
@@ -1985,16 +1985,16 @@ Strophe.Connection.prototype = {
 
 	// remove handlers scheduled for deletion
 	var i, hand;
-	while (this.removeHandler.length > 0) {
-	    hand = this.removeHandler.pop();
+	while (this.removeHandlers.length > 0) {
+	    hand = this.removeHandlers.pop();
 	    i = this.handlers.indexOf(hand);
 	    if (i >= 0) 
 		this.handlers.splice(i, 1);
 	}
 
 	// add handlers scheduled for addition
-	while (this.addHandler.length > 0) {
-	    this.handlers.push(this.addHandler.pop());
+	while (this.addHandlers.length > 0) {
+	    this.handlers.push(this.addHandlers.pop());
 	}
 
 	var child, j, newList;
@@ -2569,7 +2569,7 @@ Strophe.Connection.prototype = {
     {
 	var thand = new Strophe.TimedHandler(period, handler);
 	thand.user = false;
-	this.addTimed.push(thand);
+	this.addTimeds.push(thand);
 	return thand;
     },
 
@@ -2591,7 +2591,7 @@ Strophe.Connection.prototype = {
     {
 	var hand = new Strophe.Handler(handler, ns, name, type, id);
 	hand.user = false;
-	this.addHandler.push(hand);
+	this.addHandlers.push(hand);
 	return hand;
     },
 
@@ -2633,16 +2633,16 @@ Strophe.Connection.prototype = {
 	var i, thand, since, newList;
 
 	// remove timed handlers that have been scheduled for deletion
-	while (this.removeTimed.length > 0) {
-	    thand = this.removeTimed.pop();
+	while (this.removeTimeds.length > 0) {
+	    thand = this.removeTimeds.pop();
 	    i = this.timedHandlers.indexOf(thand);
 	    if (i >= 0)
 		this.timedHandlers.splice(i, 1);
 	}
 
 	// add timed handlers scheduled for addition
-	while (this.addTimed.length > 0) {
-	    this.timedHandlers.push(this.addTimed.pop());
+	while (this.addTimeds.length > 0) {
+	    this.timedHandlers.push(this.addTimeds.pop());
 	}
 
 	// call ready timed handlers
