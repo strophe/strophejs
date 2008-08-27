@@ -909,9 +909,6 @@ Strophe.Handler = function (handler, ns, name, type, id, from)
     this.id = id;
     this.from = from;
     
-    // whether the handler is active
-    // FIXME: this does not seem to be used
-    this.active = false;
     // whether the handler is a user handler or a system handler
     this.user = true;
 };
@@ -929,8 +926,6 @@ Strophe.Handler.prototype = {
     isMatch: function (elem)
     {
 	var nsMatch, i;
-
-	if (!this.active) return false;
 
 	nsMatch = false;
 	if (!this.ns) {
@@ -1002,7 +997,8 @@ Strophe.Handler.prototype = {
      */
     toString: function ()
     {
-	return "{Handler: " + this.handler + "(" + this.name + ")}";
+	return "{Handler: " + this.handler + "(" + this.name + "," +
+            this.id + "," + this.ns + ")}";
     }
 };
 
@@ -1037,7 +1033,6 @@ Strophe.TimedHandler = function (period, handler)
     this.handler = handler;
     
     this.lastCalled = new Date().getTime();
-    this.active = false;
     this.user = true;
 };
 
@@ -1233,6 +1228,10 @@ Strophe.Connection = function (service)
     // handler lists
     this.timedHandlers = [];
     this.handlers = [];
+    this.removeTimed = [];
+    this.removeHandler = [];
+    this.addTimed = [];
+    this.addHandler = [];
     
     this._idleTimeout = null;
     this._disconnectTimeout = null;
@@ -1251,6 +1250,10 @@ Strophe.Connection = function (service)
     this._data = [];
     this._requests = [];
     this._uniqueId = Math.round(Math.random() * 10000);
+
+    this._sasl_success_handler = null;
+    this._sasl_failure_handler = null;
+    this._sasl_challenge_handler = null;
     
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
@@ -1277,6 +1280,10 @@ Strophe.Connection.prototype = {
 	// handler lists
 	this.timedHandlers = [];
 	this.handlers = [];
+	this.removeTimed = [];
+	this.removeHandler = [];
+	this.addTimed = [];
+	this.addHandler = [];
 	
 	this.authenticated = false;
 	this.disconnecting = false;
@@ -1511,7 +1518,7 @@ Strophe.Connection.prototype = {
     addTimedHandler: function (period, handler)
     {
 	var thand = new Strophe.TimedHandler(period, handler);
-	this.timedHandlers.push(thand);
+	this.addTimed.push(thand);
 	return thand;
     },
 
@@ -1527,15 +1534,9 @@ Strophe.Connection.prototype = {
      */
     deleteTimedHandler: function (handRef)
     {
-	var newList = [];
-	var i;
-	for (i = 0; i < this.timedHandlers.length; i++) {
-	    if (this.timedHandlers[i] != handRef) {
-		newList.push(this.timedHandlers[i]);
-	    }
-	}
-
-	this.timedHandlers = newList;
+	// this must be done in the Idle loop so that we don't change
+	// the handlers during iteration
+	this.removeTimed.push(handRef);
     },
     
     /** Function: addHandler
@@ -1571,7 +1572,7 @@ Strophe.Connection.prototype = {
     addHandler: function (handler, ns, name, type, id, from)
     {
 	var hand = new Strophe.Handler(handler, ns, name, type, id, from);
-	this.handlers.push(hand);
+	this.addHandler.push(hand);
 	return hand;
     },
 
@@ -1587,14 +1588,9 @@ Strophe.Connection.prototype = {
      */
     deleteHandler: function (handRef)
     {
-	var newList = [];
-	for (var i = 0; i < this.handlers.length; i++) {
-	    if (this.handlers[i] != handRef) {
-		newList.push(this.handlers[i]);
-	    }
-	}
-	
-	this.handlers = newList;
+	// this must be done in the Idle loop so that we don't change
+	// the handlers during iteration
+	this.removeHandler.push(handRef);
     },
 
     /** Function: disconnect
@@ -1742,7 +1738,7 @@ Strophe.Connection.prototype = {
 		if (!this.connected)
 		    this.connect_callback(Strophe.Status.CONNFAIL, 
 					  "bad-service");
-		this._onDisconnectTimeout();
+		this.disconnect();
 		return;
 	    }
 	    req.xhr.send(req.data);
@@ -1830,8 +1826,8 @@ Strophe.Connection.prototype = {
 	    if (this.disconnecting) {
 		if (reqStatus >= 400) {
 		    this._hitError(reqStatus);
-		}
-		return;
+		    return;
+		} 
 	    }
 
 	    var reqIs0 = (this._requests[0] == req);
@@ -1929,6 +1925,10 @@ Strophe.Connection.prototype = {
 	// delete handlers
 	this.handlers = [];
 	this.timedHandlers = [];
+	this.removeTimed = [];
+	this.removeHandler = [];
+	this.addTimed = [];
+	this.addHandler = [];
     },
     
     /** PrivateFunction: _dataRecv
@@ -1955,9 +1955,8 @@ Strophe.Connection.prototype = {
 	}
 	if (elem === null) return;
 
-	// requests are removed from the queue after the handler is called,
-	// so if there is one left, the queue will be empty when we return
-	if (this.disconnecting && this._requests.length == 1) {
+	// handle graceful disconnect
+	if (this.disconnecting && this._requests.length == 0) {
 	    this.deleteTimedHandler(this._disconnectTimeout);
 	    this._disconnectTimeout = null;
 	    this._doDisconnect();
@@ -1979,20 +1978,29 @@ Strophe.Connection.prototype = {
 	    } else {
 		this.connect_callback(Strophe.Status.CONNFAIL, "unknown");
 	    }
-	    this._onDisconnectTimeout();
 	    this.connect_callback(Strophe.Status.DISCONNECTING, null);
+	    this.disconnect();
 	    return;
 	}
 
-	var i, child, j, newList, hand;
+	// remove handlers scheduled for deletion
+	var i, hand;
+	while (this.removeHandler.length > 0) {
+	    hand = this.removeHandler.pop();
+	    i = this.handlers.indexOf(hand);
+	    if (i >= 0) 
+		this.handlers.splice(i, 1);
+	}
+
+	// add handlers scheduled for addition
+	while (this.addHandler.length > 0) {
+	    this.handlers.push(this.addHandler.pop());
+	}
+
+	var child, j, newList;
 	if (elem.hasChildNodes()) {
 	    for (i = 0; i < elem.childNodes.length; i++) {
 		child = elem.childNodes[i];
-
-		// set all handlers active
-		for (j = 0; j < this.handlers.length; j++) {
-		    this.handlers[j].active = true;
-		}
 
 		// process handlers
 		newList = this.handlers;
@@ -2040,16 +2048,16 @@ Strophe.Connection.prototype = {
 					  .prependArg(this._dataRecv.bind(this)),
 				      body.tree().getAttribute("rid"));
 	
-	for (i = 0; i < this._requests.length; i++) {
-	    this._requests[i].xhr.abort();
+	// abort and clear all waiting requests
+	var r;
+	while (this._requests.length > 0) {
+	    r = this._requests.pop();
+	    r.xhr.abort();
+	    r.abort = true;
 	}
 
-	// FIXME: shouldn't req go on the stack here?
-
-	req.xhr.open("POST", this.service, true);
-	req.xhr.send(req.data);
-
-	this.rawOutput(req.data);
+	this._requests.push(req);
+	this._throttledRequestHandler();
     },
 
     /** PrivateFunction: _connect_cb
@@ -2118,10 +2126,12 @@ Strophe.Connection.prototype = {
 	if (Strophe.getNodeFromJid(this.jid) === null && 
 	    do_sasl_anonymous) {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
-	    this._addSysHandler(this._sasl_success_cb.bind(this), null,
-				"success", null, null);
-	    this._addSysHandler(this._sasl_failure_cb.bind(this), null,
-				"failure", null, null);
+	    this._sasl_success_handler = this._addSysHandler(
+		this._sasl_success_cb.bind(this), null,
+		"success", null, null);
+	    this._sasl_failure_handler = this._addSysHandler(
+		this._sasl_failure_cb.bind(this), null,
+		"failure", null, null);
 
 	    this.send($build("auth", {
 		xmlns: Strophe.NS.SASL,
@@ -2131,13 +2141,15 @@ Strophe.Connection.prototype = {
 	    // we don't have a node, which is required for non-anonymous
 	    // client connections
 	    this.connect_callback(Strophe.Status.CONNFAIL, null);
-	    this._onDisconnectTimeout();
+	    this.disconnect();
 	} else if (do_sasl_digest_md5) {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
-	    this._addSysHandler(this._sasl_challenge1_cb.bind(this), null, 
-				"challenge", null, null);
-            this._addSysHandler(this._sasl_failure_cb.bind(this), null, 
-				"failure", null, null);
+	    this._sasl_challenge_handler = this._addSysHandler(
+		this._sasl_challenge1_cb.bind(this), null, 
+		"challenge", null, null);
+            this._sasl_failure_handler = this._addSysHandler(
+		this._sasl_failure_cb.bind(this), null, 
+		"failure", null, null);
 
 	    this.send($build("auth", {
 		xmlns: Strophe.NS.SASL,
@@ -2153,10 +2165,12 @@ Strophe.Connection.prototype = {
 	    auth_str = auth_str + this.pass;
 	    
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
-	    this._addSysHandler(this._sasl_success_cb.bind(this), null, 
-				"success", null, null);
-	    this._addSysHandler(this._sasl_failure_cb.bind(this), null,
-				"failure", null, null);
+	    this._sasl_success_handler = this._addSysHandler(
+		this._sasl_success_cb.bind(this), null, 
+		"success", null, null);
+	    this._sasl_failure_handler = this._addSysHandler(
+		this._sasl_failure_cb.bind(this), null,
+		"failure", null, null);
 
 	    hashed_auth_str = encode64(auth_str);
 	    this.send($build("auth", {
@@ -2198,6 +2212,9 @@ Strophe.Connection.prototype = {
 	var nonce = "";
 	var qop = "";
 	var matches;
+
+        // remove unneeded handlers
+        this.deleteHandler(this._sasl_failure_handler);
 
 	while (challenge.match(attribMatch)) {
 	    matches = challenge.match(attribMatch);
@@ -2244,12 +2261,15 @@ Strophe.Connection.prototype = {
 					       hex_md5(A2)) + '",';
 	responseText += 'charset="utf-8"';
 
-        this._addSysHandler(this._sasl_challenge2_cb.bind(this), null, 
-			    "challenge", null, null);
-	this._addSysHandler(this._sasl_success_cb.bind(this), null, 
-			    "success", null, null);
-        this._addSysHandler(this._sasl_failure_cb.bind(this), null, 
-			    "failure", null, null);
+        this._sasl_challenge_handler = this._addSysHandler(
+	    this._sasl_challenge2_cb.bind(this), null, 
+	    "challenge", null, null);
+	this._sasl_success_handler = this._addSysHandler(
+	    this._sasl_success_cb.bind(this), null, 
+	    "success", null, null);
+        this._sasl_failure_handler = this._addSysHandler(
+	    this._sasl_failure_cb.bind(this), null, 
+	    "failure", null, null);
 
         this.send($build('response', {
 	    xmlns: Strophe.NS.SASL
@@ -2269,8 +2289,16 @@ Strophe.Connection.prototype = {
      */
     _sasl_challenge2_cb: function (elem)
     {
-	this._addSysHandler(this._sasl_success_cb.bind(this), null, 
-			    "success", null, null);
+	// remove unneeded handlers
+	this.deleteHandler(this._sasl_success_handler);
+	this.deleteHandler(this._sasl_failure_handler);
+
+	this._sasl_success_handler = this._addSysHandler(
+	    this._sasl_success_cb.bind(this), null, 
+	    "success", null, null);
+	this._sasl_failure_handler = this._addSysHandler(
+	    this._sasl_failure_cb.bind(this), null, 
+	    "failure", null, null);
 	this.send($build('response', {xmlns: Strophe.NS.SASL}).tree());
 	return false;
     },
@@ -2316,9 +2344,10 @@ Strophe.Connection.prototype = {
 	    iq.up().c('password', {}).t(this.pass);
 	}
 	if (!this.resource) {
-	    Strophe.info("Resource required for legacy authentication.");
-	    this.connect_callback(Strophe.Status.AUTHFAIL, null);
-	    return false;
+	    // since the user has not supplied a resource, we pick
+	    // a default one here.  unlike other auth methods, the server
+	    // cannot do this for us.
+	    this.resource = "strophe";
 	}
 	iq.up().c('resource', {}).t(this.resource);
 
@@ -2342,6 +2371,15 @@ Strophe.Connection.prototype = {
     _sasl_success_cb: function (elem)
     {
 	Strophe.info("SASL authentication succeeded.");
+
+	// remove old handlers
+	this.deleteHandler(this._sasl_failure_handler);
+	this._sasl_failure_handler = null;
+	if (this._sasl_challenge_handler) {
+	    this.deleteHandler(this._sasl_challenge_handler);
+	    this._sasl_challenge_handler = null;
+	}
+
 	this._addSysHandler(this._sasl_auth1_cb.bind(this), null, 
 			    "stream:features", null, null);
 
@@ -2477,6 +2515,16 @@ Strophe.Connection.prototype = {
      */
     _sasl_failure_cb: function (elem)
     {
+	// delete unneeded handlers
+	if (this._sasl_success_handler) {
+	    this.deleteHandler(this._sasl_success_handler);
+	    this._sasl_success_handler = null;
+	}
+	if (this._sasl_challenge_handler) {
+	    this.deleteHandler(this._sasl_challenge_handler);
+	    this._sasl_challenge_handler = null;
+	}
+	
 	this.connect_callback(Strophe.Status.AUTHFAIL, null);
 	return false;
     },
@@ -2500,6 +2548,7 @@ Strophe.Connection.prototype = {
 	    this.connect_callback(Strophe.Status.CONNECTED, null);
 	} else if (elem.getAttribute("type") == "error") {
 	    this.connect_callback(Strophe.Status.AUTHFAIL, null);
+	    this.disconnect();
 	}
 
 	return false;
@@ -2520,7 +2569,8 @@ Strophe.Connection.prototype = {
     {
 	var thand = new Strophe.TimedHandler(period, handler);
 	thand.user = false;
-	this.timedHandlers.push(thand);
+	this.addTimed.push(thand);
+	return thand;
     },
 
     /** PrivateFunction: _addSysHandler
@@ -2541,7 +2591,8 @@ Strophe.Connection.prototype = {
     {
 	var hand = new Strophe.Handler(handler, ns, name, type, id);
 	hand.user = false;
-	this.handlers.push(hand);
+	this.addHandler.push(hand);
+	return hand;
     },
 
     /** PrivateFunction: _onDisconnectTimeout
@@ -2556,13 +2607,14 @@ Strophe.Connection.prototype = {
     _onDisconnectTimeout: function ()
     {
 	Strophe.info("_onDisconnectTimeout was called");
-	// cancel all remaining requests
-	for (var i = 0; i < this._requests.length; i++) {
-	    this._requests[i].xhr.abort();
+
+	// cancel all remaining requests and clear the queue
+	var req;
+	while (this._requests.length > 0) {
+	    req = this._requests.pop();
+	    req.xhr.abort();
+	    req.abort = true;
 	}
-	
-	// clear the queue
-	this._requests = [];
 	
 	// actually disconnect
 	this._doDisconnect();
@@ -2578,19 +2630,27 @@ Strophe.Connection.prototype = {
      */
     _onIdle: function ()
     {
-	var i, thand, since;
+	var i, thand, since, newList;
 
-	// activate all timed handlers
-	for (i = 0; i < this.timedHandlers.length; i++) {
-	    this.timedHandlers[i].active = true;
+	// remove timed handlers that have been scheduled for deletion
+	while (this.removeTimed.length > 0) {
+	    thand = this.removeTimed.pop();
+	    i = this.timedHandlers.indexOf(thand);
+	    if (i >= 0)
+		this.timedHandlers.splice(i, 1);
 	}
-	
+
+	// add timed handlers scheduled for addition
+	while (this.addTimed.length > 0) {
+	    this.timedHandlers.push(this.addTimed.pop());
+	}
+
 	// call ready timed handlers
 	var now = new Date().getTime();
-	var newList = [];
+	newList = [];
 	for (i = 0; i < this.timedHandlers.length; i++) {
 	    thand = this.timedHandlers[i];
-	    if (thand.active && (this.authenticated || !thand.user)) {
+	    if (this.authenticated || !thand.user) {
 		since = thand.lastCalled + thand.period;
 		if (since - now <= 0) {
 		    if (thand.run()) {
