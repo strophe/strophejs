@@ -1844,12 +1844,12 @@ Strophe.Connection.prototype = {
 	    // request succeeded
 	    if (reqStatus == 200) {
 		// if request 1 finished, or request 0 finished and request
-		// 1 is over XMPP_SECONDARY_TIMEOUT seconds old, we need to
+		// 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
 		// restart the other - both will be in the first spot, as the
 		// completed request has been removed from the queue already
 		if (reqIs1 || 
 		    (reqIs0 && this._requests.length > 0 && 
- 		     this._requests[0].age() > XMPP_SECONDARY_TIMEOUT)) {
+ 		     this._requests[0].age() > Strophe.SECONDARY_TIMEOUT)) {
 		    this._restartRequest(0);
 		}
 		// call handler
@@ -2156,8 +2156,8 @@ Strophe.Connection.prototype = {
 		mechanism: "DIGEST-MD5"
 	    }).tree());
 	} else if (do_sasl_plain) {
-	    //Build the plain auth string (fulljid null
-	    //username null password) and base 64 encoded.
+	    // Build the plain auth string (fulljid null
+	    // username null password) and base 64 encoded.
 	    auth_str = Strophe.escapeJid(this.jid);
 	    auth_str = auth_str + "\u0000";
 	    auth_str = auth_str + Strophe.getNodeFromJid(this.jid);
