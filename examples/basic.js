@@ -30,7 +30,7 @@ function onConnect(status)
 	$('#connect').get(0).value = 'connect';
     } else if (status == Strophe.Status.CONNECTED) {
 	log('Strophe is connected.');
-//	connection.disconnect();
+	connection.disconnect();
     }
 }
 
@@ -38,8 +38,6 @@ $(document).ready(function () {
     connection = new Strophe.Connection(BOSH_SERVICE);
     connection.rawInput = rawInput;
     connection.rawOutput = rawOutput;
-    Strophe.log = function (level, msg) { log('LOG: ' + msg); };
-
 
     $('#connect').bind('click', function () {
 	var button = $('#connect').get(0);
