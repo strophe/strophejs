@@ -297,6 +297,7 @@ Strophe = {
      */
     xmlElement: function (name)
     {
+
 	// FIXME: this should also support attrs argument in object notation
 	if (!name) { return null; }
 
@@ -1224,7 +1225,7 @@ Strophe.Connection = function (service)
     // SASL
     this.do_session = false;
     this.do_bind = false;
-    
+
     // handler lists
     this.timedHandlers = [];
     this.handlers = [];
@@ -1276,7 +1277,8 @@ Strophe.Connection.prototype = {
 	// SASL
 	this.do_session = false;
 	this.do_bind = false;
-	
+	this.do_sasl_anonymous = true;
+
 	// handler lists
 	this.timedHandlers = [];
 	this.handlers = [];
@@ -2106,25 +2108,25 @@ Strophe.Connection.prototype = {
 	// TODO - add SASL anonymous for guest accounts
 	var do_sasl_plain = false;
 	var do_sasl_digest_md5 = false;
-	var do_sasl_anonymous = false;
+
+
 
 	var mechanisms = bodyWrap.getElementsByTagName("mechanism");
 	var i, mech, auth_str, hashed_auth_str;
 	if (mechanisms.length > 0) {
 	    for (i = 0; i < mechanisms.length; i++) {
 		mech = Strophe.getText(mechanisms[i]);
-		if (mech == 'DIGEST-MD5') {
+		if (mech == 'DIGEST-MD5' && !this.do_sasl_anonymous) {
 		    do_sasl_digest_md5 = true;
-		} else if (mech == 'PLAIN') {
+		} else if (mech == 'PLAIN' && !this.do_sasl_anonymous) {
 		    do_sasl_plain = true;
-		} else if (mech == 'ANONYMOUS') {
-		    do_sasl_anonymous = true;
+		} else if (mech == 'ANONYMOUS' && this.do_sasl_anonymous) {
+		    this.do_sasl_anonymous = true;
 		}
 	    }
 	}
-	
-	if (Strophe.getNodeFromJid(this.jid) === null && 
-	    do_sasl_anonymous) {
+
+	if (this.do_sasl_anonymous) {
 	    this.connect_callback(Strophe.Status.AUTHENTICATING, null);
 	    this._sasl_success_handler = this._addSysHandler(
 		this._sasl_success_cb.bind(this), null,
