@@ -428,6 +428,10 @@ Strophe = {
     escapeJid: function (jid)
     {
 	var user = jid.split("@");
+	if (user.length == 1) 
+	    // no user so nothing to escape
+	    return jid;
+
 	var host = user.splice(user.length - 1, 1)[0];
 	user = user.join("@")
 	    .replace(/^\s+|\s+$/g, '')
@@ -441,6 +445,7 @@ Strophe = {
 	    .replace(/</g,   "\\3c")
 	    .replace(/>/g,   "\\3e")
 	    .replace(/@/g,   "\\40");
+	
 	return [user, host].join("@");
     },
 
