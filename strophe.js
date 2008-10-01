@@ -1256,8 +1256,6 @@ Strophe.Connection = function (service)
     this.service = service;
     /* The connected JID. */
     this.jid = "";
-    /* The connected JID's resource. */
-    this.resource = null;
     /* request id for body tags */
     this.rid = Math.floor(Math.random() * 4294967295);
     /* The current session ID. */
@@ -1438,8 +1436,6 @@ Strophe.Connection.prototype = {
 
 	// parse jid for domain and resource
 	this.domain = Strophe.getDomainFromJid(this.jid);
-	var res = Strophe.getResourceFromJid(jid);
-	if (res) this.resource = res;
 
 	// build the body tag
 	var body = this._buildBody().attrs({
@@ -2076,8 +2072,7 @@ Strophe.Connection.prototype = {
 	if (this.authenticated) {
 	    body.c('presence', {
 		xmlns: Strophe.NS.CLIENT,
-		type: 'unavailable',
-		from: Strophe.escapeJid(this.jid) + "/" + this.resource
+		type: 'unavailable'
 	    });
 	}
 
@@ -2383,13 +2378,13 @@ Strophe.Connection.prototype = {
 	} else {
 	    iq.up().c('password', {}).t(this.pass);
 	}
-	if (!this.resource) {
+	if (!Strophe.getResourceFromJid(this.jid)) {
 	    // since the user has not supplied a resource, we pick
 	    // a default one here.  unlike other auth methods, the server
 	    // cannot do this for us.
-	    this.resource = "strophe";
+	    this.jid = Strophe.getBareJidFromJid(this.jid) + '/strophe';
 	}
-	iq.up().c('resource', {}).t(this.resource);
+	iq.up().c('resource', {}).t(Strophe.getResourceFromJid(this.jid));
 
 	this._addSysHandler(this._auth2_cb.bind(this), null, 
 			    null, null, "_auth_2");
@@ -2460,10 +2455,11 @@ Strophe.Connection.prototype = {
 	    this._addSysHandler(this._sasl_bind_cb.bind(this), null, null, 
 				null, "_bind_auth_2");
 	    
-	    if (this.resource)
+	    var resource = Strophe.getResourceFromJid(this.jid);
+	    if (resource)
 		this.send($iq({type: "set", id: "_bind_auth_2"})
 		          .c('bind', {xmlns: Strophe.NS.BIND})
-		          .c('resource', {}).t(this.resource).tree());
+		          .c('resource', {}).t(resource).tree());
 	    else
 		this.send($iq({type: "set", id: "_bind_auth_2"})
 		          .c('bind', {xmlns: Strophe.NS.BIND})
@@ -2492,15 +2488,12 @@ Strophe.Connection.prototype = {
 
 	// TODO - need to grab errors
 	var bind = elem.getElementsByTagName("bind");
-	var jidNode, full_jid, jid;
+	var jidNode;
 	if (bind.length > 0) {
 	    // Grab jid
 	    jidNode = bind[0].getElementsByTagName("jid");
 	    if (jidNode.length > 0) {
-		full_jid = Strophe.getText(jidNode[0]);
-		
-		jid = full_jid.split("/");
-		this.resource = jid[jid.length - 1];
+		this.jid = Strophe.getText(jidNode[0]);
 		
 		if (this.do_session) {
 		    this._addSysHandler(this._sasl_session_cb.bind(this), 
