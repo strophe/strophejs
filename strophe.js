@@ -34,12 +34,13 @@
  *  Returns:
  *    The bound function.
  */
-// TODO: make sure we don't clobber someone else's 
-Function.prototype.bind = function (obj)
-{
-    var func = this;
-    return function () { return func.apply(obj, arguments); };
-};
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (obj)
+    {
+	var func = this;
+	return function () { return func.apply(obj, arguments); };
+    };
+}
 
 /** PrivateFunction: Function.prototype.prependArg
  *  Prepend an argument to a function.
@@ -64,17 +65,54 @@ Function.prototype.bind = function (obj)
  *  Returns:
  *    A new Function which calls the original with the prepended argument.
  */
-Function.prototype.prependArg = function (arg)
-{
-    var func = this;
-
-    return function () { 
-	var newargs = [arg];
-	for (var i = 0; i < arguments.length; i++)
-	    newargs.push(arguments[i]);
-	return func.apply(this, newargs); 
+if (!Function.prototype.prependArg) {
+    Function.prototype.prependArg = function (arg)
+    {
+	var func = this;
+	
+	return function () { 
+	    var newargs = [arg];
+	    for (var i = 0; i < arguments.length; i++)
+		newargs.push(arguments[i]);
+	    return func.apply(this, newargs); 
+	};
     };
-};
+}
+
+/** PrivateFunction: Array.prototype.indexOf
+ *  Return the index of an object in an array.
+ *
+ *  This function is not supplied by some JavaScript implementations, so
+ *  we provide it if it is missing.  This code is from:
+ *  http://developer.mozilla.org/En/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
+ *
+ *  Parameters:
+ *    (Object) elt - The object to look for.
+ *    (Integer) from - The index from which to start looking. (optional).
+ * 
+ *  Returns:
+ *    The index of elt in the array or -1 if not found.
+ */
+if (!Array.prototype.indexOf)
+{
+    Array.prototype.indexOf = function(elt /*, from*/)
+    {
+	var len = this.length;
+	
+	var from = Number(arguments[1]) || 0;
+	from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+	if (from < 0)
+	    from += len;
+	
+	for (; from < len; from++) {
+	    if (from in this && this[from] === elt)
+		return from;
+	}
+
+	return -1;
+    };
+}
+
 
 /** Function: $build
  *  Create a Strophe.Builder.
