@@ -2000,28 +2000,26 @@ Strophe.Connection.prototype = {
 	while (this.addHandlers.length > 0) {
 	    this.handlers.push(this.addHandlers.pop());
 	}
-
-	var child, j, newList;
-	if (elem.hasChildNodes()) {
-	    for (i = 0; i < elem.childNodes.length; i++) {
-		child = elem.childNodes[i];
-
-		// process handlers
-		newList = this.handlers;
-		this.handlers = [];
-		for (j = 0; j < newList.length; j++) {
-		    hand = newList[j];
-		    if (hand.isMatch(child) && 
-			(this.authenticated || !hand.user)) {
-			if (hand.run(child)) {
-			    this.handlers.push(hand);
-			}
-		    } else {
-			this.handlers.push(hand);
+	
+	// send each incoming stanza through the handler chain
+	var self = this;
+	Strophe.forEachChild(elem, null, function (child) {
+	    var i, newList;
+	    // process handlers
+	    newList = self.handlers;
+	    self.handlers = [];
+	    for (i = 0; i < newList.length; i++) {
+		var hand = newList[i];
+		if (hand.isMatch(child) && 
+		    (self.authenticated || !hand.user)) {
+		    if (hand.run(child)) {
+			self.handlers.push(hand);
 		    }
+		} else {
+		    self.handlers.push(hand);
 		}
 	    }
-	}
+	});
     },
 
     /** PrivateFunction: _sendTerminate
