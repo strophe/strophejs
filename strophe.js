@@ -1412,7 +1412,6 @@ Strophe.Connection.prototype = {
 	    window: this.window,
 	    content: "text/xml; charset=utf-8",
 	    ver: "1.6",
-	    xmlns: Strophe.NS.HTTPBIND,
 	    "xmpp:version": "1.0",
 	    "xmlns:xmpp": Strophe.NS.BOSH
 	});
@@ -2687,7 +2686,6 @@ Strophe.Connection.prototype = {
 				to: this.domain,
 				"xml:lang": "en",
 				"xmpp:restart": "true",
-				xmlns: Strophe.NS.HTTPBIND,
 				"xmlns:xmpp": Strophe.NS.BOSH
 			    })
 			} else {
