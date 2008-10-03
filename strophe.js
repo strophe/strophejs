@@ -523,7 +523,7 @@ Strophe = {
     {
 	if (jid.indexOf("@") < 0)
 	    return null;
-	return this.escapeJid(jid).split("@")[0];
+	return Strophe.escapeJid(jid).split("@")[0];
     },
 
     /** Function: getDomainFromJid
@@ -537,7 +537,11 @@ Strophe = {
      */
     getDomainFromJid: function (jid)
     {
-	return this.escapeJid(this.getBareJidFromJid(jid)).split("@")[1];
+	var bare = Strophe.escapeJid(Strophe.getBareJidFromJid(jid));
+	if (bare.indexOf("@") < 0)
+	    return bare;
+	else
+	    return bare.split("@")[1];
     },
 
     /** Function: getResourceFromJid
@@ -551,7 +555,7 @@ Strophe = {
      */
     getResourceFromJid: function (jid)
     {
-	var s = this.escapeJid(jid).split("/");
+	var s = Strophe.escapeJid(jid).split("/");
 	if (s.length < 2) return null;
 	return s[1];
     },
