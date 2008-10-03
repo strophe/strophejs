@@ -1464,6 +1464,34 @@ Strophe.Connection.prototype = {
 	this._throttledRequestHandler();
     },
 
+    /** Function: attach
+     *  Attach to an already created and authenticated BOSH session.
+     *
+     *  This function is provided to allow Strophe to attach to BOSH
+     *  sessions which have been created externally, perhaps by a Web
+     *  application.  This is often used to support auto-login type features
+     *  without putting user credentials into the page.
+     *
+     *  Parameters:
+     *    (String) jid - The full JID that is bound by the session.
+     *    (String) sid - The SID of the BOSH session.
+     *    (String) rid - The current RID of the BOSH session.  This RID
+     *      will be used by the next request.
+     *    (Function) callback The connect callback function.
+     */
+    attach: function (jid, sid, rid, callback)
+    {
+	this.jid = jid;
+	this.sid = sid;
+	this.rid = rid;
+	this.connect_callback = callback;
+
+	this.domain = Strophe.getDomainFromJid(this.jid);
+	
+	this.authenticated = true;
+	this.connected = true;
+    },
+
     /** Function: rawInput
      *  User overrideable function that receives raw data coming into the 
      *  connection.
