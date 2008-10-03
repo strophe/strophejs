@@ -1940,6 +1940,7 @@ Strophe.Connection.prototype = {
 		    if (reqStatus >= 400 && reqStatus < 500) {
 			this.connect_callback(Strophe.Status.DISCONNECTING, 
 					      null);
+			this._doDisconnect();
 		    }
 		}
 	    }
