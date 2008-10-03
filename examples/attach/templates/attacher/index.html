@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml'>
+  <head>
+    <title>Strophe Attach Example</title>
+    <script language='javascript'
+	    type='text/javascript'
+	    src='http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js'></script>
+    <script language='javascript'
+	    type='text/javascript'
+	    src='http://code.stanziq.com/svn/strophe/trunk/strophejs/b64.js'></script>
+    <script language='javascript'
+	    type='text/javascript'
+	    src='http://code.stanziq.com/svn/strophe/trunk/strophejs/md5.js'></script>
+    <script language='javascript'
+	    type='text/javascript'
+	    src='http://code.stanziq.com/svn/strophe/trunk/strophejs/sha1.js'></script>
+    <script language='javascript'
+	    type='text/javascript'
+	    src='http://code.stanziq.com/svn/strophe/trunk/strophejs/strophe.js'></script>
+    <script language='javascript'
+	    type='text/javascript'>
+      <!--
+	  var ATTACH_SID = "{{ sid }}";
+	  var ATTACH_RID = "{{ rid }}";
+	  var ATTACH_JID = "{{ jid }}";
+	  var BOSH_SERVICE = '/xmpp-httpbind';
+	  var connection = null;
+	  var startTime = null;
+
+          function log(msg)
+	  {
+	      $('#log').append('<div></div>').append(
+	          document.createTextNode(msg));
+	  }
+
+	  function onConnect(status) 
+	  {
+	      if (status == Strophe.Status.DISCONNECTED)
+	          log('Disconnected.');
+	  }
+
+          function onResult(iq) {
+	      var elapsed = (new Date()) - startTime;
+	      log('Response from jabber.org took ' + elapsed + 'ms.');
+          }
+	  
+	  $(document).ready(function () {
+	      // create the connection and attach it
+	      connection = new Strophe.Connection(BOSH_SERVICE);
+	      connection.rawInput = function (data) { 
+	          log('RECV: ' + data); 
+	      };
+	      connection.rawOutput = function (data) { 
+	          log('SENT: ' + data); 
+	      };
+	      // uncomment for extra debugging
+	      // Strophe.log = function (lvl, msg) { log(msg); };
+	      connection.attach(ATTACH_JID, ATTACH_SID, ATTACH_RID,
+	                        onConnect);
+
+              // set up handler
+	      connection.addHandler(onResult, null, 'iq', 
+	                            'result', 'disco-1', null);
+
+              log('Strophe is attached.');
+				
+	      // send disco#info to jabber.org
+	      var iq = $iq({to: 'jabber.org',
+	                    type: 'get',
+			    id: 'disco-1'})
+                  .c('query', {xmlns: Strophe.NS.DISCO_INFO})
+		  .tree()
+
+              startTime = new Date();
+              connection.send(iq);
+          });
+      // -->
+    </script>
+  </head>
+  <body>
+    <h1>Strophe Attach Example</h1>
+    <p>This example shows how to attach to an existing BOSH session with
+    Strophe.</p>
+    <h2>Log</h2>
+    <div id='log'>
+    </div>
+  </body>
+</html>

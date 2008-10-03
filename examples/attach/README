@@ -1,0 +1,37 @@
+This is an example of Strophe attaching to a pre-existing BOSH session
+that is created externally.  This example requires a bit more than
+HTML and JavaScript.  Specifically it contains a very simple Web
+application written in Django which creates a BOSH session before
+rendering the page.
+
+Requirements:
+
+* Django 1.0 (http://www.djangoproject.com)
+* Twisted 8.1.x (http://twistedmatrix.com)
+* Punjab 0.3 (http://code.stanziq.com/punjab)
+
+Note that Twisted and Punjab are only used for small functions related
+to JID and BOSH parsing.
+
+How It Works:
+
+The Django app contains one view which is tied to the root URL.  This
+view uses the BOSHClient class to start a BOSH session using the
+settings from settings.py.
+
+Once the connection is established, Django passes the JID, SID, and
+RID for the BOSH session into the template engine and renders the
+page.
+
+The template assigns the JID, SID, and RID to global vars like so:
+
+    var BOSH_JID = {{ jid }};
+    var BOSH_SID = {{ sid }};
+    var BOSH_RID = {{ rid }};
+
+The connection is attached to Strophe by calling
+Strophe.Connection.attach() with this data and a connection callback
+handler.
+
+To show that the session is attached and works, a disco info ping is
+done to jabber.org.
