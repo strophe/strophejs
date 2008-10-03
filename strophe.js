@@ -1410,7 +1410,7 @@ Strophe.Connection.prototype = {
      *
      *  Parameters:
      *    (String) jid - The user's JID.  This may be a bare JID,
-     *      or a full JID.  If a node is not supplied SASL ANONYMOUS
+     *      or a full JID.  If a node is not supplied, SASL ANONYMOUS
      *      authentication will be attempted.
      *    (String) pass - The user's password.
      *    (Function) callback The connect callback function.
@@ -1426,7 +1426,7 @@ Strophe.Connection.prototype = {
      */
     connect: function (jid, pass, callback, wait, hold, wind)
     {
-	this.jid = Strophe.getBareJidFromJid(jid);
+	this.jid = jid;
 	this.pass = pass;
 	this.connect_callback = callback;
 	this.disconnecting = false;
