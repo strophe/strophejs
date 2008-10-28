@@ -1,0 +1,4 @@
+Strophe.js is a JavaScript library for speaking XMPP via BOSH (XEP 124
+and 206).  It is licensed under the MIT license, except for the files
+b64.js, md5.js, and sha1.js which are licensed as public domain and
+BSD (see these files for details).
