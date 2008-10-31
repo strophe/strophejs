@@ -1793,6 +1793,7 @@ Strophe.Connection.prototype = {
 						    req.origFunc, 
 						    req.rid, 
 						    req.sends);
+	    req = this._requests[i];
 	}
 
 	if (req.xhr.readyState === 0) {
