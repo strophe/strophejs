@@ -682,14 +682,15 @@ Strophe = {
 
 	if (elem.getAttribute("_realname")) {
 	    nodeName = elem.getAttribute("_realname");
-	    elem.removeAttribute("_realname");
 	}
 
 	result = "<" + nodeName;
 	for (i = 0; i < elem.attributes.length; i++) {
-	    result += " " + elem.attributes[i].nodeName.toLowerCase() + 
+               if(elem.attributes[i].nodeName != "_realname") {
+		 result += " " + elem.attributes[i].nodeName.toLowerCase() + 
 	        "='" + elem.attributes[i].value
 	            .replace("'", "&#39;").replace("&", "&#x26;") + "'";
+	       }
 	}
 
 	if (elem.childNodes.length > 0) {
