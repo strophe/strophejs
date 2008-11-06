@@ -1146,7 +1146,7 @@ Strophe.Request = function (data, func, rid, sends)
     this.func = func;
     this.rid = rid;
     this.date = NaN;
-    this.sends = (arguments.length > 3 ? sends : 0);
+    this.sends = sends || 0;
     this.abort = false;
     this.dead = null;
     this.age = function () {
@@ -1774,15 +1774,18 @@ Strophe.Connection.prototype = {
 
 	var now = new Date();
 	var time_elapsed = req.age();
-
+	var primaryTimeout = (!isNaN(time_elapsed) &&
+			      time_elapsed > Strophe.TIMEOUT);
+	var secondaryTimeout = (req.dead !== null &&
+				req.timeDead() > Strophe.SECONDARY_TIMEOUT);
+	var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
+					       (reqStatus < 1 || 
+						reqStatus >= 500));
 	var oldreq;
-	if ((req.dead !== null && 
-	     (req.timeDead() > Strophe.SECONDARY_TIMEOUT)) || 
-	    (!isNaN(time_elapsed) && time_elapsed > Strophe.TIMEOUT) || 
-	    (req.xhr.readyState == 4 && (reqStatus < 1 || 
-					 reqStatus >= 500))) {
-	    if (req.dead !== null && 
-		req.timeDead() > Strophe.SECONDARY_TIMEOUT) {
+
+	if (primaryTimeout || secondaryTimeout ||
+	    requestCompletedWithServerError) {
+	    if (secondaryTimeout) {
 		Strophe.error("Request " + 
 			      this._requests[i].id + 
 			      " timed out (secondary), restarting");
@@ -1812,8 +1815,25 @@ Strophe.Connection.prototype = {
 		this.disconnect();
 		return;
 	    }
-	    req.xhr.send(req.data);
-	    req.sends++;
+
+      // Fires the XHR request -- may be invoked immediately
+      // or on a gradually expanding retry window for reconnects
+      var sendFunc = function () {
+	  req.xhr.send(req.data);
+      };
+
+      // Implement progressive backoff for reconnects --
+      // First retry (send == 1) should also be instantaneous
+      if (req.sends > 1) {
+          // Using a cube of the retry number creats a nicely
+          // expanding retry window
+          var backoff = Math.pow(req.sends, 3) * 1000;
+          setTimeout(sendFunc, backoff);
+      } else {
+          sendFunc();
+      }
+
+      req.sends++;
 
 	    this.rawOutput(req.data);
 	} else {
