@@ -2245,9 +2245,10 @@ Strophe.Connection.prototype = {
 		mechanism: "DIGEST-MD5"
 	    }).tree());
 	} else if (do_sasl_plain) {
-	    // Build the plain auth string (fulljid null
+	    // Build the plain auth string (barejid null
 	    // username null password) and base 64 encoded.
-	    auth_str = Strophe.escapeJid(this.jid);
+	    auth_str = Strophe.escapeJid(
+		Strophe.getBareJidFromJid(this.jid));
 	    auth_str = auth_str + "\u0000";
 	    auth_str = auth_str + Strophe.getNodeFromJid(this.jid);
 	    auth_str = auth_str + "\u0000";
