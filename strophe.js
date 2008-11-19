@@ -194,7 +194,8 @@ Strophe = {
 	SASL: "urn:ietf:params:xml:ns:xmpp-sasl",
 	STREAM: "http://etherx.jabber.org/streams",
 	BIND: "urn:ietf:params:xml:ns:xmpp-bind",
-	SESSION: "urn:ietf:params:xml:ns:xmpp-session"
+	SESSION: "urn:ietf:params:xml:ns:xmpp-session",
+	VERSION: "jabber:iq:version"
     },
     
     /** Constants: Connection Status Constants
