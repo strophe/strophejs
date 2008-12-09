@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>XMPP Disco Dancing</title>
+  <script language='javascript' 
+	  type='text/javascript'
+	  src='http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js'></script>
+  <script language='javascript'
+	  type='text/javascript'
+	  src='strophejs/b64.js'></script>
+  <script language='javascript'
+	  type='text/javascript'
+	  src='strophejs/md5.js'></script>
+  <script language='javascript'
+	  type='text/javascript'
+	  src='strophejs/sha1.js'></script>
+  <script language='javascript'
+	  type='text/javascript'
+	  src='strophejs/strophe.js'></script>
+<script language='javascript'
+	  type='text/javascript'
+	  src='scripts/basic.js'></script>
+  <script language='javascript'
+	  type='text/javascript'
+	  src='scripts/disco.js'></script>
+  <link rel="stylesheet" href="css/disco.css" type="text/css" />
+</head>
+<body>
+  <div id='login' style='text-align: center'>
+    <form id='cred' name='cred'>
+      <label for='jid'>JID:</label>
+      <input type='text' class='leftinput' id='jid' />
+      <label for='pass'>Password:</label>
+      <input type='password' class='leftinput' id='pass' />
+      <input type='submit' id='connect' value='connect' />
+    </form>
+ <br/>
+  </div>
+  <hr />
+  <div id='disco'>
+</div>
+  <hr />
+  <div id='log_container'>
+<a href='#'>Status Log :</a>
+<div id='log'></div></div>
+</body>
+</html>
