@@ -11,11 +11,11 @@
   Returns:
   A new Strophe.PubSub object.
  */
-Strophe.PubSub = function(connection) {
+Strophe.PubSub = function(connection,call_back) {
     this.connection = connection;
     //stub for function that needs to be overidden. Used to handle
     //incoming subscription and pubsub events.
-    this.itemsReceived = function() {}; 
+    this.itemsReceived = call_back;
     //add the event handler to receive items 
     this.connection.addHandler(this.itemsReceived,
 			       null,
