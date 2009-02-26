@@ -764,6 +764,14 @@ Strophe = {
  */
 Strophe.Builder = function (name, attrs)
 {
+    // Set correct namespace for jabber:client elements
+    if (name == "presence" || name == "message" || name == "iq") {
+        if (attrs && !attrs.xmlns)
+            attrs.xmlns = Strophe.NS.CLIENT;
+        else if (!attrs)
+            attrs = {xmlns: Strophe.NS.CLIENT};
+    }
+
     // Holds the tree being built.
     this.nodeTree = this._makeNode(name, attrs);
 
