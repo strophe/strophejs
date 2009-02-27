@@ -6,8 +6,8 @@ $(document).ready(function () {
                        $build("iq", {}).tree(),
                        $pres().tree()];
         $.each(stanzas, function () {
-            equals(Strophe.NS.CLIENT, $(this).attr("xmlns"), 
-                  "Namespace should be '" + Strophe.NS.CLIENT + "'.");
+            equals($(this).attr("xmlns"), Strophe.NS.CLIENT,
+                  "Namespace should be '" + Strophe.NS.CLIENT + "'");
         });
     });
 });
