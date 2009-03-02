@@ -1246,6 +1246,14 @@ Strophe.Request.prototype = {
  *  To send data to the connection, use send().
  */
 
+/* Dictionary: Strophe.ConnectionPlugins
+
+   Used to store plugins names that need initialization on
+   Strophe.Connection construction.
+
+ */
+Strophe.ConnectionPlugins = {};
+
 /** Constructor: Strophe.Connection
  *  Create and initialize a Strophe.Connection object.
  *
@@ -1303,6 +1311,10 @@ Strophe.Connection = function (service)
     
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    for(var k in Strophe.ConnectionPlugins) 
+    {
+	Strophe.ConnectionPlugins[k].apply(this,[]);
+    }
 };
 
 Strophe.Connection.prototype = {

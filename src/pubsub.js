@@ -1,28 +1,18 @@
 /*
   Copyright 2008, Stanziq  Inc.
 */
+Strophe.ConnectionPlugins['pubsub'] = 
+/*
+  Extend connection object to have plugin name 'pubsub'.  
+*/
+function(){
+    console.log('init...');
+    var _conn = this;
+    this.pubsub.init(_conn);
+    /*
+      Function used to setup plugin.
+     */
 
-/***Constructor
-  Create and intialize a new Strophe PubSub client.
-
-  Parameters:
-  (Strophe.Connection) connection - The connection object.
-
-  Returns:
-  A new Strophe.PubSub object.
- */
-Strophe.PubSub = function(connection,call_back) {
-    this.connection = connection;
-    //stub for function that needs to be overidden. Used to handle
-    //incoming subscription and pubsub events.
-    this.itemsReceived = call_back;
-    //add the event handler to receive items 
-    this.connection.addHandler(this.itemsReceived,
-			       null,
-			       'message',
-			       null,
-			       Strophe.NS.PUBSUB+"#event",
-			       null);
     /* extend name space 
      *  NS.PUBSUB - XMPP Publish Subscribe namespace
      *              from XEP 60.  
@@ -32,11 +22,16 @@ Strophe.PubSub = function(connection,call_back) {
      */
     Strophe.NS['PUBSUB'] = "http://jabber.org/protocol/pubsub";
     Strophe.NS['PUBSUB_SUBSCRIBE_OPTIONS'] = "http://jabber.org/protocol/pubsub#subscribe_options";
-
+	
 };
 
-Strophe.PubSub.prototype = {
+Strophe.Connection.prototype.pubsub = {
 
+    //connection reference
+    _conn:null,
+    init: function(_conn) {
+	this._conn = _conn;
+    },
     /***Function
 	
       Create a pubsub node on the given service with the given node
@@ -54,7 +49,8 @@ Strophe.PubSub.prototype = {
       Iq id used to send subscription.
     */
     createNode: function(jid,service,node,options, call_back) {
-	var iqid = this.connection.getUniqueId("pubsubcreatenode");
+
+	var iqid = this._conn.getUniqueId("pubsubcreatenode");
 
 	var iq = $iq({from:jid, to:service, type:'set', id:iqid});
 
@@ -83,13 +79,13 @@ Strophe.PubSub.prototype = {
 	     {xmlns:Strophe.NS.PUBSUB}).c('create',
 	     {node:node}).up().cnode(c_options);
 
-	this.connection.send(iq.tree());
-	this.connection.addHandler(call_back,
-				   null,
-				   'iq',
-				   null,
-				   iqid,
-				   null);
+	this._conn.send(iq.tree());
+	this._conn.addHandler(call_back,
+			 null,
+			 'iq',
+			 null,
+			 iqid,
+			 null);
 	return iqid;
     },
     /***Function
@@ -100,15 +96,16 @@ Strophe.PubSub.prototype = {
       (String) service - The name of the pubsub service.
       (String) node -  The name of the pubsub node.
       (Dictionary) options -  The configuration options for the  node.
+      (Function) event_cb - Used to recieve subscription events.
       (Function) call_back - Used to determine if node
       creation was sucessful.
 
       Returns:
       Iq id used to send subscription.
     */
-    subscribe: function(jid,service,node,options, call_back) {
+    subscribe: function(jid,service,node,options, event_cb, call_back) {
 
-	var subid = this.connection.getUniqueId("subscribenode");
+	var subid = this._conn.getUniqueId("subscribenode");
 
 	//create subscription options
 	var sub_options = Strophe.xmlElement("options",[]);
@@ -141,15 +138,24 @@ Strophe.PubSub.prototype = {
 		{node:node,jid:jid});
 	}
 
-	this.connection.send(sub.tree());
+	this._conn.send(sub.tree());
 
-	this.connection.addHandler(call_back,
-				  null,
-				  'iq',
-				  null,
-				  subid,
-				  null);
-	
+	this._conn.addHandler(call_back,
+			 null,
+			 'iq',
+			 null,
+			 subid,
+			 null);
+	//stub for function that needs to be overidden. Used to handle
+	//incoming subscription and pubsub events.
+
+	//add the event handler to receive items 
+	this._conn.addHandler(event_cb,
+			 null,
+			 'message',
+			 null,
+			 Strophe.NS.PUBSUB+"#event",
+			 null);
 	return subid;
 	
     },
@@ -166,7 +172,7 @@ Strophe.PubSub.prototype = {
     */    
     unsubscribe: function(jid,service,node, call_back) {
 
-	var subid = this.connection.getUniqueId("unsubscribenode");
+	var subid = this._conn.getUniqueId("unsubscribenode");
 
 	
 	var sub = $iq({from:jid, to:service, type:'set', id:subid})
@@ -175,14 +181,14 @@ Strophe.PubSub.prototype = {
 
 
 
-	this.connection.send(sub.tree());
+	this._conn.send(sub.tree());
 
-	this.connection.addHandler(call_back,
-				   null,
-				   'iq',
-				   null,
-				   subid,
-				   null);
+	this._conn.addHandler(call_back,
+			 null,
+			 'iq',
+			 null,
+			 subid,
+			 null);
 	
 	return subid;
 	
@@ -200,7 +206,7 @@ Strophe.PubSub.prototype = {
       creation was sucessful.
     */    
     publish: function(jid, service, node, items, call_back) {
-	var pubid = this.connection.getUniqueId("publishnode");
+	var pubid = this._conn.getUniqueId("publishnode");
 
 
 	var publish_elem = Strophe.xmlElement("publish",
@@ -222,14 +228,14 @@ Strophe.PubSub.prototype = {
 	pub.c('pubsub', { xmlns:Strophe.NS.PUBSUB }).cnode(publish_elem);
 
 
-	this.connection.send(pub.tree());
+	this._conn.send(pub.tree());
 
-	this.connection.addHandler(call_back,
-				   null,
-				   'iq',
-				   null,
-				   pubid,
-				   null);
+	this._conn.addHandler(call_back,
+			 null,
+			 'iq',
+			 null,
+			 pubid,
+			 null);
 	
 	return pubid;
     }

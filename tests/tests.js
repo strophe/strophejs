@@ -19,10 +19,11 @@ Strophe.Test = {
 	    //Connect strophe, uses localhost to test
 	    Strophe.Test.connection = new Strophe.Connection(Strophe.Test.BOSH_URL);
 
+	    
 	    //connect anonymously to run most tests
             var username = Strophe.Test.XMPP_DOMAIN;
             var password = "password";
-        
+	    
         
 
 	    Strophe.Test.connection.connect(username,
@@ -53,10 +54,9 @@ Strophe.Test = {
 		});
 
 		test("Create default node test.",function(){
-		    var ps = new Strophe.PubSub(Strophe.Test.connection);
-		    var iqid  = ps.createNode(Strophe.Test.connection.jid,
-					      Strophe.Test.PUBSUB_COMPONENT,
-					      Strophe.Test._node_name,{}, function(stanza) {
+		    var iqid =  Strophe.Test.connection.pubsub.createNode(Strophe.Test.connection.jid,
+								   Strophe.Test.PUBSUB_COMPONENT,
+								   Strophe.Test._node_name,{}, function(stanza) {
 
 						  
 			       test("handled create node.",
@@ -76,48 +76,48 @@ Strophe.Test = {
 		    ok(true,"sent create request. "+ iqid);
 		});
 
-		var psub = new Strophe.PubSub(Strophe.Test.connection);
-		//setup the itemsReceived function
-		psub.itemsReceived = function(stanza) {
-		    test("items received", function() {
-			console.log(stanza);
-			if($(stanza).length > 0)
-			{
-			    ok(true,"item received.");
-			}
-			else
-			{
-			    ok(false,"no items.");
-			}
-		    });
-		};
+		
+
 
 		test("subscribe to a node",function() {
 
 
-		    var iqid = psub.subscribe(Strophe.Test.connection.jid,
+		    var iqid = Strophe.Test.connection.pubsub.subscribe(Strophe.Test.connection.jid,
 					    Strophe.Test.PUBSUB_COMPONENT,
 					    Strophe.Test._node_name,
 					      [],
-			  function(stanza) {
-			      
-			      var error = $(stanza).find("error");
-
-			      test("handled subscribe",
-				   function() {
-				  if(error.length == 0)
-				      {
-					  ok(true,"subscribed");
-				      }
-				  else
-				      {
-					  console.log(error.get(0));
-					  ok(false,
-					     "not subscribed");
-				      }
-				  
-			      });
-			  });
+			function(stanza) {
+			    test("items received", function() {
+				console.log(stanza);
+				if($(stanza).length > 0)
+				{
+				    ok(true,"item received.");
+				}
+				else
+				{
+				    ok(false,"no items.");
+				}
+			    });
+			},
+			function(stanza) {
+			    
+			    var error = $(stanza).find("error");
+			    
+			    test("handled subscribe",
+				 function() {
+				if(error.length == 0)
+				    {
+					ok(true,"subscribed");
+				    }
+				else
+				    {
+					console.log(error.get(0));
+					ok(false,
+					   "not subscribed");
+				    }
+				
+			    });
+			});
 		    
 		    if(iqid)
 			ok(true,
@@ -126,8 +126,8 @@ Strophe.Test = {
 		});
 
 		test("publish to a node",function() {
-		    var ps = new Strophe.PubSub(Strophe.Test.connection);
-		    var iqid = ps.publish(Strophe.Test.connection.jid,
+
+		    var iqid = Strophe.Test.connection.pubsub.publish(Strophe.Test.connection.jid,
 					  Strophe.Test.PUBSUB_COMPONENT,
 					  Strophe.Test._node_name,
 			{test:'test'},
@@ -168,12 +168,12 @@ Strophe.Test = {
 		    var text = Strophe.xmlTextNode("crazy");
 		    value.appendChild(text);
 		    keyword_elem.appendChild(value);
-		    var ps = new Strophe.PubSub(Strophe.Test.connection);
 		    
-		    var iqid = ps.subscribe(Strophe.Test.connection.jid,
+		    var iqid = Strophe.Test.connection.pubsub.subscribe(Strophe.Test.connection.jid,
 					    Strophe.Test.PUBSUB_COMPONENT,
 					    Strophe.Test._node_name,
 			[keyword_elem],
+		        function(stanza) {console.log(stanza);},
 			function(stanza) {
 			    
 			    var error = $(stanza).find("error");
@@ -199,8 +199,8 @@ Strophe.Test = {
 			   "subscribed to search");
 		});
 		test("unsubscribe to a node",function() {
-		    var ps = new Strophe.PubSub(Strophe.Test.connection);
-		    var iqid = ps.unsubscribe(Strophe.Test.connection.jid,
+
+		    var iqid = Strophe.Test.connection.pubsub.unsubscribe(Strophe.Test.connection.jid,
 					      Strophe.Test.PUBSUB_COMPONENT,
 					      Strophe.Test._node_name,
 		       function(stanza) {
