@@ -1557,6 +1557,13 @@ Strophe.Connection.prototype = {
     },
     /** Function: sendIQ
 	Helper function to send IQs to the xmpp server.
+     *  Parameters:
+     *    (XMLElement) elem - The stanza to send.
+     *    (Function) ok_callback - The callback function for a successful request.
+     *    (Function) error_back - The callback function for a failed request.
+     *
+     *  Returns:
+     *    The id used to send the IQ.
     */
     sendIQ: function(elem, ok_callback, error_back) {
 	var sid = elem.getAttribute('id');
@@ -1589,7 +1596,7 @@ Strophe.Connection.prototype = {
 				   null,
 				   sid,
 				   null);
-
+	return sid;
     },
     /** PrivateFunction: _sendRestart
      *  Send an xmpp:restart stanza.
