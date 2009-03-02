@@ -6,7 +6,7 @@ Strophe.ConnectionPlugins['pubsub'] =
   Extend connection object to have plugin name 'pubsub'.  
 */
 function(){
-    console.log('init...');
+
     var _conn = this;
     this.pubsub.init(_conn);
     /*
