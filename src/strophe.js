@@ -180,8 +180,6 @@ Strophe = {
      *  NS.STREAM - XMPP Streams namespace from RFC 3920.
      *  NS.BIND - XMPP Binding namespace from RFC 3920.
      *  NS.SESSION - XMPP Session namespace from RFC 3920.
-     *  NS.PUBSUB - XMPP Publish Subscribe namespace from XEP 60.
-     *  NS.PUBSUB_SUBSCRIBE_OPTIONS - XMPP pubsub options namespace from XEP 60.          
      */
     NS: {
 	HTTPBIND: "http://jabber.org/protocol/httpbind",
@@ -197,8 +195,6 @@ Strophe = {
 	STREAM: "http://etherx.jabber.org/streams",
 	BIND: "urn:ietf:params:xml:ns:xmpp-bind",
 	SESSION: "urn:ietf:params:xml:ns:xmpp-session",
-	PUBSUB: "http://jabber.org/protocol/pubsub",
-	PUBSUB_SUBSCRIBE_OPTIONS:"http://jabber.org/protocol/pubsub#subscribe_options",
 	VERSION: "jabber:iq:version"
     },
     

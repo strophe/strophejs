@@ -23,6 +23,15 @@ Strophe.PubSub = function(connection,call_back) {
 			       null,
 			       Strophe.NS.PUBSUB+"#event",
 			       null);
+    /* extend name space 
+     *  NS.PUBSUB - XMPP Publish Subscribe namespace
+     *              from XEP 60.  
+     *
+     *  NS.PUBSUB_SUBSCRIBE_OPTIONS - XMPP pubsub
+     *                                options namespace from XEP 60.
+     */
+    Strophe.NS['PUBSUB'] = "http://jabber.org/protocol/pubsub";
+    Strophe.NS['PUBSUB_SUBSCRIBE_OPTIONS'] = "http://jabber.org/protocol/pubsub#subscribe_options";
 
 };
 
