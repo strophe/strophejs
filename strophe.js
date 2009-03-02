@@ -1555,7 +1555,42 @@ Strophe.Connection.prototype = {
 	clearTimeout(this._idleTimeout);
 	this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
+    /** Function: sendIQ
+	Helper function to send IQs to the xmpp server.
+    */
+    sendIQ: function(elem, ok_callback, error_back) {
+	var sid = elem.getAttribute('id');
+	//inject id if not found
+	if(!sid)
+	{
+	    sid = this.getUniqueId("sendIQ");
+	    elem.setAttribute("id",sid);
+	}
+	this.send(elem);
 
+	this.addHandler(function(stanza) {
+	    //find error in stanza
+	    var elems = stanza.getElementsByTagName('error');
+
+	    if(elems.length == 0)
+	    {
+		//if no error , call ok_callback
+		ok_callback(stanza);
+	    }
+	    else
+	    {
+		//if error, call error_back
+		error_back(stanza);
+	    }
+
+	},
+				   null,
+				   'iq',
+				   null,
+				   sid,
+				   null);
+
+    },
     /** PrivateFunction: _sendRestart
      *  Send an xmpp:restart stanza.
      */

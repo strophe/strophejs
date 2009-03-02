@@ -33,6 +33,7 @@ Strophe.Test = {
                                Strophe.Test.DEFAULT_WINDOW,
                                Strophe.Test.DEFAULT_ROUTE);
 
+
 	    //set up the test client UI
 	    $("#disconnect").click(function() {
 		Strophe.Test.connection.disconnect();
@@ -226,7 +227,42 @@ Strophe.Test = {
 			ok(true,
 			   "unsubscribed from search with no options.");
 		});
-		
+		test("test sendIQ interface.",function(){
+		    var sendiq_good = false;
+		    //setup timeout for sendIQ for 3 seconds
+		    setTimeout(function() {
+			ok(sendiq_good, "The iq didn't timeout.");
+		    }, 3000);
+
+		    //send a pubsub subscribe stanza
+
+		    var sub = $iq( 
+		              {from:Strophe.Test.connection.jid, 
+			      to:Strophe.Test.PUBSUB_COMPONENT, 
+			      type:'set'}
+		    );
+		    sub.c('pubsub', { xmlns:Strophe.NS.PUBSUB }).c('subscribe',
+		    {node:Strophe.Test._node_name,
+			      jid:Strophe.Test.connection.jid});
+		    var stanza=sub.tree();
+		    //call sendIQ with several call backs
+		    Strophe.Test.connection.sendIQ(stanza,
+		    function(stanza) {
+			test("iq sent",function() {
+			    sendiq_good = true;
+			    ok(true,"iq sent succesfully.");
+			});
+		    },
+		    function(stanza) {
+			test("iq fail",function() {
+			    sendiq_good = false;
+			    console.log(stanza);
+			    ok(false,"failed to send iq.");
+			});
+		    });
+
+
+		});
 	    });
 	    
 	});
