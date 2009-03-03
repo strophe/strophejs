@@ -238,5 +238,18 @@ Strophe.Connection.prototype.pubsub = {
 			 null);
 	
 	return pubid;
+    },
+    /*Function: items
+      Used to retrieve the persistent items from the pubsub node.
+
+     */
+    items: function(jid,service,node,ok_callback,error_back) {
+	var pub = $iq({from:jid, to:service, type:'get'})
+	
+	//ask for all items
+	pub.c('pubsub', 
+	    { xmlns:Strophe.NS.PUBSUB }).c('items',{node:node});
+    
+	return this._conn.sendIQ(pub.tree(),ok_callback,error_back);
     }
 };

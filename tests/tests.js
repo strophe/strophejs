@@ -227,6 +227,22 @@ Strophe.Test = {
 			ok(true,
 			   "unsubscribed from search with no options.");
 		});
+		test("test items retrieval",function(){
+		    var itemid = Strophe.Test.connection.pubsub.items(Strophe.Test.connection.jid,
+					      Strophe.Test.PUBSUB_COMPONENT,
+					      Strophe.Test._node_name,
+				 function(stanza) {
+				     ok(true,"item request successful.");
+				 },
+				 function(stanza) {
+				     ok(false,"failed to send request.");
+				 });
+
+		    if(itemid)
+		    {
+			ok(true,"item request sent.");
+		    }
+		});
 		test("test sendIQ interface.",function(){
 		    var sendiq_good = false;
 		    //setup timeout for sendIQ for 3 seconds
