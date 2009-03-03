@@ -5,32 +5,29 @@ Strophe.ConnectionPlugins['pubsub'] =
 /*
   Extend connection object to have plugin name 'pubsub'.  
 */
-function(){
-
-    var _conn = this;
-    this.pubsub.init(_conn);
-    /*
-      Function used to setup plugin.
-     */
-
-    /* extend name space 
-     *  NS.PUBSUB - XMPP Publish Subscribe namespace
-     *              from XEP 60.  
-     *
-     *  NS.PUBSUB_SUBSCRIBE_OPTIONS - XMPP pubsub
-     *                                options namespace from XEP 60.
-     */
-    Strophe.NS['PUBSUB'] = "http://jabber.org/protocol/pubsub";
-    Strophe.NS['PUBSUB_SUBSCRIBE_OPTIONS'] = "http://jabber.org/protocol/pubsub#subscribe_options";
-	
-};
-
-Strophe.Connection.prototype.pubsub = {
+{
 
     //connection reference
     _conn:null,
+    //The plugin must have the init function.
     init: function(_conn) {
+
 	this._conn = _conn;
+
+	/*
+	  Function used to setup plugin.
+	*/
+	
+	/* extend name space 
+	 *  NS.PUBSUB - XMPP Publish Subscribe namespace
+	 *              from XEP 60.  
+	 *
+	 *  NS.PUBSUB_SUBSCRIBE_OPTIONS - XMPP pubsub
+	 *                                options namespace from XEP 60.
+	 */
+	Strophe.NS['PUBSUB'] = "http://jabber.org/protocol/pubsub";
+	Strophe.NS['PUBSUB_SUBSCRIBE_OPTIONS'] = "http://jabber.org/protocol/pubsub#subscribe_options";
+	
     },
     /***Function
 	

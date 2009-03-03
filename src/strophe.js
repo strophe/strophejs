@@ -1313,7 +1313,8 @@ Strophe.Connection = function (service)
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     for(var k in Strophe.ConnectionPlugins) 
     {
-	Strophe.ConnectionPlugins[k].apply(this,[]);
+	this[k] = Strophe.ConnectionPlugins[k];
+	this[k].init(this);
     }
 };
 
