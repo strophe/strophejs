@@ -143,16 +143,14 @@ Strophe.ConnectionPlugins['pubsub'] =
 			 null,
 			 subid,
 			 null);
-	//stub for function that needs to be overidden. Used to handle
-	//incoming subscription and pubsub events.
 
 	//add the event handler to receive items 
 	this._conn.addHandler(event_cb,
-			 null,
-			 'message',
-			 null,
-			 Strophe.NS.PUBSUB+"#event",
-			 null);
+			      null,
+			      'message',
+			      null,
+			      null,
+			      null);
 	return subid;
 	
     },
