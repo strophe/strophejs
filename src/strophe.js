@@ -2335,7 +2335,7 @@ Strophe.Connection.prototype = {
 	    }
 	}
 
-	var digest_uri = "xmpp/" + realm;
+        var digest_uri = "xmpp/" + this.domain;
 	if (host !== null) {
 	    digest_uri = digest_uri + "/" + host;
 	}
