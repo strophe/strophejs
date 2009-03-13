@@ -1138,17 +1138,18 @@ Strophe.TimedHandler.prototype = {
  *  Create and initialize a new Strophe.Request object.
  *
  *  Parameters:
- *    (String) data - The data to be sent in the request.
+ *    (XMLElement) elem - The XML data to be sent in the request.
  *    (Function) func - The function that will be called when the
  *      XMLHttpRequest readyState changes.
  *    (Integer) rid - The BOSH rid attribute associated with this request.
  *    (Integer) sends - The number of times this same request has been
  *      sent.
  */
-Strophe.Request = function (data, func, rid, sends)
+Strophe.Request = function (elem, func, rid, sends)
 {
     this.id = ++Strophe._requestId;
-    this.data = data;
+    this.xmlData = elem;
+    this.data = Strophe.serialize(elem);
     // save original function in case we need to make a new request
     // from this one.
     this.origFunc = func;
@@ -1466,7 +1467,7 @@ Strophe.Connection.prototype = {
 	this.connect_callback(Strophe.Status.CONNECTING, null);
 
 	this._requests.push(
-	    new Strophe.Request(body.toString(),
+	    new Strophe.Request(body.tree(),
 				this._onRequestStateChange.bind(this)
 				    .prependArg(this._connect_cb.bind(this)),
 				body.tree().getAttribute("rid")));
@@ -1499,6 +1500,40 @@ Strophe.Connection.prototype = {
 	
 	this.authenticated = true;
 	this.connected = true;
+    },
+
+    /** Function: xmlInput
+     *  User overrideable function that receives XML data coming into the 
+     *  connection.
+     *
+     *  The default function does nothing.  User code can override this with
+     *  > Strophe.Connection.xmlInput = function (elem) {
+     *  >   (user code)
+     *  > };
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The XML data received by the connection.
+     */
+    xmlInput: function (elem)
+    {
+	return;
+    },
+
+    /** Function: xmlOutput
+     *  User overrideable function that receives XML data sent to the
+     *  connection.
+     *
+     *  The default function does nothing.  User code can override this with
+     *  > Strophe.Connection.xmlOutput = function (elem) {
+     *  >   (user code)
+     *  > };
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The XMLdata sent by the connection.
+     */
+    xmlOutput: function (elem)
+    {
+	return;
     },
 
     /** Function: rawInput
@@ -1802,7 +1837,7 @@ Strophe.Connection.prototype = {
 	    req.abort = true;
 	    req.xhr.abort();
 	    oldreq = req;
-	    this._requests[i] = new Strophe.Request(req.data, 
+	    this._requests[i] = new Strophe.Request(req.xmlData, 
 						    req.origFunc, 
 						    req.rid, 
 						    req.sends);
@@ -1825,25 +1860,26 @@ Strophe.Connection.prototype = {
 		return;
 	    }
 
-      // Fires the XHR request -- may be invoked immediately
-      // or on a gradually expanding retry window for reconnects
-      var sendFunc = function () {
-	  req.xhr.send(req.data);
-      };
+            // Fires the XHR request -- may be invoked immediately
+            // or on a gradually expanding retry window for reconnects
+            var sendFunc = function () {
+	        req.xhr.send(req.data);
+            };
+            
+            // Implement progressive backoff for reconnects --
+            // First retry (send == 1) should also be instantaneous
+            if (req.sends > 1) {
+                // Using a cube of the retry number creats a nicely
+                // expanding retry window
+                var backoff = Math.pow(req.sends, 3) * 1000;
+                setTimeout(sendFunc, backoff);
+            } else {
+                sendFunc();
+            }
+            
+            req.sends++;
 
-      // Implement progressive backoff for reconnects --
-      // First retry (send == 1) should also be instantaneous
-      if (req.sends > 1) {
-          // Using a cube of the retry number creats a nicely
-          // expanding retry window
-          var backoff = Math.pow(req.sends, 3) * 1000;
-          setTimeout(sendFunc, backoff);
-      } else {
-          sendFunc();
-      }
-
-      req.sends++;
-
+            this.xmlOutput(req.xmlData);
 	    this.rawOutput(req.data);
 	} else {
 	    Strophe.debug("_throttledRequestHandler: " + 
@@ -2063,7 +2099,8 @@ Strophe.Connection.prototype = {
 	    this._doDisconnect();
 	}
 
-	this.rawInput(Strophe.serialize(elem));
+	this.xmlInput(elem);
+        this.rawInput(Strophe.serialize(elem));
 
 	var typ = elem.getAttribute("type");
 	var cond, conflict;
@@ -2141,7 +2178,7 @@ Strophe.Connection.prototype = {
 
 	this.disconnecting = true;
 
-	var req = new Strophe.Request(body.toString(),
+	var req = new Strophe.Request(body.tree(),
 				      this._onRequestStateChange.bind(this)
 					  .prependArg(this._dataRecv.bind(this)),
 				      body.tree().getAttribute("rid"));
@@ -2179,7 +2216,8 @@ Strophe.Connection.prototype = {
 	var bodyWrap = req.getResponse();
 	if (!bodyWrap) return;
 
-	this.rawInput(Strophe.serialize(bodyWrap));
+	this.xmlInput(bodyWrap);
+        this.rawInput(Strophe.serialize(bodyWrap));
 
 	var typ = bodyWrap.getAttribute("type");
 	var cond, conflict;
@@ -2789,7 +2827,7 @@ Strophe.Connection.prototype = {
 		delete this._data;
 		this._data = [];
 		this._requests.push(
-		    new Strophe.Request(body.toString(),
+		    new Strophe.Request(body.tree(),
 					this._onRequestStateChange.bind(this)
 					    .prependArg(this._dataRecv.bind(this)),
 					body.tree().getAttribute("rid")));
