@@ -40,7 +40,8 @@ function onMessage(msg) {
 	log('ECHOBOT: I got a message from ' + from + ': ' + 
 	    Strophe.getText(body));
     
-	var reply = $msg({to: from, from: to, type: 'chat'}).cnode(body);
+	var reply = $msg({to: from, from: to, type: 'chat'})
+            .cnode(Strophe.copyElement(body));
 	connection.send(reply.tree());
 
 	log('ECHOBOT: I sent ' + from + ': ' + Strophe.getText(body));
