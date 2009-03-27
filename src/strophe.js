@@ -1717,10 +1717,15 @@ Strophe.Connection.prototype = {
      *
      *  The user supplied connection callback will be notified of the
      *  progress as this process happens.
+     *
+     *  Parameters:
+     *    (String) reason - The reason the disconnect is occuring.
      */
-    disconnect: function ()
+    disconnect: function (reason)
     {
-        Strophe.info("disconnect was called");
+        this.connect_callback(Strophe.Status.DISCONNECTING, reason);
+
+        Strophe.info("Disconnect was called because: " + reason);
         if (this.connected) {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
@@ -2085,22 +2090,34 @@ Strophe.Connection.prototype = {
             var elem = req.getResponse();
         } catch (e) {
             if (e != "parsererror") throw e;
-
-            this.connect_callback(Strophe.Status.DISCONNECTING,
-                                  "strophe-parsererror");
-            this.disconnect();
+            this.disconnect("strophe-parsererror");
         }
         if (elem === null) return;
+
+        this.xmlInput(elem);
+        this.rawInput(Strophe.serialize(elem));
+
+        // remove handlers scheduled for deletion
+        var i, hand;
+        while (this.removeHandlers.length > 0) {
+            hand = this.removeHandlers.pop();
+            i = this.handlers.indexOf(hand);
+            if (i >= 0)
+                this.handlers.splice(i, 1);
+        }
+
+        // add handlers scheduled for addition
+        while (this.addHandlers.length > 0) {
+            this.handlers.push(this.addHandlers.pop());
+        }
 
         // handle graceful disconnect
         if (this.disconnecting && this._requests.length == 0) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
             this._doDisconnect();
+            return;
         }
-
-        this.xmlInput(elem);
-        this.rawInput(Strophe.serialize(elem));
 
         var typ = elem.getAttribute("type");
         var cond, conflict;
@@ -2116,23 +2133,8 @@ Strophe.Connection.prototype = {
             } else {
                 this.connect_callback(Strophe.Status.CONNFAIL, "unknown");
             }
-            this.connect_callback(Strophe.Status.DISCONNECTING, null);
             this.disconnect();
             return;
-        }
-
-        // remove handlers scheduled for deletion
-        var i, hand;
-        while (this.removeHandlers.length > 0) {
-            hand = this.removeHandlers.pop();
-            i = this.handlers.indexOf(hand);
-            if (i >= 0)
-                this.handlers.splice(i, 1);
-        }
-
-        // add handlers scheduled for addition
-        while (this.addHandlers.length > 0) {
-            this.handlers.push(this.addHandlers.pop());
         }
 
         // send each incoming stanza through the handler chain
@@ -2276,7 +2278,8 @@ Strophe.Connection.prototype = {
         } else if (Strophe.getNodeFromJid(this.jid) === null) {
             // we don't have a node, which is required for non-anonymous
             // client connections
-            this.connect_callback(Strophe.Status.CONNFAIL, null);
+            this.connect_callback(Strophe.Status.CONNFAIL,
+                                  'x-strophe-bad-non-anon-jid');
             this.disconnect();
         } else if (do_sasl_digest_md5) {
             this.connect_callback(Strophe.Status.AUTHENTICATING, null);
