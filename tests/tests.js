@@ -279,6 +279,29 @@ Strophe.Test = {
 
 
 		});
+		test("test sendIQ failed.",function(){
+		    var sub = $iq( 
+		    {from:Strophe.Test.connection.jid, 
+			      to:Strophe.Test.PUBSUB_COMPONENT, 
+			      type:'get'}
+		    );
+		    //call sendIQ with several call backs
+		    
+		    Strophe.Test.connection.sendIQ(sub.tree(),
+		    function(stanza) {
+			console.log(stanza);
+			test("iq sent",function() {
+			    ok(false,
+			       "iq sent succesfully when should have failed.");
+			});
+		    },
+		    function(stanza) {
+			test("iq fail",function() {
+			    ok(true,
+			       "success on failure test: failed to send iq.");
+			});
+		    });		    
+		});
 	    });
 	    
 	});

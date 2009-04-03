@@ -1574,7 +1574,9 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    The id used to send the IQ.
     */
-    sendIQ: function(elem, ok_callback, error_back) {
+    sendIQ: function(elem, ok_callback, error_back, timeout) {
+
+
 	var sid = elem.getAttribute('id');
 	//inject id if not found
 	if(!sid)
@@ -1582,13 +1584,24 @@ Strophe.Connection.prototype = {
 	    sid = this.getUniqueId("sendIQ");
 	    elem.setAttribute("id",sid);
 	}
-	this.send(elem);
+
+	//if timeout not specified, use don't setup timeout handler.
+	if(timeout)
+	{
+	    //call error_back on timeout
+	    this.addTimedHandler(timeout,function() {
+		
+		error_back("sendIQ timed out.");
+		return false;
+
+	    });
+	}
 
 	this.addHandler(function(stanza) {
 	    //find error in stanza
-	    var elems = stanza.getElementsByTagName('error');
-
-	    if(elems.length == 0)
+	    var error = stanza.getAttribute('type');
+	    
+	    if(error != 'error')
 	    {
 		//if no error , call ok_callback
 		ok_callback(stanza);
@@ -1605,6 +1618,8 @@ Strophe.Connection.prototype = {
 				   null,
 				   sid,
 				   null);
+	this.send(elem);
+
 	return sid;
     },
     /** PrivateFunction: _sendRestart

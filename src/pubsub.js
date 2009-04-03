@@ -1,6 +1,7 @@
 /*
   Copyright 2008, Stanziq  Inc.
 */
+
 Strophe.ConnectionPlugins['pubsub'] = 
 /*
   Extend connection object to have plugin name 'pubsub'.  
@@ -76,13 +77,13 @@ Strophe.ConnectionPlugins['pubsub'] =
 	     {xmlns:Strophe.NS.PUBSUB}).c('create',
 	     {node:node}).up().cnode(c_options);
 
-	this._conn.send(iq.tree());
 	this._conn.addHandler(call_back,
 			 null,
 			 'iq',
 			 null,
 			 iqid,
 			 null);
+	this._conn.send(iq.tree());
 	return iqid;
     },
     /***Function
@@ -135,7 +136,6 @@ Strophe.ConnectionPlugins['pubsub'] =
 		{node:node,jid:jid});
 	}
 
-	this._conn.send(sub.tree());
 
 	this._conn.addHandler(call_back,
 			 null,
@@ -151,6 +151,7 @@ Strophe.ConnectionPlugins['pubsub'] =
 			      null,
 			      null,
 			      null);
+	this._conn.send(sub.tree());
 	return subid;
 	
     },
@@ -176,14 +177,14 @@ Strophe.ConnectionPlugins['pubsub'] =
 
 
 
-	this._conn.send(sub.tree());
-
 	this._conn.addHandler(call_back,
 			 null,
 			 'iq',
 			 null,
 			 subid,
 			 null);
+	this._conn.send(sub.tree());
+
 	
 	return subid;
 	
@@ -223,14 +224,14 @@ Strophe.ConnectionPlugins['pubsub'] =
 	pub.c('pubsub', { xmlns:Strophe.NS.PUBSUB }).cnode(publish_elem);
 
 
-	this._conn.send(pub.tree());
-
 	this._conn.addHandler(call_back,
 			 null,
 			 'iq',
 			 null,
 			 pubid,
 			 null);
+	this._conn.send(pub.tree());
+
 	
 	return pubid;
     },
