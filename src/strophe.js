@@ -197,7 +197,22 @@ Strophe = {
 	SESSION: "urn:ietf:params:xml:ns:xmpp-session",
 	VERSION: "jabber:iq:version"
     },
-    
+    /** Function: addNamespace 
+
+
+     *   This function is used to extend the current namespaces in
+     *	Strophe.NS.  It takes a key and a value with the key being the
+     *	name of the new namespace, with its actual value.
+     *	For example:
+     *	Strophe.addNamespace('PUBSUB',,"http://jabber.org/protocol/pubsub");
+
+     *  Parameters:
+     *    (String) name - The variable name of the new namespace
+     *    (String) value - The actual namespace.	
+     **/
+    addNamespace: function(name,value) {
+	Strophe.NS[name] = value;
+    },    
     /** Constants: Connection Status Constants
      *  Connection status constants for use by the connection handler
      *  callback.
@@ -1254,6 +1269,15 @@ Strophe.Request.prototype = {
  */
 Strophe.ConnectionPlugins = {};
 
+/** Function: addConnectionPlugin
+    extends the Strophe.Connection object with the given name.
+    Paramaters:
+       (String) name - The name of the extension.
+       (Function) proto_type - The function to extend the connection object.
+ **/
+Strophe.addConnectionPlugin = function(name,proto_type) {
+    Strophe.ConnectionPlugins[name] = proto_type;
+};
 /** Constructor: Strophe.Connection
  *  Create and initialize a Strophe.Connection object.
  *
@@ -1313,7 +1337,7 @@ Strophe.Connection = function (service)
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     for(var k in Strophe.ConnectionPlugins) 
     {
-	this[k] = Strophe.ConnectionPlugins[k];
+	this[k] = Strophe.ConnectionPlugins[k]();
 	this[k].init(this);
     }
 };
@@ -1570,6 +1594,7 @@ Strophe.Connection.prototype = {
      *    (XMLElement) elem - The stanza to send.
      *    (Function) ok_callback - The callback function for a successful request.
      *    (Function) error_back - The callback function for a failed request.
+     *    (Integer) timeout - The time specified in miliseconds for a timeout to occur.
      *
      *  Returns:
      *    The id used to send the IQ.
@@ -1622,6 +1647,7 @@ Strophe.Connection.prototype = {
 
 	return sid;
     },
+
     /** PrivateFunction: _sendRestart
      *  Send an xmpp:restart stanza.
      */
@@ -2882,3 +2908,5 @@ Strophe.Connection.prototype = {
 	this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     }
 };
+
+
