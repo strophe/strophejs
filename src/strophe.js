@@ -1583,17 +1583,37 @@ Strophe.Connection.prototype = {
      */
     send: function (elem)
     {
-        if (elem !== null && typeof(elem["sort"]) == "function") {
+        if (elem === null) { return ; }
+        if (typeof(elem["sort"]) === "function") {
             for (var i = 0; i < elem.length; i++) {
-                this._data.push(elem[i]);
+                this._queueData(elem[i]);
             }
+        } else if (typeof(elem["tree"]) === "function") {
+            this._queueData(elem.tree());
         } else {
-            this._data.push(elem);
+            this._queueData(elem);
         }
 
         this._throttledRequestHandler();
         clearTimeout(this._idleTimeout);
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    },
+
+    /** PrivateFunction: _queueData
+     *  Queue outgoing data for later sending.  Also ensures that the data
+     *  is a DOMElement.
+     */
+    _queueData: function (element) {
+        if (element === null ||
+            !element["tagName"] ||
+            !element["childNodes"]) {
+            throw {
+                name: "StropheError",
+                message: "Cannot queue non-DOMElement."
+            };
+        }
+        
+        this._data.push(element);
     },
 
     /** PrivateFunction: _sendRestart
