@@ -2831,51 +2831,51 @@ Strophe.Connection.prototype = {
             this._data.length === 0 && !this.disconnecting) {
             Strophe.info("no requests during idle cycle, sending " +
                          "blank request");
-            this.send(null);
-        } else {
-            if (this._requests.length < 2 && this._data.length > 0 &&
-               !this.paused) {
-                body = this._buildBody();
-                for (i = 0; i < this._data.length; i++) {
-                    if (this._data[i] !== null) {
-                        if (this._data[i] === "restart") {
-                            body.attrs({
-                                to: this.domain,
-                                "xml:lang": "en",
-                                "xmpp:restart": "true",
-                                "xmlns:xmpp": Strophe.NS.BOSH
-                            })
-                        } else {
-                            body.cnode(this._data[i]).up();
-                        }
+            this._data.push(null);
+        }
+
+        if (this._requests.length < 2 && this._data.length > 0 &&
+            !this.paused) {
+            body = this._buildBody();
+            for (i = 0; i < this._data.length; i++) {
+                if (this._data[i] !== null) {
+                    if (this._data[i] === "restart") {
+                        body.attrs({
+                            to: this.domain,
+                            "xml:lang": "en",
+                            "xmpp:restart": "true",
+                            "xmlns:xmpp": Strophe.NS.BOSH
+                        })
+                    } else {
+                        body.cnode(this._data[i]).up();
                     }
                 }
-                delete this._data;
-                this._data = [];
-                this._requests.push(
-                    new Strophe.Request(body.tree(),
-                                        this._onRequestStateChange.bind(this)
-                                            .prependArg(this._dataRecv.bind(this)),
-                                        body.tree().getAttribute("rid")));
-                this._processRequest(this._requests.length - 1);
             }
+            delete this._data;
+            this._data = [];
+            this._requests.push(
+                new Strophe.Request(body.tree(),
+                                    this._onRequestStateChange.bind(this)
+                                    .prependArg(this._dataRecv.bind(this)),
+                                    body.tree().getAttribute("rid")));
+            this._processRequest(this._requests.length - 1);
+        }
 
-            if (this._requests.length > 0) {
-                time_elapsed = this._requests[0].age();
-                if (this._requests[0].dead !== null) {
-                    if (this._requests[0].timeDead() >
-                        Strophe.SECONDARY_TIMEOUT) {
-                        this._throttledRequestHandler();
-                    }
-                }
-
-                if (time_elapsed > Strophe.TIMEOUT) {
-                    Strophe.warn("Request " +
-                                 this._requests[0].id +
-                                 " timed out, over " + Strophe.TIMEOUT +
-                                 " seconds since last activity");
+        if (this._requests.length > 0) {
+            time_elapsed = this._requests[0].age();
+            if (this._requests[0].dead !== null) {
+                if (this._requests[0].timeDead() >
+                    Strophe.SECONDARY_TIMEOUT) {
                     this._throttledRequestHandler();
                 }
+            }
+
+            if (time_elapsed > Strophe.TIMEOUT) {
+                Strophe.warn("Request " +
+                             this._requests[0].id +
+                             " timed out, over " + Strophe.TIMEOUT +
+                             " seconds since last activity");
+                this._throttledRequestHandler();
             }
         }
 
