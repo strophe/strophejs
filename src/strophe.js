@@ -1579,7 +1579,9 @@ Strophe.Connection.prototype = {
      *  server, all pending data is sent and the queue is flushed.
      *
      *  Parameters:
-     *    (XMLElement) elem - The stanza to send.
+     *    (XMLElement |
+     *     [XMLElement] |
+     *     Strophe.Builder) elem - The stanza to send.
      */
     send: function (elem)
     {
