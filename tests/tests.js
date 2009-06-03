@@ -37,5 +37,8 @@ $(document).ready(function () {
         var text = "s & p";
 	var textNode = Strophe.xmlTextNode(text);
 	equals(textNode.textContent, "s &amp; p", "should be escaped.");
+	var text0 = "s < & > p";
+	var textNode0 = Strophe.xmlTextNode(text0);
+	equals(textNode0.textContent, "s &lt; &amp; &gt; p", "should be escaped.");
     });
 });
