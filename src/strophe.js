@@ -373,7 +373,22 @@ Strophe = {
 
         return node;
     },
-
+    /*  Function: xmlescape
+     *  Excapes invalid xml characters.
+     *
+     *  Parameters:
+     *     (String) text - text to escape.
+     *
+     *	Returns:
+     *      Escaped text.
+     */
+    xmlescape: function(text) 
+    {
+	text = text.replace(/\&/g, "&amp;");
+        text = text.replace(/</g,  "&lt;");
+        text = text.replace(/>/g,  "&gt;");
+        return text;    
+    },
     /** Function: xmlTextNode
      *  Creates an XML DOM text node.
      *
@@ -387,6 +402,8 @@ Strophe = {
      */
     xmlTextNode: function (text)
     {
+	//ensure text is escaped
+	text = Strophe.xmlescape(text);
         if (window.ActiveXObject) {
             return new ActiveXObject("Microsoft.XMLDOM").createTextNode(text);
         } else {

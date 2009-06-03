@@ -33,4 +33,9 @@ $(document).ready(function () {
             equals(e.name, "StropheError", "send() should throw exception");
         }
     });
+    test("xml escape test", function () {
+        var text = "s & p";
+	var textNode = Strophe.xmlTextNode(text);
+	equals(textNode.textContent, "s &amp; p", "should be escaped.");
+    });
 });
