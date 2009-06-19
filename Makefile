@@ -5,8 +5,6 @@ BASE_FILES = $(SRC_DIR)/b64.js \
 	$(SRC_DIR)/sha1.js \
 	$(SRC_DIR)/strophe.js
 
-STROPHE_VERSION = `cat version.txt`
-
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
 
