@@ -1,4 +1,6 @@
 SRC_DIR = src
+DOC_DIR = doc
+NDPROJ_DIR = ndproj
 
 BASE_FILES = $(SRC_DIR)/b64.js \
 	$(SRC_DIR)/md5.js \
@@ -8,7 +10,7 @@ BASE_FILES = $(SRC_DIR)/b64.js \
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
 
-.PHONY: all normal min clean
+.PHONY: all normal doc min clean
 
 all: normal min
 
@@ -34,6 +36,13 @@ else
 	@@echo "    Please set YUI_COMPRESSOR to the path to the jar file."
 endif
 	@@echo
+
+doc:
+	@@echo "Building Strophe documentation..."
+	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
+	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
+	@@NaturalDocs -q -i $(SRC_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@echo "Documentation built."
 
 clean:
 	@@echo "Cleaning " $(STROPHE) "..."
