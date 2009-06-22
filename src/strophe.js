@@ -197,22 +197,24 @@ Strophe = {
 	SESSION: "urn:ietf:params:xml:ns:xmpp-session",
 	VERSION: "jabber:iq:version"
     },
+
     /** Function: addNamespace 
-
-
-     *   This function is used to extend the current namespaces in
+     *  This function is used to extend the current namespaces in
      *	Strophe.NS.  It takes a key and a value with the key being the
      *	name of the new namespace, with its actual value.
      *	For example:
-     *	Strophe.addNamespace('PUBSUB',,"http://jabber.org/protocol/pubsub");
-
+     *	Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
+     *
      *  Parameters:
-     *    (String) name - The variable name of the new namespace
+     *    (String) name - The name under which the namespace will be
+     *      referenced under Strophe.NS
      *    (String) value - The actual namespace.	
-     **/
-    addNamespace: function(name,value) {
+     */
+    addNamespace: function (name, value)
+    {
 	Strophe.NS[name] = value;
-    },    
+    },
+
     /** Constants: Connection Status Constants
      *  Connection status constants for use by the connection handler
      *  callback.
@@ -733,7 +735,25 @@ Strophe = {
      *  _Private_ variable that keeps track of the request ids for 
      *  connections.
      */
-    _requestId: 0
+    _requestId: 0,
+
+    /** PrivateVariable: Strophe.connectionPlugins
+     *  _Private_ variable Used to store plugin names that need
+     *  initialization on Strophe.Connection construction.
+     */
+    _connectionPlugins: {},
+
+    /** Function: addConnectionPlugin
+     *  Extends the Strophe.Connection object with the given plugin.
+     *
+     *  Paramaters:
+     *    (String) name - The name of the extension.
+     *    (Object) ptype - The plugin's prototype.
+     */
+    addConnectionPlugin: function (name, ptype)
+    {
+        Strophe._connectionPlugins[name] = ptype;
+    }
 };
 
 /** Class: Strophe.Builder
@@ -1261,23 +1281,6 @@ Strophe.Request.prototype = {
  *  To send data to the connection, use send().
  */
 
-/* Dictionary: Strophe.ConnectionPlugins
-
-   Used to store plugins names that need initialization on
-   Strophe.Connection construction.
-
- */
-Strophe.ConnectionPlugins = {};
-
-/** Function: addConnectionPlugin
-    extends the Strophe.Connection object with the given name.
-    Paramaters:
-       (String) name - The name of the extension.
-       (Function) proto_type - The function to extend the connection object.
- **/
-Strophe.addConnectionPlugin = function(name,proto_type) {
-    Strophe.ConnectionPlugins[name] = proto_type;
-};
 /** Constructor: Strophe.Connection
  *  Create and initialize a Strophe.Connection object.
  *
@@ -1335,9 +1338,13 @@ Strophe.Connection = function (service)
     
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
-    for(var k in Strophe.ConnectionPlugins) 
-    {
-	this[k] = Strophe.ConnectionPlugins[k]();
+
+    // initialize plugins
+    for (var k in Strophe._connectionPlugins) {
+	ptype = Strophe._connectionPlugins[k];
+        var F = function () {};
+        F.prototype = ptype;
+        this[k] = new F();
 	this[k].init(this);
     }
 };
