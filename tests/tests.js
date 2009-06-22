@@ -2,8 +2,8 @@
 
 Strophe.Test = {
     BOSH_URL: "/xmpp-httpbind",
-    XMPP_DOMAIN: 'collecta.com',
-    PUBSUB_COMPONENT: "pubsub.stanziq.com",
+    XMPP_DOMAIN: 'localhost',
+    PUBSUB_COMPONENT: "pubsub.localhost",
     _node_name: "", //node name created in connectCallback function
     connection: null, //connection object created in run function
     
