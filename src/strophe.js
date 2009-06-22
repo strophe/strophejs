@@ -199,6 +199,23 @@ Strophe = {
         STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas"
     },
 
+    /** Function: addNamespace 
+     *  This function is used to extend the current namespaces in
+     *	Strophe.NS.  It takes a key and a value with the key being the
+     *	name of the new namespace, with its actual value.
+     *	For example:
+     *	Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
+     *
+     *  Parameters:
+     *    (String) name - The name under which the namespace will be
+     *      referenced under Strophe.NS
+     *    (String) value - The actual namespace.	
+     */
+    addNamespace: function (name, value)
+    {
+	Strophe.NS[name] = value;
+    },
+
     /** Constants: Connection Status Constants
      *  Connection status constants for use by the connection handler
      *  callback.
@@ -736,7 +753,25 @@ Strophe = {
      *  _Private_ variable that keeps track of the request ids for
      *  connections.
      */
-    _requestId: 0
+    _requestId: 0,
+
+    /** PrivateVariable: Strophe.connectionPlugins
+     *  _Private_ variable Used to store plugin names that need
+     *  initialization on Strophe.Connection construction.
+     */
+    _connectionPlugins: {},
+
+    /** Function: addConnectionPlugin
+     *  Extends the Strophe.Connection object with the given plugin.
+     *
+     *  Paramaters:
+     *    (String) name - The name of the extension.
+     *    (Object) ptype - The plugin's prototype.
+     */
+    addConnectionPlugin: function (name, ptype)
+    {
+        Strophe._connectionPlugins[name] = ptype;
+    }
 };
 
 /** Class: Strophe.Builder
@@ -1330,6 +1365,15 @@ Strophe.Connection = function (service)
 
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+
+    // initialize plugins
+    for (var k in Strophe._connectionPlugins) {
+	ptype = Strophe._connectionPlugins[k];
+        var F = function () {};
+        F.prototype = ptype;
+        this[k] = new F();
+	this[k].init(this);
+    }
 };
 
 Strophe.Connection.prototype = {
@@ -1616,6 +1660,67 @@ Strophe.Connection.prototype = {
         this._throttledRequestHandler();
         clearTimeout(this._idleTimeout);
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    },
+
+    /** Function: sendIQ
+     *  Helper function to send IQ stanzas.
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The stanza to send.
+     *    (Function) callback - The callback function for a successful request.
+     *    (Function) errback - The callback function for a failed or timed 
+     *      out request.  On timeout, the stanza will be null.
+     *    (Integer) timeout - The time specified in milliseconds for a 
+     *      timeout to occur.
+     *
+     *  Returns:
+     *    The id used to send the IQ.
+    */
+    sendIQ: function(elem, callback, errback, timeout) {
+        var timeoutHandler = null, handler = null;
+	var id = elem.getAttribute('id');
+        var that = this;
+
+	// inject id if not found
+	if (!id) {
+	    id = this.getUniqueId("sendIQ");
+	    elem.setAttribute("id", id);
+	}
+
+	var handler = this.addHandler(function (stanza) {
+	    // remove timeout handler if there is one
+            if (timeoutHandler) {
+                that.deleteTimedHandler(timeoutHandler);
+            }
+
+            var iqtype = stanza.getAttribute('type');
+	    if (iqtype === 'result') {
+		callback(stanza);
+	    } else if (iqtype === 'error') {
+		errback(stanza);
+	    } else {
+                throw {
+                    name: "StropheError",
+                    message: "Got bad IQ type of " + iqtype
+                };
+            }
+	}, null, 'iq', null, id);
+
+	// if timeout specified, setup timeout handler.
+	if (timeout) {
+	    timeoutHandler = this.addTimedHandler(timeout, function () {
+                // get rid of normal handler
+                that.deleteHandler(handler);
+
+	        // call errback on timeout with null stanza
+		errback(null);
+		return false;
+	    });
+	}
+
+	this.send(elem);
+
+	return id;
     },
 
     /** PrivateFunction: _queueData
@@ -2901,3 +3006,5 @@ Strophe.Connection.prototype = {
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     }
 };
+
+
