@@ -14,6 +14,8 @@ $(document).ready(function () {
     test("send() accepts Builders (#27)", function () {
         var stanza = $pres();
         var conn = new Strophe.Connection("");
+        // fake connection callback to avoid errors
+        conn.connect_callback = function () {};
         
         ok(conn._data.length === 0, "Output queue is clean");
         try {
@@ -25,7 +27,8 @@ $(document).ready(function () {
     test("send() does not accept strings", function () {
         var stanza = "<presence/>";
         var conn = new Strophe.Connection("");
-
+        // fake connection callback to avoid errors
+        conn.connect_callback = function () {};
         expect(1);
         try {
             conn.send(stanza);
