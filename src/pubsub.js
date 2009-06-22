@@ -2,19 +2,16 @@
   Copyright 2008, Stanziq  Inc.
 */
 
-Strophe.addConnectionPlugin('pubsub',function() 
+Strophe.addConnectionPlugin('pubsub', {
 /*
   Extend connection object to have plugin name 'pubsub'.  
 */
-{
-    var connection = null;
-    
-    var obj = {
+    _connection: null,
 
 	//The plugin must have the init function.
-	init: function(_conn) {
+	init: function(conn) {
 
-	    connection = _conn;
+	    this._connection = conn;
 
 	    /*
 	      Function used to setup plugin.
@@ -69,7 +66,7 @@ Strophe.addConnectionPlugin('pubsub',function()
 	*/
 	createNode: function(jid,service,node,options, call_back) {
 	    
-	    var iqid = connection.getUniqueId("pubsubcreatenode");
+	    var iqid = this._connection.getUniqueId("pubsubcreatenode");
 	    
 	    var iq = $iq({from:jid, to:service, type:'set', id:iqid});
 	    
@@ -98,13 +95,13 @@ Strophe.addConnectionPlugin('pubsub',function()
 		{xmlns:Strophe.NS.PUBSUB}).c('create',
 		    {node:node}).up().cnode(c_options);
 	    
-	    connection.addHandler(call_back,
+	    this._connection.addHandler(call_back,
 				  null,
 				  'iq',
 				  null,
 				  iqid,
 				  null);
-	    connection.send(iq.tree());
+	    this._connection.send(iq.tree());
 	    return iqid;
 	},
 	/***Function
@@ -124,7 +121,7 @@ Strophe.addConnectionPlugin('pubsub',function()
 	*/
 	subscribe: function(jid,service,node,options, event_cb, call_back) {
 	    
-	    var subid = connection.getUniqueId("subscribenode");
+	    var subid = this._connection.getUniqueId("subscribenode");
 	    
 	    //create subscription options
 	    var sub_options = Strophe.xmlElement("options",[]);
@@ -158,7 +155,7 @@ Strophe.addConnectionPlugin('pubsub',function()
 	    }
 	    
 	    
-	    connection.addHandler(call_back,
+	    this._connection.addHandler(call_back,
 				  null,
 				  'iq',
 				  null,
@@ -166,13 +163,13 @@ Strophe.addConnectionPlugin('pubsub',function()
 				  null);
 	    
 	    //add the event handler to receive items 
-	    connection.addHandler(event_cb,
+	    this._connection.addHandler(event_cb,
 				  null,
 				  'message',
 				  null,
 				  null,
 				  null);
-	    connection.send(sub.tree());
+	    this._connection.send(sub.tree());
 	    return subid;
 	    
 	},
@@ -189,7 +186,7 @@ Strophe.addConnectionPlugin('pubsub',function()
 	*/    
 	unsubscribe: function(jid,service,node, call_back) {
 	    
-	    var subid = connection.getUniqueId("unsubscribenode");
+	    var subid = this._connection.getUniqueId("unsubscribenode");
 	    
 	    
 	    var sub = $iq({from:jid, to:service, type:'set', id:subid})
@@ -198,13 +195,13 @@ Strophe.addConnectionPlugin('pubsub',function()
 
 	    
 	    
-	    connection.addHandler(call_back,
+	    this._connection.addHandler(call_back,
 				  null,
 				  'iq',
 				  null,
 				  subid,
 				  null);
-	    connection.send(sub.tree());
+	    this._connection.send(sub.tree());
 	    
 	    
 	    return subid;
@@ -223,7 +220,7 @@ Strophe.addConnectionPlugin('pubsub',function()
 	creation was sucessful.
 	*/    
 	publish: function(jid, service, node, items, call_back) {
-	    var pubid = connection.getUniqueId("publishnode");
+	    var pubid = this._connection.getUniqueId("publishnode");
 	    
 	    
 	    var publish_elem = Strophe.xmlElement("publish",
@@ -245,13 +242,13 @@ Strophe.addConnectionPlugin('pubsub',function()
 	    pub.c('pubsub', { xmlns:Strophe.NS.PUBSUB }).cnode(publish_elem);
 	    
 	    
-	    connection.addHandler(call_back,
+	    this._connection.addHandler(call_back,
 				  null,
 				  'iq',
 				  null,
 				  pubid,
 				  null);
-	    connection.send(pub.tree());
+	    this._connection.send(pub.tree());
 	    
 	    
 	    return pubid;
@@ -267,9 +264,6 @@ Strophe.addConnectionPlugin('pubsub',function()
 	    pub.c('pubsub', 
 		{ xmlns:Strophe.NS.PUBSUB }).c('items',{node:node});
 	    
-	    return connection.sendIQ(pub.tree(),ok_callback,error_back);
+	    return this._connection.sendIQ(pub.tree(),ok_callback,error_back);
 	}
-    };
-
-    return obj;
 });
