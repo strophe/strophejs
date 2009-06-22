@@ -1588,64 +1588,66 @@ Strophe.Connection.prototype = {
 	clearTimeout(this._idleTimeout);
 	this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
+
     /** Function: sendIQ
-	Helper function to send IQs to the xmpp server.
+     *  Helper function to send IQ stanzas.
+     *
      *  Parameters:
      *    (XMLElement) elem - The stanza to send.
-     *    (Function) ok_callback - The callback function for a successful request.
-     *    (Function) error_back - The callback function for a failed request.
-     *    (Integer) timeout - The time specified in miliseconds for a timeout to occur.
+     *    (Function) callback - The callback function for a successful request.
+     *    (Function) errback - The callback function for a failed or timed 
+     *      out request.  On timeout, the stanza will be null.
+     *    (Integer) timeout - The time specified in milliseconds for a 
+     *      timeout to occur.
      *
      *  Returns:
      *    The id used to send the IQ.
     */
-    sendIQ: function(elem, ok_callback, error_back, timeout) {
+    sendIQ: function(elem, callback, errback, timeout) {
+        var timeoutHandler = null, handler = null;
+	var id = elem.getAttribute('id');
+        var that = this;
 
-
-	var sid = elem.getAttribute('id');
-	//inject id if not found
-	if(!sid)
-	{
-	    sid = this.getUniqueId("sendIQ");
-	    elem.setAttribute("id",sid);
+	// inject id if not found
+	if (!id) {
+	    id = this.getUniqueId("sendIQ");
+	    elem.setAttribute("id", id);
 	}
 
-	//if timeout not specified, use don't setup timeout handler.
-	if(timeout)
-	{
-	    //call error_back on timeout
-	    this.addTimedHandler(timeout,function() {
-		
-		error_back("sendIQ timed out.");
-		return false;
+	var handler = this.addHandler(function (stanza) {
+	    // remove timeout handler if there is one
+            if (timeoutHandler) {
+                that.deleteTimedHandler(timeoutHandler);
+            }
 
+            var iqtype = stanza.getAttribute('type');
+	    if (iqtype === 'result') {
+		callback(stanza);
+	    } else if (iqtype === 'error') {
+		errback(stanza);
+	    } else {
+                throw {
+                    name: "StropheError",
+                    message: "Got bad IQ type of " + iqtype
+                };
+            }
+	}, null, 'iq', null, id);
+
+	// if timeout specified, setup timeout handler.
+	if (timeout) {
+	    timeoutHandler = this.addTimedHandler(timeout, function () {
+                // get rid of normal handler
+                that.deleteHandler(handler);
+
+	        // call errback on timeout with null stanza
+		errback(null);
+		return false;
 	    });
 	}
 
-	this.addHandler(function(stanza) {
-	    //find error in stanza
-	    var error = stanza.getAttribute('type');
-	    
-	    if(error != 'error')
-	    {
-		//if no error , call ok_callback
-		ok_callback(stanza);
-	    }
-	    else
-	    {
-		//if error, call error_back
-		error_back(stanza);
-	    }
-
-	},
-				   null,
-				   'iq',
-				   null,
-				   sid,
-				   null);
 	this.send(elem);
 
-	return sid;
+	return id;
     },
 
     /** PrivateFunction: _sendRestart
