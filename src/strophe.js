@@ -1526,7 +1526,7 @@ Strophe.Connection.prototype = {
             "xmlns:xmpp": Strophe.NS.BOSH
         });
 
-        this.connect_callback(Strophe.Status.CONNECTING, null);
+        this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
         this._requests.push(
             new Strophe.Request(body.tree(),
@@ -1868,7 +1868,7 @@ Strophe.Connection.prototype = {
      */
     disconnect: function (reason)
     {
-        this.connect_callback(Strophe.Status.DISCONNECTING, reason);
+        this._changeConnectStatus(Strophe.Status.DISCONNECTING, reason);
 
         Strophe.info("Disconnect was called because: " + reason);
         if (this.connected) {
@@ -1876,6 +1876,41 @@ Strophe.Connection.prototype = {
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
             this._sendTerminate();
+        }
+    },
+
+    /** PrivateFunction: _changeConnectStatus
+     *  _Private_ helper function that makes sure plugins and the user's
+     *  callback are notified of connection status changes.
+     *
+     *  Parameters:
+     *    (Integer) status - the new connection status, one of the values
+     *      in Strophe.Status
+     *    (String) condition - the error condition or null
+     */
+    _changeConnectStatus: function (status, condition)
+    {
+        // notify all plugins listening for status changes
+        for (var k in Strophe._connectionPlugins) {
+            var plugin = this[k];
+            if (plugin.statusChanged) {
+                try {
+                    plugin.statusChanged(status, condition);
+                } catch (err) {
+                    Strophe.error("" + k + " plugin caused an exception " +
+                                  "changing status: " + err);
+                }
+            }
+        }
+
+        // notify the user's callback
+        if (this.connect_callback) {
+            try {
+                this.connect_callback(status, condition);
+            } catch (err) {
+                Strophe.error("User connection callback caused an " +
+                              "exception: " + err);
+            }
         }
     },
 
@@ -2003,9 +2038,10 @@ Strophe.Connection.prototype = {
                 req.xhr.open("POST", this.service, true);
             } catch (e) {
                 Strophe.error("XHR open failed.");
-                if (!this.connected)
-                    this.connect_callback(Strophe.Status.CONNFAIL,
-                                          "bad-service");
+                if (!this.connected) {
+                    this._changeConnectStatus(Strophe.Status.CONNFAIL,
+                                              "bad-service");
+                }
                 this.disconnect();
                 return;
             }
@@ -2154,8 +2190,8 @@ Strophe.Connection.prototype = {
                     reqStatus >= 12000) {
                     this._hitError(reqStatus);
                     if (reqStatus >= 400 && reqStatus < 500) {
-                        this.connect_callback(Strophe.Status.DISCONNECTING,
-                                              null);
+                        this._changeConnectStatus(Strophe.Status.DISCONNECTING,
+                                                  null);
                         this._doDisconnect();
                     }
                 }
@@ -2205,7 +2241,7 @@ Strophe.Connection.prototype = {
 
         // tell the parent we disconnected
         if (this.connected) {
-            this.connect_callback(Strophe.Status.DISCONNECTED, null);
+            this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
             this.connected = false;
         }
 
@@ -2274,9 +2310,9 @@ Strophe.Connection.prototype = {
                 if (cond == "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
-                this.connect_callback(Strophe.Status.CONNFAIL, cond);
+                this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this.connect_callback(Strophe.Status.CONNFAIL, "unknown");
+                this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
             this.disconnect();
             return;
@@ -2376,9 +2412,9 @@ Strophe.Connection.prototype = {
                 if (cond == "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
-                this.connect_callback(Strophe.Status.CONNFAIL, cond);
+                this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this.connect_callback(Strophe.Status.CONNFAIL, "unknown");
+                this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
             return;
         }
@@ -2408,7 +2444,7 @@ Strophe.Connection.prototype = {
 
         if (Strophe.getNodeFromJid(this.jid) === null &&
             do_sasl_anonymous) {
-            this.connect_callback(Strophe.Status.AUTHENTICATING, null);
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._sasl_success_handler = this._addSysHandler(
                 this._sasl_success_cb.bind(this), null,
                 "success", null, null);
@@ -2423,11 +2459,11 @@ Strophe.Connection.prototype = {
         } else if (Strophe.getNodeFromJid(this.jid) === null) {
             // we don't have a node, which is required for non-anonymous
             // client connections
-            this.connect_callback(Strophe.Status.CONNFAIL,
-                                  'x-strophe-bad-non-anon-jid');
+            this._changeConnectStatus(Strophe.Status.CONNFAIL,
+                                      'x-strophe-bad-non-anon-jid');
             this.disconnect();
         } else if (do_sasl_digest_md5) {
-            this.connect_callback(Strophe.Status.AUTHENTICATING, null);
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._sasl_challenge_handler = this._addSysHandler(
                 this._sasl_challenge1_cb.bind(this), null,
                 "challenge", null, null);
@@ -2449,7 +2485,7 @@ Strophe.Connection.prototype = {
             auth_str = auth_str + "\u0000";
             auth_str = auth_str + this.pass;
 
-            this.connect_callback(Strophe.Status.AUTHENTICATING, null);
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._sasl_success_handler = this._addSysHandler(
                 this._sasl_success_cb.bind(this), null,
                 "success", null, null);
@@ -2463,7 +2499,7 @@ Strophe.Connection.prototype = {
                 mechanism: "PLAIN"
             }).t(hashed_auth_str).tree());
         } else {
-            this.connect_callback(Strophe.Status.AUTHENTICATING, null);
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._addSysHandler(this._auth1_cb.bind(this), null, null,
                                 null, "_auth_1");
 
@@ -2699,7 +2735,7 @@ Strophe.Connection.prototype = {
         }
 
         if (!this.do_bind) {
-            this.connect_callback(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
         } else {
             this._addSysHandler(this._sasl_bind_cb.bind(this), null, null,
@@ -2732,7 +2768,7 @@ Strophe.Connection.prototype = {
     {
         if (elem.getAttribute("type") == "error") {
             Strophe.info("SASL binding failed.");
-            this.connect_callback(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
         }
 
@@ -2756,7 +2792,7 @@ Strophe.Connection.prototype = {
             }
         } else {
             Strophe.info("SASL binding failed.");
-            this.connect_callback(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
         }
     },
@@ -2777,10 +2813,10 @@ Strophe.Connection.prototype = {
     {
         if (elem.getAttribute("type") == "result") {
             this.authenticated = true;
-            this.connect_callback(Strophe.Status.CONNECTED, null);
+            this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") == "error") {
             Strophe.info("Session creation failed.");
-            this.connect_callback(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
         }
 
@@ -2808,7 +2844,7 @@ Strophe.Connection.prototype = {
             this._sasl_challenge_handler = null;
         }
 
-        this.connect_callback(Strophe.Status.AUTHFAIL, null);
+        this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
         return false;
     },
 
@@ -2828,9 +2864,9 @@ Strophe.Connection.prototype = {
     {
         if (elem.getAttribute("type") == "result") {
             this.authenticated = true;
-            this.connect_callback(Strophe.Status.CONNECTED, null);
+            this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") == "error") {
-            this.connect_callback(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             this.disconnect();
         }
 
