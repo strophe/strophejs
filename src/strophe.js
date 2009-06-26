@@ -713,6 +713,10 @@ Strophe = {
 
         if (!elem) return null;
 
+        if (typeof(elem["tree"]) === "function") {
+            elem = elem.tree();
+        }
+
         var nodeName = elem.nodeName;
         var i, child;
 
@@ -1678,8 +1682,12 @@ Strophe.Connection.prototype = {
     */
     sendIQ: function(elem, callback, errback, timeout) {
         var timeoutHandler = null, handler = null;
-	var id = elem.getAttribute('id');
         var that = this;
+
+        if (typeof(elem["tree"]) === "function") {
+            elem = elem.tree();
+        }
+	var id = elem.getAttribute('id');
 
 	// inject id if not found
 	if (!id) {
