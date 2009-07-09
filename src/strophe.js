@@ -1703,9 +1703,13 @@ Strophe.Connection.prototype = {
 
             var iqtype = stanza.getAttribute('type');
 	    if (iqtype === 'result') {
-		callback(stanza);
+		if (callback) {
+                    callback(stanza);
+                }
 	    } else if (iqtype === 'error') {
-		errback(stanza);
+		if (errback) {
+                    errback(stanza);
+                }
 	    } else {
                 throw {
                     name: "StropheError",
@@ -1721,7 +1725,9 @@ Strophe.Connection.prototype = {
                 that.deleteHandler(handler);
 
 	        // call errback on timeout with null stanza
-		errback(null);
+                if (errback) {
+		    errback(null);
+                }
 		return false;
 	    });
 	}
