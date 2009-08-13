@@ -2433,8 +2433,14 @@ Strophe.Connection.prototype = {
             return;
         }
 
-        this.sid = bodyWrap.getAttribute("sid");
-        this.stream_id = bodyWrap.getAttribute("authid");
+        // check to make sure we don't overwrite these if _connect_cb is
+        // called multiple times in the case of missing stream:features
+        if (!this.sid) {
+            this.sid = bodyWrap.getAttribute("sid");
+        }
+        if (!this.stream_id) {
+            this.stream_id = bodyWrap.getAttribute("authid");
+        }
 
         // TODO - add SASL anonymous for guest accounts
         var do_sasl_plain = false;
@@ -2454,6 +2460,17 @@ Strophe.Connection.prototype = {
                     do_sasl_anonymous = true;
                 }
             }
+        } else {
+            // we didn't get stream:features yet, so we need wait for it
+            // by sending a blank poll request
+            var body = this._buildBody();
+            this._requests.push(
+                new Strophe.Request(body.tree(),
+                                    this._onRequestStateChange.bind(this)
+                                      .prependArg(this._connect_cb.bind(this)),
+                                    body.tree().getAttribute("rid")));
+            this._throttledRequestHandler();
+            return;
         }
 
         if (Strophe.getNodeFromJid(this.jid) === null &&
