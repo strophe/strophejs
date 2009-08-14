@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+  <!-- 
+       Cross domain policy file for allow everything.  If you need more
+       information on these, please see:
+       http://www.adobe.com/devnet/articles/crossdomain_policy_file_spec.html
+  -->
+  <site-control permitted-cross-domain-policies="all"/>
+  <allow-access-from domain="*" />
+  <allow-http-request-headers-from domain="*" headers="*" />
+</cross-domain-policy>
