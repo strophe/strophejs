@@ -112,6 +112,9 @@ if (!Array.prototype.indexOf)
     };
 }
 
+(function(callback){
+
+var Strophe;
 
 /** Function: $build
  *  Create a Strophe.Builder.
@@ -640,6 +643,9 @@ Strophe = {
      */
     log: function (level, msg)
     {
+        // if (level > this.LogLevel.DEBUG) {
+        //   console.debug( msg );
+        // }
         return;
     },
 
@@ -3089,4 +3095,14 @@ Strophe.Connection.prototype = {
     }
 };
 
+if(callback){
+  callback(Strophe,$build,$msg,$iq,$pres);
+}
 
+})(function(){
+  Strophe = arguments[0];
+  $build = arguments[1];
+  $msg = arguments[2];
+  $iq = arguments[3];
+  $pres = arguments[4];
+});
