@@ -112,8 +112,13 @@ if (!Array.prototype.indexOf)
     };
 }
 
-(function(callback){
-
+/* All of the Strophe globals are defined in this special function below so
+ * that references to the globals become closures.  This will ensure that
+ * on page reload, these references will still be available to callbacks
+ * that are still executing.
+ */
+ 
+(function (callback) {
 var Strophe;
 
 /** Function: $build
@@ -643,9 +648,6 @@ Strophe = {
      */
     log: function (level, msg)
     {
-        // if (level > this.LogLevel.DEBUG) {
-        //   console.debug( msg );
-        // }
         return;
     },
 
@@ -3095,14 +3097,14 @@ Strophe.Connection.prototype = {
     }
 };
 
-if(callback){
-  callback(Strophe,$build,$msg,$iq,$pres);
+if (callback) {
+    callback(Strophe, $build, $msg, $iq, $pres);
 }
 
-})(function(){
-  Strophe = arguments[0];
-  $build = arguments[1];
-  $msg = arguments[2];
-  $iq = arguments[3];
-  $pres = arguments[4];
+})(function () {
+    Strophe = arguments[0];
+    $build = arguments[1];
+    $msg = arguments[2];
+    $iq = arguments[3];
+    $pres = arguments[4];
 });
