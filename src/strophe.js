@@ -2599,18 +2599,18 @@ Strophe.Connection.prototype = {
         var A2 = 'AUTHENTICATE:' + digest_uri;
 
         var responseText = "";
-        responseText += 'username="' +
-            Strophe.getNodeFromJid(this.jid) + '",';
-        responseText += 'realm="' + realm + '",';
-        responseText += 'nonce="' + nonce + '",';
-        responseText += 'cnonce="' + cnonce + '",';
+        responseText += 'username=' +
+            this._quote(Strophe.getNodeFromJid(this.jid)) + ',';
+        responseText += 'realm=' + this._quote(realm) + ',';
+        responseText += 'nonce=' + this._quote(nonce) + ',';
+        responseText += 'cnonce=' + this._quote(cnonce) + ',';
         responseText += 'nc="00000001",';
         responseText += 'qop="auth",';
-        responseText += 'digest-uri="' + digest_uri + '",';
-        responseText += 'response="' + hex_md5(hex_md5(A1) + ":" +
+        responseText += 'digest-uri=' + this._quote(digest_uri) + ',';
+        responseText += 'response=' + this._quote(hex_md5(hex_md5(A1) + ":" +
                                                nonce + ":00000001:" +
                                                cnonce + ":auth:" +
-                                               hex_md5(A2)) + '",';
+                                               hex_md5(A2))) + ',';
         responseText += 'charset="utf-8"';
 
         this._sasl_challenge_handler = this._addSysHandler(
@@ -2629,6 +2629,21 @@ Strophe.Connection.prototype = {
 
         return false;
     },
+
+    /** PrivateFunction: _quote
+     *  _Private_ utility function to backslash escape and quote strings.
+     *
+     *  Parameters:
+     *    (String) str - The string to be quoted.
+     *
+     *  Returns:
+     *    quoted string
+     */
+    _quote: function (str)
+    {
+        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    },
+
 
     /** PrivateFunction: _sasl_challenge2_cb
      *  _Private_ handler for second step of DIGEST-MD5 SASL authentication.

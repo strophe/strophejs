@@ -36,6 +36,7 @@ $(document).ready(function () {
             equals(e.name, "StropheError", "send() should throw exception");
         }
     });
+
     test("xml escape test", function () {
         var text = "s & p";
 	var textNode = Strophe.xmlTextNode(text);
@@ -43,5 +44,15 @@ $(document).ready(function () {
 	var text0 = "s < & > p";
 	var textNode0 = Strophe.xmlTextNode(text0);
 	equals(textNode0.textContent, "s &lt; &amp; &gt; p", "should be escaped.");
+    });
+
+    module("Misc");
+
+    test("quoting strings", function () {
+        var input = '"beep \\40"';
+        var conn = new Strophe.Connection();
+        var output = conn._quote(input);
+        equals(output, "\"\\\"beep \\\\40\\\"\"",
+               "string should be quoted and escaped");
     });
 });
