@@ -2842,6 +2842,9 @@ Strophe.Connection.prototype = {
                     this.send($iq({type: "set", id: "_session_auth_2"})
                                   .c('session', {xmlns: Strophe.NS.SESSION})
                                   .tree());
+                } else {
+                    this.authenticated = true;
+                    this._changeConnectStatus(Strophe.Status.CONNECTED, null);
                 }
             }
         } else {
