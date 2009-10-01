@@ -2,11 +2,11 @@ $(document).ready(function () {
     module("Builder");
 
     test("Correct namespace (#32)", function () {
-        var stanzas = [new Strophe.Builder("message", {}).tree(),
+        var stanzas = [new Strophe.Builder("message", {foo: "asdf"}).tree(),
                        $build("iq", {}).tree(),
                        $pres().tree()];
         $.each(stanzas, function () {
-            equals($(this).attr("xmlns"), Strophe.NS.CLIENT,
+            equals($(this).attr('xmlns'), Strophe.NS.CLIENT,
                   "Namespace should be '" + Strophe.NS.CLIENT + "'");
         });
     });
@@ -37,18 +37,25 @@ $(document).ready(function () {
         }
     });
 
-    test("xml escape test", function () {
+    module("XML");
+
+    test("XML escaping test", function () {
         var text = "s & p";
 	var textNode = Strophe.xmlTextNode(text);
-	equals(textNode.textContent, "s &amp; p", "should be escaped.");
+	equals(Strophe.getText(textNode), "s &amp; p", "should be escaped");
 	var text0 = "s < & > p";
 	var textNode0 = Strophe.xmlTextNode(text0);
-	equals(textNode0.textContent, "s &lt; &amp; &gt; p", "should be escaped.");
+	equals(Strophe.getText(textNode0), "s &lt; &amp; &gt; p", "should be escaped");
+    });
+
+    test("XML element creation", function () {
+        var elem = Strophe.xmlElement("message");
+        equals(elem.tagName, "message", "Element name should be the same");
     });
 
     module("Misc");
 
-    test("quoting strings", function () {
+    test("Quoting strings", function () {
         var input = '"beep \\40"';
         var conn = new Strophe.Connection();
         var output = conn._quote(input);

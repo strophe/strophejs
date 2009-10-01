@@ -334,6 +334,30 @@ Strophe = {
         return el.tagName.toLowerCase() == name.toLowerCase();
     },
 
+    /** PrivateVariable: _xmlGenerator
+     *  _Private_ variable that caches a DOM document to
+     *  generate elements.
+     */
+    _xmlGenerator: null,
+
+    /** PrivateFunction: _makeGenerator
+     *  _Private_ function that creates a dummy XML DOM document to serve as
+     *  an element and text node generator.
+     */
+    _makeGenerator: function () {
+        var doc;
+
+        if (window.ActiveXObject) {
+            doc = new ActiveXObject("Microsoft.XMLDOM");
+            doc.appendChild(doc.createElement('strophe'));
+        } else {
+            doc = document.implementation
+                .createDocument('jabber:client', 'strophe', null);
+        }
+
+        return doc;
+    },
+
     /** Function: xmlElement
      *  Create an XML DOM element.
      *
@@ -361,24 +385,17 @@ Strophe = {
      */
     xmlElement: function (name)
     {
-        // FIXME: this should also support attrs argument in object notation
         if (!name) { return null; }
 
         var node = null;
-        if (window.ActiveXObject) {
-            node = new ActiveXObject("Microsoft.XMLDOM").createElement(name);
-        } else {
-            node = document.createElement(name);
+        if (!Strophe._xmlGenerator) {
+            Strophe._xmlGenerator = Strophe._makeGenerator();
         }
-        // use node._realname to store the case-sensitive version of the tag
-        // name, since some browsers will force tagnames to all lowercase.
-        // this is needed for the <vCard/> tag in XMPP specifically.
-        if (node.tagName != name)
-            node.setAttribute("_realname", name);
+        node = Strophe._xmlGenerator.createElement(name);
 
         // FIXME: this should throw errors if args are the wrong type or
         // there are more than two optional args
-        var a, i;
+        var a, i, k;
         for (a = 1; a < arguments.length; a++) {
             if (!arguments[a]) { continue; }
             if (typeof(arguments[a]) == "string" ||
@@ -393,11 +410,18 @@ Strophe = {
                                           arguments[a][i][1]);
                     }
                 }
+            } else if (typeof(arguments[a]) == "object") {
+                for (k in arguments[a]) {
+                    if (arguments[a].hasOwnProperty(k)) {
+                        node.setAttribute(k, arguments[a][k]);
+                    }
+                } 
             }
         }
 
         return node;
     },
+
     /*  Function: xmlescape
      *  Excapes invalid xml characters.
      *
@@ -414,6 +438,7 @@ Strophe = {
         text = text.replace(/>/g,  "&gt;");
         return text;    
     },
+
     /** Function: xmlTextNode
      *  Creates an XML DOM text node.
      *
@@ -429,11 +454,11 @@ Strophe = {
     {
 	//ensure text is escaped
 	text = Strophe.xmlescape(text);
-        if (window.ActiveXObject) {
-            return new ActiveXObject("Microsoft.XMLDOM").createTextNode(text);
-        } else {
-            return document.createTextNode(text);
+
+        if (!Strophe._xmlGenerator) {
+            Strophe._xmlGenerator = Strophe._makeGenerator();
         }
+        return Strophe._xmlGenerator.createTextNode(text);
     },
 
     /** Function: getText
@@ -838,7 +863,7 @@ Strophe.Builder = function (name, attrs)
     }
 
     // Holds the tree being built.
-    this.nodeTree = this._makeNode(name, attrs);
+    this.nodeTree = Strophe.xmlElement(name, attrs);
 
     // Points to the current operation node.
     this.node = this.nodeTree;
@@ -970,25 +995,6 @@ Strophe.Builder.prototype = {
         var child = Strophe.xmlTextNode(text);
         this.node.appendChild(child);
         return this;
-    },
-
-    /** PrivateFunction: _makeNode
-     *  _Private_ helper function to create a DOM element.
-     *
-     *  Parameters:
-     *    (String) name - The name of the new element.
-     *    (Object) attrs - The attributes for the new element in object
-     *      notation.
-     *
-     *  Returns:
-     *    A new DOM element.
-     */
-    _makeNode: function (name, attrs)
-    {
-        var node = Strophe.xmlElement(name);
-        for (var k in attrs)
-            node.setAttribute(k, attrs[k]);
-        return node;
     }
 };
 
