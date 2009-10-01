@@ -951,7 +951,7 @@ Strophe.Builder.prototype = {
      */
     c: function (name, attrs)
     {
-        var child = this._makeNode(name, attrs);
+        var child = Strophe.xmlElement(name, attrs);
         this.node.appendChild(child);
         this.node = child;
         return this;
