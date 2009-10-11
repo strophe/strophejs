@@ -522,25 +522,18 @@ Strophe = {
         return el;
     },
 
-    /** Function: escapeJid
-     *  Escape a JID.
+    /** Function: escapeNode
+     *  Escape the node part (also called local part) of a JID.
      *
      *  Parameters:
-     *    (String) jid - A JID.
+     *    (String) node - A node (or local part).
      *
      *  Returns:
-     *    An escaped JID String.
+     *    An escaped node (or local part).
      */
-    escapeJid: function (jid)
+    escapeNode: function (node)
     {
-        var user = jid.split("@");
-        if (user.length == 1)
-            // no user so nothing to escape
-            return jid;
-
-        var host = user.splice(user.length - 1, 1)[0];
-        user = user.join("@")
-            .replace(/^\s+|\s+$/g, '')
+        return node.replace(/^\s+|\s+$/g, '')
             .replace(/\\/g,  "\\5c")
             .replace(/ /g,   "\\20")
             .replace(/\"/g,  "\\22")
@@ -551,22 +544,20 @@ Strophe = {
             .replace(/</g,   "\\3c")
             .replace(/>/g,   "\\3e")
             .replace(/@/g,   "\\40");
-
-        return [user, host].join("@");
     },
 
-    /** Function: unescapeJid
-     *  Unescape a JID.
+    /** Function: unescapeNode
+     *  Unescape a node part (also called local part) of a JID.
      *
      *  Parameters:
-     *    (String) jid - A JID.
+     *    (String) node - A node (or local part).
      *
      *  Returns:
-     *    An unescaped JID String.
+     *    An unescaped node (or local part).
      */
-    unescapeJid: function (jid)
+    unescapeNode: function (node)
     {
-        return jid.replace(/\\20/g, " ")
+        return node.replace(/\\20/g, " ")
             .replace(/\\22/g, '"')
             .replace(/\\26/g, "&")
             .replace(/\\27/g, "'")
@@ -591,7 +582,7 @@ Strophe = {
     {
         if (jid.indexOf("@") < 0)
             return null;
-        return Strophe.escapeJid(jid).split("@")[0];
+        return jid.split("@")[0];
     },
 
     /** Function: getDomainFromJid
@@ -605,11 +596,14 @@ Strophe = {
      */
     getDomainFromJid: function (jid)
     {
-        var bare = Strophe.escapeJid(Strophe.getBareJidFromJid(jid));
-        if (bare.indexOf("@") < 0)
+        var bare = Strophe.getBareJidFromJid(jid);
+        if (bare.indexOf("@") < 0) {
             return bare;
-        else
-            return bare.split("@")[1];
+        } else {
+            var parts = bare.split("@");
+            parts.splice(0, 1);
+            return parts.join('@');
+        }
     },
 
     /** Function: getResourceFromJid
@@ -623,9 +617,10 @@ Strophe = {
      */
     getResourceFromJid: function (jid)
     {
-        var s = Strophe.escapeJid(jid).split("/");
+        var s = jid.split("/");
         if (s.length < 2) return null;
-        return s[1];
+        s.splice(0, 1);
+        return s.join('/');
     },
 
     /** Function: getBareJidFromJid
@@ -639,7 +634,7 @@ Strophe = {
      */
     getBareJidFromJid: function (jid)
     {
-        return this.escapeJid(jid).split("/")[0];
+        return jid.split("/")[0];
     },
 
     /** Function: log
@@ -2523,8 +2518,7 @@ Strophe.Connection.prototype = {
         } else if (do_sasl_plain) {
             // Build the plain auth string (barejid null
             // username null password) and base 64 encoded.
-            auth_str = Strophe.escapeJid(
-                Strophe.getBareJidFromJid(this.jid));
+            auth_str = Strophe.getBareJidFromJid(this.jid);
             auth_str = auth_str + "\u0000";
             auth_str = auth_str + Strophe.getNodeFromJid(this.jid);
             auth_str = auth_str + "\u0000";
