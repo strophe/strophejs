@@ -2033,8 +2033,6 @@ Strophe.Connection.prototype = {
         var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
                                                (reqStatus < 1 ||
                                                 reqStatus >= 500));
-        var oldreq;
-
         if (primaryTimeout || secondaryTimeout ||
             requestCompletedWithServerError) {
             if (secondaryTimeout) {
@@ -2042,9 +2040,9 @@ Strophe.Connection.prototype = {
                               this._requests[i].id +
                               " timed out (secondary), restarting");
             }
-            req.abort = true;
             req.xhr.abort();
-            oldreq = req;
+            req.abort = true;
+            req.xhr.onreadystatechange = function () {};
             this._requests[i] = new Strophe.Request(req.xmlData,
                                                     req.origFunc,
                                                     req.rid,
@@ -2091,7 +2089,7 @@ Strophe.Connection.prototype = {
             this.xmlOutput(req.xmlData);
             this.rawOutput(req.data);
         } else {
-            Strophe.debug("_throttledRequestHandler: " +
+            Strophe.debug("_processRequest: " +
                           (i === 0 ? "first" : "second") +
                           " request has readyState of " +
                           req.xhr.readyState);
@@ -2395,6 +2393,7 @@ Strophe.Connection.prototype = {
             r = this._requests.pop();
             r.xhr.abort();
             r.abort = true;
+            r.xhr.onreadystatechange = function () {};
         }
 
         this._requests.push(req);
@@ -2990,6 +2989,7 @@ Strophe.Connection.prototype = {
             req = this._requests.pop();
             req.xhr.abort();
             req.abort = true;
+            req.xhr.onreadystatechange = function () {};
         }
 
         // actually disconnect
