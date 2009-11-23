@@ -181,6 +181,12 @@ function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
  *  provide a namespace for library objects, constants, and functions.
  */
 Strophe = {
+    /** Constant: VERSION
+     *  The version of the Strophe library. Unreleased builds will have
+     *  a version of head-HASH where HASH is a partial revision.
+     */
+    VERSION: "@VERSION@",
+
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
      *

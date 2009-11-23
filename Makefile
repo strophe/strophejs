@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 SRC_DIR = src
 DOC_DIR = doc
 PLUGIN_DIR = plugins
@@ -10,9 +12,13 @@ BASE_FILES = $(SRC_DIR)/base64.js \
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
 
-PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js
+PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js $(PLUGIN_DIR)/strophe.flxhr.js
 PLUGIN_FILES_MIN = $(PLUGIN_FILES:.js=.min.js)
-.PHONY: all normal doc min clean
+
+DIST_FILES = LICENSE README contrib examples plugins tests doc \
+		$(STROPHE) $(STROPHE_MIN)
+
+VERSION = $(shell if [ -f version.txt ]; then cat version.txt; else VERSION=`git rev-list HEAD -n1`; echo $${VERSION:0:7}; fi)
 
 all: normal min
 
@@ -22,7 +28,7 @@ min: $(STROPHE_MIN) $(PLUGIN_FILES_MIN)
 
 $(STROPHE): $(BASE_FILES)
 	@@echo "Building" $(STROPHE) "..."
-	@@cat $(BASE_FILES) > $(STROPHE)
+	@@cat $(BASE_FILES) | sed -e 's/@VERSION@/$(VERSION)/' > $(STROPHE)
 	@@echo $(STROPHE) "built."
 	@@echo
 
@@ -58,6 +64,17 @@ doc:
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
 	@@NaturalDocs -q -i $(SRC_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
 	@@echo "Documentation built."
+	@@echo
+
+release: normal min doc
+	@@echo "Creating release packages..."
+	@@mkdir strophejs-$(VERSION)
+	@@cp -R $(DIST_FILES) strophejs-$(VERSION)
+	@@tar czf strophejs-$(VERSION).tar.gz strophejs-$(VERSION)
+	@@zip -qr strophejs-$(VERSION).zip strophejs-$(VERSION)
+	@@rm -rf strophejs-$(VERSION)
+	@@echo "Release created."
+	@@echo
 
 clean:
 	@@echo "Cleaning" $(STROPHE) "..."
@@ -73,3 +90,5 @@ clean:
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR)
 	@@echo "Documentation cleaned."
 	@@echo
+
+.PHONY: all normal min doc release clean
