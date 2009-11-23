@@ -5,6 +5,12 @@
     Copyright 2006-2008, OGG, LLC
 */
 
+/* jslint configuration: */
+/*global document, window, setTimeout, clearTimeout, console,
+    XMLHttpRequest, ActiveXObject,
+    Base64, MD5,
+    Strophe, $build, $msg, $iq, $pres */
+
 /** File: strophe.js
  *  A JavaScript library for XMPP BOSH.
  *
@@ -71,8 +77,9 @@ if (!Function.prototype.prependArg) {
 
         return function () {
             var newargs = [arg];
-            for (var i = 0; i < arguments.length; i++)
+            for (var i = 0; i < arguments.length; i++) {
                 newargs.push(arguments[i]);
+            }
             return func.apply(this, newargs);
         };
     };
@@ -100,12 +107,14 @@ if (!Array.prototype.indexOf)
 
         var from = Number(arguments[1]) || 0;
         from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-        if (from < 0)
+        if (from < 0) {
             from += len;
+        }
 
         for (; from < len; from++) {
-            if (from in this && this[from] === elt)
+            if (from in this && this[from] === elt) {
                 return from;
+            }
         }
 
         return -1;
@@ -117,7 +126,7 @@ if (!Array.prototype.indexOf)
  * on page reload, these references will still be available to callbacks
  * that are still executing.
  */
- 
+
 (function (callback) {
 var Strophe;
 
@@ -402,10 +411,10 @@ Strophe = {
                 typeof(arguments[a]) == "number") {
                 node.appendChild(Strophe.xmlTextNode(arguments[a]));
             } else if (typeof(arguments[a]) == "object" &&
-                       typeof(arguments[a]['sort']) == "function") {
+                       typeof(arguments[a].sort) == "function") {
                 for (i = 0; i < arguments[a].length; i++) {
                     if (typeof(arguments[a][i]) == "object" &&
-                        typeof(arguments[a][i]['sort']) == "function") {
+                        typeof(arguments[a][i].sort) == "function") {
                         node.setAttribute(arguments[a][i][0],
                                           arguments[a][i][1]);
                     }
@@ -472,7 +481,7 @@ Strophe = {
      */
     getText: function (elem)
     {
-        if (!elem) return null;
+        if (!elem) { return null; }
 
         var str = "";
         if (elem.childNodes.length === 0 && elem.nodeType ==
@@ -580,8 +589,7 @@ Strophe = {
      */
     getNodeFromJid: function (jid)
     {
-        if (jid.indexOf("@") < 0)
-            return null;
+        if (jid.indexOf("@") < 0) { return null; }
         return jid.split("@")[0];
     },
 
@@ -618,7 +626,7 @@ Strophe = {
     getResourceFromJid: function (jid)
     {
         var s = jid.split("/");
-        if (s.length < 2) return null;
+        if (s.length < 2) { return null; }
         s.splice(0, 1);
         return s.join('/');
     },
@@ -739,9 +747,9 @@ Strophe = {
     {
         var result;
 
-        if (!elem) return null;
+        if (!elem) { return null; }
 
-        if (typeof(elem["tree"]) === "function") {
+        if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
 
@@ -851,10 +859,11 @@ Strophe.Builder = function (name, attrs)
 {
     // Set correct namespace for jabber:client elements
     if (name == "presence" || name == "message" || name == "iq") {
-        if (attrs && !attrs.xmlns)
+        if (attrs && !attrs.xmlns) {
             attrs.xmlns = Strophe.NS.CLIENT;
-        else if (!attrs)
+        } else if (!attrs) {
             attrs = {xmlns: Strophe.NS.CLIENT};
+        }
     }
 
     // Holds the tree being built.
@@ -924,8 +933,11 @@ Strophe.Builder.prototype = {
      */
     attrs: function (moreattrs)
     {
-        for (var k in moreattrs)
-            this.node.setAttribute(k, moreattrs[k]);
+        for (var k in moreattrs) {
+            if (moreattrs.hasOwnProperty(k)) {
+                this.node.setAttribute(k, moreattrs[k]);
+            }
+        }
         return this;
     },
 
@@ -1047,7 +1059,7 @@ Strophe.Handler.prototype = {
      */
     isMatch: function (elem)
     {
-        var nsMatch, i;
+        var nsMatch;
 
         nsMatch = false;
         if (!this.ns) {
@@ -1055,8 +1067,9 @@ Strophe.Handler.prototype = {
         } else {
             var self = this;
             Strophe.forEachChild(elem, null, function (elem) {
-                if (elem.getAttribute("xmlns") == self.ns)
+                if (elem.getAttribute("xmlns") == self.ns) {
                     nsMatch = true;
+                }
             });
 
             nsMatch = nsMatch || elem.getAttribute("xmlns") == this.ns;
@@ -1226,12 +1239,12 @@ Strophe.Request = function (elem, func, rid, sends)
     this.abort = false;
     this.dead = null;
     this.age = function () {
-        if (!this.date) return 0;
+        if (!this.date) { return 0; }
         var now = new Date();
         return (now - this.date) / 1000;
     };
     this.timeDead = function () {
-        if (!this.dead) return 0;
+        if (!this.dead) { return 0; }
         var now = new Date();
         return (now - this.dead) / 1000;
     };
@@ -1381,11 +1394,14 @@ Strophe.Connection = function (service)
 
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
-	ptype = Strophe._connectionPlugins[k];
-        var F = function () {};
-        F.prototype = ptype;
-        this[k] = new F();
-	this[k].init(this);
+        if (Strophe._connectionPlugins.hasOwnProperty(k)) {
+	    var ptype = Strophe._connectionPlugins[k];
+            // jslint complaints about the below line, but this is fine
+            var F = function () {};
+            F.prototype = ptype;
+            this[k] = new F();
+	    this[k].init(this);
+        }
     }
 };
 
@@ -1519,9 +1535,9 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.errors = 0;
 
-        if (!wait) wait = 60;
-        if (!hold) hold = 1;
-        if (wind) this.window = wind;
+        if (!wait) { wait = 60; }
+        if (!hold) { hold = 1; }
+        if (wind) { this.window = wind; }
 
         // parse jid for domain and resource
         this.domain = Strophe.getDomainFromJid(this.jid);
@@ -1660,11 +1676,11 @@ Strophe.Connection.prototype = {
     send: function (elem)
     {
         if (elem === null) { return ; }
-        if (typeof(elem["sort"]) === "function") {
+        if (typeof(elem.sort) === "function") {
             for (var i = 0; i < elem.length; i++) {
                 this._queueData(elem[i]);
             }
-        } else if (typeof(elem["tree"]) === "function") {
+        } else if (typeof(elem.tree) === "function") {
             this._queueData(elem.tree());
         } else {
             this._queueData(elem);
@@ -1690,10 +1706,10 @@ Strophe.Connection.prototype = {
      *    The id used to send the IQ.
     */
     sendIQ: function(elem, callback, errback, timeout) {
-        var timeoutHandler = null, handler = null;
+        var timeoutHandler = null;
         var that = this;
 
-        if (typeof(elem["tree"]) === "function") {
+        if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
 	var id = elem.getAttribute('id');
@@ -1752,8 +1768,8 @@ Strophe.Connection.prototype = {
      */
     _queueData: function (element) {
         if (element === null ||
-            !element["tagName"] ||
-            !element["childNodes"]) {
+            !element.tagName ||
+            !element.childNodes) {
             throw {
                 name: "StropheError",
                 message: "Cannot queue non-DOMElement."
@@ -1915,13 +1931,15 @@ Strophe.Connection.prototype = {
     {
         // notify all plugins listening for status changes
         for (var k in Strophe._connectionPlugins) {
-            var plugin = this[k];
-            if (plugin.statusChanged) {
-                try {
-                    plugin.statusChanged(status, condition);
-                } catch (err) {
-                    Strophe.error("" + k + " plugin caused an exception " +
-                                  "changing status: " + err);
+            if (Strophe._connectionPlugins.hasOwnProperty(k)) {
+                var plugin = this[k];
+                if (plugin.statusChanged) {
+                    try {
+                        plugin.statusChanged(status, condition);
+                    } catch (err) {
+                        Strophe.error("" + k + " plugin caused an exception " +
+                                      "changing status: " + err);
+                    }
                 }
             }
         }
@@ -1930,9 +1948,9 @@ Strophe.Connection.prototype = {
         if (this.connect_callback) {
             try {
                 this.connect_callback(status, condition);
-            } catch (err) {
+            } catch (e) {
                 Strophe.error("User connection callback caused an " +
-                              "exception: " + err);
+                              "exception: " + e);
             }
         }
     },
@@ -1974,8 +1992,7 @@ Strophe.Connection.prototype = {
             }
         }
 
-        // set the onreadystatechange handler to a null function so
-        // that we don't get any misfires
+        // IE6 fails on setting to null, so set to empty function
         req.xhr.onreadystatechange = function () {};
 
         this._throttledRequestHandler();
@@ -2024,7 +2041,6 @@ Strophe.Connection.prototype = {
             reqStatus = -1;
         }
 
-        var now = new Date();
         var time_elapsed = req.age();
         var primaryTimeout = (!isNaN(time_elapsed) &&
                               time_elapsed > Strophe.TIMEOUT);
@@ -2042,6 +2058,7 @@ Strophe.Connection.prototype = {
             }
             req.xhr.abort();
             req.abort = true;
+            // setting to null fails on IE6, so set to empty function
             req.xhr.onreadystatechange = function () {};
             this._requests[i] = new Strophe.Request(req.xmlData,
                                                     req.origFunc,
@@ -2057,7 +2074,7 @@ Strophe.Connection.prototype = {
             req.date = new Date();
             try {
                 req.xhr.open("POST", this.service, true);
-            } catch (e) {
+            } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this.connected) {
                     this._changeConnectStatus(Strophe.Status.CONNFAIL,
@@ -2291,10 +2308,10 @@ Strophe.Connection.prototype = {
         try {
             var elem = req.getResponse();
         } catch (e) {
-            if (e != "parsererror") throw e;
+            if (e != "parsererror") { throw e; }
             this.disconnect("strophe-parsererror");
         }
-        if (elem === null) return;
+        if (elem === null) { return; }
 
         this.xmlInput(elem);
         this.rawInput(Strophe.serialize(elem));
@@ -2304,8 +2321,9 @@ Strophe.Connection.prototype = {
         while (this.removeHandlers.length > 0) {
             hand = this.removeHandlers.pop();
             i = this.handlers.indexOf(hand);
-            if (i >= 0)
+            if (i >= 0) {
                 this.handlers.splice(i, 1);
+            }
         }
 
         // add handlers scheduled for addition
@@ -2314,7 +2332,7 @@ Strophe.Connection.prototype = {
         }
 
         // handle graceful disconnect
-        if (this.disconnecting && this._requests.length == 0) {
+        if (this.disconnecting && this._requests.length === 0) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
             this._doDisconnect();
@@ -2372,7 +2390,6 @@ Strophe.Connection.prototype = {
         Strophe.info("_sendTerminate was called");
         var body = this._buildBody().attrs({type: "terminate"});
 
-        var presence, i;
         if (this.authenticated) {
             body.c('presence', {
                 xmlns: Strophe.NS.CLIENT,
@@ -2393,6 +2410,7 @@ Strophe.Connection.prototype = {
             r = this._requests.pop();
             r.xhr.abort();
             r.abort = true;
+            // jslint complains, but this is necessary for IE6
             r.xhr.onreadystatechange = function () {};
         }
 
@@ -2419,7 +2437,7 @@ Strophe.Connection.prototype = {
 
         this.connected = true;
         var bodyWrap = req.getResponse();
-        if (!bodyWrap) return;
+        if (!bodyWrap) { return; }
 
         this.xmlInput(bodyWrap);
         this.rawInput(Strophe.serialize(bodyWrap));
@@ -2695,8 +2713,6 @@ Strophe.Connection.prototype = {
      */
     _auth1_cb: function (elem)
     {
-        var check_query, check_digest;
-
         // build plaintext auth iq
         var iq = $iq({type: "set", id: "_auth_2"})
             .c('query', {xmlns: Strophe.NS.AUTH})
@@ -2782,14 +2798,15 @@ Strophe.Connection.prototype = {
                                 null, "_bind_auth_2");
 
             var resource = Strophe.getResourceFromJid(this.jid);
-            if (resource)
+            if (resource) {
                 this.send($iq({type: "set", id: "_bind_auth_2"})
                           .c('bind', {xmlns: Strophe.NS.BIND})
                           .c('resource', {}).t(resource).tree());
-            else
+            } else {
                 this.send($iq({type: "set", id: "_bind_auth_2"})
                           .c('bind', {xmlns: Strophe.NS.BIND})
                           .tree());
+            }
         }
 
         return false;
@@ -2976,6 +2993,8 @@ Strophe.Connection.prototype = {
             req = this._requests.pop();
             req.xhr.abort();
             req.abort = true;
+            // jslint complains, but this is fine. setting to empty func
+            // is necessary for IE6
             req.xhr.onreadystatechange = function () {};
         }
 
@@ -2999,8 +3018,9 @@ Strophe.Connection.prototype = {
         while (this.removeTimeds.length > 0) {
             thand = this.removeTimeds.pop();
             i = this.timedHandlers.indexOf(thand);
-            if (i >= 0)
+            if (i >= 0) {
                 this.timedHandlers.splice(i, 1);
+            }
         }
 
         // add timed handlers scheduled for addition
@@ -3047,7 +3067,7 @@ Strophe.Connection.prototype = {
                             "xml:lang": "en",
                             "xmpp:restart": "true",
                             "xmlns:xmpp": Strophe.NS.BOSH
-                        })
+                        });
                     } else {
                         body.cnode(this._data[i]).up();
                     }
@@ -3092,9 +3112,9 @@ if (callback) {
 }
 
 })(function () {
-    Strophe = arguments[0];
-    $build = arguments[1];
-    $msg = arguments[2];
-    $iq = arguments[3];
-    $pres = arguments[4];
+    window.Strophe = arguments[0];
+    window.$build = arguments[1];
+    window.$msg = arguments[2];
+    window.$iq = arguments[3];
+    window.$pres = arguments[4];
 });
