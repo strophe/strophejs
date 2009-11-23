@@ -3,10 +3,9 @@ DOC_DIR = doc
 PLUGIN_DIR = plugins
 NDPROJ_DIR = ndproj
 
-BASE_FILES = $(SRC_DIR)/b64.js \
+BASE_FILES = $(SRC_DIR)/base64.js \
 	$(SRC_DIR)/md5.js \
-	$(SRC_DIR)/sha1.js \
-	$(SRC_DIR)/strophe.js
+	$(SRC_DIR)/core.js
 
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js

@@ -2531,7 +2531,7 @@ Strophe.Connection.prototype = {
                 this._sasl_failure_cb.bind(this), null,
                 "failure", null, null);
 
-            hashed_auth_str = encode64(auth_str);
+            hashed_auth_str = Base64.encode(auth_str);
             this.send($build("auth", {
                 xmlns: Strophe.NS.SASL,
                 mechanism: "PLAIN"
@@ -2564,8 +2564,8 @@ Strophe.Connection.prototype = {
     {
         var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
-        var challenge = decode64(Strophe.getText(elem));
-        var cnonce = hex_md5(Math.random() * 1234567890);
+        var challenge = Base64.decode(Strophe.getText(elem));
+        var cnonce = MD5.hexdigest(Math.random() * 1234567890);
         var realm = "";
         var host = null;
         var nonce = "";
@@ -2600,8 +2600,8 @@ Strophe.Connection.prototype = {
             digest_uri = digest_uri + "/" + host;
         }
 
-        var A1 = str_md5(Strophe.getNodeFromJid(this.jid) +
-                         ":" + realm + ":" + this.pass) +
+        var A1 = MD5.hash(Strophe.getNodeFromJid(this.jid) +
+                          ":" + realm + ":" + this.pass) +
             ":" + nonce + ":" + cnonce;
         var A2 = 'AUTHENTICATE:' + digest_uri;
 
@@ -2614,10 +2614,11 @@ Strophe.Connection.prototype = {
         responseText += 'nc="00000001",';
         responseText += 'qop="auth",';
         responseText += 'digest-uri=' + this._quote(digest_uri) + ',';
-        responseText += 'response=' + this._quote(hex_md5(hex_md5(A1) + ":" +
-                                               nonce + ":00000001:" +
-                                               cnonce + ":auth:" +
-                                               hex_md5(A2))) + ',';
+        responseText += 'response=' + this._quote(
+            MD5.hexdigest(MD5.hexdigest(A1) + ":" +
+                          nonce + ":00000001:" +
+                          cnonce + ":auth:" +
+                          MD5.hexdigest(A2))) + ',';
         responseText += 'charset="utf-8"';
 
         this._sasl_challenge_handler = this._addSysHandler(
@@ -2632,7 +2633,7 @@ Strophe.Connection.prototype = {
 
         this.send($build('response', {
             xmlns: Strophe.NS.SASL
-        }).t(encode64(responseText)).tree());
+        }).t(Base64.encode(responseText)).tree());
 
         return false;
     },
@@ -2648,7 +2649,8 @@ Strophe.Connection.prototype = {
      */
     _quote: function (str)
     {
-        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"'; 
+        //" end string workaround for emacs
     },
 
 
@@ -2693,30 +2695,15 @@ Strophe.Connection.prototype = {
      */
     _auth1_cb: function (elem)
     {
-        var use_digest = false;
         var check_query, check_digest;
 
-        if (elem.getAttribute("type") == "result") {
-            // Find digest
-            check_query = elem.childNodes[0];
-            if (check_query) {
-                check_digest = check_query.getElementsByTagName("digest")[0];
-                if (check_digest) {
-                    use_digest = true;
-                }
-            }
-        }
-
-        // Use digest or plaintext depending on the server features
+        // build plaintext auth iq
         var iq = $iq({type: "set", id: "_auth_2"})
             .c('query', {xmlns: Strophe.NS.AUTH})
-            .c('username', {}).t(Strophe.getNodeFromJid(this.jid));
-        if (use_digest) {
-            iq.up().c("digest", {})
-                .t(hex_sha1(this.stream_id + this.pass));
-        } else {
-            iq.up().c('password', {}).t(this.pass);
-        }
+            .c('username', {}).t(Strophe.getNodeFromJid(this.jid))
+            .up()
+            .c('password').t(this.pass);
+
         if (!Strophe.getResourceFromJid(this.jid)) {
             // since the user has not supplied a resource, we pick
             // a default one here.  unlike other auth methods, the server
