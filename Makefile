@@ -21,32 +21,32 @@ normal: $(STROPHE)
 min: $(STROPHE_MIN) $(PLUGIN_FILES_MIN)
 
 $(STROPHE): $(BASE_FILES)
-	@@echo "Building " $(STROPHE) "..."
+	@@echo "Building" $(STROPHE) "..."
 	@@cat $(BASE_FILES) > $(STROPHE)
-	@@echo $(STROPHE) " built."
+	@@echo $(STROPHE) "built."
 	@@echo
 
 $(STROPHE_MIN): $(STROPHE)
-	@@echo "Building " $(STROPHE_MIN) "..."
+	@@echo "Building" $(STROPHE_MIN) "..."
 ifdef YUI_COMPRESSOR
 	@@java -jar $(YUI_COMPRESSOR) --type js --nomunge \
 		$(STROPHE) > $(STROPHE_MIN)
-	@@echo $(STROPHE_MIN) " built."
+	@@echo $(STROPHE_MIN) "built."
 else
-	@@echo $(STROPHE_MIN) " not built."
+	@@echo $(STROPHE_MIN) "not built."
 	@@echo "    YUI Compressor required to build minified version."
 	@@echo "    Please set YUI_COMPRESSOR to the path to the jar file."
 endif
 	@@echo
 
 %.min.js: %.js
-	@@echo "Building " $@ "..."
+	@@echo "Building" $@ "..."
 ifdef YUI_COMPRESSOR
 	@@java -jar $(YUI_COMPRESSOR) --type js --nomunge \
 		$< > $@
-	@@echo $@ " built."
+	@@echo $@ "built."
 else
-	@@echo $@ " not built."
+	@@echo $@ "not built."
 	@@echo "    YUI Compressor required to build minified version."
 	@@echo "    Please set YUI_COMPRESSOR to the path to the jar file."
 endif
@@ -60,10 +60,16 @@ doc:
 	@@echo "Documentation built."
 
 clean:
-	@@echo "Cleaning " $(STROPHE) "..."
+	@@echo "Cleaning" $(STROPHE) "..."
 	@@rm -f $(STROPHE)
-	@@echo $(STROPHE) " cleaned."
-	@@echo "Cleaning " $(STROPHE_MIN) "..."
+	@@echo $(STROPHE) "cleaned."
+	@@echo "Cleaning" $(STROPHE_MIN) "..."
 	@@rm -f $(STROPHE_MIN)
-	@@echo $(STROPHE_MIN) " cleaned."
+	@@echo $(STROPHE_MIN) "cleaned."
+	@@echo "Cleaning minified plugins..."
+	@@rm -f $(PLUGIN_FILES_MIN)
+	@@echo "Minified plugins cleaned."
+	@@echo "Cleaning documentation..."
+	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR)
+	@@echo "Documentation cleaned."
 	@@echo
