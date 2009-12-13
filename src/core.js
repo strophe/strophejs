@@ -296,13 +296,17 @@ Strophe = {
      *  These should not be changed unless you know exactly what you are
      *  doing.
      *
-     *  TIMEOUT - Time to wait for a request to return.  This defaults to
-     *      70 seconds.
-     *  SECONDARY_TIMEOUT - Time to wait for immediate request return. This
-     *      defaults to 7 seconds.
+     *  TIMEOUT - Timeout multiplier. A waiting request will be considered
+     *      failed after Math.floor(TIMEOUT * wait) seconds have elapsed.
+     *      This defaults to 1.1, and with default wait, 66 seconds.
+     *  SECONDARY_TIMEOUT - Secondary timeout multiplier. In cases where
+     *      Strophe can detect early failure, it will consider the request
+     *      failed if it doesn't return after
+     *      Math.floor(SECONDARY_TIMEOUT * wait) seconds have elapsed.
+     *      This defaults to 0.1, and with default wait, 6 seconds.
      */
-    TIMEOUT: 70,
-    SECONDARY_TIMEOUT: 7,
+    TIMEOUT: 1.1,
+    SECONDARY_TIMEOUT: 0.1,
 
     /** Function: forEachChild
      *  Map a function over some or all child elements of a given element.
@@ -1386,7 +1390,9 @@ Strophe.Connection = function (service)
 
     this.paused = false;
 
-    // default BOSH window
+    // default BOSH values
+    this.hold = 1;
+    this.wait = 60;
     this.window = 5;
 
     this._data = [];
@@ -1543,8 +1549,9 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.errors = 0;
 
-        if (!wait) { wait = 60; }
-        if (!hold) { hold = 1; }
+        this.wait = wait || this.wait;
+        this.hold = hold || this.hold;
+
         if (wind) { this.window = wind; }
 
         // parse jid for domain and resource
@@ -1554,8 +1561,8 @@ Strophe.Connection.prototype = {
         var body = this._buildBody().attrs({
             to: this.domain,
             "xml:lang": "en",
-            wait: wait,
-            hold: hold,
+            wait: this.wait,
+            hold: this.hold,
             window: this.window,
             content: "text/xml; charset=utf-8",
             ver: "1.6",
@@ -1587,8 +1594,17 @@ Strophe.Connection.prototype = {
      *    (String) rid - The current RID of the BOSH session.  This RID
      *      will be used by the next request.
      *    (Function) callback The connect callback function.
+     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
+     *      time the server will wait before returning an empty result for
+     *      a request.  The default setting of 60 seconds is recommended.
+     *      Other settings will require tweaks to the Strophe.TIMEOUT value.
+     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
+     *      number of connections the server will hold at one time.  This
+     *      should almost always be set to 1 (the default).
+     *    (Integer) wind - The optional HTTBIND window value.  This is the
+     *      allowed range of request ids that are valid.  The default is 5.
      */
-    attach: function (jid, sid, rid, callback)
+    attach: function (jid, sid, rid, callback, wait, hold, wind)
     {
         this.jid = jid;
         this.sid = sid;
@@ -1599,6 +1615,11 @@ Strophe.Connection.prototype = {
 
         this.authenticated = true;
         this.connected = true;
+
+        this.wait = wait || this.wait;
+        this.hold = hold || this.hold;
+
+        if (wind) { this.window = wind; }
     },
 
     /** Function: xmlInput
@@ -2051,9 +2072,9 @@ Strophe.Connection.prototype = {
 
         var time_elapsed = req.age();
         var primaryTimeout = (!isNaN(time_elapsed) &&
-                              time_elapsed > Strophe.TIMEOUT);
+                              time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
         var secondaryTimeout = (req.dead !== null &&
-                                req.timeDead() > Strophe.SECONDARY_TIMEOUT);
+                                req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
         var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
                                                (reqStatus < 1 ||
                                                 reqStatus >= 500));
@@ -2217,7 +2238,7 @@ Strophe.Connection.prototype = {
                 // completed request has been removed from the queue already
                 if (reqIs1 ||
                     (reqIs0 && this._requests.length > 0 &&
-                     this._requests[0].age() > Strophe.SECONDARY_TIMEOUT)) {
+                     this._requests[0].age() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait))) {
                     this._restartRequest(0);
                 }
                 // call handler
@@ -3095,15 +3116,15 @@ Strophe.Connection.prototype = {
             time_elapsed = this._requests[0].age();
             if (this._requests[0].dead !== null) {
                 if (this._requests[0].timeDead() >
-                    Strophe.SECONDARY_TIMEOUT) {
+                    Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
                     this._throttledRequestHandler();
                 }
             }
 
-            if (time_elapsed > Strophe.TIMEOUT) {
+            if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
                 Strophe.warn("Request " +
                              this._requests[0].id +
-                             " timed out, over " + Strophe.TIMEOUT +
+                             " timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) +
                              " seconds since last activity");
                 this._throttledRequestHandler();
             }
