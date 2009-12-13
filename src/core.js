@@ -771,7 +771,9 @@ Strophe = {
                if(elem.attributes[i].nodeName != "_realname") {
                  result += " " + elem.attributes[i].nodeName.toLowerCase() +
                 "='" + elem.attributes[i].value
-                    .replace("'", "&#39;").replace("&", "&#x26;") + "'";
+                    .replace("&", "&amp;")
+                       .replace("'", "&apos;")
+                       .replace("<", "&lt;") + "'";
                }
         }
 

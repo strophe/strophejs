@@ -95,6 +95,18 @@ $(document).ready(function () {
         }
     });
 
+    test("Builder with XML attribute escaping test", function () {
+        var text = "<b>";
+        var expected = "<presence to='&lt;b>' xmlns='jabber:client'/>";
+        var pres = $pres({to: text});
+        equals(pres.toString(), expected, "< should be escaped");
+
+        text = "foo&bar";
+        expected = "<presence to='foo&amp;bar' xmlns='jabber:client'/>";
+        pres = $pres({to: text});
+        equals(pres.toString(), expected, "& should be escaped");
+    });
+
     module("XML");
 
     test("XML escaping test", function () {
