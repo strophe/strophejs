@@ -2062,8 +2062,8 @@ Strophe.Connection.prototype = {
                               this._requests[i].id +
                               " timed out (secondary), restarting");
             }
-            req.xhr.abort();
             req.abort = true;
+            req.xhr.abort();
             // setting to null fails on IE6, so set to empty function
             req.xhr.onreadystatechange = function () {};
             this._requests[i] = new Strophe.Request(req.xmlData,
@@ -2414,8 +2414,8 @@ Strophe.Connection.prototype = {
         var r;
         while (this._requests.length > 0) {
             r = this._requests.pop();
-            r.xhr.abort();
             r.abort = true;
+            r.xhr.abort();
             // jslint complains, but this is necessary for IE6
             r.xhr.onreadystatechange = function () {};
         }
@@ -2997,8 +2997,8 @@ Strophe.Connection.prototype = {
         var req;
         while (this._requests.length > 0) {
             req = this._requests.pop();
-            req.xhr.abort();
             req.abort = true;
+            req.xhr.abort();
             // jslint complains, but this is fine. setting to empty func
             // is necessary for IE6
             req.xhr.onreadystatechange = function () {};
