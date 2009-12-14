@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <!--
+     http-pre-bind example
+
+     This example works with mod_http_pre_bind found here:
+     http://github.com/thepug/Mod-Http-Pre-Bind
+     
+     It expects both /xmpp-httpbind to be proxied and /http-pre-bind
+     
+     If you want to test this out without setting it up, you can use Collecta's
+     at http://www.collecta.com/xmpp-httpbind and 
+     http://www.collecta.com/http-pre-bind
+     Use a JID of 'guest.collecta.com' to test.
+    -->
+
+  <head>
+    <title>Strophe.js Pre-Bind Example</title>
+    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'></script>
+    <script src='../strophe.js'></script>
+    <script src='prebind.js'></script>
+  </head>
+
+  <body>
+    <div id='login' style='text-align: center'>
+      <form name='cred'>
+        <label for='jid'>JID:</label>
+        <input type='text' id='jid'>
+        <label for='pass'>Password:</label>
+        <input type='password' id='pass'>
+        <input type='button' id='connect' value='connect'>
+      </form>
+    </div>
+
+    <hr>
+
+    <div id='log'></div>
+  </body>
+</html>
