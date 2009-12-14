@@ -111,7 +111,7 @@ Strophe.addConnectionPlugin('pubsub', {
 	    (String) jid - The node owner's jid.
 	    (String) service - The name of the pubsub service.
 	    (String) node -  The name of the pubsub node.
-	    (Dictionary) options -  The configuration options for the  node.
+	    (Array) options -  The configuration options for the  node.
 	    (Function) event_cb - Used to recieve subscription events.
 	    (Function) call_back - Used to determine if node
 	    creation was sucessful.
@@ -134,14 +134,15 @@ Strophe.addConnectionPlugin('pubsub', {
 	    form_field.appendChild(value);
 	    x.appendChild(form_field);
 	    
-	    for (var i in options)
-	    {
-		var val = options[i];
-		x.appendChild(val);
-	    }
 	    var sub = $iq({from:jid, to:service, type:'set', id:subid})
-	    if(options && options.length != 0)
+
+	    if(options && options.length && options.length !== 0)
 	    {
+	        for (var i = 0; i < options.length; i++)
+	        {
+		    var val = options[i];
+		    x.appendChild(val);
+	        }
 		sub_options.appendChild(x);
 		
 		sub.c('pubsub', { xmlns:Strophe.NS.PUBSUB }).c('subscribe',
