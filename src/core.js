@@ -251,6 +251,7 @@ Strophe = {
      *  Status.CONNECTED - The connection has succeeded
      *  Status.DISCONNECTED - The connection has been terminated
      *  Status.DISCONNECTING - The connection is currently being terminated
+     *  Status.ATTACHED - The connection has been attached
      */
     Status: {
         ERROR: 0,
@@ -260,7 +261,8 @@ Strophe = {
         AUTHFAIL: 4,
         CONNECTED: 5,
         DISCONNECTED: 6,
-        DISCONNECTING: 7
+        DISCONNECTING: 7,
+        ATTACHED: 8
     },
 
     /** Constants: Log Level Constants
@@ -1620,6 +1622,8 @@ Strophe.Connection.prototype = {
         this.hold = hold || this.hold;
 
         if (wind) { this.window = wind; }
+
+        this._changeConnectStatus(Strophe.Status.ATTACHED, null);
     },
 
     /** Function: xmlInput
