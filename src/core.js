@@ -2437,16 +2437,6 @@ Strophe.Connection.prototype = {
                                           .prependArg(this._dataRecv.bind(this)),
                                       body.tree().getAttribute("rid"));
 
-        // abort and clear all waiting requests
-        var r;
-        while (this._requests.length > 0) {
-            r = this._requests.pop();
-            r.abort = true;
-            r.xhr.abort();
-            // jslint complains, but this is necessary for IE6
-            r.xhr.onreadystatechange = function () {};
-        }
-
         this._requests.push(req);
         this._throttledRequestHandler();
     },
