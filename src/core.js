@@ -1724,6 +1724,22 @@ Strophe.Connection.prototype = {
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
 
+    /** Function: flush
+     *  Immediately send any pending outgoing data.
+     *  
+     *  Normally send() queues outgoing data until the next idle period
+     *  (100ms), which optimizes network use in the common cases when
+     *  several send()s are called in succession. flush() can be used to 
+     *  immediately send all pending data.
+     */
+    flush: function ()
+    {
+        // cancel the pending idle period and run the idle function
+        // immediately
+        clearTimeout(this._idleTimeout);
+        this._onIdle();
+    },
+
     /** Function: sendIQ
      *  Helper function to send IQ stanzas.
      *
