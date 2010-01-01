@@ -1721,7 +1721,7 @@ Strophe.Connection.prototype = {
 
         this._throttledRequestHandler();
         clearTimeout(this._idleTimeout);
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        this._onIdle();
     },
 
     /** Function: sendIQ
