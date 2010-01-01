@@ -1044,18 +1044,30 @@ Strophe.Builder.prototype = {
  *    (String) type - The element type to match.
  *    (String) id - The element id attribute to match.
  *    (String) from - The element from attribute to match.
+ *    (Object) options - Handler options
  *
  *  Returns:
  *    A new Strophe.Handler object.
  */
-Strophe.Handler = function (handler, ns, name, type, id, from)
+Strophe.Handler = function (handler, ns, name, type, id, from, options)
 {
     this.handler = handler;
     this.ns = ns;
     this.name = name;
     this.type = type;
     this.id = id;
-    this.from = from;
+    this.options = options || {matchbare: false};
+    
+    // default matchBare to false if undefined
+    if (!this.options.matchBare) {
+        this.options.matchBare = false;
+    }
+
+    if (this.options.matchBare) {
+        this.from = Strophe.getBareJidFromJid(from);
+    } else {
+        this.from = from;
+    }
 
     // whether the handler is a user handler or a system handler
     this.user = true;
@@ -1074,6 +1086,13 @@ Strophe.Handler.prototype = {
     isMatch: function (elem)
     {
         var nsMatch;
+        var from = null;
+        
+        if (this.options.matchBare) {
+            from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
+        } else {
+            from = elem.getAttribute('from');
+        }
 
         nsMatch = false;
         if (!this.ns) {
@@ -1091,9 +1110,9 @@ Strophe.Handler.prototype = {
 
         if (nsMatch &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-            (!this.type || elem.getAttribute("type") == this.type) &&
-            (!this.id || elem.getAttribute("id") == this.id) &&
-            (!this.from || elem.getAttribute("from") == this.from)) {
+            (!this.type || elem.getAttribute("type") === this.type) &&
+            (!this.id || elem.getAttribute("id") === this.id) &&
+            (!this.from || from === this.from)) {
                 return true;
         }
 
@@ -1902,6 +1921,13 @@ Strophe.Connection.prototype = {
      *  and also any of its immediate children.  This is primarily to make
      *  matching /iq/query elements easy.
      *
+     *  The options argument contains handler matching flags that affect how
+     *  matches are determined. Currently the only flag is matchBare (a
+     *  boolean). When matchBare is true, the from parameter and the from
+     *  attribute on the stanza will be matched as bare JIDs instead of
+     *  full JIDs. To use this, pass {matchBare: true} as the value of
+     *  options. The default value for matchBare is false. 
+     *
      *  The return value should be saved if you wish to remove the handler
      *  with deleteHandler().
      *
@@ -1912,13 +1938,14 @@ Strophe.Connection.prototype = {
      *    (String) type - The stanza type attribute to match.
      *    (String) id - The stanza id attribute to match.
      *    (String) from - The stanza from attribute to match.
+     *    (String) options - The handler options
      *
      *  Returns:
      *    A reference to the handler that can be used to remove it.
      */
-    addHandler: function (handler, ns, name, type, id, from)
+    addHandler: function (handler, ns, name, type, id, from, options)
     {
-        var hand = new Strophe.Handler(handler, ns, name, type, id, from);
+        var hand = new Strophe.Handler(handler, ns, name, type, id, from, options);
         this.addHandlers.push(hand);
         return hand;
     },
