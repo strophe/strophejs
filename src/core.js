@@ -1557,10 +1557,8 @@ Strophe.Connection.prototype = {
      *    (Integer) hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-     *    (Integer) wind - The optional HTTBIND window value.  This is the
-     *      allowed range of request ids that are valid.  The default is 5.
      */
-    connect: function (jid, pass, callback, wait, hold, wind)
+    connect: function (jid, pass, callback, wait, hold)
     {
         this.jid = jid;
         this.pass = pass;
@@ -1573,8 +1571,6 @@ Strophe.Connection.prototype = {
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
 
-        if (wind) { this.window = wind; }
-
         // parse jid for domain and resource
         this.domain = Strophe.getDomainFromJid(this.jid);
 
@@ -1584,7 +1580,6 @@ Strophe.Connection.prototype = {
             "xml:lang": "en",
             wait: this.wait,
             hold: this.hold,
-            window: this.window,
             content: "text/xml; charset=utf-8",
             ver: "1.6",
             "xmpp:version": "1.0",
@@ -1639,8 +1634,7 @@ Strophe.Connection.prototype = {
 
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
-
-        if (wind) { this.window = wind; }
+        this.wind = wind || this.wind;
 
         this._changeConnectStatus(Strophe.Status.ATTACHED, null);
     },
@@ -2533,8 +2527,14 @@ Strophe.Connection.prototype = {
         if (!this.stream_id) {
             this.stream_id = bodyWrap.getAttribute("authid");
         }
+        var wind = bodyWrap.getAttribute('requests');
+        if (wind) { this.window = wind; }
+        var hold = bodyWrap.getAttribute('hold');
+        if (hold) { this.hold = hold; }
+        var wait = bodyWrap.getAttribute('wait');
+        if (wait) { this.wait = wait; }
+        
 
-        // TODO - add SASL anonymous for guest accounts
         var do_sasl_plain = false;
         var do_sasl_digest_md5 = false;
         var do_sasl_anonymous = false;
