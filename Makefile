@@ -15,7 +15,7 @@ STROPHE_MIN = strophe.min.js
 PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js $(PLUGIN_DIR)/strophe.flxhr.js
 PLUGIN_FILES_MIN = $(PLUGIN_FILES:.js=.min.js)
 
-DIST_FILES = LICENSE README contrib examples plugins tests doc \
+DIST_FILES = LICENSE.txt README.txt contrib examples plugins tests doc \
 		$(STROPHE) $(STROPHE_MIN)
 
 VERSION = $(shell if [ -f version.txt ]; then cat version.txt; else VERSION=`git rev-list HEAD -n1`; echo $${VERSION:0:7}; fi)
