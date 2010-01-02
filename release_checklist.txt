@@ -4,7 +4,7 @@
 *** Make sure all tests pass
 *** Decide on version number
 *** Tag code with version (git tag -s release-VERSION head)
-  * Push repo
+  * Push repo and tags
 *** Create version.txt with version
 *** Run make release
 *** Upload zip file and tarball to server (/strophe/strophejs/releases/)
