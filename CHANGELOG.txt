@@ -1,0 +1,9 @@
+# Strophe.js Change Log
+
+## Version 1.0.1 - 2010-01-27
+
+* Fix handling of window, hold, and wait attributes. Bug #75.
+
+## Version 1.0 - 2010-01-01
+
+* First release.
