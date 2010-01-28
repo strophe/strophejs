@@ -3,6 +3,7 @@
 * Release Checklist
 *** Make sure all tests pass
 *** Decide on version number
+*** Update CHANGELOG.txt
 *** Tag code with version (git tag -s release-VERSION head)
   * Push repo and tags
 *** Create version.txt with version
@@ -11,3 +12,4 @@
 *** Upload documentation to server (/strophe/strophejs/doc/VERSION/)
 *** Update wiki
 *** Tell the world
+    
