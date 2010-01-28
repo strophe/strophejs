@@ -1634,7 +1634,7 @@ Strophe.Connection.prototype = {
 
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
-        this.wind = wind || this.wind;
+        this.window = wind || this.window;
 
         this._changeConnectStatus(Strophe.Status.ATTACHED, null);
     },
@@ -2528,11 +2528,11 @@ Strophe.Connection.prototype = {
             this.stream_id = bodyWrap.getAttribute("authid");
         }
         var wind = bodyWrap.getAttribute('requests');
-        if (wind) { this.window = wind; }
+        if (wind) { this.window = parseInt(wind, 10); }
         var hold = bodyWrap.getAttribute('hold');
-        if (hold) { this.hold = hold; }
+        if (hold) { this.hold = parseInt(hold, 10); }
         var wait = bodyWrap.getAttribute('wait');
-        if (wait) { this.wait = wait; }
+        if (wait) { this.wait = parseInt(wait, 10); }
         
 
         var do_sasl_plain = false;
