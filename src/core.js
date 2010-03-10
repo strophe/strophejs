@@ -383,22 +383,15 @@ Strophe = {
      *  Create an XML DOM element.
      *
      *  This function creates an XML DOM element correctly across all
-     *  implementations. Specifically the Microsoft implementation of
-     *  document.createElement makes DOM elements with 43+ default attributes
-     *  unless elements are created with the ActiveX object Microsoft.XMLDOM.
-     *
-     *  Most DOMs force element names to lowercase, so we use the
-     *  _realname attribute on the created element to store the case
-     *  sensitive name.  This is required to generate proper XML for
-     *  things like vCard avatars (XEP 153).  This attribute is stripped
-     *  out before being sent over the wire or serialized, but you may
-     *  notice it during debugging.
+     *  implementations. Note that these are not HTML DOM elements, which
+     *  aren't appropriate for XMPP stanzas.
      *
      *  Parameters:
      *    (String) name - The name for the element.
-     *    (Array) attrs - An optional array of key/value pairs to use as
-     *      element attributes in the following format [['key1', 'value1'],
-     *      ['key2', 'value2']]
+     *    (Array|Object) attrs - An optional array or object containing
+     *      key/value pairs to use as element attributes. The object should
+     *      be in the format {'key': 'value'} or {key: 'value'}. The array
+     *      should have the format [['key1', 'value1'], ['key2', 'value2']].
      *    (String) text - The text child data for the element.
      *
      *  Returns:
