@@ -1091,9 +1091,9 @@ Strophe.Handler.prototype = {
         if (!this.ns) {
             nsMatch = true;
         } else {
-            var self = this;
+            var that = this;
             Strophe.forEachChild(elem, null, function (elem) {
-                if (elem.getAttribute("xmlns") == self.ns) {
+                if (elem.getAttribute("xmlns") == that.ns) {
                     nsMatch = true;
                 }
             });
@@ -2421,21 +2421,21 @@ Strophe.Connection.prototype = {
         }
 
         // send each incoming stanza through the handler chain
-        var self = this;
+        var that = this;
         Strophe.forEachChild(elem, null, function (child) {
             var i, newList;
             // process handlers
-            newList = self.handlers;
-            self.handlers = [];
+            newList = that.handlers;
+            that.handlers = [];
             for (i = 0; i < newList.length; i++) {
                 var hand = newList[i];
                 if (hand.isMatch(child) &&
-                    (self.authenticated || !hand.user)) {
+                    (that.authenticated || !hand.user)) {
                     if (hand.run(child)) {
-                        self.handlers.push(hand);
+                        that.handlers.push(hand);
                     }
                 } else {
-                    self.handlers.push(hand);
+                    that.handlers.push(hand);
                 }
             }
         });
