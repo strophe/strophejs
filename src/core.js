@@ -1057,7 +1057,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     }
 
     if (this.options.matchBare) {
-        this.from = Strophe.getBareJidFromJid(from);
+        this.from = from ? Strophe.getBareJidFromJid(from) : null;
     } else {
         this.from = from;
     }
