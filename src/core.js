@@ -828,7 +828,7 @@ Strophe = {
  *  DOM element easily and rapidly.  All the functions except for toString()
  *  and tree() return the object, so calls can be chained.  Here's an
  *  example using the $iq() builder helper.
- *  > $iq({to: 'you': from: 'me': type: 'get', id: '1'})
+ *  > $iq({to: 'you', from: 'me', type: 'get', id: '1'})
  *  >     .c('query', {xmlns: 'strophe:example'})
  *  >     .c('example')
  *  >     .toString()
