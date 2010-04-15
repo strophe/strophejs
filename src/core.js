@@ -1103,9 +1103,9 @@ Strophe.Handler.prototype = {
 
         if (nsMatch &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-            (!this.type || elem.getAttribute("type") === this.type) &&
-            (!this.id || elem.getAttribute("id") === this.id) &&
-            (!this.from || from === this.from)) {
+            (!this.type || elem.getAttribute("type") == this.type) &&
+            (!this.id || elem.getAttribute("id") == this.id) &&
+            (!this.from || from == this.from)) {
                 return true;
         }
 
@@ -1782,11 +1782,11 @@ Strophe.Connection.prototype = {
             }
 
             var iqtype = stanza.getAttribute('type');
-	    if (iqtype === 'result') {
+	    if (iqtype == 'result') {
 		if (callback) {
                     callback(stanza);
                 }
-	    } else if (iqtype === 'error') {
+	    } else if (iqtype == 'error') {
 		if (errback) {
                     errback(stanza);
                 }
@@ -3120,7 +3120,7 @@ Strophe.Connection.prototype = {
             body = this._buildBody();
             for (i = 0; i < this._data.length; i++) {
                 if (this._data[i] !== null) {
-                    if (this._data[i] === "restart") {
+                    if (this._data[i] == "restart") {
                         body.attrs({
                             to: this.domain,
                             "xml:lang": "en",
