@@ -3120,7 +3120,7 @@ Strophe.Connection.prototype = {
             body = this._buildBody();
             for (i = 0; i < this._data.length; i++) {
                 if (this._data[i] !== null) {
-                    if (this._data[i] == "restart") {
+                    if (this._data[i] === "restart") {
                         body.attrs({
                             to: this.domain,
                             "xml:lang": "en",
