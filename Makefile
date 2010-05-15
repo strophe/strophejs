@@ -12,7 +12,7 @@ BASE_FILES = $(SRC_DIR)/base64.js \
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
 
-PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js $(PLUGIN_DIR)/strophe.flxhr.js
+PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js $(PLUGIN_DIR)/strophe.flxhr.js $(PLUGIN_DIR)/strophe.muc.js
 PLUGIN_FILES_MIN = $(PLUGIN_FILES:.js=.min.js)
 
 DIST_FILES = LICENSE.txt README.txt contrib examples plugins tests doc \
