@@ -236,7 +236,7 @@ Strophe.addConnectionPlugin('muc', {
     iq - the id of the mode change request.
     */
     modifyUser: function(room, nick, role, affiliation, reason) {
-	var item_attrs = {nick: nick};
+	var item_attrs = {nick: Strophe.escapeNode(nick)};
 	if (role !== null)
 	{
             item_attrs["role"] = role;
@@ -287,7 +287,7 @@ Strophe.addConnectionPlugin('muc', {
         var room_nick = room;
         if (nick) 
         {
-            room_nick += "/" + nick; 
+            room_nick += "/" + Strophe.escapeNode(nick); 
         }
         return room_nick;
     }
