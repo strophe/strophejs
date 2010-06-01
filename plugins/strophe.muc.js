@@ -12,10 +12,10 @@ Strophe.addConnectionPlugin('muc', {
     init: function(conn) {
         this._connection = conn;
         /* extend name space 
-	     *  NS.MUC - XMPP Multi-user chat namespace
-	     *              from XEP 45.  
-	     *
-	     */
+         *  NS.MUC - XMPP Multi-user chat namespace
+         *              from XEP 45.  
+         *
+         */
         Strophe.addNamespace('MUC_OWNER', Strophe.NS.MUC+"#owner");
         Strophe.addNamespace('MUC_ADMIN', Strophe.NS.MUC+"#admin");
     },
@@ -58,11 +58,11 @@ Strophe.addConnectionPlugin('muc', {
                     return true;
                 }
             },
-				        null,
-				        "message",
-				        null,
-				        null,
-				        null);
+                                        null,
+                                        "message",
+                                        null,
+                                        null,
+                                        null);
         }
         if (pres_handler_cb)
         {
@@ -70,13 +70,13 @@ Strophe.addConnectionPlugin('muc', {
                 var xquery = stanza.getElementsByTagName("x");
                 if (xquery.length > 0)
                 {
-		    //Handle only MUC user protocol
-		    for (var i = 0; i < xquery.length; i++)
+                    //Handle only MUC user protocol
+                    for (var i = 0; i < xquery.length; i++)
                     {
                         var xmlns = xquery[i].getAttribute("xmlns");
                         
-		        if (xmlns && xmlns.match(Strophe.NS.MUC))
-		        {
+                        if (xmlns && xmlns.match(Strophe.NS.MUC))
+                        {
                             return pres_handler_cb(stanza);
                         }
                     }
@@ -128,7 +128,7 @@ Strophe.addConnectionPlugin('muc', {
     message: function(room, nick, message) {
         var room_nick = this.test_append_nick(room, nick);        
         var msgid = this._connection.getUniqueId();
-	var msg = $msg({to: room_nick,
+        var msg = $msg({to: room_nick,
                         from: this._connection.jid,
                         type: "groupchat",
                         id: msgid}).c("body",
@@ -150,9 +150,9 @@ Strophe.addConnectionPlugin('muc', {
                           type: "get"}).c("query",
                                           {xmlns: Strophe.NS.MUC_OWNER});
         var stanza = config.tree();
-	return this._connection.sendIQ(stanza,
-                                       function(){},
-                                       function(){});
+        return this._connection.sendIQ(stanza,
+                               function(){},
+                               function(){});
     },
     /***Function
     Cancel the room configuration
@@ -168,7 +168,7 @@ Strophe.addConnectionPlugin('muc', {
             .c("query", {xmlns: Strophe.NS.MUC_OWNER})
             .c("x", {xmlns: "jabber:x:data", type: "cancel"});
         var stanza = config.tree();
-	return this._connection.sendIQ(stanza,
+        return this._connection.sendIQ(stanza,
                                        function(){},
                                        function(){});
     },
@@ -189,7 +189,7 @@ Strophe.addConnectionPlugin('muc', {
             config.cnode(configarray[i]);
         }
         var stanza = config.tree();
-	return this._connection.sendIQ(stanza,
+        return this._connection.sendIQ(stanza,
                                        function(){},
                                        function(){});        
     },
@@ -236,20 +236,20 @@ Strophe.addConnectionPlugin('muc', {
     iq - the id of the mode change request.
     */
     modifyUser: function(room, nick, role, affiliation, reason) {
-	var item_attrs = {nick: Strophe.escapeNode(nick)};
-	if (role !== null)
-	{
+        var item_attrs = {nick: Strophe.escapeNode(nick)};
+        if (role !== null)
+        {
             item_attrs["role"] = role;
-	}
-	if (affiliation !== null)
-	{
+        }
+        if (affiliation !== null)
+        {
             item_attrs["affiliation"] = affiliation;
-	}
+        }
         var item = $build("item", item_attrs);
-	if (reason !== null)
-	{
-	    item.cnode(Strophe.xmlElement("reason", reason));
-	}
+        if (reason !== null)
+        {
+            item.cnode(Strophe.xmlElement("reason", reason));
+        }
         var room = $iq({to: room,
                         type: "set"})
             .c("query", {xmlns: Strophe.NS.MUC_OWNER}).cnode(item.tree());
