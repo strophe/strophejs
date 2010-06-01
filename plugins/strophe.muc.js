@@ -1,6 +1,12 @@
 /*
 Plugin to implement the MUC extension. http://xmpp.org/extensions/xep-0045.html
 */
+/* jslint configuration: */
+/* global document, window, setTimeout, clearTimeout, console,
+    XMLHttpRequest, ActiveXObject,
+    Base64, MD5,
+    Strophe, $build, $msg, $iq, $pres 
+*/
 
 Strophe.addConnectionPlugin('muc', {
     _connection: null,
@@ -200,12 +206,12 @@ Strophe.addConnectionPlugin('muc', {
     id - the unique id used to create the chat room.
     */
     createInstantRoom: function(room) {
-        var room = $iq({to: room,
-                        type: "set"})
+        var roomiq = $iq({to: room,
+                          type: "set"})
             .c("query", {xmlns: Strophe.NS.MUC_OWNER})
             .c("x", {xmlns: "jabber:x:data",
                      type: "submit"});
-        return this._connection.sendIQ(room.tree(),
+        return this._connection.sendIQ(roomiq.tree(),
                                        function() {},
                                        function() {});
     },
@@ -239,21 +245,21 @@ Strophe.addConnectionPlugin('muc', {
         var item_attrs = {nick: Strophe.escapeNode(nick)};
         if (role !== null)
         {
-            item_attrs["role"] = role;
+            item_attrs.role = role;
         }
         if (affiliation !== null)
         {
-            item_attrs["affiliation"] = affiliation;
+            item_attrs.affiliation = affiliation;
         }
         var item = $build("item", item_attrs);
         if (reason !== null)
         {
             item.cnode(Strophe.xmlElement("reason", reason));
         }
-        var room = $iq({to: room,
-                        type: "set"})
+        var roomiq = $iq({to: room,
+                          type: "set"})
             .c("query", {xmlns: Strophe.NS.MUC_OWNER}).cnode(item.tree());
-        return this._connection.sendIQ(room.tree(),
+        return this._connection.sendIQ(roomiq.tree(),
                                        function() {},
                                        function() {});
     },
