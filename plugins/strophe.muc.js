@@ -71,11 +71,14 @@ Strophe.addConnectionPlugin('muc', {
                 if (xquery.length > 0)
                 {
 		    //Handle only MUC user protocol
-		    var xmlns = xquery[0].getAttribute("xmlns");
-                    
-		    if (xmlns && xmlns.match(Strophe.NS.MUC))
-		    {
-                        return pres_handler_cb(stanza);
+		    for (var i = 0; i < xquery.length; i++)
+                    {
+                        var xmlns = xquery[i].getAttribute("xmlns");
+                        
+		        if (xmlns && xmlns.match(Strophe.NS.MUC))
+		        {
+                            return pres_handler_cb(stanza);
+                        }
                     }
                 }
                 return true;                
