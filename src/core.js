@@ -987,8 +987,9 @@ Strophe.Builder.prototype = {
      */
     cnode: function (elem)
     {
-        this.node.appendChild(elem);
-        this.node = elem;
+        var newElem = Strophe.copyElement(elem);
+        this.node.appendChild(newElem);
+        this.node = newElem;
         return this;
     },
 
