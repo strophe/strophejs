@@ -369,7 +369,7 @@ Strophe = {
         var doc;
 
         if (window.ActiveXObject) {
-            doc = new ActiveXObject("Microsoft.XMLDOM");
+            doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
             doc = document.implementation
@@ -378,6 +378,43 @@ Strophe = {
 
         return doc;
     },
+
+    /**
+     * Gets IE xml doc object
+     * 
+     * @author Brendon Crawford
+     * @note Sponsored by Last.vc
+     * @see http://last.vc
+     * @see http://github.com/brendoncrawford/strophejs-last
+     * @see http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
+     */
+    _getIEXmlDom : function() {
+        var doc = null;
+        var docStrings = [
+            "Msxml2.DOMDocument.6.0",
+            "Msxml2.DOMDocument.5.0",
+            "Msxml2.DOMDocument.4.0",
+            "MSXML2.DOMDocument.3.0",
+            "MSXML2.DOMDocument",
+            "MSXML.DOMDocument",
+            "Microsoft.XMLDOM"
+        ];
+        for (var d = 0; d < docStrings.length; d++) {
+            if (doc === null) {
+                try {
+                    doc = new ActiveXObject(docStrings[d]);
+                }
+                catch(e) {
+                    doc = null;
+                }
+            }
+            else {
+                break;
+            }
+        }
+        return doc;
+    },
+
 
     /** Function: xmlElement
      *  Create an XML DOM element.
