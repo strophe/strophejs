@@ -176,6 +176,8 @@ Strophe = {
      *  NS.STREAM - XMPP Streams namespace from RFC 3920.
      *  NS.BIND - XMPP Binding namespace from RFC 3920.
      *  NS.SESSION - XMPP Session namespace from RFC 3920.
+     *  NS.XHTML_IM - XHTML-IM namespace from XEP 71.
+     *  NS.XHTML - XHTML body namespace from XEP 71.
      */
     NS: {
         HTTPBIND: "http://jabber.org/protocol/httpbind",
@@ -192,7 +194,9 @@ Strophe = {
         BIND: "urn:ietf:params:xml:ns:xmpp-bind",
         SESSION: "urn:ietf:params:xml:ns:xmpp-session",
         VERSION: "jabber:iq:version",
-        STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas"
+        STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas",
+        XHTML_IM: "http://jabber.org/protocol/xhtml-im",
+        XHTML: "http://www.w3.org/1999/xhtml"
     },
 
     /** Function: addNamespace
@@ -490,6 +494,32 @@ Strophe = {
 	text = Strophe.xmlescape(text);
 
         return Strophe.xmlGenerator().createTextNode(text);
+    },
+
+    /** Function: xmlHtmlNode
+     *  Creates an XML DOM html node.
+     *
+     *  Parameters:
+     *    (String) html - The content of the html node.
+     *
+     *  Returns:
+     *    A new XML DOM text node.
+     */
+    xmlHtmlNode: function (html)
+    {
+        //ensure text is escaped
+        if (window.DOMParser)
+        {
+            parser = new DOMParser();
+            node = parser.parseFromString(html, "text/xml");
+        }
+        else
+        {
+            node = new ActiveXObject("Microsoft.XMLDOM");
+            node.async="false";
+            node.loadXML(html);
+        }
+        return node;
     },
 
     /** Function: getText
@@ -1044,6 +1074,23 @@ Strophe.Builder.prototype = {
     {
         var child = Strophe.xmlTextNode(text);
         this.node.appendChild(child);
+        return this;
+    },
+
+    /** Function: h
+     *  Replace current element contents with the HTML passed in.
+     *
+     *  This *does not* make the child the new current element
+     *
+     *  Parameters:
+     *    (String) html - The html to insert as contents of current element.
+     *
+     *  Returns:
+     *    The Strophe.Builder object.
+     */
+    h: function (html)
+    {
+        this.node.textContent = html;
         return this;
     }
 };
