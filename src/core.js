@@ -2404,7 +2404,7 @@ Strophe.Connection.prototype = {
 
         var typ = elem.getAttribute("type");
         var cond, conflict;
-        if (typ !== null && typ == "terminate") {
+        if (typ !== null && typ == "terminate" && !this.disconnecting) {
             // an error occurred
             cond = elem.getAttribute("condition");
             conflict = elem.getElementsByTagName("conflict");
