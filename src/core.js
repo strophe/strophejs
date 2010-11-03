@@ -1090,11 +1090,16 @@ Strophe.Builder.prototype = {
      */
     h: function (html)
     {
-        this.node.textContent = html;
+        /* add a wrapper in case html is a standalone fragment */
+        html = Strophe.xmlHtmlNode('<body>' + html + '</body>');
+        html = html.childNodes[0];
+        while(html.childNodes.length > 0)
+        {
+            this.node.appendChild(html.childNodes[0]);
+        }
         return this;
     }
 };
-
 
 /** PrivateClass: Strophe.Handler
  *  _Private_ helper class for managing stanza handlers.
