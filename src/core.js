@@ -1090,12 +1090,23 @@ Strophe.Builder.prototype = {
      */
     h: function (html)
     {
-        /* add a wrapper in case html is a standalone fragment */
-        html = Strophe.xmlHtmlNode('<body>' + html + '</body>');
+        var node = null;
+        /* add a wrapper in case html is an unenclosed fragment */
+        var html = Strophe.xmlHtmlNode('<body>' + html + '</body>');
         html = html.childNodes[0];
         while(html.childNodes.length > 0)
         {
-            this.node.appendChild(html.childNodes[0]);
+            if (document.importNode)
+            {
+                node = document.importNode(html.childNodes[0], true);
+                html.removeChild(html.childNodes[0]);
+                this.node.appendChild(node);
+                node = null;
+            }
+            else // IE doesn't have importNode
+            {
+                this.node.appendChild(html.childNodes[0]);
+            }
         }
         return this;
     }
