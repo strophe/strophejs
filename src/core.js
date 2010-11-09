@@ -807,9 +807,9 @@ Strophe = {
                if(elem.attributes[i].nodeName != "_realname") {
                  result += " " + elem.attributes[i].nodeName.toLowerCase() +
                 "='" + elem.attributes[i].value
-                    .replace("&", "&amp;")
-                       .replace("'", "&apos;")
-                       .replace("<", "&lt;") + "'";
+                    .replace(/&/g, "&amp;")
+                       .replace(/\'/g, "&apos;")
+                       .replace(/</g, "&lt;") + "'";
                }
         }
 
@@ -1024,8 +1024,9 @@ Strophe.Builder.prototype = {
      */
     cnode: function (elem)
     {
-        this.node.appendChild(elem);
-        this.node = elem;
+        var newElem = Strophe.copyElement(elem);
+        this.node.appendChild(newElem);
+        this.node = newElem;
         return this;
     },
 
@@ -1417,6 +1418,8 @@ Strophe.Connection = function (service)
     /* The current session ID. */
     this.sid = null;
     this.streamId = null;
+    /* stream:features */
+    this.features = null;
 
     // SASL
     this.do_session = false;
@@ -2442,6 +2445,11 @@ Strophe.Connection.prototype = {
         var typ = elem.getAttribute("type");
         var cond, conflict;
         if (typ !== null && typ == "terminate") {
+            // Don't process stanzas that come in after disconnect
+            if (this.disconnecting) {
+                return;
+            }
+            
             // an error occurred
             cond = elem.getAttribute("condition");
             conflict = elem.getElementsByTagName("conflict");
@@ -2873,8 +2881,11 @@ Strophe.Connection.prototype = {
      */
     _sasl_auth1_cb: function (elem)
     {
-        var i, child;
+        // save stream:features for future usage
+        this.features = elem
 
+        var i, child;
+        
         for (i = 0; i < elem.childNodes.length; i++) {
             child = elem.childNodes[i];
             if (child.nodeName == 'bind') {
