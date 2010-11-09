@@ -49,7 +49,7 @@ if (!Function.prototype.bind) {
         var _slice = Array.prototype.slice;
         var _concat = Array.prototype.concat;
         var _args = _slice.call(arguments, 1);
-        
+
         return function () {
             return func.apply(obj ? obj : this,
                               _concat.call(_args,
@@ -199,7 +199,70 @@ Strophe = {
         XHTML: "http://www.w3.org/1999/xhtml"
     },
 
-    /** Function: addNamespace
+
+    /** Constants: XHTML_IM Namespace 
+     *  contains allowed tags, tag attributes, and css properties. 
+     *  Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
+     *  See http://xmpp.org/extensions/xep-0071.html#profile-summary for the list of recommended
+     *  allowed tags and their attributes.
+     */
+    XHTML: {
+		tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
+		attributes: {
+			'a':          ['href'],
+			'blockquote': ['style'],
+			'br':         [],
+			'cite':       ['style'],
+			'em':         [],
+			'img':        ['src', 'alt', 'style', 'height', 'width'],
+			'li':         ['style'],
+			'ol':         ['style'],
+			'p':          ['style'],
+			'span':       ['style'],
+			'strong':     [],
+			'ul':         ['style'],
+			'body':       []
+		},
+		css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
+		validTag: function(tag)
+		{
+			for(var i = 0; i < Strophe.XHTML.tags.length; i++)
+			{
+				if(tag == Strophe.XHTML.tags[i])
+				{
+					return true;
+				}
+			}
+			return false;
+		},
+		validAttribute: function(tag, attribute)
+		{
+			if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0)
+			{
+				for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++)
+				{
+					if(attribute == Strophe.XHTML.attributes[tag][i])
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		},
+		validCSS: function(style)
+		{
+			for(var i = 0; i < Strophe.XHTML.css.length; i++)
+			{
+				if(style == Strophe.XHTML.css[i])
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+    },
+
+    /** Function: addNamespace 
      *  This function is used to extend the current namespaces in
      *	Strophe.NS.  It takes a key and a value with the key being the
      *	name of the new namespace, with its actual value.
@@ -209,11 +272,11 @@ Strophe = {
      *  Parameters:
      *    (String) name - The name under which the namespace will be
      *      referenced under Strophe.NS
-     *    (String) value - The actual namespace.
+     *    (String) value - The actual namespace.	
      */
     addNamespace: function (name, value)
     {
-	Strophe.NS[name] = value;
+	    Strophe.NS[name] = value;
     },
 
     /** Constants: Connection Status Constants
@@ -269,6 +332,7 @@ Strophe = {
         NORMAL: 1,
         TEXT: 3,
         CDATA: 4
+        FRAGMENT: 11
     },
 
     /** PrivateConstants: Timeout Values
@@ -451,7 +515,7 @@ Strophe = {
                     if (arguments[a].hasOwnProperty(k)) {
                         node.setAttribute(k, arguments[a][k]);
                     }
-                }
+                } 
             }
         }
 
@@ -467,14 +531,14 @@ Strophe = {
      *	Returns:
      *      Escaped text.
      */
-    xmlescape: function(text)
+    xmlescape: function(text) 
     {
-        text = text.replace(/\&/g, "&amp;");
+	text = text.replace(/\&/g, "&amp;");
         text = text.replace(/</g,  "&lt;");
         text = text.replace(/>/g,  "&gt;");
         text = text.replace(/'/g,  "&apos;");
         text = text.replace(/"/g,  "&quot;");
-        return text;
+        return text;    
     },
 
     /** Function: xmlTextNode
@@ -584,7 +648,7 @@ Strophe = {
     },
 
 
-    /** Function: copyHtml
+    /** Function: createHtml
      *  Copy an HTML DOM element into an XML DOM.
      *
      *  This function copies a DOM element and all its descendants and returns
@@ -596,27 +660,77 @@ Strophe = {
      *  Returns:
      *    A new, copied DOM element tree.
      */
-    copyHtml: function (elem)
+    createHtml: function (elem)
     {
-        var i, el;
+        var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue, children, child;
         if (elem.nodeType == Strophe.ElementType.NORMAL) {
-            try
+            tag = elem.nodeName.toLowerCase();
+            if(Strophe.XHTML.validTag(tag))
             {
-                el = Strophe.xmlElement(elem.tagName);
-                for (i = 0; i < elem.attributes.length; i++) {
-                    if(elem.attributes[i].nodeName.toLowerCase().match(/href|src|target/) && !elem.attributes[i].value.match(/0|null|undefined|false/) && elem.attributes[i].value !== '')
-                    {
-                        el.setAttribute(elem.attributes[i].nodeName.toLowerCase(),
-                                elem.attributes[i].value);
+                try
+                {
+                    el = Strophe.xmlElement(tag);
+                    for (i = 0; i < elem.attributes.length; i++) {
+                        attribute = elem.attributes[i].nodeName.toLowerCase();
+                        value = elem.attributes[i].value;
+                        if(Strophe.XHTML.validAttribute(tag, attribute) && !value.match(/0|null|undefined|false/) && value !== '')
+                        {
+                            // filter out invalid css styles
+                            if(attribute == 'style')
+                            {
+                                css = [];
+                                cssAttrs = value.split(';');
+                                for(j = 0; j < cssAttrs.length; j++)
+                                {
+                                    attr = cssAttrs[j].split(':');
+                                    cssName = attr[0].replace(/^\s*/, "").replace(/\s*$/, "").toLowerCase();
+                                    if(Strophe.XHTML.validCSS(cssName))
+                                    {
+                                        cssValue = attr[1].replace(/^\s*/, "").replace(/\s*$/, "");
+                                        css.push(cssName + ': ' + cssValue);
+                                    }
+                                }
+                                if(css.length > 0)
+                                {
+                                    value = css.join('; ');
+                                    el.setAttribute(attribute, value);
+                                }
+                            }
+                            else
+                            {
+                                el.setAttribute(attribute, value);
+                            }
+                        }
+                    }
+
+                    for (i = 0; i < elem.childNodes.length; i++) {
+                        el.appendChild(Strophe.createHtml(elem.childNodes[i]));
                     }
                 }
-
-                for (i = 0; i < elem.childNodes.length; i++) {
-                    el.appendChild(Strophe.copyHtml(elem.childNodes[i]));
+                catch(e) { // invalid elements
+                  el = false;
                 }
             }
-            catch(e) { // invalid elements
-              el = Strophe.xmlTextNode('');
+            else
+            {
+                children = document.createDocumentFragment();
+                for (i = 0; i < elem.childNodes.length; i++) {
+                    child = Strophe.createHtml(elem.childNodes[i]);
+                    if(child !== false)
+                    {
+                        children.appendChild(child);
+                    }
+                }
+                return children;
+            }
+        } else if (elem.nodeType == Strophe.ElementType.FRAGMENT) {
+            el = document.createDocumentFragment();
+            for (i = 0; i < elem.childNodes.length; i++) {
+                child = Strophe.createHtml(elem.childNodes[i]);
+                if(child !== false)
+                {
+                    el.appendChild(child);
+                }
             }
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
             el = Strophe.xmlTextNode(elem.nodeValue);
@@ -1132,14 +1246,13 @@ Strophe.Builder.prototype = {
      */
     h: function (html)
     {
-        var fragment = document.createDocumentFragment();
-        fragment.appendChild(document.createElement('div'));
+        var fragment = document.createElement('body');
 
         // force the browser to try and fix any invalid HTML tags
-        fragment.childNodes[0].innerHTML = html;
+        fragment.innerHTML = html;
 
         // copy cleaned html into an xml dom
-        var xhtml = Strophe.copyHtml(fragment.childNodes[0]);
+        var xhtml = Strophe.createHtml(fragment);
 
         while(xhtml.childNodes.length > 0)
         {
@@ -1186,7 +1299,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     this.type = type;
     this.id = id;
     this.options = options || {matchbare: false};
-
+    
     // default matchBare to false if undefined
     if (!this.options.matchBare) {
         this.options.matchBare = false;
@@ -1216,7 +1329,7 @@ Strophe.Handler.prototype = {
     {
         var nsMatch;
         var from = null;
-
+        
         if (this.options.matchBare) {
             from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
         } else {
@@ -1871,10 +1984,10 @@ Strophe.Connection.prototype = {
 
     /** Function: flush
      *  Immediately send any pending outgoing data.
-     *
+     *  
      *  Normally send() queues outgoing data until the next idle period
      *  (100ms), which optimizes network use in the common cases when
-     *  several send()s are called in succession. flush() can be used to
+     *  several send()s are called in succession. flush() can be used to 
      *  immediately send all pending data.
      */
     flush: function ()
@@ -1891,9 +2004,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The stanza to send.
      *    (Function) callback - The callback function for a successful request.
-     *    (Function) errback - The callback function for a failed or timed
+     *    (Function) errback - The callback function for a failed or timed 
      *      out request.  On timeout, the stanza will be null.
-     *    (Integer) timeout - The time specified in milliseconds for a
+     *    (Integer) timeout - The time specified in milliseconds for a 
      *      timeout to occur.
      *
      *  Returns:
@@ -1969,7 +2082,7 @@ Strophe.Connection.prototype = {
                 message: "Cannot queue non-DOMElement."
             };
         }
-
+        
         this._data.push(element);
     },
 
@@ -2052,7 +2165,7 @@ Strophe.Connection.prototype = {
      *  boolean). When matchBare is true, the from parameter and the from
      *  attribute on the stanza will be matched as bare JIDs instead of
      *  full JIDs. To use this, pass {matchBare: true} as the value of
-     *  options. The default value for matchBare is false.
+     *  options. The default value for matchBare is false. 
      *
      *  The return value should be saved if you wish to remove the handler
      *  with deleteHandler().
@@ -2695,7 +2808,7 @@ Strophe.Connection.prototype = {
         if (hold) { this.hold = parseInt(hold, 10); }
         var wait = bodyWrap.getAttribute('wait');
         if (wait) { this.wait = parseInt(wait, 10); }
-
+        
 
         var do_sasl_plain = false;
         var do_sasl_digest_md5 = false;
@@ -2895,7 +3008,7 @@ Strophe.Connection.prototype = {
      */
     _quote: function (str)
     {
-        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"'; 
         //" end string workaround for emacs
     },
 
