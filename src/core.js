@@ -1380,6 +1380,8 @@ Strophe.Connection = function (service)
     /* The current session ID. */
     this.sid = null;
     this.streamId = null;
+    /* stream:features */
+    this.features = null;
 
     // SASL
     this.do_session = false;
@@ -2841,8 +2843,11 @@ Strophe.Connection.prototype = {
      */
     _sasl_auth1_cb: function (elem)
     {
-        var i, child;
+        // save stream:features for future usage
+        this.features = elem
 
+        var i, child;
+        
         for (i = 0; i < elem.childNodes.length; i++) {
             child = elem.childNodes[i];
             if (child.nodeName == 'bind') {

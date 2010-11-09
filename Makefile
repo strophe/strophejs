@@ -12,7 +12,7 @@ BASE_FILES = $(SRC_DIR)/base64.js \
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
 
-PLUGIN_FILES = $(PLUGIN_DIR)/strophe.pubsub.js $(PLUGIN_DIR)/strophe.flxhr.js $(PLUGIN_DIR)/strophe.muc.js
+PLUGIN_FILES = $(shell ls $(PLUGIN_DIR)/strophe.*.js | grep -v min)
 PLUGIN_FILES_MIN = $(PLUGIN_FILES:.js=.min.js)
 
 DIST_FILES = LICENSE.txt README.txt contrib examples plugins tests doc \
@@ -62,7 +62,7 @@ doc:
 	@@echo "Building Strophe documentation..."
 	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
-	@@NaturalDocs -q -i $(SRC_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@NaturalDocs -q -i $(SRC_DIR) -i $(PLUGINS_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
 	@@echo "Documentation built."
 	@@echo
 
