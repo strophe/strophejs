@@ -381,12 +381,11 @@ Strophe = {
 
     /**
      * Gets IE xml doc object
-     * 
-     * @author Brendon Crawford
-     * @note Sponsored by Last.vc
-     * @see http://last.vc
-     * @see http://github.com/brendoncrawford/strophejs-last
-     * @see http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
+     *
+     * Returns:
+     *     A Microsoft XML DOM Object
+     * See Also:
+     *     http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
      */
     _getIEXmlDom : function() {
         var doc = null;
