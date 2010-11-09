@@ -583,6 +583,48 @@ Strophe = {
         return el;
     },
 
+
+    /** Function: copyHtml
+     *  Copy an HTML DOM element into an XML DOM.
+     *
+     *  This function copies a DOM element and all its descendants and returns
+     *  the new copy.
+     *
+     *  Parameters:
+     *    (HTMLElement) elem - A DOM element.
+     *
+     *  Returns:
+     *    A new, copied DOM element tree.
+     */
+    copyHtml: function (elem)
+    {
+        var i, el;
+        if (elem.nodeType == Strophe.ElementType.NORMAL) {
+            try
+            {
+                el = Strophe.xmlElement(elem.tagName);
+                for (i = 0; i < elem.attributes.length; i++) {
+                    if(elem.attributes[i].nodeName.toLowerCase().match(/href|src|target/) && !elem.attributes[i].value.match(/0|null|undefined|false/) && elem.attributes[i].value !== '')
+                    {
+                        el.setAttribute(elem.attributes[i].nodeName.toLowerCase(),
+                                elem.attributes[i].value);
+                    }
+                }
+
+                for (i = 0; i < elem.childNodes.length; i++) {
+                    el.appendChild(Strophe.copyHtml(elem.childNodes[i]));
+                }
+            }
+            catch(e) { // invalid elements
+              el = Strophe.xmlTextNode('');
+            }
+        } else if (elem.nodeType == Strophe.ElementType.TEXT) {
+            el = Strophe.xmlTextNode(elem.nodeValue);
+        }
+
+        return el;
+    },
+
     /** Function: escapeNode
      *  Escape the node part (also called local part) of a JID.
      *
@@ -1090,12 +1132,18 @@ Strophe.Builder.prototype = {
      */
     h: function (html)
     {
-        var node = null;
-        var fragment = document.createElement('div');
-        fragment.innerHTML = html;
-        while(fragment.childNodes.length > 0)
+        var fragment = document.createDocumentFragment();
+        fragment.appendChild(document.createElement('div'));
+
+        // force the browser to try and fix any invalid HTML tags
+        fragment.childNodes[0].innerHTML = html;
+
+        // copy cleaned html into an xml dom
+        var xhtml = Strophe.copyHtml(fragment.childNodes[0]);
+
+        while(xhtml.childNodes.length > 0)
         {
-            this.node.appendChild(fragment.childNodes[0]);
+            this.node.appendChild(xhtml.childNodes[0]);
         }
         return this;
     }
