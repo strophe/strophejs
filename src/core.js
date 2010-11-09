@@ -670,10 +670,15 @@ Strophe = {
                 try
                 {
                     el = Strophe.xmlElement(tag);
-                    for (i = 0; i < elem.attributes.length; i++) {
-                        attribute = elem.attributes[i].nodeName.toLowerCase();
-                        value = elem.attributes[i].value;
-                        if(Strophe.XHTML.validAttribute(tag, attribute) && !value.match(/0|null|undefined|false/) && value !== '')
+                    for(i = 0; i < Strophe.XHTML.attributes[tag].length; i++)
+                    {
+                        attribute = Strophe.XHTML.attributes[tag][i];
+                        value = elem.getAttribute(attribute);
+                        if(attribute == 'style' && typeof value == 'object')
+                        {
+                            value = value.cssText; // we're dealing with IE, need to get CSS out
+                        }
+                        if(!value.match(/0|null|undefined|false/) && value !== '')
                         {
                             // filter out invalid css styles
                             if(attribute == 'style')
@@ -708,29 +713,21 @@ Strophe = {
                     }
                 }
                 catch(e) { // invalid elements
-                  el = false;
+                  el = Strophe.xmlTextNode('');
                 }
             }
             else
             {
                 children = document.createDocumentFragment();
                 for (i = 0; i < elem.childNodes.length; i++) {
-                    child = Strophe.createHtml(elem.childNodes[i]);
-                    if(child !== false)
-                    {
-                        children.appendChild(child);
-                    }
+                    children.appendChild(Strophe.createHtml(elem.childNodes[i]));
                 }
                 return children;
             }
         } else if (elem.nodeType == Strophe.ElementType.FRAGMENT) {
             el = document.createDocumentFragment();
             for (i = 0; i < elem.childNodes.length; i++) {
-                child = Strophe.createHtml(elem.childNodes[i]);
-                if(child !== false)
-                {
-                    el.appendChild(child);
-                }
+                el.appendChild(Strophe.createHtml(elem.childNodes[i]));
             }
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
             el = Strophe.xmlTextNode(elem.nodeValue);
