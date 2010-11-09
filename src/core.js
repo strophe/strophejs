@@ -2405,9 +2405,11 @@ Strophe.Connection.prototype = {
         var typ = elem.getAttribute("type");
         var cond, conflict;
         if (typ !== null && typ == "terminate") {
+            // Don't process stanzas that come in after disconnect
             if (this.disconnecting) {
                 return;
             }
+            
             // an error occurred
             cond = elem.getAttribute("condition");
             conflict = elem.getElementsByTagName("conflict");
