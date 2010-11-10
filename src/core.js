@@ -379,6 +379,19 @@ Strophe = {
         return doc;
     },
 
+    /** Function: xmlGenerator
+     *  Get the DOM document to generate elements.
+     *
+     *  Returns:
+     *    The currently used DOM document.
+     */
+    xmlGenerator: function () {
+        if (!Strophe._xmlGenerator) {
+            Strophe._xmlGenerator = Strophe._makeGenerator();
+        }
+        return Strophe._xmlGenerator;
+    },
+
     /** Function: xmlElement
      *  Create an XML DOM element.
      *
@@ -401,11 +414,7 @@ Strophe = {
     {
         if (!name) { return null; }
 
-        var node = null;
-        if (!Strophe._xmlGenerator) {
-            Strophe._xmlGenerator = Strophe._makeGenerator();
-        }
-        node = Strophe._xmlGenerator.createElement(name);
+        var node = Strophe.xmlGenerator().createElement(name);
 
         // FIXME: this should throw errors if args are the wrong type or
         // there are more than two optional args
@@ -469,10 +478,7 @@ Strophe = {
 	//ensure text is escaped
 	text = Strophe.xmlescape(text);
 
-        if (!Strophe._xmlGenerator) {
-            Strophe._xmlGenerator = Strophe._makeGenerator();
-        }
-        return Strophe._xmlGenerator.createTextNode(text);
+        return Strophe.xmlGenerator().createTextNode(text);
     },
 
     /** Function: getText
