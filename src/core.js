@@ -981,7 +981,8 @@ Strophe = {
                 "='" + elem.attributes[i].value
                     .replace(/&/g, "&amp;")
                        .replace(/\'/g, "&apos;")
-                       .replace(/</g, "&lt;") + "'";
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;") + "'";
                }
         }
 
