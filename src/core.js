@@ -993,7 +993,7 @@ Strophe.Builder.prototype = {
      */
     cnode: function (elem)
     {
-        var newElem = Strophe.copyElement(elem);
+        var newElem = Strophe.xmlGenerator().importNode(elem, true);
         this.node.appendChild(newElem);
         this.node = newElem;
         return this;
