@@ -677,11 +677,18 @@ Strophe = {
                     {
                         attribute = Strophe.XHTML.attributes[tag][i];
                         value = elem.getAttribute(attribute);
+                        if(value === null || value === '' || value === false || value === 0)
+                        {
+                            continue;
+                        }
                         if(attribute == 'style' && typeof value == 'object')
                         {
-                            value = value.cssText; // we're dealing with IE, need to get CSS out
+                            if(typeof value.cssText != 'undefined')
+                            {
+                                value = value.cssText; // we're dealing with IE, need to get CSS out
+                            }
                         }
-                        if(!value.match(/0|null|undefined|false/) && value !== '')
+                        if(!value.match(/0|null|undefined|false/))
                         {
                             // filter out invalid css styles
                             if(attribute == 'style')
