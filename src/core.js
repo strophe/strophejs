@@ -222,7 +222,7 @@ Strophe = {
         STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas"
     },
 
-    /** Function: addNamespace 
+    /** Function: addNamespace
      *  This function is used to extend the current namespaces in
      *	Strophe.NS.  It takes a key and a value with the key being the
      *	name of the new namespace, with its actual value.
@@ -232,7 +232,7 @@ Strophe = {
      *  Parameters:
      *    (String) name - The name under which the namespace will be
      *      referenced under Strophe.NS
-     *    (String) value - The actual namespace.	
+     *    (String) value - The actual namespace.
      */
     addNamespace: function (name, value)
     {
@@ -438,7 +438,7 @@ Strophe = {
                     if (arguments[a].hasOwnProperty(k)) {
                         node.setAttribute(k, arguments[a][k]);
                     }
-                } 
+                }
             }
         }
 
@@ -454,12 +454,12 @@ Strophe = {
      *	Returns:
      *      Escaped text.
      */
-    xmlescape: function(text) 
+    xmlescape: function(text)
     {
 	text = text.replace(/\&/g, "&amp;");
         text = text.replace(/</g,  "&lt;");
         text = text.replace(/>/g,  "&gt;");
-        return text;    
+        return text;
     },
 
     /** Function: xmlTextNode
@@ -1057,7 +1057,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     this.type = type;
     this.id = id;
     this.options = options || {matchbare: false};
-    
+
     // default matchBare to false if undefined
     if (!this.options.matchBare) {
         this.options.matchBare = false;
@@ -1087,7 +1087,7 @@ Strophe.Handler.prototype = {
     {
         var nsMatch;
         var from = null;
-        
+
         if (this.options.matchBare) {
             from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
         } else {
@@ -1741,10 +1741,10 @@ Strophe.Connection.prototype = {
 
     /** Function: flush
      *  Immediately send any pending outgoing data.
-     *  
+     *
      *  Normally send() queues outgoing data until the next idle period
      *  (100ms), which optimizes network use in the common cases when
-     *  several send()s are called in succession. flush() can be used to 
+     *  several send()s are called in succession. flush() can be used to
      *  immediately send all pending data.
      */
     flush: function ()
@@ -1761,9 +1761,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The stanza to send.
      *    (Function) callback - The callback function for a successful request.
-     *    (Function) errback - The callback function for a failed or timed 
+     *    (Function) errback - The callback function for a failed or timed
      *      out request.  On timeout, the stanza will be null.
-     *    (Integer) timeout - The time specified in milliseconds for a 
+     *    (Integer) timeout - The time specified in milliseconds for a
      *      timeout to occur.
      *
      *  Returns:
@@ -1839,7 +1839,7 @@ Strophe.Connection.prototype = {
                 message: "Cannot queue non-DOMElement."
             };
         }
-        
+
         this._data.push(element);
     },
 
@@ -1922,7 +1922,7 @@ Strophe.Connection.prototype = {
      *  boolean). When matchBare is true, the from parameter and the from
      *  attribute on the stanza will be matched as bare JIDs instead of
      *  full JIDs. To use this, pass {matchBare: true} as the value of
-     *  options. The default value for matchBare is false. 
+     *  options. The default value for matchBare is false.
      *
      *  The return value should be saved if you wish to remove the handler
      *  with deleteHandler().
@@ -2418,7 +2418,7 @@ Strophe.Connection.prototype = {
             if (this.disconnecting) {
                 return;
             }
-            
+
             // an error occurred
             cond = elem.getAttribute("condition");
             conflict = elem.getElementsByTagName("conflict");
@@ -2540,7 +2540,7 @@ Strophe.Connection.prototype = {
         if (hold) { this.hold = parseInt(hold, 10); }
         var wait = bodyWrap.getAttribute('wait');
         if (wait) { this.wait = parseInt(wait, 10); }
-        
+
 
         var do_sasl_plain = false;
         var do_sasl_digest_md5 = false;
@@ -2740,7 +2740,7 @@ Strophe.Connection.prototype = {
      */
     _quote: function (str)
     {
-        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"'; 
+        return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
         //" end string workaround for emacs
     },
 
@@ -2854,7 +2854,7 @@ Strophe.Connection.prototype = {
         this.features = elem
 
         var i, child;
-        
+
         for (i = 0; i < elem.childNodes.length; i++) {
             child = elem.childNodes[i];
             if (child.nodeName == 'bind') {
