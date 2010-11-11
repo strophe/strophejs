@@ -663,9 +663,6 @@ Strophe = {
     createHtml: function (elem)
     {
         var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue, children, child;
-        if (!Strophe._xmlGenerator) {
-            Strophe._xmlGenerator = Strophe._makeGenerator();
-        }
         if (elem.nodeType == Strophe.ElementType.NORMAL) {
             tag = elem.nodeName.toLowerCase();
             if(Strophe.XHTML.validTag(tag))
@@ -728,13 +725,13 @@ Strophe = {
             }
             else
             {
-                el = Strophe._xmlGenerator.createDocumentFragment();
+                el = Strophe.xmlGenerator().createDocumentFragment();
                 for (i = 0; i < elem.childNodes.length; i++) {
                     el.appendChild(Strophe.createHtml(elem.childNodes[i]));
                 }
             }
         } else if (elem.nodeType == Strophe.ElementType.FRAGMENT) {
-            el = Strophe._xmlGenerator.createDocumentFragment();
+            el = Strophe.xmlGenerator().createDocumentFragment();
             for (i = 0; i < elem.childNodes.length; i++) {
                 el.appendChild(Strophe.createHtml(elem.childNodes[i]));
             }
