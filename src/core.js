@@ -674,7 +674,7 @@ Strophe = {
                     {
                         attribute = Strophe.XHTML.attributes[tag][i];
                         value = elem.getAttribute(attribute);
-                        if(value === null || value === '' || value === false || value === 0)
+                        if(typeof value == 'undefined' || value === null || value === '' || value === false || value === 0)
                         {
                             continue;
                         }
@@ -685,33 +685,30 @@ Strophe = {
                                 value = value.cssText; // we're dealing with IE, need to get CSS out
                             }
                         }
-                        if(!value.match(/0|null|undefined|false/))
+                        // filter out invalid css styles
+                        if(attribute == 'style')
                         {
-                            // filter out invalid css styles
-                            if(attribute == 'style')
+                            css = [];
+                            cssAttrs = value.split(';');
+                            for(j = 0; j < cssAttrs.length; j++)
                             {
-                                css = [];
-                                cssAttrs = value.split(';');
-                                for(j = 0; j < cssAttrs.length; j++)
+                                attr = cssAttrs[j].split(':');
+                                cssName = attr[0].replace(/^\s*/, "").replace(/\s*$/, "").toLowerCase();
+                                if(Strophe.XHTML.validCSS(cssName))
                                 {
-                                    attr = cssAttrs[j].split(':');
-                                    cssName = attr[0].replace(/^\s*/, "").replace(/\s*$/, "").toLowerCase();
-                                    if(Strophe.XHTML.validCSS(cssName))
-                                    {
-                                        cssValue = attr[1].replace(/^\s*/, "").replace(/\s*$/, "");
-                                        css.push(cssName + ': ' + cssValue);
-                                    }
-                                }
-                                if(css.length > 0)
-                                {
-                                    value = css.join('; ');
-                                    el.setAttribute(attribute, value);
+                                    cssValue = attr[1].replace(/^\s*/, "").replace(/\s*$/, "");
+                                    css.push(cssName + ': ' + cssValue);
                                 }
                             }
-                            else
+                            if(css.length > 0)
                             {
+                                value = css.join('; ');
                                 el.setAttribute(attribute, value);
                             }
+                        }
+                        else
+                        {
+                            el.setAttribute(attribute, value);
                         }
                     }
 
