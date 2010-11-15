@@ -2342,7 +2342,7 @@ Strophe.Connection.prototype = {
                 }
             }
 
-            if (!((reqStatus > 0 && reqStatus < 10000) ||
+            if (!((reqStatus > 0 && reqStatus < 500) ||
                   req.sends > 5)) {
                 this._throttledRequestHandler();
             }
