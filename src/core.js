@@ -2148,6 +2148,12 @@ Strophe.Connection.prototype = {
             reqStatus = -1;
         }
 
+        // make sure we limit the number of retries
+        if (req.sends > 5) {
+            this._onDisconnectTimeout();
+            return;
+        }
+
         var time_elapsed = req.age();
         var primaryTimeout = (!isNaN(time_elapsed) &&
                               time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
