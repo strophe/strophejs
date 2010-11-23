@@ -1594,8 +1594,9 @@ Strophe.Connection.prototype = {
      *    (Integer) hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
+	 *    (String) route
      */
-    connect: function (jid, pass, callback, wait, hold)
+    connect: function (jid, pass, callback, wait, hold, route)
     {
         this.jid = jid;
         this.pass = pass;
@@ -1622,6 +1623,12 @@ Strophe.Connection.prototype = {
             "xmpp:version": "1.0",
             "xmlns:xmpp": Strophe.NS.BOSH
         });
+
+		if(route){
+			body.attrs({
+				route: route
+			});
+		}
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
