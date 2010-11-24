@@ -1028,7 +1028,8 @@ Strophe.Builder.prototype = {
      */
     cnode: function (elem)
     {
-        var newElem = Strophe.xmlGenerator().importNode(elem, true);
+        var xmlGen = Strophe.xmlGenerator();
+        var newElem = xmlGen.importNode ? xmlGen.importNode(elem, true) : Strophe.copyElement(elem);
         this.node.appendChild(newElem);
         this.node = newElem;
         return this;
