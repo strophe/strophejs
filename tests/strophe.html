@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script>
+      <!--
+          // remove Function.prototype.bind so we can test Strophe's
+          Function.prototype.bind = undefined;
+          // -->
+    </script>
+
     <script src="http://code.jquery.com/jquery-latest.js"></script>
     <link rel="stylesheet"
           href="https://github.com/jquery/qunit/raw/master/qunit/qunit.css"

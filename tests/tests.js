@@ -161,6 +161,23 @@ $(document).ready(function () {
                "string should be quoted and escaped");
     });
 
+    test("Function binding", function () {
+        var spy = sinon.spy();
+        var obj = {};
+        var arg1 = "foo";
+        var arg2 = "bar";
+        var arg3 = "baz";
+
+        var f = spy.bind(obj, arg1, arg2);
+        f(arg3);
+        equals(spy.called, true, "bound function should be called");
+        equals(spy.calledOn(obj), true,
+               "bound function should have correct context");
+        equals(spy.alwaysCalledWithExactly(arg1, arg2, arg3),
+               true,
+               "bound function should get all arguments");
+    });
+
     module("XHR error handling");
 
     // Note that these tests are pretty dependent on the actual code.
