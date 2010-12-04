@@ -3105,6 +3105,13 @@ Strophe.Connection.prototype = {
     {
         var i, thand, since, newList;
 
+        // add timed handlers scheduled for addition
+        // NOTE: we add before remove in the case a timed handler is
+        // added and then deleted before the next _onIdle() call.
+        while (this.addTimeds.length > 0) {
+            this.timedHandlers.push(this.addTimeds.pop());
+        }
+
         // remove timed handlers that have been scheduled for deletion
         while (this.removeTimeds.length > 0) {
             thand = this.removeTimeds.pop();
@@ -3112,11 +3119,6 @@ Strophe.Connection.prototype = {
             if (i >= 0) {
                 this.timedHandlers.splice(i, 1);
             }
-        }
-
-        // add timed handlers scheduled for addition
-        while (this.addTimeds.length > 0) {
-            this.timedHandlers.push(this.addTimeds.pop());
         }
 
         // call ready timed handlers
