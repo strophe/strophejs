@@ -2227,7 +2227,7 @@ Strophe.Connection.prototype = {
 
         if (this._requests.length > 1 &&
             Math.abs(this._requests[0].rid -
-                     this._requests[1].rid) < this.window - 1) {
+                     this._requests[1].rid) < this.window) {
             this._processRequest(1);
         }
     },
