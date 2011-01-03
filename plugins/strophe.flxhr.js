@@ -24,7 +24,7 @@ Strophe.addConnectionPlugin('flxhr', {
                                                   "flXHR connection error");
                         conn._onDisconnectTimeout();
                     }});
-                xhr.onreadystatechange = this.func.prependArg(this);
+                xhr.onreadystatechange = this.func.bind(null, this);
 
                 return xhr;
             };
