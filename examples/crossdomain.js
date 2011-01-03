@@ -5,7 +5,7 @@
 // Most BOSH connection managers can serve static html files, so you should
 // be able to configure them to serve a /crossdomain.xml file to allow
 // access.
-var BOSH_SERVICE = 'http://localhost:5281/xmpp-httpbind'
+var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind'
 var connection = null;
 
 function log(msg) 
