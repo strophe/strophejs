@@ -2468,13 +2468,19 @@ Strophe.Connection.prototype = {
             that.handlers = [];
             for (i = 0; i < newList.length; i++) {
                 var hand = newList[i];
-                if (hand.isMatch(child) &&
-                    (that.authenticated || !hand.user)) {
-                    if (hand.run(child)) {
+                // encapsulate 'handler.run' not to lose the whole handler list if
+                // one of the handlers throws an exception
+                try {
+                    if (hand.isMatch(child) &&
+                        (that.authenticated || !hand.user)) {
+                        if (hand.run(child)) {
+                            that.handlers.push(hand);
+                        }
+                    } else {
                         that.handlers.push(hand);
                     }
-                } else {
-                    that.handlers.push(hand);
+                } catch(e) {
+                    //if the handler throws an exception, we consider it as false
                 }
             }
         });
