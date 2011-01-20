@@ -3210,9 +3210,12 @@ Strophe.Connection.prototype = {
             }
         }
 
-        // reactivate the timer
         clearTimeout(this._idleTimeout);
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+
+        // reactivate the timer only if connected
+        if (this.connected) {
+            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        }
     }
 };
 
