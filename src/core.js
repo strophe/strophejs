@@ -2190,9 +2190,10 @@ Strophe.Connection.prototype = {
             // Implement progressive backoff for reconnects --
             // First retry (send == 1) should also be instantaneous
             if (req.sends > 1) {
-                // Using a cube of the retry number creats a nicely
+                // Using a cube of the retry number creates a nicely
                 // expanding retry window
-                var backoff = Math.pow(req.sends, 3) * 1000;
+                var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
+                                       Math.pow(req.sends, 3)) * 1000;
                 setTimeout(sendFunc, backoff);
             } else {
                 sendFunc();
