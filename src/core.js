@@ -986,9 +986,9 @@ Strophe.Builder.prototype = {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    c: function (name, attrs)
+    c: function (name, attrs, text)
     {
-        var child = Strophe.xmlElement(name, attrs);
+        var child = Strophe.xmlElement(name, attrs, text);
         this.node.appendChild(child);
         this.node = child;
         return this;
