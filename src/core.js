@@ -2561,7 +2561,9 @@ Strophe.Connection.prototype = {
         var do_sasl_plain = false;
         var do_sasl_digest_md5 = false;
         var do_sasl_anonymous = false;
+        var do_legacy_auth = false;
 
+        // Check for the stream:features tag
         var hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0;
         if (!hasFeatures) {
             hasFeatures = bodyWrap.getElementsByTagName("features").length > 0;
@@ -2581,7 +2583,10 @@ Strophe.Connection.prototype = {
                     }
                 }
             }
-        } else {
+            do_legacy_auth = bodyWrap.getElementsByTagName("auth").length > 0;
+        }
+
+        if (!do_sasl_plain && !do_sasl_digest_md5 && !do_sasl_anonymous && !do_legacy_auth) {
             // we didn't get stream:features yet, so we need wait for it
             // by sending a blank poll request
             var body = this._buildBody();
