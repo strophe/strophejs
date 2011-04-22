@@ -6,6 +6,7 @@ PLUGIN_DIR = plugins
 NDPROJ_DIR = ndproj
 
 BASE_FILES = $(SRC_DIR)/base64.js \
+	$(SRC_DIR)/sha1.js \
 	$(SRC_DIR)/md5.js \
 	$(SRC_DIR)/core.js
 
