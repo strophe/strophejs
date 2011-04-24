@@ -1436,6 +1436,9 @@ Strophe.Connection = function (service)
     this._sasl_failure_handler = null;
     this._sasl_challenge_handler = null;
 
+    // Max retries before disconnecting
+    this.maxRetries = 5;
+
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
 
@@ -2124,7 +2127,7 @@ Strophe.Connection.prototype = {
         }
 
         // make sure we limit the number of retries
-        if (req.sends > 5) {
+        if (req.sends > this.maxRetries) {
             this._onDisconnectTimeout();
             return;
         }
