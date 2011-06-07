@@ -263,7 +263,8 @@ Strophe = {
      */
     ElementType: {
         NORMAL: 1,
-        TEXT: 3
+        TEXT: 3,
+        CDATA: 4
     },
 
     /** PrivateConstants: Timeout Values
@@ -796,12 +797,18 @@ Strophe = {
             result += ">";
             for (i = 0; i < elem.childNodes.length; i++) {
                 child = elem.childNodes[i];
-                if (child.nodeType == Strophe.ElementType.NORMAL) {
+                switch( child.nodeType ){
+                  case Strophe.ElementType.NORMAL:
                     // normal element, so recurse
                     result += Strophe.serialize(child);
-                } else if (child.nodeType == Strophe.ElementType.TEXT) {
-                    // text element
-                    result += child.nodeValue;
+                    break;
+                  case Strophe.ElementType.TEXT:
+                    // text element to escape values
+                    result += Strophe.xmlescape(child.nodeValue);
+                    break;
+                  case Strophe.ElementType.CDATA:
+                    // cdata section so don't escape values
+                    result += "<![CDATA["+child.nodeValue+"]]>";
                 }
             }
             result += "</" + nodeName + ">";
