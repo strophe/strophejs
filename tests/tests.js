@@ -111,11 +111,14 @@ $(document).ready(function () {
 
     test("XML escaping test", function () {
         var text = "s & p";
-	var textNode = Strophe.xmlTextNode(text);
-	equals(Strophe.getText(textNode), "s &amp; p", "should be escaped");
-	var text0 = "s < & > p";
-	var textNode0 = Strophe.xmlTextNode(text0);
-	equals(Strophe.getText(textNode0), "s &lt; &amp; &gt; p", "should be escaped");
+        var textNode = Strophe.xmlTextNode(text);
+        equals(Strophe.getText(textNode), "s &amp; p", "should be escaped");
+        var text0 = "s < & > p";
+        var textNode0 = Strophe.xmlTextNode(text0);
+        equals(Strophe.getText(textNode0), "s &lt; &amp; &gt; p", "should be escaped");
+        var text1 = "s's or \"p\"";
+        var textNode1 = Strophe.xmlTextNode(text1);
+        equals(Strophe.getText(textNode1), "s&apos;s or &quot;p&quot;", "should be escaped");
     });
 
     test("XML element creation", function () {
