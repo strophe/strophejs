@@ -975,13 +975,14 @@ Strophe.Builder.prototype = {
      *  Add a child to the current element and make it the new current
      *  element.
      *
-     *  This function moves the current element pointer to the child.  If you
-     *  need to add another child, it is necessary to use up() to go back
-     *  to the parent in the tree.
+     *  This function moves the current element pointer to the child,
+     *  unless text is provided.  If you need to add another child, it
+     *  is necessary to use up() to go back to the parent in the tree.
      *
      *  Parameters:
      *    (String) name - The name of the child.
      *    (Object) attrs - The attributes of the child in object notation.
+     *    (String) text - The text to add to the child.
      *
      *  Returns:
      *    The Strophe.Builder object.
@@ -990,7 +991,9 @@ Strophe.Builder.prototype = {
     {
         var child = Strophe.xmlElement(name, attrs, text);
         this.node.appendChild(child);
-        this.node = child;
+        if (!text) {
+            this.node = child;
+        }
         return this;
     },
 
