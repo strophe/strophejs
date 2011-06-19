@@ -342,7 +342,7 @@ Strophe = {
     _makeGenerator: function () {
         var doc;
 
-        if (window.ActiveXObject) {
+        if (document.implementation.createDocument === undefined) {
             doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
