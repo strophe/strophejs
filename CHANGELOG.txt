@@ -1,5 +1,37 @@
 # Strophe.js Change Log
 
+## Version 1.0.2 - 2011-06-19
+
+* Fix security bug where DIGEST-MD5 client nonce was not properly
+  randomized.
+* Fix double escaping in copyElement.
+* Fix IE errors related to importNode.
+* Add ability to pass text into Builder.c().
+* Improve performance by skipping debugging callbacks when not
+  overridden.
+* Wrap handler runs in try/catch so they don't affect or remove later
+  handlers.
+* Add ' and " to escaped characters and other escaping fixes.
+* Fix _throttledRequestHandler to use proper window size.
+* Fix timed handler management.
+* Fix flXHR plugin to better deal with errors.
+* Fix bind() to be ECMAScript 5 compatible.
+* Use bosh.metajack.im in examples so they work out of the box.
+* Add simple XHR tests.
+* Update basic example to HTML5.
+* Move community plugins to their own repository.
+* Fix bug causing infinite retries.
+* Fix 5xx error handling.
+* Store stream:features for later use by plugins.
+* Fix to prevent passing stanzas during disconnect.
+* Fix handling of disconnect responses.
+* Fix getBareJidFromJid to return null on error.
+* Fix equality testing in matchers so that string literals and string
+  objects both match.
+* Fix bare matching on missing from attributes.
+* Remove use of reserved word self.
+* Fix various documentation errors.
+
 ## Version 1.0.1 - 2010-01-27
 
 * Fix handling of window, hold, and wait attributes. Bug #75.

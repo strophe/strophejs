@@ -12,4 +12,3 @@
 *** Upload documentation to server (/strophe/strophejs/doc/VERSION/)
 *** Update wiki
 *** Tell the world
-    
