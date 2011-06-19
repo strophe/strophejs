@@ -2672,7 +2672,7 @@ Strophe.Connection.prototype = {
         var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
         var challenge = Base64.decode(Strophe.getText(elem));
-        var cnonce = MD5.hexdigest(Math.random() * 1234567890);
+        var cnonce = MD5.hexdigest("" + (Math.random() * 1234567890));
         var realm = "";
         var host = null;
         var nonce = "";
