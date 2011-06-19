@@ -108,10 +108,10 @@ $(document).ready(function () {
     });
 
     test("c() accepts text and passes it to xmlElement", function () {
-      var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
-                     .c("nick", {xmlns: Strophe.NS.NICK}, "Darcy");
-       var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>";
-       equals(pres.toString(), expected, "'Darcy' should be a child of <presence>");
+        var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
+            .c("nick", {xmlns: "http://jabber.org/protocol/nick"}, "Darcy");
+        var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>";
+        equals(pres.toString(), expected, "'Darcy' should be a child of <presence>");
     });
 
     module("XML");
