@@ -1014,7 +1014,15 @@ Strophe.Builder.prototype = {
     cnode: function (elem)
     {
         var xmlGen = Strophe.xmlGenerator();
-        var newElem = xmlGen.importNode ? xmlGen.importNode(elem, true) : Strophe.copyElement(elem);
+        try {
+            var impNode = (xmlGen.importNode !== undefined);
+        }
+        catch (e) {
+            var impNode = false;
+        }
+        var newElem = impNode ?
+                      xmlGen.importNode(elem, true) :
+                      Strophe.copyElement(elem);
         this.node.appendChild(newElem);
         this.node = newElem;
         return this;
