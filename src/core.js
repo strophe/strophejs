@@ -547,7 +547,7 @@ Strophe = {
                 el.appendChild(Strophe.copyElement(elem.childNodes[i]));
             }
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
-            el = Strophe.xmlTextNode(elem.nodeValue);
+            el = Strophe.xmlGenerator().createTextNode(elem.nodeValue);
         }
 
         return el;

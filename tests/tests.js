@@ -141,6 +141,12 @@ $(document).ready(function () {
         var elem = Strophe.xmlElement("message");
         equals(elem.tagName, "message", "Element name should be the same");
     });
+
+    test("copyElement() double escape bug", function() {
+        var cloned = Strophe.copyElement(Strophe.xmlGenerator()
+                                         .createTextNode('<>&lt;&gt;'));
+        equals(cloned.nodeValue, '<>&lt;&gt;');
+    });
     
     test("XML serializing", function() {
         var parser = new DOMParser();
