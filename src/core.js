@@ -2201,8 +2201,12 @@ Strophe.Connection.prototype = {
 
             req.sends++;
 
-            this.xmlOutput(req.xmlData);
-            this.rawOutput(req.data);
+            if (this.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
+                this.xmlOutput(req.xmlData);
+            }
+            if (this.rawOutput !== Strophe.Connection.prototype.rawOutput) {
+                this.rawOutput(req.data);
+            }
         } else {
             Strophe.debug("_processRequest: " +
                           (i === 0 ? "first" : "second") +
@@ -2411,8 +2415,12 @@ Strophe.Connection.prototype = {
         }
         if (elem === null) { return; }
 
-        this.xmlInput(elem);
-        this.rawInput(Strophe.serialize(elem));
+        if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
+            this.xmlInput(elem);
+        }
+        if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
+            this.rawInput(Strophe.serialize(elem));
+        }
 
         // remove handlers scheduled for deletion
         var i, hand;
@@ -2538,8 +2546,12 @@ Strophe.Connection.prototype = {
         var bodyWrap = req.getResponse();
         if (!bodyWrap) { return; }
 
-        this.xmlInput(bodyWrap);
-        this.rawInput(Strophe.serialize(bodyWrap));
+        if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
+            this.xmlInput(bodyWrap);
+        }
+        if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
+            this.rawInput(Strophe.serialize(bodyWrap));
+        }
 
         var typ = bodyWrap.getAttribute("type");
         var cond, conflict;
