@@ -1412,6 +1412,8 @@ Strophe.Connection = function (service)
     this.service = service;
     /* The connected JID. */
     this.jid = "";
+    /* the JIDs domain */
+    this.domain = null;
     /* request id for body tags */
     this.rid = Math.floor(Math.random() * 4294967295);
     /* The current session ID. */
@@ -1604,7 +1606,7 @@ Strophe.Connection.prototype = {
         this.hold = hold || this.hold;
 
         // parse jid for domain and resource
-        this.domain = Strophe.getDomainFromJid(this.jid);
+        this.domain = Strophe.getDomainFromJid(this.jid) || this.domain;
 
         // build the body tag
         var body = this._buildBody().attrs({
