@@ -1618,7 +1618,7 @@ Strophe.Connection.prototype = {
         this.do_authentication = authentication || this.do_authentication;
 
         // parse jid for domain and resource
-        this.domain = Strophe.getDomainFromJid(this.jid) || this.domain;
+        this.domain = this.domain || Strophe.getDomainFromJid(this.jid);
 
         // build the body tag
         var body = this._buildBody().attrs({
