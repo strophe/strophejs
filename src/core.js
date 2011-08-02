@@ -1615,7 +1615,7 @@ Strophe.Connection.prototype = {
 
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
-        this.do_authentication = authentication || this.do_authentication;
+        this.do_authentication = authentication;
 
         // parse jid for domain and resource
         this.domain = this.domain || Strophe.getDomainFromJid(this.jid);
@@ -1638,7 +1638,7 @@ Strophe.Connection.prototype = {
         this._requests.push(
             new Strophe.Request(body.tree(),
                                 this._onRequestStateChange.bind(
-                                    this, this._connect_cb.bind(this)),
+                                    this, _connect_cb.bind(this)),
                                 body.tree().getAttribute("rid")));
         this._throttledRequestHandler();
     },
@@ -2640,12 +2640,13 @@ Strophe.Connection.prototype = {
             this._requests.push(
                 new Strophe.Request(body.tree(),
                                     this._onRequestStateChange.bind(
-                                        this, this._connect_cb.bind(this)),
+                                        this, _callback.bind(this)),
                                     body.tree().getAttribute("rid")));
             this._throttledRequestHandler();
             return;
         }
-        if (this.do_authentication) this.authenticate();
+        if (this.do_authentication !== false)
+            this.authenticate();
     },
 
     /** Function: authenticate
