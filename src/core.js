@@ -2956,7 +2956,11 @@ Strophe.Connection.prototype = {
     {
         if (elem.getAttribute("type") == "error") {
             Strophe.info("SASL binding failed.");
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+			var conflict = elem.getElementsByTagName("conflict"), condition;
+			if (conflict.length > 0) {
+				condition = 'conflict';
+			}
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition);
             return false;
         }
 
