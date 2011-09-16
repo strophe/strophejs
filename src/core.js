@@ -325,7 +325,7 @@ Strophe = {
     ElementType: {
         NORMAL: 1,
         TEXT: 3,
-        CDATA: 4
+        CDATA: 4,
         FRAGMENT: 11
     },
 
