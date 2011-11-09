@@ -49,7 +49,7 @@ if (!Function.prototype.bind) {
         var _slice = Array.prototype.slice;
         var _concat = Array.prototype.concat;
         var _args = _slice.call(arguments, 1);
-        
+
         return function () {
             return func.apply(obj ? obj : this,
                               _concat.call(_args,
@@ -176,6 +176,8 @@ Strophe = {
      *  NS.STREAM - XMPP Streams namespace from RFC 3920.
      *  NS.BIND - XMPP Binding namespace from RFC 3920.
      *  NS.SESSION - XMPP Session namespace from RFC 3920.
+     *  NS.XHTML_IM - XHTML-IM namespace from XEP 71.
+     *  NS.XHTML - XHTML body namespace from XEP 71.
      */
     NS: {
         HTTPBIND: "http://jabber.org/protocol/httpbind",
@@ -192,10 +194,68 @@ Strophe = {
         BIND: "urn:ietf:params:xml:ns:xmpp-bind",
         SESSION: "urn:ietf:params:xml:ns:xmpp-session",
         VERSION: "jabber:iq:version",
-        STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas"
+        STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas",
+        XHTML_IM: "http://jabber.org/protocol/xhtml-im",
+        XHTML: "http://www.w3.org/1999/xhtml"
     },
 
-    /** Function: addNamespace
+
+    /** Constants: XHTML_IM Namespace 
+     *  contains allowed tags, tag attributes, and css properties. 
+     *  Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
+     *  See http://xmpp.org/extensions/xep-0071.html#profile-summary for the list of recommended
+     *  allowed tags and their attributes.
+     */
+    XHTML: {
+		tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
+		attributes: {
+			'a':          ['href'],
+			'blockquote': ['style'],
+			'br':         [],
+			'cite':       ['style'],
+			'em':         [],
+			'img':        ['src', 'alt', 'style', 'height', 'width'],
+			'li':         ['style'],
+			'ol':         ['style'],
+			'p':          ['style'],
+			'span':       ['style'],
+			'strong':     [],
+			'ul':         ['style'],
+			'body':       []
+		},
+		css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
+		validTag: function(tag)
+		{
+			for(var i = 0; i < Strophe.XHTML.tags.length; i++) {
+				if(tag == Strophe.XHTML.tags[i]) {
+					return true;
+				}
+			}
+			return false;
+		},
+		validAttribute: function(tag, attribute)
+		{
+			if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
+				for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
+					if(attribute == Strophe.XHTML.attributes[tag][i]) {
+						return true;
+					}
+				}
+			}
+			return false;
+		},
+		validCSS: function(style)
+		{
+			for(var i = 0; i < Strophe.XHTML.css.length; i++) {
+				if(style == Strophe.XHTML.css[i]) {
+					return true;
+				}
+			}
+			return false;
+		}
+    },
+
+    /** Function: addNamespace 
      *  This function is used to extend the current namespaces in
      *	Strophe.NS.  It takes a key and a value with the key being the
      *	name of the new namespace, with its actual value.
@@ -209,7 +269,7 @@ Strophe = {
      */
     addNamespace: function (name, value)
     {
-	Strophe.NS[name] = value;
+	    Strophe.NS[name] = value;
     },
 
     /** Constants: Connection Status Constants
@@ -260,11 +320,13 @@ Strophe = {
      *
      *  ElementType.NORMAL - Normal element.
      *  ElementType.TEXT - Text data element.
+     *  ElementType.FRAGMENT - XHTML fragment element.
      */
     ElementType: {
         NORMAL: 1,
         TEXT: 3,
-        CDATA: 4
+        CDATA: 4,
+        FRAGMENT: 11
     },
 
     /** PrivateConstants: Timeout Values
@@ -489,6 +551,29 @@ Strophe = {
         return Strophe.xmlGenerator().createTextNode(text);
     },
 
+    /** Function: xmlHtmlNode
+     *  Creates an XML DOM html node.
+     *
+     *  Parameters:
+     *    (String) html - The content of the html node.
+     *
+     *  Returns:
+     *    A new XML DOM text node.
+     */
+    xmlHtmlNode: function (html)
+    {
+        //ensure text is escaped
+        if (window.DOMParser) {
+            parser = new DOMParser();
+            node = parser.parseFromString(html, "text/xml");
+        } else {
+            node = new ActiveXObject("Microsoft.XMLDOM");
+            node.async="false";
+            node.loadXML(html);
+        }
+        return node;
+    },
+
     /** Function: getText
      *  Get the concatenation of all text children of an element.
      *
@@ -545,6 +630,83 @@ Strophe = {
             }
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
             el = Strophe.xmlGenerator().createTextNode(elem.nodeValue);
+        }
+
+        return el;
+    },
+
+
+    /** Function: createHtml
+     *  Copy an HTML DOM element into an XML DOM.
+     *
+     *  This function copies a DOM element and all its descendants and returns
+     *  the new copy.
+     *
+     *  Parameters:
+     *    (HTMLElement) elem - A DOM element.
+     *
+     *  Returns:
+     *    A new, copied DOM element tree.
+     */
+    createHtml: function (elem)
+    {
+        var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue, children, child;
+        if (elem.nodeType == Strophe.ElementType.NORMAL) {
+            tag = elem.nodeName.toLowerCase();
+            if(Strophe.XHTML.validTag(tag)) {
+                try {
+                    el = Strophe.xmlElement(tag);
+                    for(i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
+                        attribute = Strophe.XHTML.attributes[tag][i];
+                        value = elem.getAttribute(attribute);
+                        if(typeof value == 'undefined' || value === null || value === '' || value === false || value === 0) {
+                            continue;
+                        }
+                        if(attribute == 'style' && typeof value == 'object') {
+                            if(typeof value.cssText != 'undefined') {
+                                value = value.cssText; // we're dealing with IE, need to get CSS out
+                            }
+                        }
+                        // filter out invalid css styles
+                        if(attribute == 'style') {
+                            css = [];
+                            cssAttrs = value.split(';');
+                            for(j = 0; j < cssAttrs.length; j++) {
+                                attr = cssAttrs[j].split(':');
+                                cssName = attr[0].replace(/^\s*/, "").replace(/\s*$/, "").toLowerCase();
+                                if(Strophe.XHTML.validCSS(cssName)) {
+                                    cssValue = attr[1].replace(/^\s*/, "").replace(/\s*$/, "");
+                                    css.push(cssName + ': ' + cssValue);
+                                }
+                            }
+                            if(css.length > 0) {
+                                value = css.join('; ');
+                                el.setAttribute(attribute, value);
+                            }
+                        } else {
+                            el.setAttribute(attribute, value);
+                        }
+                    }
+
+                    for (i = 0; i < elem.childNodes.length; i++) {
+                        el.appendChild(Strophe.createHtml(elem.childNodes[i]));
+                    }
+                } catch(e) { // invalid elements
+                  el = Strophe.xmlTextNode('');
+                }
+            } else {
+                el = Strophe.xmlGenerator().createDocumentFragment();
+                for (i = 0; i < elem.childNodes.length; i++) {
+                    el.appendChild(Strophe.createHtml(elem.childNodes[i]));
+                }
+            }
+        } else if (elem.nodeType == Strophe.ElementType.FRAGMENT) {
+            el = Strophe.xmlGenerator().createDocumentFragment();
+            for (i = 0; i < elem.childNodes.length; i++) {
+                el.appendChild(Strophe.createHtml(elem.childNodes[i]));
+            }
+        } else if (elem.nodeType == Strophe.ElementType.TEXT) {
+            el = Strophe.xmlTextNode(elem.nodeValue);
         }
 
         return el;
@@ -786,6 +948,7 @@ Strophe = {
                 "='" + elem.attributes[i].value
                     .replace(/&/g, "&amp;")
                        .replace(/\'/g, "&apos;")
+                       .replace(/>/g, "&gt;")
                        .replace(/</g, "&lt;") + "'";
                }
         }
@@ -1042,9 +1205,35 @@ Strophe.Builder.prototype = {
         var child = Strophe.xmlTextNode(text);
         this.node.appendChild(child);
         return this;
+    },
+
+    /** Function: h
+     *  Replace current element contents with the HTML passed in.
+     *
+     *  This *does not* make the child the new current element
+     *
+     *  Parameters:
+     *    (String) html - The html to insert as contents of current element.
+     *
+     *  Returns:
+     *    The Strophe.Builder object.
+     */
+    h: function (html)
+    {
+        var fragment = document.createElement('body');
+
+        // force the browser to try and fix any invalid HTML tags
+        fragment.innerHTML = html;
+
+        // copy cleaned html into an xml dom
+        var xhtml = Strophe.createHtml(fragment);
+
+        while(xhtml.childNodes.length > 0) {
+            this.node.appendChild(xhtml.childNodes[0]);
+        }
+        return this;
     }
 };
-
 
 /** PrivateClass: Strophe.Handler
  *  _Private_ helper class for managing stanza handlers.
@@ -1083,7 +1272,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     this.type = type;
     this.id = id;
     this.options = options || {matchbare: false};
-
+    
     // default matchBare to false if undefined
     if (!this.options.matchBare) {
         this.options.matchBare = false;
@@ -1113,7 +1302,7 @@ Strophe.Handler.prototype = {
     {
         var nsMatch;
         var from = null;
-
+        
         if (this.options.matchBare) {
             from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
         } else {
@@ -1882,7 +2071,7 @@ Strophe.Connection.prototype = {
                 message: "Cannot queue non-DOMElement."
             };
         }
-
+        
         this._data.push(element);
     },
 
