@@ -97,7 +97,7 @@ $(document).ready(function () {
 
     test("Builder with XML attribute escaping test", function () {
         var text = "<b>";
-        var expected = "<presence to='&lt;b>' xmlns='jabber:client'/>";
+        var expected = "<presence to='&lt;b&gt;' xmlns='jabber:client'/>";
         var pres = $pres({to: text});
         equals(pres.toString(), expected, "< should be escaped");
 
@@ -160,9 +160,9 @@ $(document).ready(function () {
         equals(Strophe.serialize(element3), "<foo>a &gt; &apos;b&apos; &amp; &quot;b&quot; &lt; c</foo>", "should be serialized");
         // Escaping attributes
         var element4 = parser.parseFromString("<foo attr='&lt;a> &apos;b&apos;'>bar</foo>","text/xml").documentElement;
-        equals(Strophe.serialize(element4), "<foo attr='&lt;a> &apos;b&apos;'>bar</foo>", "should be serialized");
+        equals(Strophe.serialize(element4), "<foo attr='&lt;a&gt; &apos;b&apos;'>bar</foo>", "should be serialized");
         var element5 = parser.parseFromString("<foo attr=\"&lt;a> &quot;b&quot;\">bar</foo>","text/xml").documentElement;
-        equals(Strophe.serialize(element5), "<foo attr='&lt;a> \"b\"'>bar</foo>", "should be serialized");
+        equals(Strophe.serialize(element5), "<foo attr='&lt;a&gt; \"b\"'>bar</foo>", "should be serialized");
         // Empty elements
         var element6 = parser.parseFromString("<foo><empty></empty></foo>","text/xml").documentElement;
         equals(Strophe.serialize(element6), "<foo><empty/></foo>", "should be serialized");
