@@ -107,20 +107,77 @@ $(document).ready(function () {
         equals(pres.toString(), expected, "& should be escaped");
     });
 
+    test("c() accepts text and passes it to xmlElement", function () {
+        var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
+            .c("nick", {xmlns: "http://jabber.org/protocol/nick"}, "Darcy");
+        var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>";
+        equals(pres.toString(), expected, "'Darcy' should be a child of <presence>");
+    });
+
     module("XML");
 
     test("XML escaping test", function () {
         var text = "s & p";
-	var textNode = Strophe.xmlTextNode(text);
-	equals(Strophe.getText(textNode), "s &amp; p", "should be escaped");
-	var text0 = "s < & > p";
-	var textNode0 = Strophe.xmlTextNode(text0);
-	equals(Strophe.getText(textNode0), "s &lt; &amp; &gt; p", "should be escaped");
+        var textNode = Strophe.xmlTextNode(text);
+        equals(Strophe.getText(textNode), "s &amp; p", "should be escaped");
+        var text0 = "s < & > p";
+        var textNode0 = Strophe.xmlTextNode(text0);
+        equals(Strophe.getText(textNode0), "s &lt; &amp; &gt; p", "should be escaped");
+        var text1 = "s's or \"p\"";
+        var textNode1 = Strophe.xmlTextNode(text1);
+        equals(Strophe.getText(textNode1), "s&apos;s or &quot;p&quot;", "should be escaped");
+        var text2 = "<![CDATA[<foo>]]>";
+        var textNode2 = Strophe.xmlTextNode(text2);
+        equals(Strophe.getText(textNode2), "&lt;![CDATA[&lt;foo&gt;]]&gt;", "should be escaped");
+        var text3 = "<![CDATA[]]]]><![CDATA[>]]>";
+        var textNode3 = Strophe.xmlTextNode(text3);
+        equals(Strophe.getText(textNode3), "&lt;![CDATA[]]]]&gt;&lt;![CDATA[&gt;]]&gt;", "should be escaped");
+        var text4 = "&lt;foo&gt;<![CDATA[<foo>]]>";
+        var textNode4 = Strophe.xmlTextNode(text4);
+        equals(Strophe.getText(textNode4), "&amp;lt;foo&amp;gt;&lt;![CDATA[&lt;foo&gt;]]&gt;", "should be escaped");
     });
 
     test("XML element creation", function () {
         var elem = Strophe.xmlElement("message");
         equals(elem.tagName, "message", "Element name should be the same");
+    });
+
+    test("copyElement() double escape bug", function() {
+        var cloned = Strophe.copyElement(Strophe.xmlGenerator()
+                                         .createTextNode('<>&lt;&gt;'));
+        equals(cloned.nodeValue, '<>&lt;&gt;');
+    });
+    
+    test("XML serializing", function() {
+        var parser = new DOMParser();
+        // Attributes
+        var element1 = parser.parseFromString("<foo attr1='abc' attr2='edf'>bar</foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element1), "<foo attr1='abc' attr2='edf'>bar</foo>", "should be serialized");
+        var element2 = parser.parseFromString("<foo attr1=\"abc\" attr2=\"edf\">bar</foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element2), "<foo attr1='abc' attr2='edf'>bar</foo>", "should be serialized");
+        // Escaping values
+        var element3 = parser.parseFromString("<foo>a &gt; &apos;b&apos; &amp; &quot;b&quot; &lt; c</foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element3), "<foo>a &gt; &apos;b&apos; &amp; &quot;b&quot; &lt; c</foo>", "should be serialized");
+        // Escaping attributes
+        var element4 = parser.parseFromString("<foo attr='&lt;a> &apos;b&apos;'>bar</foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element4), "<foo attr='&lt;a> &apos;b&apos;'>bar</foo>", "should be serialized");
+        var element5 = parser.parseFromString("<foo attr=\"&lt;a> &quot;b&quot;\">bar</foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element5), "<foo attr='&lt;a> \"b\"'>bar</foo>", "should be serialized");
+        // Empty elements
+        var element6 = parser.parseFromString("<foo><empty></empty></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element6), "<foo><empty/></foo>", "should be serialized");
+        // Children
+        var element7 = parser.parseFromString("<foo><bar>a</bar><baz><wibble>b</wibble></baz></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element7), "<foo><bar>a</bar><baz><wibble>b</wibble></baz></foo>", "should be serialized");
+        var element8 = parser.parseFromString("<foo><bar>a</bar><baz>b<wibble>c</wibble>d</baz></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element8), "<foo><bar>a</bar><baz>b<wibble>c</wibble>d</baz></foo>", "should be serialized");
+        // CDATA
+        var element9 = parser.parseFromString("<foo><![CDATA[<foo>]]></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element9), "<foo><![CDATA[<foo>]]></foo>", "should be serialized");
+        var element10 = parser.parseFromString("<foo><![CDATA[]]]]><![CDATA[>]]></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element10), "<foo><![CDATA[]]]]><![CDATA[>]]></foo>", "should be serialized");
+        var element11 = parser.parseFromString("<foo>&lt;foo&gt;<![CDATA[<foo>]]></foo>","text/xml").documentElement;
+        equals(Strophe.serialize(element11), "<foo>&lt;foo&gt;<![CDATA[<foo>]]></foo>", "should be serialized");
     });
 
     module("Handler");
