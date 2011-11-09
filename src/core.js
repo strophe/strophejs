@@ -1375,7 +1375,7 @@ Strophe.Request.prototype = {
 /** Class: Strophe.Connection
  *  XMPP Connection manager.
  *
- *  Thie class is the main part of Strophe.  It manages a BOSH connection
+ *  This class is the main part of Strophe.  It manages a BOSH connection
  *  to an XMPP server and dispatches events to the user callbacks as
  *  data arrives.  It supports SASL PLAIN, SASL DIGEST-MD5, and legacy
  *  authentication.
@@ -1420,6 +1420,7 @@ Strophe.Connection = function (service)
     this.features = null;
 
     // SASL
+    this._sasl_data = [];
     this.do_session = false;
     this.do_bind = false;
 
@@ -2611,17 +2612,20 @@ Strophe.Connection.prototype = {
         var wait = bodyWrap.getAttribute('wait');
         if (wait) { this.wait = parseInt(wait, 10); }
 
-//
+        this._authentication.sasl_scram_sha1 = false;
         this._authentication.sasl_plain = false;
         this._authentication.sasl_digest_md5 = false;
         this._authentication.sasl_anonymous = false;
+
 
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         var i, mech, auth_str, hashed_auth_str;
         if (mechanisms.length > 0) {
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
-                if (mech == 'DIGEST-MD5') {
+                if (mech == 'SCRAM-SHA-1') {
+                    this._authentication.sasl_scram_sha1 = true;
+                } else if (mech == 'DIGEST-MD5') {
                     this._authentication.sasl_digest_md5 = true;
                 } else if (mech == 'PLAIN') {
                     this._authentication.sasl_plain = true;
@@ -2678,10 +2682,34 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.CONNFAIL,
                                       'x-strophe-bad-non-anon-jid');
             this.disconnect();
+        } else if (this._authentication.sasl_scram_sha1) {
+            var cnonce = MD5.hexdigest(Math.random() * 1234567890);
+
+            var auth_str = "n=" + Strophe.getNodeFromJid(this.jid);
+            auth_str += ",r=";
+            auth_str += cnonce;
+
+            this._sasl_data["cnonce"] = cnonce;
+            this._sasl_data["client-first-message-bare"] = auth_str;
+
+            auth_str = "n,," + auth_str;
+
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
+            this._sasl_challenge_handler = this._addSysHandler(
+                this._sasl_scram_challenge_cb.bind(this), null,
+                "challenge", null, null);
+            this._sasl_failure_handler = this._addSysHandler(
+                this._sasl_failure_cb.bind(this), null,
+                "failure", null, null);
+
+            this.send($build("auth", {
+                xmlns: Strophe.NS.SASL,
+                mechanism: "SCRAM-SHA-1"
+            }).t(Base64.encode(auth_str)).tree());
         } else if (this._authentication.sasl_digest_md5) {
             this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._sasl_challenge_handler = this._addSysHandler(
-                this._sasl_challenge1_cb.bind(this), null,
+                this._sasl_digest_challenge1_cb.bind(this), null,
                 "challenge", null, null);
             this._sasl_failure_handler = this._addSysHandler(
                 this._sasl_failure_cb.bind(this), null,
@@ -2728,7 +2756,7 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /** PrivateFunction: _sasl_challenge1_cb
+    /** PrivateFunction: _sasl_digest_challenge1_cb
      *  _Private_ handler for DIGEST-MD5 SASL authentication.
      *
      *  Parameters:
@@ -2737,7 +2765,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_challenge1_cb: function (elem)
+    _sasl_digest_challenge1_cb: function (elem)
     {
         var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
@@ -2799,7 +2827,7 @@ Strophe.Connection.prototype = {
         responseText += 'charset="utf-8"';
 
         this._sasl_challenge_handler = this._addSysHandler(
-            this._sasl_challenge2_cb.bind(this), null,
+            this._sasl_digest_challenge2_cb.bind(this), null,
             "challenge", null, null);
         this._sasl_success_handler = this._addSysHandler(
             this._sasl_success_cb.bind(this), null,
@@ -2831,7 +2859,7 @@ Strophe.Connection.prototype = {
     },
 
 
-    /** PrivateFunction: _sasl_challenge2_cb
+    /** PrivateFunction: _sasl_digest_challenge2_cb
      *  _Private_ handler for second step of DIGEST-MD5 SASL authentication.
      *
      *  Parameters:
@@ -2840,7 +2868,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_challenge2_cb: function (elem)
+    _sasl_digest_challenge2_cb: function (elem)
     {
         // remove unneeded handlers
         this.deleteHandler(this._sasl_success_handler);
@@ -2853,6 +2881,91 @@ Strophe.Connection.prototype = {
             this._sasl_failure_cb.bind(this), null,
             "failure", null, null);
         this.send($build('response', {xmlns: Strophe.NS.SASL}).tree());
+        return false;
+    },
+
+    /** PrivateFunction: _sasl_scram_challenge_cb
+     *  _Private_ handler for SCRAM-SHA-1 SASL authentication.
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The challenge stanza.
+     *
+     *  Returns:
+     *    false to remove the handler.
+     */
+    _sasl_scram_challenge_cb: function (elem)
+    {
+        var nonce, salt, iter, Hi, U, U_old;
+        var clientKey, serverKey, clientSignature;
+        var responseText = "c=biws,";
+        var challenge = Base64.decode(Strophe.getText(elem));
+        var authMessage = this._sasl_data["client-first-message-bare"] + "," +
+            challenge + ",";
+        var cnonce = this._sasl_data["cnonce"]
+        var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
+
+        // remove unneeded handlers
+        this.deleteHandler(this._sasl_failure_handler);
+
+        while (challenge.match(attribMatch)) {
+            matches = challenge.match(attribMatch);
+            challenge = challenge.replace(matches[0], "");
+            switch (matches[1]) {
+            case "r":
+                nonce = matches[2];
+                break;
+            case "s":
+                salt = matches[2];
+                break;
+            case "i":
+                iter = matches[2];
+                break;
+            }
+        }
+
+        if (!(nonce.substr(0, cnonce.length) === cnonce)) {
+            this._sasl_data = [];
+            return this._sasl_failure_cb(null);
+        }
+
+        responseText += "r=" + nonce;
+        authMessage += responseText;
+
+        salt = Base64.decode(salt);
+        salt += "\0\0\0\1";
+
+        Hi = U_old = core_hmac_sha1(this.pass, salt);
+        for (i = 1; i < iter; i++) {
+            U = core_hmac_sha1(this.pass, binb2str(U_old));
+            for (k = 0; k < 5; k++) {
+                Hi[k] ^= U[k];
+            }
+            U_old = U;
+        }
+        Hi = binb2str(Hi);
+
+        clientKey = core_hmac_sha1(Hi, "Client Key");
+        serverKey = str_hmac_sha1(Hi, "Server Key");
+        clientSignature = core_hmac_sha1(str_sha1(binb2str(clientKey)), authMessage);
+        this._sasl_data["server-signature"] = b64_hmac_sha1(serverKey, authMessage);
+
+        for (k = 0; k < 5; k++) {
+            clientKey[k] ^= clientSignature[k];
+        }
+
+        responseText += ",p=" + Base64.encode(binb2str(clientKey));
+
+        this._sasl_success_handler = this._addSysHandler(
+            this._sasl_success_cb.bind(this), null,
+            "success", null, null);
+        this._sasl_failure_handler = this._addSysHandler(
+            this._sasl_failure_cb.bind(this), null,
+            "failure", null, null);
+
+        this.send($build('response', {
+            xmlns: Strophe.NS.SASL
+        }).t(Base64.encode(responseText)).tree());
+
         return false;
     },
 
@@ -2906,7 +3019,29 @@ Strophe.Connection.prototype = {
      */
     _sasl_success_cb: function (elem)
     {
-        Strophe.info("SASL authentication succeeded.");
+        if (this._sasl_data["server-signature"]) {
+            var serverSignature;
+            var success = Base64.decode(Strophe.getText(elem));
+            var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
+            matches = success.match(attribMatch);
+            if (matches[1] == "v") {
+                serverSignature = matches[2];
+            }
+	    if (serverSignature != this._sasl_data["server-signature"]) {
+		// remove old handlers
+		this.deleteHandler(this._sasl_failure_handler);
+		this._sasl_failure_handler = null;
+		if (this._sasl_challenge_handler) {
+			this.deleteHandler(this._sasl_challenge_handler);
+			this._sasl_challenge_handler = null;
+		}
+
+		this._sasl_data = [];
+		return this._sasl_failure_cb(null);
+	    }
+	}
+
+	Strophe.info("SASL authentication succeeded.");
 
         // remove old handlers
         this.deleteHandler(this._sasl_failure_handler);
