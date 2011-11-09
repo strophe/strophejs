@@ -5,11 +5,10 @@
 *** Decide on version number
 *** Update CHANGELOG.txt
 *** Tag code with version (git tag -s release-VERSION head)
-  * Push repo and tags
+*** Push repo and tags (git push && git push --tags)
 *** Create version.txt with version
 *** Run make release
-*** Upload zip file and tarball to server (/strophe/strophejs/releases/)
-*** Upload documentation to server (/strophe/strophejs/doc/VERSION/)
-*** Update wiki
+*** Upload zip file and tarball to GitHub
+*** Add documentation to strophe.im repo
+*** Update website
 *** Tell the world
-    
