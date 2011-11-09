@@ -1,0 +1,16 @@
+{
+  "name"          : "Strophe.js",
+  "description"   : "Strophe.js is an XMPP library for JavaScript",
+  "version"       : "1.0.2",
+  "homepage"      : "http://strophe.im/strophejs",
+  "repository"    : { "type": "git", "url": "git://github.com/metajack/strophejs.git" },
+  "keywords"      : ["xmpp", "message", "browser"],
+  "author"        : "",
+  "contributors"  : [],
+  "licenses"      : ["MIT"],
+  "dependencies"  : [],
+  "main"          : "./strophe.js",
+  "scripts"       : { "install": "make", "update": "make" },
+  "directories"   : { "lib": "./src", "test": "./tests" },
+  "engines"       : { "browser": "*" }
+}
