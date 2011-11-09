@@ -514,7 +514,7 @@ Strophe = {
             }
         }
 
-        return str;
+        return Strophe.xmlescape(str);
     },
 
     /** Function: copyElement
