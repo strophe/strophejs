@@ -1,6 +1,6 @@
 Strophe.js is a JavaScript library for speaking XMPP via BOSH (XEP 124
 and 206).  It is licensed under the MIT license, except for the files
-base64.js and md5.js, which are licensed as public domain and
+sha1.js, base64.js and md5.js, which are licensed as public domain and
 BSD (see these files for details).
 
 It has been tested on Firefox 1.5, 2.x, and 3.x, IE 6, 7, and 8, Safari, Mobile
