@@ -1784,16 +1784,8 @@ Strophe.Connection.prototype = {
      *    (Integer) hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-     *    (Boolean) authentication - The optional trigger for authentication
-     *      process. When set to false a successful connection request will
-     *      skip the authention process. The authentication process can
-     *      triggered manually by the 'authenticate' method.
-     *    (Function) _connect_cb - low level (xmpp) connect callback function.
-     *      Useful for plugins with their own xmpp connect callback (when their)
-     *      want to do something special).
      */
-    connect: function (jid, pass, callback, wait, hold,
-                       authentication, _connect_cb)
+    connect: function (jid, pass, callback, wait, hold)
     {
         this.jid = jid;
         this.pass = pass;
@@ -1805,7 +1797,6 @@ Strophe.Connection.prototype = {
 
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
-        this.do_authentication = authentication;
 
         // parse jid for domain and resource
         this.domain = this.domain || Strophe.getDomainFromJid(this.jid);
@@ -1824,7 +1815,9 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        _connect_cb = _connect_cb || this._connect_cb;
+        var _connect_cb = this._connect_callback || this._connect_cb;
+        this._connect_callback = null;
+
         this._requests.push(
             new Strophe.Request(body.tree(),
                                 this._onRequestStateChange.bind(
