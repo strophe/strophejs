@@ -2838,7 +2838,7 @@ Strophe.Connection.prototype = {
                 bodyWrap.getElementsByTagName("auth").length > 0;
 
             found_authentication =
-                this._authentication.legacy_auth &&
+                this._authentication.legacy_auth ||
                 missmatchedmechs < mechanisms.length;
         }
         if (!found_authentication) {
