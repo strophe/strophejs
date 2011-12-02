@@ -1363,7 +1363,7 @@ Strophe.Handler.prototype = {
                               e.fileName + ":" + e.lineNumber + " - " +
                               e.name + ": " + e.message);
             } else {
-                Strophe.fatal("error: " + this.handler);
+                Strophe.fatal("error: " + e.message + "\n" + e.stack);
             }
 
             throw e;
@@ -2808,11 +2808,19 @@ Strophe.Connection.prototype = {
         this._authentication.sasl_plain = false;
         this._authentication.sasl_digest_md5 = false;
         this._authentication.sasl_anonymous = false;
+        this._authentication.legacy_auth = false;
 
 
+        // Check for the stream:features tag
+        var hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0;
+        if (!hasFeatures) {
+            hasFeatures = bodyWrap.getElementsByTagName("features").length > 0;
+        }
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
-        var i, mech, auth_str, hashed_auth_str;
-        if (mechanisms.length > 0) {
+        var i, mech, auth_str, hashed_auth_str,
+            found_authentication = false;
+        if (hasFeatures && mechanisms.length > 0) {
+            var missmatchedmechs = 0;
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
                 if (mech == 'SCRAM-SHA-1') {
@@ -2823,9 +2831,17 @@ Strophe.Connection.prototype = {
                     this._authentication.sasl_plain = true;
                 } else if (mech == 'ANONYMOUS') {
                     this._authentication.sasl_anonymous = true;
-                }
+                } else missmatchedmechs++;
             }
-        } else {
+
+            this._authentication.legacy_auth =
+                bodyWrap.getElementsByTagName("auth").length > 0;
+
+            found_authentication =
+                this._authentication.legacy_auth ||
+                missmatchedmechs < mechanisms.length;
+        }
+        if (!found_authentication) {
             _callback = _callback || this._connect_cb;
             // we didn't get stream:features yet, so we need wait for it
             // by sending a blank poll request
