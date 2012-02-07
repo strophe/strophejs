@@ -408,7 +408,7 @@ Strophe = {
         // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be 
 		// less than 10 in the case of IE9 and below.
         if (document.implementation.createDocument === undefined || 
-			document.implementation.createDocument && document.documentMode && document.documentMode < 10)) {
+			document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
             doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
