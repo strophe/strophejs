@@ -1608,7 +1608,6 @@ Strophe.Connection = function (service)
     this.rid = Math.floor(Math.random() * 4294967295);
     /* The current session ID. */
     this.sid = null;
-    this.streamId = null;
     /* stream:features */
     this.features = null;
 
@@ -1682,7 +1681,6 @@ Strophe.Connection.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
 
         this.sid = null;
-        this.streamId = null;
 
         // SASL
         this.do_session = false;
@@ -2596,7 +2594,6 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.disconnecting = false;
         this.sid = null;
-        this.streamId = null;
         this.rid = Math.floor(Math.random() * 4294967295);
 
         // tell the parent we disconnected
