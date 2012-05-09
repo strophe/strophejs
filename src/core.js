@@ -2841,7 +2841,11 @@ Strophe.Connection.prototype = {
         Strophe.info("_connect_cb was called");
 
         this.connected = true;
-        var bodyWrap = req.getResponse();
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            var bodyWrap = req;
+        } else {
+            var bodyWrap = req.getResponse();
+        }
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
@@ -2851,6 +2855,8 @@ Strophe.Connection.prototype = {
             this.rawInput(Strophe.serialize(bodyWrap));
         }
 
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+        } else {
             var typ = bodyWrap.getAttribute("type");
             var cond, conflict;
             if (typ !== null && typ == "terminate") {
@@ -2882,6 +2888,8 @@ Strophe.Connection.prototype = {
             if (hold) { this.hold = parseInt(hold, 10); }
             var wait = bodyWrap.getAttribute('wait');
             if (wait) { this.wait = parseInt(wait, 10); }
+        }
+
 
         this._authentication.sasl_scram_sha1 = false;
         this._authentication.sasl_plain = false;
