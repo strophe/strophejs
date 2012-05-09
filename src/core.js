@@ -3657,6 +3657,49 @@ Strophe.Connection.prototype = {
 
         var body, time_elapsed;
 
+
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            this._websocket_onIdle_helper();
+        } else {
+            this._bosh_onIdle_helper();
+        }
+
+        clearTimeout(this._idleTimeout);
+
+        // reactivate the timer only if connected
+        if (this.connected) {
+            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        }
+    },
+
+    /**
+     *
+     */
+    _websocket_onIdle_helper: function () {
+        if (this._data.length > 0 && !this.paused) {
+            for (i = 0; i < this._data.length; i++) {
+                if (this._data[i] !== null) {
+                    if (this._data[i] === "restart") {
+                        var restart = this._buildStream();
+                        this.xmlOutput(restart);
+                        this.rawOutput(Strophe.serialize(restart));
+                        this.socket.send(Strophe.serialize(restart));
+                    } else {
+                        var stanza = this._data[i];
+                        this.xmlOutput(stanza);
+                        this.rawOutput(Strophe.serialize(stanza));
+                        this.socket.send(Strophe.serialize(stanza));
+                    }
+                }
+            }
+            this._data = [];
+        }
+    },
+
+    /**
+     *
+     */
+    _bosh_onIdle_helper: function () {
         // if no requests are in progress, poll
         if (this.authenticated && this._requests.length === 0 &&
             this._data.length === 0 && !this.disconnecting) {
@@ -3708,13 +3751,6 @@ Strophe.Connection.prototype = {
                              " seconds since last activity");
                 this._throttledRequestHandler();
             }
-        }
-
-        clearTimeout(this._idleTimeout);
-
-        // reactivate the timer only if connected
-        if (this.connected) {
-            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
         }
     }
 };
