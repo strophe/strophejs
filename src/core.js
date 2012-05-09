@@ -1609,6 +1609,11 @@ Strophe.Connection = function (service)
 {
     /* The path to the httpbind service. */
     this.service = service;
+    if (service.indexOf("ws") === 0) {
+        this.protocol = Strophe.ProtocolType.WEBSOCKET;
+    } else {
+        this.protocol = Strophe.ProtocolType.BOSH;
+    }
     /* The connected JID. */
     this.jid = "";
     /* the JIDs domain */
