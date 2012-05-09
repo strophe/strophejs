@@ -2008,9 +2008,13 @@ Strophe.Connection.prototype = {
             this._queueData(elem);
         }
 
-        this._throttledRequestHandler();
-        clearTimeout(this._idleTimeout);
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            this.flush();
+        } else {
+            this._throttledRequestHandler();
+            clearTimeout(this._idleTimeout);
+            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        }
     },
 
     /** Function: flush
