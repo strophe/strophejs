@@ -3640,6 +3640,74 @@ Strophe.Connection.prototype = {
     }
 };
 
+Strophe.Websocket = {
+    /** PrivateFunction: _onError
+     * _Private_ function to handle websockets errors.
+     *
+     * Parameters:
+     * () error - The websocket error.
+     */
+    _onError: function(error) {
+        Strophe.log("Websocket error " + error);
+    },
+
+    /** PrivateFunction: _onOpen
+     * _Private_ function to handle websockets connections.
+     *
+     */
+    _onOpen: function() {
+        Strophe.log("Websocket open");
+        var start = this._buildStream();
+        this.xmlOutput(start);
+        var startString = Strophe.serialize(start);
+        this.rawOutput(startString);
+        this.socket.send(startString);
+    },
+
+    /** PrivateFunction: _onClose
+     * _Private_ function to handle websockets closing.
+     *
+     */
+    _onClose: function(event) {
+        Strophe.log("Websocket disconnected");
+        this._doDisconnect();
+    },
+
+    /** PrivateFunction: _onMessage
+     * _Private_ function to handle websockets messages.
+     *
+     * This function parses each of the messages as if they are full documents. [TODO : We may actually want to use a SAX Push parser].
+     *
+     * Since all XMPP traffic starts with "<stream:stream version='1.0' xml:lang='en' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='3697395463' from='SERVER'>"
+     * The first stanza will always fail to be parsed...
+     * Addtionnaly, the seconds stanza will always be a <stream:features> with the stream NS defined in the previous stanza... so we need to 'force' the inclusion of the NS in this stanza!
+     *
+     * Parameters:
+     * (string) message - The websocket message.
+     */
+    _onMessage: function(message) {
+        parser = new DOMParser();
+        elem = parser.parseFromString(string, "text/xml").documentElement;
+
+        this._dataRecv(elem);
+    },
+
+    _connect_cb: function(message) {
+        string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"); // Ugly hack todeal with the problem of stream ns undefined.
+
+        parser = new DOMParser();
+        elem = parser.parseFromString(string, "text/xml").documentElement;
+
+        if (elem.nodeName != "stream:stream") {
+            this.socket.onmessage = Strophe.Websocket._onMessage.bind(this);
+            this._connect_cb(elem);
+        } else {
+            this.xmlInput(elem);
+            this.rawInput(Strophe.serialize(elem));
+        }
+    }
+};
+
 if (callback) {
     callback(Strophe, $build, $msg, $iq, $pres);
 }
