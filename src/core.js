@@ -1613,15 +1613,12 @@ Strophe.Connection = function (service)
         this.protocol = Strophe.ProtocolType.WEBSOCKET;
     } else {
         this.protocol = Strophe.ProtocolType.BOSH;
+        Strophe.bosh_constructor_helper.bind(this)();
     }
     /* The connected JID. */
     this.jid = "";
     /* the JIDs domain */
     this.domain = null;
-    /* request id for body tags */
-    this.rid = Math.floor(Math.random() * 4294967295);
-    /* The current session ID. */
-    this.sid = null;
     /* stream:features */
     this.features = null;
 
@@ -1651,13 +1648,7 @@ Strophe.Connection = function (service)
 
     this.paused = false;
 
-    // default BOSH values
-    this.hold = 1;
-    this.wait = 60;
-    this.window = 5;
-
     this._data = [];
-    this._requests = [];
     this._uniqueId = Math.round(Math.random() * 10000);
 
     this._sasl_success_handler = null;
@@ -1681,6 +1672,20 @@ Strophe.Connection = function (service)
 	    this[k].init(this);
         }
     }
+};
+
+Strophe.bosh_constructor_helper = function() {
+    /* request id for body tags */
+    this.rid = Math.floor(Math.random() * 4294967295);
+    /* The current session ID. */
+    this.sid = null;
+
+    // default BOSH values
+    this.hold = 1;
+    this.wait = 60;
+    this.window = 5;
+
+    this._requests = [];
 };
 
 Strophe.Connection.prototype = {
