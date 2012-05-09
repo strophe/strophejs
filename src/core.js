@@ -2702,11 +2702,16 @@ Strophe.Connection.prototype = {
      */
     _dataRecv: function (req)
     {
-        try {
-            var elem = req.getResponse();
-        } catch (e) {
-            if (e != "parsererror") { throw e; }
-            this.disconnect("strophe-parsererror");
+        Strophe.info("_dataRecv called");
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            var elem = req;
+        } else {
+            try {
+                var elem = req.getResponse();
+            } catch (e) {
+                if (e != "parsererror") { throw e; }
+                this.disconnect("strophe-parsererror");
+            }
         }
         if (elem === null) { return; }
 
