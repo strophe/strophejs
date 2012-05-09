@@ -1817,11 +1817,32 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.errors = 0;
 
-        this.wait = wait || this.wait;
-        this.hold = hold || this.hold;
-
         // parse jid for domain and resource
         this.domain = this.domain || Strophe.getDomainFromJid(this.jid);
+
+        this._changeConnectStatus(Strophe.Status.CONNECTING, null);
+
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            this.websocket_connect_helper();
+        } else {
+            this.bosh_connect_helper();
+        }
+    },
+
+    websocket_connect_helper: function () {
+        if(!this.socket) {
+            this.socket = new WebSocket(this.service, "xmpp");
+            this.socket.onopen = Strophe.Websocket._onOpen.bind(this);
+            this.socket.onerror = Strophe.Websocket._onError.bind(this);
+            this.socket.onclose = Strophe.Websocket._onClose.bind(this);
+            this.socket.onmessage = Strophe.Websocket._connect_cb.bind(this);
+        }
+    },
+
+    bosh_connect_helper: function (wait, hold, route)
+    {
+        this.wait = wait || this.wait;
+        this.hold = hold || this.hold;
 
         // build the body tag
         var body = this._buildBody().attrs({
@@ -1835,13 +1856,11 @@ Strophe.Connection.prototype = {
             "xmlns:xmpp": Strophe.NS.BOSH
         });
 
-		if(route){
-			body.attrs({
-				route: route
-			});
-		}
-
-        this._changeConnectStatus(Strophe.Status.CONNECTING, null);
+        if(route){
+            body.attrs({
+                route: route
+            });
+        }
 
         var _connect_cb = this._connect_cb;
 
