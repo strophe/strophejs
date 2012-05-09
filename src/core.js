@@ -2682,8 +2682,11 @@ Strophe.Connection.prototype = {
         Strophe.info("_doDisconnect was called");
         this.authenticated = false;
         this.disconnecting = false;
+        //XXX BOSH (split later)
         this.sid = null;
         this.rid = Math.floor(Math.random() * 4294967295);
+        //XXX WEBSOCKET
+        this.socket = null;
 
         // tell the parent we disconnected
         if (this.connected) {
