@@ -2257,10 +2257,17 @@ Strophe.Connection.prototype = {
 
         Strophe.info("Disconnect was called because: " + reason);
         if (this.connected) {
+            this.disconnecting = true;
+            if (this.authenticated) {
+                var pres = $pres({
+                    xmlns: Strophe.NS.CLIENT,
+                    type: 'unavailable'
+                });
+            }
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
-            this._sendTerminate();
+            this._sendTerminate(pres);
         }
     },
 
@@ -2772,19 +2779,14 @@ Strophe.Connection.prototype = {
      *  the BOSH server a terminate body and includes an unavailable
      *  presence if authentication has completed.
      */
-    _sendTerminate: function ()
+    _sendTerminate: function (pres)
     {
         Strophe.info("_sendTerminate was called");
         var body = this._buildBody().attrs({type: "terminate"});
 
-        if (this.authenticated) {
-            body.c('presence', {
-                xmlns: Strophe.NS.CLIENT,
-                type: 'unavailable'
-            });
+        if (pres) {
+            body.cnode(pres);
         }
-
-        this.disconnecting = true;
 
         var req = new Strophe.Request(body.tree(),
                                       this._onRequestStateChange.bind(
