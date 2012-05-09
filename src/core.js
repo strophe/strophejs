@@ -2124,8 +2124,13 @@ Strophe.Connection.prototype = {
     {
         this._data.push("restart");
 
-        this._throttledRequestHandler();
-        clearTimeout(this._idleTimeout);
+        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+            clearTimeout(this._idleTimeout);
+            this._onIdle.bind(this)();
+        } else {
+            this._throttledRequestHandler();
+            clearTimeout(this._idleTimeout);
+        }
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
 
