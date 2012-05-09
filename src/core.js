@@ -2267,7 +2267,16 @@ Strophe.Connection.prototype = {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
-            this._sendTerminate(pres);
+            if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
+                this.send(pres);
+                var close = '</stream:stream>'
+                this.connection.xmlOutput(close);
+                this.connection.rawOutput(close);
+                this.socket.send(close)
+                this.socket.close(); // Close the socket
+            } else {
+                this._sendTerminate(pres);
+            }
         }
     },
 
