@@ -1611,9 +1611,10 @@ Strophe.Connection = function (service)
     this.service = service;
     if (service.indexOf("ws") === 0) {
         this.protocol = Strophe.ProtocolType.WEBSOCKET;
+        this.po = new Strophe.Websocket(this);
     } else {
         this.protocol = Strophe.ProtocolType.BOSH;
-        Strophe.bosh_constructor_helper.bind(this)();
+        this.po = new Strophe.Bosh(this);
     }
     /* The connected JID. */
     this.jid = "";
@@ -1672,20 +1673,6 @@ Strophe.Connection = function (service)
 	    this[k].init(this);
         }
     }
-};
-
-Strophe.bosh_constructor_helper = function() {
-    /* request id for body tags */
-    this.rid = Math.floor(Math.random() * 4294967295);
-    /* The current session ID. */
-    this.sid = null;
-
-    // default BOSH values
-    this.hold = 1;
-    this.wait = 60;
-    this.window = 5;
-
-    this._requests = [];
 };
 
 Strophe.Connection.prototype = {
@@ -1837,39 +1824,6 @@ Strophe.Connection.prototype = {
             this.socket.onclose = Strophe.Websocket._onClose.bind(this);
             this.socket.onmessage = Strophe.Websocket._connect_cb.bind(this);
         }
-    },
-
-    bosh_connect_helper: function (wait, hold, route)
-    {
-        this.wait = wait || this.wait;
-        this.hold = hold || this.hold;
-
-        // build the body tag
-        var body = this._buildBody().attrs({
-            to: this.domain,
-            "xml:lang": "en",
-            wait: this.wait,
-            hold: this.hold,
-            content: "text/xml; charset=utf-8",
-            ver: "1.6",
-            "xmpp:version": "1.0",
-            "xmlns:xmpp": Strophe.NS.BOSH
-        });
-
-        if(route){
-            body.attrs({
-                route: route
-            });
-        }
-
-        var _connect_cb = this._connect_cb;
-
-        this._requests.push(
-            new Strophe.Request(body.tree(),
-                                this._onRequestStateChange.bind(
-                                    this, _connect_cb.bind(this)),
-                                body.tree().getAttribute("rid")));
-        this._throttledRequestHandler();
     },
 
     /** Function: attach
@@ -3756,6 +3710,60 @@ Strophe.Connection.prototype = {
             }
         }
     }
+};
+
+Strophe.Bosh = function(connection) {
+    this._c = connection;
+    /* request id for body tags */
+    this.rid = Math.floor(Math.random() * 4294967295);
+    /* The current session ID. */
+    this.sid = null;
+
+    // default BOSH values
+    this.hold = 1;
+    this.wait = 60;
+    this.window = 5;
+
+    this._requests = [];
+}
+
+Strophe.Bosh.prototype = {
+    connect: function (wait, hold, route)
+    {
+        this.wait = wait || this.wait;
+        this.hold = hold || this.hold;
+
+        // build the body tag
+        var body = this._buildBody().attrs({
+            to: this.domain,
+            "xml:lang": "en",
+            wait: this.wait,
+            hold: this.hold,
+            content: "text/xml; charset=utf-8",
+            ver: "1.6",
+            "xmpp:version": "1.0",
+            "xmlns:xmpp": Strophe.NS.BOSH
+        });
+
+        if(route){
+            body.attrs({
+                route: route
+            });
+        }
+
+        var _connect_cb = this._connect_cb;
+
+        this._requests.push(
+            new Strophe.Request(body.tree(),
+                                this._onRequestStateChange.bind(
+                                    this, _connect_cb.bind(this)),
+                                body.tree().getAttribute("rid")));
+        this._throttledRequestHandler();
+    }
+};
+
+Strophe.Websocket = function(connection) {
+    this._c = connection;
 };
 
 Strophe.Websocket = {
