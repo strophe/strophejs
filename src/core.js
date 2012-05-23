@@ -2271,155 +2271,6 @@ Strophe.Connection.prototype = {
         }).cnode(stanza);
     },
 
-    /** PrivateFunction: _removeRequest
-     *  _Private_ function to remove a request from the queue.
-     *
-     *  Parameters:
-     *    (Strophe.Request) req - The request to remove.
-     */
-    _removeRequest: function (req)
-    {
-        Strophe.debug("removing request");
-
-        var i;
-        for (i = this._requests.length - 1; i >= 0; i--) {
-            if (req == this._requests[i]) {
-                this._requests.splice(i, 1);
-            }
-        }
-
-        // IE6 fails on setting to null, so set to empty function
-        req.xhr.onreadystatechange = function () {};
-
-        this._throttledRequestHandler();
-    },
-
-    /** PrivateFunction: _restartRequest
-     *  _Private_ function to restart a request that is presumed dead.
-     *
-     *  Parameters:
-     *    (Integer) i - The index of the request in the queue.
-     */
-    _restartRequest: function (i)
-    {
-        var req = this._requests[i];
-        if (req.dead === null) {
-            req.dead = new Date();
-        }
-
-        this._processRequest(i);
-    },
-
-    /** PrivateFunction: _processRequest
-     *  _Private_ function to process a request in the queue.
-     *
-     *  This function takes requests off the queue and sends them and
-     *  restarts dead requests.
-     *
-     *  Parameters:
-     *    (Integer) i - The index of the request in the queue.
-     */
-    _processRequest: function (i)
-    {
-        var req = this._requests[i];
-        var reqStatus = -1;
-
-        try {
-            if (req.xhr.readyState == 4) {
-                reqStatus = req.xhr.status;
-            }
-        } catch (e) {
-            Strophe.error("caught an error in _requests[" + i +
-                          "], reqStatus: " + reqStatus);
-        }
-
-        if (typeof(reqStatus) == "undefined") {
-            reqStatus = -1;
-        }
-
-        // make sure we limit the number of retries
-        if (req.sends > this.maxRetries) {
-            this._onDisconnectTimeout();
-            return;
-        }
-
-        var time_elapsed = req.age();
-        var primaryTimeout = (!isNaN(time_elapsed) &&
-                              time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
-        var secondaryTimeout = (req.dead !== null &&
-                                req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
-        var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
-                                               (reqStatus < 1 ||
-                                                reqStatus >= 500));
-        if (primaryTimeout || secondaryTimeout ||
-            requestCompletedWithServerError) {
-            if (secondaryTimeout) {
-                Strophe.error("Request " +
-                              this._requests[i].id +
-                              " timed out (secondary), restarting");
-            }
-            req.abort = true;
-            req.xhr.abort();
-            // setting to null fails on IE6, so set to empty function
-            req.xhr.onreadystatechange = function () {};
-            this._requests[i] = new Strophe.Request(req.xmlData,
-                                                    req.origFunc,
-                                                    req.rid,
-                                                    req.sends);
-            req = this._requests[i];
-        }
-
-        if (req.xhr.readyState === 0) {
-            Strophe.debug("request id " + req.id +
-                          "." + req.sends + " posting");
-
-            try {
-                req.xhr.open("POST", this.service, true);
-            } catch (e2) {
-                Strophe.error("XHR open failed.");
-                if (!this.connected) {
-                    this._changeConnectStatus(Strophe.Status.CONNFAIL,
-                                              "bad-service");
-                }
-                this.disconnect();
-                return;
-            }
-
-            // Fires the XHR request -- may be invoked immediately
-            // or on a gradually expanding retry window for reconnects
-            var sendFunc = function () {
-                req.date = new Date();
-                req.xhr.send(req.data);
-            };
-
-            // Implement progressive backoff for reconnects --
-            // First retry (send == 1) should also be instantaneous
-            if (req.sends > 1) {
-                // Using a cube of the retry number creates a nicely
-                // expanding retry window
-                var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
-                                       Math.pow(req.sends, 3)) * 1000;
-                setTimeout(sendFunc, backoff);
-            } else {
-                sendFunc();
-            }
-
-            req.sends++;
-
-            if (this.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
-                this.xmlOutput(req.xmlData);
-            }
-            if (this.rawOutput !== Strophe.Connection.prototype.rawOutput) {
-                this.rawOutput(req.data);
-            }
-        } else {
-            Strophe.debug("_processRequest: " +
-                          (i === 0 ? "first" : "second") +
-                          " request has readyState of " +
-                          req.xhr.readyState);
-        }
-    },
-
     /** PrivateFunction: _throttledRequestHandler
      *  _Private_ function to throttle requests to the connection window.
      *
@@ -3690,6 +3541,155 @@ Strophe.Bosh.prototype = {
         }
     },
 
+    /** PrivateFunction: _removeRequest
+     *  _Private_ function to remove a request from the queue.
+     *
+     *  Parameters:
+     *    (Strophe.Request) req - The request to remove.
+     */
+    _removeRequest: function (req)
+    {
+        Strophe.debug("removing request");
+
+        var i;
+        for (i = this._requests.length - 1; i >= 0; i--) {
+            if (req == this._requests[i]) {
+                this._requests.splice(i, 1);
+            }
+        }
+
+        // IE6 fails on setting to null, so set to empty function
+        req.xhr.onreadystatechange = function () {};
+
+        this._throttledRequestHandler();
+    },
+
+    /** PrivateFunction: _restartRequest
+     *  _Private_ function to restart a request that is presumed dead.
+     *
+     *  Parameters:
+     *    (Integer) i - The index of the request in the queue.
+     */
+    _restartRequest: function (i)
+    {
+        var req = this._requests[i];
+        if (req.dead === null) {
+            req.dead = new Date();
+        }
+
+        this._processRequest(i);
+    },
+
+    /** PrivateFunction: _processRequest
+     *  _Private_ function to process a request in the queue.
+     *
+     *  This function takes requests off the queue and sends them and
+     *  restarts dead requests.
+     *
+     *  Parameters:
+     *    (Integer) i - The index of the request in the queue.
+     */
+    _processRequest: function (i)
+    {
+        var req = this._requests[i];
+        var reqStatus = -1;
+
+        try {
+            if (req.xhr.readyState == 4) {
+                reqStatus = req.xhr.status;
+            }
+        } catch (e) {
+            Strophe.error("caught an error in _requests[" + i +
+                          "], reqStatus: " + reqStatus);
+        }
+
+        if (typeof(reqStatus) == "undefined") {
+            reqStatus = -1;
+        }
+
+        // make sure we limit the number of retries
+        if (req.sends > this.maxRetries) {
+            this._onDisconnectTimeout();
+            return;
+        }
+
+        var time_elapsed = req.age();
+        var primaryTimeout = (!isNaN(time_elapsed) &&
+                              time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
+        var secondaryTimeout = (req.dead !== null &&
+                                req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
+        var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
+                                               (reqStatus < 1 ||
+                                                reqStatus >= 500));
+        if (primaryTimeout || secondaryTimeout ||
+            requestCompletedWithServerError) {
+            if (secondaryTimeout) {
+                Strophe.error("Request " +
+                              this._requests[i].id +
+                              " timed out (secondary), restarting");
+            }
+            req.abort = true;
+            req.xhr.abort();
+            // setting to null fails on IE6, so set to empty function
+            req.xhr.onreadystatechange = function () {};
+            this._requests[i] = new Strophe.Request(req.xmlData,
+                                                    req.origFunc,
+                                                    req.rid,
+                                                    req.sends);
+            req = this._requests[i];
+        }
+
+        if (req.xhr.readyState === 0) {
+            Strophe.debug("request id " + req.id +
+                          "." + req.sends + " posting");
+
+            try {
+                req.xhr.open("POST", this._c.service, true);
+            } catch (e2) {
+                Strophe.error("XHR open failed.");
+                if (!this._c.connected) {
+                    this._c._changeConnectStatus(Strophe.Status.CONNFAIL,
+                                              "bad-service");
+                }
+                this._c.disconnect();
+                return;
+            }
+
+            // Fires the XHR request -- may be invoked immediately
+            // or on a gradually expanding retry window for reconnects
+            var sendFunc = function () {
+                req.date = new Date();
+                req.xhr.send(req.data);
+            };
+
+            // Implement progressive backoff for reconnects --
+            // First retry (send == 1) should also be instantaneous
+            if (req.sends > 1) {
+                // Using a cube of the retry number creates a nicely
+                // expanding retry window
+                var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
+                                       Math.pow(req.sends, 3)) * 1000;
+                setTimeout(sendFunc, backoff);
+            } else {
+                sendFunc();
+            }
+
+            req.sends++;
+
+            if (this._c.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
+                this._c.xmlOutput(req.xmlData);
+            }
+            if (this._c.rawOutput !== Strophe.Connection.prototype.rawOutput) {
+                this._c.rawOutput(req.data);
+            }
+        } else {
+            Strophe.debug("_processRequest: " +
+                          (i === 0 ? "first" : "second") +
+                          " request has readyState of " +
+                          req.xhr.readyState);
+        }
+    },
+
     /** PrivateFunction: _hitError
      *  _Private_ function to handle the error count.
      *
@@ -3847,4 +3847,4 @@ if (callback) {
     window.$msg = arguments[2];
     window.$iq = arguments[3];
     window.$pres = arguments[4];
-});
+})
