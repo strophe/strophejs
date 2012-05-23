@@ -1809,21 +1809,7 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-            this.websocket_connect_helper();
-        } else {
-            this.bosh_connect_helper();
-        }
-    },
-
-    websocket_connect_helper: function () {
-        if(!this.socket) {
-            this.socket = new WebSocket(this.service, "xmpp");
-            this.socket.onopen = Strophe.Websocket._onOpen.bind(this);
-            this.socket.onerror = Strophe.Websocket._onError.bind(this);
-            this.socket.onclose = Strophe.Websocket._onClose.bind(this);
-            this.socket.onmessage = Strophe.Websocket._connect_cb.bind(this);
-        }
+        this.po.connect(wait, hold, route)
     },
 
     /** Function: attach
@@ -3834,6 +3820,16 @@ Strophe.Websocket = {
             this.rawInput(Strophe.serialize(elem));
         }
     }
+
+    connect: function () {
+        if(!this.socket) {
+            this.socket = new WebSocket(this._c.service, "xmpp");
+            this.socket.onopen = this._onOpen.bind(this);
+            this.socket.onerror = this._onError.bind(this);
+            this.socket.onclose = this._onClose.bind(this);
+            this.socket.onmessage = this._connect_cb.bind(this);
+        }
+    },
 };
 
 if (callback) {
