@@ -3762,7 +3762,10 @@ Strophe.Websocket.prototype = {
         this._c._dataRecv(elem);
     },
 
-    _connect_cb: function(message) {
+    /** PrivateFunction: _connect_cb_wrapper
+     * _Private_ function that handles the first connection messages
+     */
+    _connect_cb_wrapper: function(message) {
         string = message.data;
 
         var parser = new DOMParser();
@@ -3793,7 +3796,7 @@ Strophe.Websocket.prototype = {
             this.socket.onopen = this._onOpen.bind(this);
             this.socket.onerror = this._onError.bind(this);
             this.socket.onclose = this._onClose.bind(this);
-            this.socket.onmessage = this._connect_cb.bind(this);
+            this.socket.onmessage = this._connect_cb_wrapper.bind(this);
         }
     },
 
