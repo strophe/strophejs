@@ -3727,9 +3727,9 @@ Strophe.Websocket.prototype = {
     _onOpen: function() {
         Strophe.log("Websocket open");
         var start = this._buildStream();
-        this.xmlOutput(start);
+        this._c.xmlOutput(start);
         var startString = Strophe.serialize(start);
-        this.rawOutput(startString);
+        this._c.rawOutput(startString);
         this.socket.send(startString);
     },
 
@@ -3757,26 +3757,35 @@ Strophe.Websocket.prototype = {
     _onMessage: function(message) {
         parser = new DOMParser();
         var elem = parser.parseFromString(message.data, "text/xml").documentElement;
-        var elem = this._bodyWrap(elem).tree();
+        var elem = this._c._bodyWrap(elem).tree();
 
-        this._dataRecv(elem);
+        this._c._dataRecv(elem);
     },
 
     _connect_cb: function(message) {
-        string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"); // Ugly hack todeal with the problem of stream ns undefined.
+        string = message.data;
 
         var parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
         if (elem.nodeName != "stream:stream") {
-            this.socket.onmessage = Strophe.Websocket._onMessage.bind(this);
-            elem = this._bodyWrap(elem).tree();
-            this._connect_cb(elem);
+            this.socket.onmessage = this._stream_ns_wrapper.bind(this);
+            elem = this._c._bodyWrap(elem).tree();
+            this._c._connect_cb(elem);
         } else {
-            this.xmlInput(elem);
-            this.rawInput(Strophe.serialize(elem));
+            this._c.xmlInput(elem);
+            this._c.rawInput(Strophe.serialize(elem));
         }
-    }
+    },
+
+    _stream_ns_wrapper: function(message) {
+        string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"); // Ugly hack todeal with the problem of stream ns undefined.
+        if (string !== message.data) {
+            this.socket.onmessage = this._onMessage.bind(this);
+            message.data = string;
+        }
+        this._onMessage(message)
+    },
 
     connect: function () {
         if(!this.socket) {
@@ -3841,4 +3850,4 @@ if (callback) {
     window.$msg = arguments[2];
     window.$iq = arguments[3];
     window.$pres = arguments[4];
-})
+});
