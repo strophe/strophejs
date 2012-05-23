@@ -1948,13 +1948,7 @@ Strophe.Connection.prototype = {
             this._queueData(elem);
         }
 
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-            this.flush();
-        } else {
-            this._throttledRequestHandler();
-            clearTimeout(this._idleTimeout);
-            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
-        }
+        this.po.send();
     },
 
     /** Function: flush
@@ -3745,7 +3739,14 @@ Strophe.Bosh.prototype = {
                                     this, _connect_cb.bind(this)),
                                 body.tree().getAttribute("rid")));
         this._throttledRequestHandler();
-    }
+    },
+
+    send: function () {
+        this._throttledRequestHandler();
+        clearTimeout(this._c._idleTimeout);
+        this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this), 100);
+    },
+
 };
 
 Strophe.Websocket = function(connection) {
@@ -3829,6 +3830,10 @@ Strophe.Websocket = {
             this.socket.onclose = this._onClose.bind(this);
             this.socket.onmessage = this._connect_cb.bind(this);
         }
+    },
+
+    send: function () {
+        this._c.flush();
     },
 };
 
