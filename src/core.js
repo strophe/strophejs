@@ -1988,54 +1988,54 @@ Strophe.Connection.prototype = {
         if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
-	var id = elem.getAttribute('id');
+        var id = elem.getAttribute('id');
 
-	// inject id if not found
-	if (!id) {
-	    id = this.getUniqueId("sendIQ");
-	    elem.setAttribute("id", id);
-	}
+        // inject id if not found
+        if (!id) {
+            id = this.getUniqueId("sendIQ");
+            elem.setAttribute("id", id);
+        }
 
-	var handler = this.addHandler(function (stanza) {
-	    // remove timeout handler if there is one
+        var handler = this.addHandler(function (stanza) {
+            // remove timeout handler if there is one
             if (timeoutHandler) {
                 that.deleteTimedHandler(timeoutHandler);
             }
 
             var iqtype = stanza.getAttribute('type');
-	    if (iqtype == 'result') {
-		if (callback) {
+            if (iqtype == 'result') {
+                if (callback) {
                     callback(stanza);
                 }
-	    } else if (iqtype == 'error') {
-		if (errback) {
+            } else if (iqtype == 'error') {
+                if (errback) {
                     errback(stanza);
                 }
-	    } else {
+            } else {
                 throw {
                     name: "StropheError",
-                    message: "Got bad IQ type of " + iqtype
+            message: "Got bad IQ type of " + iqtype
                 };
             }
-	}, null, 'iq', null, id);
+        }, null, 'iq', null, id);
 
-	// if timeout specified, setup timeout handler.
-	if (timeout) {
-	    timeoutHandler = this.addTimedHandler(timeout, function () {
+        // if timeout specified, setup timeout handler.
+        if (timeout) {
+            timeoutHandler = this.addTimedHandler(timeout, function () {
                 // get rid of normal handler
                 that.deleteHandler(handler);
 
-	        // call errback on timeout with null stanza
+                // call errback on timeout with null stanza
                 if (errback) {
-		    errback(null);
+                    errback(null);
                 }
-		return false;
-	    });
-	}
+                return false;
+            });
+        }
 
-	this.send(elem);
+        this.send(elem);
 
-	return id;
+        return id;
     },
 
     /** PrivateFunction: _queueData
