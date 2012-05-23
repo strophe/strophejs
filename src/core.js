@@ -3569,87 +3569,6 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /**
-     *
-     */
-    _websocket_onIdle_helper: function () {
-        if (this._data.length > 0 && !this.paused) {
-            for (i = 0; i < this._data.length; i++) {
-                if (this._data[i] !== null) {
-                    if (this._data[i] === "restart") {
-                        var restart = this._buildStream();
-                        this.xmlOutput(restart);
-                        this.rawOutput(Strophe.serialize(restart));
-                        this.socket.send(Strophe.serialize(restart));
-                    } else {
-                        var stanza = this._data[i];
-                        this.xmlOutput(stanza);
-                        this.rawOutput(Strophe.serialize(stanza));
-                        this.socket.send(Strophe.serialize(stanza));
-                    }
-                }
-            }
-            this._data = [];
-        }
-    },
-
-    /**
-     *
-     */
-    _bosh_onIdle_helper: function () {
-        // if no requests are in progress, poll
-        if (this.authenticated && this._requests.length === 0 &&
-            this._data.length === 0 && !this.disconnecting) {
-            Strophe.info("no requests during idle cycle, sending " +
-                         "blank request");
-            this._data.push(null);
-        }
-
-        if (this._requests.length < 2 && this._data.length > 0 &&
-            !this.paused) {
-            body = this._buildBody();
-            for (i = 0; i < this._data.length; i++) {
-                if (this._data[i] !== null) {
-                    if (this._data[i] === "restart") {
-                        body.attrs({
-                            to: this.domain,
-                            "xml:lang": "en",
-                            "xmpp:restart": "true",
-                            "xmlns:xmpp": Strophe.NS.BOSH
-                        });
-                    } else {
-                        body.cnode(this._data[i]).up();
-                    }
-                }
-            }
-            delete this._data;
-            this._data = [];
-            this._requests.push(
-                new Strophe.Request(body.tree(),
-                                    this._onRequestStateChange.bind(
-                                        this, this._dataRecv.bind(this)),
-                                    body.tree().getAttribute("rid")));
-            this._processRequest(this._requests.length - 1);
-        }
-
-        if (this._requests.length > 0) {
-            time_elapsed = this._requests[0].age();
-            if (this._requests[0].dead !== null) {
-                if (this._requests[0].timeDead() >
-                    Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
-                    this._throttledRequestHandler();
-                }
-            }
-
-            if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
-                Strophe.warn("Request " +
-                             this._requests[0].id +
-                             " timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) +
-                             " seconds since last activity");
-                this._throttledRequestHandler();
-            }
-        }
-    }
 };
 
 Strophe.Bosh = function(connection) {
@@ -3727,6 +3646,66 @@ Strophe.Bosh.prototype = {
         return bodyWrap;
     },
 
+    /**
+     *
+     */
+    _onIdle: function () {
+        var data = this._c._data;
+
+        // if no requests are in progress, poll
+        if (this._c.authenticated && this._requests.length === 0 &&
+            data.length === 0 && !this._c.disconnecting) {
+            Strophe.info("no requests during idle cycle, sending " +
+                         "blank request");
+            data.push(null);
+        }
+
+        if (this._requests.length < 2 && data.length > 0 &&
+            !this._c.paused) {
+            body = this._buildBody();
+            for (i = 0; i < data.length; i++) {
+                if (data[i] !== null) {
+                    if (data[i] === "restart") {
+                        body.attrs({
+                            to: this._c.domain,
+                            "xml:lang": "en",
+                            "xmpp:restart": "true",
+                            "xmlns:xmpp": Strophe.NS.BOSH
+                        });
+                    } else {
+                        body.cnode(data[i]).up();
+                    }
+                }
+            }
+            delete this._c._data;
+            this._c._data = [];
+            this._requests.push(
+                new Strophe.Request(body.tree(),
+                                    this._onRequestStateChange.bind(
+                                        this, this._c._dataRecv.bind(this)),
+                                    body.tree().getAttribute("rid")));
+            this._processRequest(this._requests.length - 1);
+        }
+
+        if (this._requests.length > 0) {
+            time_elapsed = this._requests[0].age();
+            if (this._requests[0].dead !== null) {
+                if (this._requests[0].timeDead() >
+                    Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
+                    this._throttledRequestHandler();
+                }
+            }
+
+            if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
+                Strophe.warn("Request " +
+                             this._requests[0].id +
+                             " timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) +
+                             " seconds since last activity");
+                this._throttledRequestHandler();
+            }
+        }
+    },
+
     /** PrivateFunction: _hitError
      *  _Private_ function to handle the error count.
      *
@@ -3752,7 +3731,7 @@ Strophe.Websocket = function(connection) {
     this._c = connection;
 };
 
-Strophe.Websocket = {
+Strophe.Websocket.prototype = {
     /** PrivateFunction: _onError
      * _Private_ function to handle websockets errors.
      *
@@ -3834,6 +3813,28 @@ Strophe.Websocket = {
     send: function () {
         this._c.flush();
     },
+
+    /**
+     *
+     */
+    _onIdle: function () {
+        var data = this._c._data;
+        if (data.length > 0 && !this._c.paused) {
+            for (i = 0; i < data.length; i++) {
+                if (data[i] !== null) {
+                    if (data[i] === "restart") {
+                        var stanza = this._buildStream();
+                    } else {
+                        var stanza = data[i];
+                    }
+                    this._c.xmlOutput(stanza);
+                    this._c.rawOutput(Strophe.serialize(stanza));
+                    this.socket.send(Strophe.serialize(stanza));
+                }
+            }
+            this._c._data = [];
+        }
+    }
 };
 
 if (callback) {
