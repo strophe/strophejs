@@ -2260,26 +2260,6 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /** PrivateFunction: _buildBody
-     *  _Private_ helper function to generate the <body/> wrapper for BOSH.
-     *
-     *  Returns:
-     *    A Strophe.Builder with a <body/> element.
-     */
-    _buildBody: function ()
-    {
-        var bodyWrap = $build('body', {
-            rid: this.rid++,
-            xmlns: Strophe.NS.HTTPBIND
-        });
-
-        if (this.sid !== null) {
-            bodyWrap.attrs({sid: this.sid});
-        }
-
-        return bodyWrap;
-    },
-
     /** PrivateFunction _bodyWrap
      *  _Private_ helper function to wrap a stanza in a <body> tag.
      *  This is used so Strophe can process stanzas from WebSockets like BOSH
@@ -3747,6 +3727,25 @@ Strophe.Bosh.prototype = {
         this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this), 100);
     },
 
+    /** PrivateFunction: _buildBody
+     *  _Private_ helper function to generate the <body/> wrapper for BOSH.
+     *
+     *  Returns:
+     *    A Strophe.Builder with a <body/> element.
+     */
+    _buildBody: function ()
+    {
+        var bodyWrap = $build('body', {
+            rid: this.rid++,
+            xmlns: Strophe.NS.HTTPBIND
+        });
+
+        if (this.sid !== null) {
+            bodyWrap.attrs({sid: this.sid});
+        }
+
+        return bodyWrap;
+    },
 };
 
 Strophe.Websocket = function(connection) {
