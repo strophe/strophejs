@@ -2271,22 +2271,6 @@ Strophe.Connection.prototype = {
         }).cnode(stanza);
     },
 
-    /** PrivateFunction: _buildStream
-     *  _Private_ helper function to generate the <stream> start tag for WebSockets
-     *
-     *  Returns:
-     *    A Strophe.Builder with a <stream> element.
-     */
-    _buildStream: function ()
-    {
-        return $build("stream:stream", {
-            "to": this.domain,
-            "xmlns": Strophe.NS.CLIENT,
-            "xmlns:stream": Strophe.NS.STREAM,
-            "version": '1.0'
-        });
-    },
-
     /** PrivateFunction: _removeRequest
      *  _Private_ function to remove a request from the queue.
      *
@@ -3812,6 +3796,22 @@ Strophe.Websocket.prototype = {
 
     send: function () {
         this._c.flush();
+    },
+
+    /** PrivateFunction: _buildStream
+     *  _Private_ helper function to generate the <stream> start tag for WebSockets
+     *
+     *  Returns:
+     *    A Strophe.Builder with a <stream> element.
+     */
+    _buildStream: function ()
+    {
+        return $build("stream:stream", {
+            "to": this._c.domain,
+            "xmlns": Strophe.NS.CLIENT,
+            "xmlns:stream": Strophe.NS.STREAM,
+            "version": '1.0'
+        });
     },
 
     /**
