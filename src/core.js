@@ -2469,41 +2469,7 @@ Strophe.Connection.prototype = {
             this.rawInput(Strophe.serialize(bodyWrap));
         }
 
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-        } else {
-            var typ = bodyWrap.getAttribute("type");
-            var cond, conflict;
-            if (typ !== null && typ == "terminate") {
-                // an error occurred
-                cond = bodyWrap.getAttribute("condition");
-                conflict = bodyWrap.getElementsByTagName("conflict");
-                if (cond !== null) {
-                    if (cond == "remote-stream-error" && conflict.length > 0) {
-                        cond = "conflict";
-                    }
-                    this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
-                } else {
-                    this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
-                }
-                return;
-            }
-
-            // check to make sure we don't overwrite these if _connect_cb is
-            // called multiple times in the case of missing stream:features
-            if (!this.sid) {
-                this.sid = bodyWrap.getAttribute("sid");
-            }
-            if (!this.stream_id) {
-                this.stream_id = bodyWrap.getAttribute("authid");
-            }
-            var wind = bodyWrap.getAttribute('requests');
-            if (wind) { this.window = parseInt(wind, 10); }
-            var hold = bodyWrap.getAttribute('hold');
-            if (hold) { this.hold = parseInt(hold, 10); }
-            var wait = bodyWrap.getAttribute('wait');
-            if (wait) { this.wait = parseInt(wait, 10); }
-        }
-
+        this.po._connect_cb(bodyWrap);
 
         this._authentication.sasl_scram_sha1 = false;
         this._authentication.sasl_plain = false;
@@ -3702,6 +3668,46 @@ Strophe.Bosh.prototype = {
         if (this.errors > 4) {
             this._onDisconnectTimeout();
         }
+    /** PrivateFunction: _connect_cb
+     *  _Private_ handler for initial connection request.
+     *
+     *  This handler is used to process the Bosh-part of the initial request.
+     *  Parameters:
+     *    (Strophe.Request) bodyWrap - The received stanza.
+     */
+    _connect_cb: function (bodyWrap)
+    {
+        var typ = bodyWrap.getAttribute("type");
+        var cond, conflict;
+        if (typ !== null && typ == "terminate") {
+            // an error occurred
+            cond = bodyWrap.getAttribute("condition");
+            conflict = bodyWrap.getElementsByTagName("conflict");
+            if (cond !== null) {
+                if (cond == "remote-stream-error" && conflict.length > 0) {
+                    cond = "conflict";
+                }
+                this._c._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
+            } else {
+                this._c._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+            }
+            return;
+        }
+
+        // check to make sure we don't overwrite these if _connect_cb is
+        // called multiple times in the case of missing stream:features
+        if (!this.sid) {
+            this.sid = bodyWrap.getAttribute("sid");
+        }
+        if (!this.stream_id) {
+            this.stream_id = bodyWrap.getAttribute("authid");
+        }
+        var wind = bodyWrap.getAttribute('requests');
+        if (wind) { this.window = parseInt(wind, 10); }
+        var hold = bodyWrap.getAttribute('hold');
+        if (hold) { this.hold = parseInt(hold, 10); }
+        var wait = bodyWrap.getAttribute('wait');
+        if (wait) { this.wait = parseInt(wait, 10); }
     }
 };
 
@@ -3780,6 +3786,12 @@ Strophe.Websocket.prototype = {
             this._c.rawInput(Strophe.serialize(elem));
         }
     },
+
+    /** PrivateFunction: _connect_cb
+     * _Private_ function stub that gets called by the connection
+     * in _connect_cb
+     */
+    _connect_cb: function() {},
 
     _stream_ns_wrapper: function(message) {
         string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"); // Ugly hack todeal with the problem of stream ns undefined.
