@@ -3260,12 +3260,7 @@ Strophe.Connection.prototype = {
 
         var body, time_elapsed;
 
-
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-            this._websocket_onIdle_helper();
-        } else {
-            this._bosh_onIdle_helper();
-        }
+        this.po._onIdle();
 
         clearTimeout(this._idleTimeout);
 
@@ -3273,8 +3268,7 @@ Strophe.Connection.prototype = {
         if (this.connected) {
             this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
         }
-    },
-
+    }
 };
 
 Strophe.Bosh = function(connection) {
