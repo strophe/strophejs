@@ -2413,7 +2413,7 @@ Strophe.Connection.prototype = {
 
         var req = new Strophe.Request(body.tree(),
                                       this._onRequestStateChange.bind(
-                                          this, this._dataRecv.bind(this)),
+                                          this, this._dataRecv.bind(this._c)),
                                       body.tree().getAttribute("rid"));
 
         this._requests.push(req);
@@ -3246,7 +3246,7 @@ Strophe.Bosh.prototype = {
 
         // build the body tag
         var body = this._buildBody().attrs({
-            to: this.domain,
+            to: this._c.domain,
             "xml:lang": "en",
             wait: this.wait,
             hold: this.hold,
@@ -3262,12 +3262,12 @@ Strophe.Bosh.prototype = {
             });
         }
 
-        var _connect_cb = this._connect_cb;
+        var _connect_cb = this._c._connect_cb;
 
         this._requests.push(
             new Strophe.Request(body.tree(),
                                 this._onRequestStateChange.bind(
-                                    this, _connect_cb.bind(this)),
+                                    this, _connect_cb.bind(this._c)),
                                 body.tree().getAttribute("rid")));
         this._throttledRequestHandler();
     },
@@ -3275,7 +3275,7 @@ Strophe.Bosh.prototype = {
     send: function () {
         this._throttledRequestHandler();
         clearTimeout(this._c._idleTimeout);
-        this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this), 100);
+        this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this._c), 100);
     },
 
     /** PrivateFunction: _buildBody
@@ -3334,7 +3334,7 @@ Strophe.Bosh.prototype = {
             this._requests.push(
                 new Strophe.Request(body.tree(),
                                     this._onRequestStateChange.bind(
-                                        this, this._c._dataRecv.bind(this)),
+                                        this, this._c._dataRecv.bind(this._c)),
                                     body.tree().getAttribute("rid")));
             this._processRequest(this._requests.length - 1);
         }
@@ -3747,7 +3747,7 @@ Strophe.Websocket.prototype = {
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
-        this._doDisconnect();
+        this._c._doDisconnect();
     },
 
     /** PrivateFunction: _onMessage
