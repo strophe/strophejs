@@ -3145,16 +3145,7 @@ Strophe.Connection.prototype = {
     {
         Strophe.info("_onDisconnectTimeout was called");
 
-        // cancel all remaining requests and clear the queue
-        var req;
-        while (this._requests.length > 0) {
-            req = this._requests.pop();
-            req.abort = true;
-            req.xhr.abort();
-            // jslint complains, but this is fine. setting to empty func
-            // is necessary for IE6
-            req.xhr.onreadystatechange = function () {};
-        }
+        this.po._onDisconnectTimeout();
 
         // actually disconnect
         this._doDisconnect();
@@ -3292,6 +3283,25 @@ Strophe.Bosh.prototype = {
         }
 
         return bodyWrap;
+    },
+
+
+    /** PrivateFunction: _onDisconnectTimeout
+     *  _Private_ timeout handler for handling non-graceful disconnection.
+     *
+     */
+    _onDisconnectTimeout: function ()
+    {
+        // cancel all remaining requests and clear the queue
+        var req;
+        while (this._requests.length > 0) {
+            req = this._requests.pop();
+            req.abort = true;
+            req.xhr.abort();
+            // jslint complains, but this is fine. setting to empty func
+            // is necessary for IE6
+            req.xhr.onreadystatechange = function () {};
+        }
     },
 
     /**
@@ -3867,6 +3877,12 @@ Strophe.Websocket.prototype = {
             "version": '1.0'
         });
     },
+
+    /** PrivateFunction: _onDisconnectTimeout
+     *  _Private_ timeout handler for handling non-graceful disconnection.
+     *
+     */
+    _onDisconnectTimeout: function () {},
 
     /**
      *
