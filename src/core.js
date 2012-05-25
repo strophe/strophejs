@@ -2268,11 +2268,7 @@ Strophe.Connection.prototype = {
         Strophe.info("_doDisconnect was called");
         this.authenticated = false;
         this.disconnecting = false;
-        //XXX BOSH (split later)
-        this.sid = null;
-        this.rid = Math.floor(Math.random() * 4294967295);
-        //XXX WEBSOCKET
-        this.socket = null;
+        this.po._doDisconnect();
 
         // tell the parent we disconnected
         if (this.connected) {
@@ -3670,6 +3666,16 @@ Strophe.Bosh.prototype = {
         this._sendTerminate(pres);
     },
 
+    /** PrivateFunction: _doDisconnect
+     *  _Private_ function to disconnect.
+     *
+     */
+    _doDisconnect: function ()
+    {
+        this.sid = null;
+        this.rid = Math.floor(Math.random() * 4294967295);
+    },
+
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -3825,6 +3831,15 @@ Strophe.Websocket.prototype = {
     {
         clearTimeout(this._c._idleTimeout);
         this._c._onIdle.bind(this._c)();
+    },
+
+    /** PrivateFunction: _doDisconnect
+     *  _Private_ function to disconnect.
+     *
+     */
+    _doDisconnect: function ()
+    {
+        this.socket = null;
     },
 
     disconnect: function (pres)
