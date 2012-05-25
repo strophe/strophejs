@@ -2325,7 +2325,7 @@ Strophe.Connection.prototype = {
         }
 
         // handle graceful disconnect
-        if (this.disconnecting && this._requests.length === 0) {
+        if (this.disconnecting && this.po.emptyQueue()) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
             this._doDisconnect();
@@ -3677,6 +3677,11 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
     },
 
+    emptyQueue: function ()
+    {
+        return this._requests.length === 0;
+    },
+
     reqToData: function (req)
     {
         try {
@@ -3861,6 +3866,11 @@ Strophe.Websocket.prototype = {
         this._c.rawOutput(close);
         this.socket.send(close);
         this.socket.close(); // Close the socket
+    },
+
+    emptyQueue: function ()
+    {
+        return true;
     },
 
     reqToData: function (req)
