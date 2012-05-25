@@ -2382,31 +2382,6 @@ Strophe.Connection.prototype = {
         });
     },
 
-    /** PrivateFunction: _sendTerminate
-     *  _Private_ function to send initial disconnect sequence.
-     *
-     *  This is the first step in a graceful disconnect.  It sends
-     *  the BOSH server a terminate body and includes an unavailable
-     *  presence if authentication has completed.
-     */
-    _sendTerminate: function (pres)
-    {
-        Strophe.info("_sendTerminate was called");
-        var body = this._buildBody().attrs({type: "terminate"});
-
-        if (pres) {
-            body.cnode(pres);
-        }
-
-        var req = new Strophe.Request(body.tree(),
-                                      this._onRequestStateChange.bind(
-                                          this, this._dataRecv.bind(this._c)),
-                                      body.tree().getAttribute("rid"));
-
-        this._requests.push(req);
-        this._throttledRequestHandler();
-    },
-
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -3690,6 +3665,31 @@ Strophe.Bosh.prototype = {
             if (e != "parsererror") { throw e; }
             this._c.disconnect("strophe-parsererror");
         }
+    },
+
+    /** PrivateFunction: _sendTerminate
+     *  _Private_ function to send initial disconnect sequence.
+     *
+     *  This is the first step in a graceful disconnect.  It sends
+     *  the BOSH server a terminate body and includes an unavailable
+     *  presence if authentication has completed.
+     */
+    _sendTerminate: function (pres)
+    {
+        Strophe.info("_sendTerminate was called");
+        var body = this._buildBody().attrs({type: "terminate"});
+
+        if (pres) {
+            body.cnode(pres.tree());
+        }
+
+        var req = new Strophe.Request(body.tree(),
+                                      this._onRequestStateChange.bind(
+                                          this, this._c._dataRecv.bind(this._c)),
+                                      body.tree().getAttribute("rid"));
+
+        this._requests.push(req);
+        this._throttledRequestHandler();
     },
 
     /** PrivateFunction: _connect_cb
