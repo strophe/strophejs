@@ -2403,11 +2403,8 @@ Strophe.Connection.prototype = {
         Strophe.info("_connect_cb was called");
 
         this.connected = true;
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-            var bodyWrap = req;
-        } else {
-            var bodyWrap = req.getResponse();
-        }
+
+        var bodyWrap = this.po.reqToData(req);
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
