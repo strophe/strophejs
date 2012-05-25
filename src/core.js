@@ -2299,16 +2299,7 @@ Strophe.Connection.prototype = {
     _dataRecv: function (req)
     {
         Strophe.info("_dataRecv called");
-        if (this.protocol === Strophe.ProtocolType.WEBSOCKET) {
-            var elem = req;
-        } else {
-            try {
-                var elem = req.getResponse();
-            } catch (e) {
-                if (e != "parsererror") { throw e; }
-                this.disconnect("strophe-parsererror");
-            }
-        }
+        var elem = this.po.reqToData(req);
         if (elem === null) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
@@ -3686,6 +3677,16 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
     },
 
+    reqToData: function (req)
+    {
+        try {
+            return req.getResponse();
+        } catch (e) {
+            if (e != "parsererror") { throw e; }
+            this._c.disconnect("strophe-parsererror");
+        }
+    },
+
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -3860,6 +3861,11 @@ Strophe.Websocket.prototype = {
         this._c.rawOutput(close);
         this.socket.send(close);
         this.socket.close(); // Close the socket
+    },
+
+    reqToData: function (req)
+    {
+        return req;
     },
 
     /** PrivateFunction: _buildStream
