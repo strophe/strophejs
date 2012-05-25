@@ -3782,6 +3782,7 @@ Strophe.Websocket.prototype = {
      * (string) message - The websocket message.
      */
     _onMessage: function(message) {
+        message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         parser = new DOMParser();
         var elem = parser.parseFromString(message.data, "text/xml").documentElement;
         var elem = this._c._bodyWrap(elem).tree();
@@ -3799,7 +3800,7 @@ Strophe.Websocket.prototype = {
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
         if (elem.nodeName != "stream:stream") {
-            this.socket.onmessage = this._stream_ns_wrapper.bind(this);
+            this.socket.onmessage = this._onMessage.bind(this);
             elem = this._c._bodyWrap(elem).tree();
             this._c._connect_cb(elem);
         } else {
@@ -3813,15 +3814,6 @@ Strophe.Websocket.prototype = {
      * in _connect_cb
      */
     _connect_cb: function() {},
-
-    _stream_ns_wrapper: function(message) {
-        string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"); // Ugly hack todeal with the problem of stream ns undefined.
-        if (string !== message.data) {
-            this.socket.onmessage = this._onMessage.bind(this);
-            message.data = string;
-        }
-        this._onMessage(message)
-    },
 
     connect: function () {
         if(!this.socket) {
