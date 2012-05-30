@@ -3855,16 +3855,18 @@ Strophe.Websocket.prototype = {
 
     disconnect: function (pres)
     {
-        if (pres) {
-            this._c.send(pres);
+        if (this.socket.readyState !== WebSocket.CLOSED) {
+            if (pres) {
+                this._c.send(pres);
+            }
+            var close = '</stream:stream>';
+            this._c.xmlOutput(close);
+            this._c.rawOutput(close);
+            try {
+                this.socket.send(close);
+            } catch (e) {}
+            this.socket.close();
         }
-        var close = '</stream:stream>';
-        this._c.xmlOutput(close);
-        this._c.rawOutput(close);
-        try {
-            this.socket.send(close);
-        } catch (e) {}
-        this.socket.close(); // Close the socket
     },
 
     emptyQueue: function ()
