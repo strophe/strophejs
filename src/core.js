@@ -3782,6 +3782,10 @@ Strophe.Websocket.prototype = {
      * (string) message - The websocket message.
      */
     _onMessage: function(message) {
+        if (message.data === "</stream:stream>") {
+            this.disconnect();
+            return;
+        }
         var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
 
         parser = new DOMParser();
@@ -3851,11 +3855,15 @@ Strophe.Websocket.prototype = {
 
     disconnect: function (pres)
     {
-        this._c.send(pres);
+        if (pres) {
+            this._c.send(pres);
+        }
         var close = '</stream:stream>';
         this._c.xmlOutput(close);
         this._c.rawOutput(close);
-        this.socket.send(close);
+        try {
+            this.socket.send(close);
+        } catch (e) {}
         this.socket.close(); // Close the socket
     },
 
