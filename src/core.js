@@ -2454,16 +2454,7 @@ Strophe.Connection.prototype = {
                 missmatchedmechs < mechanisms.length;
         }
         if (!found_authentication) {
-            _callback = _callback || this._connect_cb;
-            // we didn't get stream:features yet, so we need wait for it
-            // by sending a blank poll request
-            var body = this._buildBody();
-            this._requests.push(
-                new Strophe.Request(body.tree(),
-                                    this._onRequestStateChange.bind(
-                                        this, _callback.bind(this)),
-                                    body.tree().getAttribute("rid")));
-            this._throttledRequestHandler();
+            this.po._wait_for_features(_callback);
             return;
         }
         if (this.do_authentication !== false)
@@ -3729,6 +3720,27 @@ Strophe.Bosh.prototype = {
         if (hold) { this.hold = parseInt(hold, 10); }
         var wait = bodyWrap.getAttribute('wait');
         if (wait) { this.wait = parseInt(wait, 10); }
+    },
+
+    /** Function: _wait_for_features
+     *
+     * called on stream start/restart when no stream:features
+     * has been received and sends a blank poll request.
+     */
+    _wait_for_features: function (_callback)
+    {
+        if (_callback) {
+            _callback = _callback.bind(this._c);
+        } else {
+            _callback = this._c._connect_cb.bind(this._c);
+        }
+        var body = this._buildBody();
+        this._requests.push(
+                new Strophe.Request(body.tree(),
+                    this._onRequestStateChange.bind(
+                        this, _callback.bind(this._c)),
+                    body.tree().getAttribute("rid")));
+        this._throttledRequestHandler();
     }
 };
 
