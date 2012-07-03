@@ -3850,6 +3850,7 @@ Strophe.Websocket.prototype = {
      */
     _doDisconnect: function ()
     {
+        this.socket.close();
         this.socket = null;
     },
 
