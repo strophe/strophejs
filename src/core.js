@@ -3794,6 +3794,9 @@ Strophe.Websocket.prototype = {
      */
     _onMessage: function(message) {
         if (message.data === "</stream:stream>") {
+            var close = "</stream:stream>";
+            this._c.rawInput(close);
+            this._c.xmlInput(this._c._bodyWrap(document.createElement("stream:stream")));
             this.disconnect();
             return;
         }
@@ -3874,7 +3877,7 @@ Strophe.Websocket.prototype = {
                 this._c.send(pres);
             }
             var close = '</stream:stream>';
-            this._c.xmlOutput(close);
+            this._c.xmlOutput(this._c._bodyWrap(document.createElement("stream:stream")));
             this._c.rawOutput(close);
             try {
                 this.socket.send(close);
