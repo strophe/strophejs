@@ -3152,9 +3152,9 @@ Strophe.Connection.prototype = {
 
         var body, time_elapsed;
 
-        this.po._onIdle();
-
         clearTimeout(this._idleTimeout);
+
+        this.po._onIdle();
 
         // reactivate the timer only if connected
         if (this.connected) {
