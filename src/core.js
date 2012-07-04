@@ -3797,7 +3797,9 @@ Strophe.Websocket.prototype = {
             var close = "</stream:stream>";
             this._c.rawInput(close);
             this._c.xmlInput(this._c._bodyWrap(document.createElement("stream:stream")));
-            this.disconnect();
+            if (!this._c.disconnecting) {
+                this._c._doDisconnect();
+            }
             return;
         }
         var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
@@ -3808,7 +3810,17 @@ Strophe.Websocket.prototype = {
 
         var elem = this._c._bodyWrap(elem).tree();
 
-        this._c._dataRecv(elem);
+        if (this._c.disconnecting &&
+                elem.firstChild.nodeName === "presence" &&
+                elem.firstChild.getAttribute("type") === "unavailable") {
+            this._c.xmlInput(elem);
+            this._c.rawInput(Strophe.serialize(elem));
+            // if we are already disconnecting we will ignore the unavailable stanza and
+            // wait for the </stream:stream> tag before we close the connection
+            return;
+        } else {
+            this._c._dataRecv(elem);
+        }
     },
 
     /** PrivateFunction: _connect_cb_wrapper
@@ -3866,7 +3878,9 @@ Strophe.Websocket.prototype = {
      */
     _doDisconnect: function ()
     {
-        this.socket.close();
+        try {
+            this.socket.close();
+        } catch (e) {}
         this.socket = null;
     },
 
@@ -3882,7 +3896,6 @@ Strophe.Websocket.prototype = {
             try {
                 this.socket.send(close);
             } catch (e) {}
-            this.socket.close();
         }
     },
 
