@@ -2453,7 +2453,7 @@ Strophe.Connection.prototype = {
                 missmatchedmechs < mechanisms.length;
         }
         if (!found_authentication) {
-            this.po._wait_for_features(_callback);
+            this.po._no_auth_received(_callback);
             return;
         }
         if (this.do_authentication !== false)
@@ -3721,12 +3721,12 @@ Strophe.Bosh.prototype = {
         if (wait) { this.wait = parseInt(wait, 10); }
     },
 
-    /** Function: _wait_for_features
+    /** Function: _no_auth_received
      *
      * called on stream start/restart when no stream:features
      * has been received and sends a blank poll request.
      */
-    _wait_for_features: function (_callback)
+    _no_auth_received: function (_callback)
     {
         if (_callback) {
             _callback = _callback.bind(this._c);
