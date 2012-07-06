@@ -3814,6 +3814,10 @@ Strophe.Websocket.prototype = {
 
         var elem = this._c._bodyWrap(elem).tree();
 
+        if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
+            return;
+        }
+
         if (this._c.disconnecting &&
                 elem.firstChild.nodeName === "presence" &&
                 elem.firstChild.getAttribute("type") === "unavailable") {
