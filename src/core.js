@@ -3896,9 +3896,9 @@ Strophe.Websocket.prototype = {
      */
     _doDisconnect: function ()
     {
-        try {
+        if (this.socket) { try {
             this.socket.close();
-        } catch (e) {}
+        } catch (e) {} }
         this.socket = null;
     },
 
