@@ -3844,6 +3844,8 @@ Strophe.Websocket.prototype = {
         } else {
             this._c.xmlInput(elem);
             this._c.rawInput(Strophe.serialize(elem));
+            //_connect_cb will check for stream:error and disconnect on error
+            this._connect_cb(elem)
         }
     },
 
