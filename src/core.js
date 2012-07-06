@@ -2415,7 +2415,6 @@ Strophe.Connection.prototype = {
 
         var conncheck = this.po._connect_cb(bodyWrap);
         if (conncheck === Strophe.Status.CONNFAIL) {
-            this._doDisconnect();
             return;
         }
 
@@ -3706,6 +3705,7 @@ Strophe.Bosh.prototype = {
             } else {
                 this._c._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
+            this._c._doDisconnect();
             return Strophe.Status.CONNFAIL;
         }
 
@@ -3855,16 +3855,31 @@ Strophe.Websocket.prototype = {
      *    (Strophe.Request) bodyWrap - The received stanza.
      */
     _connect_cb: function(bodyWrap) {
+        var error = this._check_streamerror(bodyWrap, Strophe.Status.CONNFAIL);
+        if (error) {
+            return Strophe.Status.CONNFAIL;
+        }
+    },
+
+    /** PrivateFunction: _check_streamerror
+     * _Private_ checks a message for stream:error
+     *
+     *  Parameters:
+     *    (Strophe.Request) bodyWrap - The received stanza.
+     *    connectstatus - The ConnectStatus that will be set on error.
+     */
+    _check_streamerror: function (bodyWrap, connectstatus) {
         var errors = bodyWrap.getElementsByTagName("stream:error");
         if (errors.length === 0) {
-            return;
+            return false;
         }
         var error = errors[0];
         var condition = error.childNodes[0].tagName;
         var text = error.getElementsByTagName("text")[0].textContent;
         Strophe.error("WebSocket stream error: " + condition + " - " + text);
-        this._c._changeConnectStatus(Strophe.Status.CONNFAIL, condition);
-        return Strophe.Status.CONNFAIL;
+        this._c._changeConnectStatus(connectstatus, condition);
+        this._c._doDisconnect();
+        return true;
     },
 
     connect: function () {
