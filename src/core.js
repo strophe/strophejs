@@ -1616,9 +1616,9 @@ Strophe.Connection = function (service)
     /* The path to the httpbind service. */
     this.service = service;
     if (service.indexOf("ws") === 0) {
-        this.po = new Strophe.Websocket(this);
+        this._proto = new Strophe.Websocket(this);
     } else {
-        this.po = new Strophe.Bosh(this);
+        this._proto = new Strophe.Bosh(this);
     }
     /* The connected JID. */
     this.jid = "";
@@ -1812,7 +1812,7 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        this.po.connect(wait, hold, route)
+        this._proto.connect(wait, hold, route)
     },
 
     /** Function: attach
@@ -1951,7 +1951,7 @@ Strophe.Connection.prototype = {
             this._queueData(elem);
         }
 
-        this.po.send();
+        this._proto.send();
     },
 
     /** Function: flush
@@ -2065,7 +2065,7 @@ Strophe.Connection.prototype = {
     {
         this._data.push("restart");
 
-        this.po._sendRestart();
+        this._proto._sendRestart();
 
         this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
@@ -2208,7 +2208,7 @@ Strophe.Connection.prototype = {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
-            this.po.disconnect(pres);
+            this._proto.disconnect(pres);
         }
     },
 
@@ -2271,7 +2271,7 @@ Strophe.Connection.prototype = {
         Strophe.info("_doDisconnect was called");
         this.authenticated = false;
         this.disconnecting = false;
-        this.po._doDisconnect();
+        this._proto._doDisconnect();
 
         // tell the parent we disconnected
         if (this.connected) {
@@ -2302,7 +2302,7 @@ Strophe.Connection.prototype = {
     _dataRecv: function (req)
     {
         Strophe.info("_dataRecv called");
-        var elem = this.po.reqToData(req);
+        var elem = this._proto.reqToData(req);
         if (elem === null) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
@@ -2328,7 +2328,7 @@ Strophe.Connection.prototype = {
         }
 
         // handle graceful disconnect
-        if (this.disconnecting && this.po.emptyQueue()) {
+        if (this.disconnecting && this._proto.emptyQueue()) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
             this._doDisconnect();
@@ -2407,7 +2407,7 @@ Strophe.Connection.prototype = {
 
         this.connected = true;
 
-        var bodyWrap = this.po.reqToData(req);
+        var bodyWrap = this._proto.reqToData(req);
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
@@ -2417,7 +2417,7 @@ Strophe.Connection.prototype = {
             this.rawInput(Strophe.serialize(bodyWrap));
         }
 
-        var conncheck = this.po._connect_cb(bodyWrap);
+        var conncheck = this._proto._connect_cb(bodyWrap);
         if (conncheck === Strophe.Status.CONNFAIL) {
             return;
         }
@@ -2459,7 +2459,7 @@ Strophe.Connection.prototype = {
                 missmatchedmechs < mechanisms.length;
         }
         if (!found_authentication) {
-            this.po._no_auth_received(_callback);
+            this._proto._no_auth_received(_callback);
             return;
         }
         if (this.do_authentication !== false)
@@ -3104,7 +3104,7 @@ Strophe.Connection.prototype = {
     {
         Strophe.info("_onDisconnectTimeout was called");
 
-        this.po._onDisconnectTimeout();
+        this._proto._onDisconnectTimeout();
 
         // actually disconnect
         this._doDisconnect();
@@ -3160,7 +3160,7 @@ Strophe.Connection.prototype = {
 
         clearTimeout(this._idleTimeout);
 
-        this.po._onIdle();
+        this._proto._onIdle();
 
         // reactivate the timer only if connected
         if (this.connected) {
