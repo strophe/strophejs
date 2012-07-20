@@ -3179,7 +3179,7 @@ Strophe.Connection.prototype = {
  *    A new Strophe.Bosh object.
  */
 Strophe.Bosh = function(connection) {
-    this._c = connection;
+    this._conn = connection;
     /* request id for body tags */
     this.rid = Math.floor(Math.random() * 4294967295);
     /* The current session ID. */
@@ -3205,7 +3205,7 @@ Strophe.Bosh.prototype = {
 
         // build the body tag
         var body = this._buildBody().attrs({
-            to: this._c.domain,
+            to: this._conn.domain,
             "xml:lang": "en",
             wait: this.wait,
             hold: this.hold,
@@ -3221,20 +3221,20 @@ Strophe.Bosh.prototype = {
             });
         }
 
-        var _connect_cb = this._c._connect_cb;
+        var _connect_cb = this._conn._connect_cb;
 
         this._requests.push(
             new Strophe.Request(body.tree(),
                                 this._onRequestStateChange.bind(
-                                    this, _connect_cb.bind(this._c)),
+                                    this, _connect_cb.bind(this._conn)),
                                 body.tree().getAttribute("rid")));
         this._throttledRequestHandler();
     },
 
     send: function () {
-        clearTimeout(this._c._idleTimeout);
+        clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
-        this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this._c), 100);
+        this._conn._idleTimeout = setTimeout(this._conn._onIdle.bind(this._conn), 100);
     },
 
     /** PrivateFunction: _buildBody
@@ -3280,24 +3280,24 @@ Strophe.Bosh.prototype = {
      *
      */
     _onIdle: function () {
-        var data = this._c._data;
+        var data = this._conn._data;
 
         // if no requests are in progress, poll
-        if (this._c.authenticated && this._requests.length === 0 &&
-            data.length === 0 && !this._c.disconnecting) {
+        if (this._conn.authenticated && this._requests.length === 0 &&
+            data.length === 0 && !this._conn.disconnecting) {
             Strophe.info("no requests during idle cycle, sending " +
                          "blank request");
             data.push(null);
         }
 
         if (this._requests.length < 2 && data.length > 0 &&
-            !this._c.paused) {
+            !this._conn.paused) {
             body = this._buildBody();
             for (i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
                     if (data[i] === "restart") {
                         body.attrs({
-                            to: this._c.domain,
+                            to: this._conn.domain,
                             "xml:lang": "en",
                             "xmpp:restart": "true",
                             "xmlns:xmpp": Strophe.NS.BOSH
@@ -3307,12 +3307,12 @@ Strophe.Bosh.prototype = {
                     }
                 }
             }
-            delete this._c._data;
-            this._c._data = [];
+            delete this._conn._data;
+            this._conn._data = [];
             this._requests.push(
                 new Strophe.Request(body.tree(),
                                     this._onRequestStateChange.bind(
-                                        this, this._c._dataRecv.bind(this._c)),
+                                        this, this._conn._dataRecv.bind(this._conn)),
                                     body.tree().getAttribute("rid")));
             this._processRequest(this._requests.length - 1);
         }
@@ -3439,14 +3439,14 @@ Strophe.Bosh.prototype = {
                           "." + req.sends + " posting");
 
             try {
-                req.xhr.open("POST", this._c.service, true);
+                req.xhr.open("POST", this._conn.service, true);
             } catch (e2) {
                 Strophe.error("XHR open failed.");
-                if (!this._c.connected) {
-                    this._c._changeConnectStatus(Strophe.Status.CONNFAIL,
+                if (!this._conn.connected) {
+                    this._conn._changeConnectStatus(Strophe.Status.CONNFAIL,
                                               "bad-service");
                 }
-                this._c.disconnect();
+                this._conn.disconnect();
                 return;
             }
 
@@ -3471,11 +3471,11 @@ Strophe.Bosh.prototype = {
 
             req.sends++;
 
-            if (this._c.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
-                this._c.xmlOutput(req.xmlData);
+            if (this._conn.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
+                this._conn.xmlOutput(req.xmlData);
             }
-            if (this._c.rawOutput !== Strophe.Connection.prototype.rawOutput) {
-                this._c.rawOutput(req.data);
+            if (this._conn.rawOutput !== Strophe.Connection.prototype.rawOutput) {
+                this._conn.rawOutput(req.data);
             }
         } else {
             Strophe.debug("_processRequest: " +
@@ -3600,9 +3600,9 @@ Strophe.Bosh.prototype = {
                     reqStatus >= 12000) {
                     this._hitError(reqStatus);
                     if (reqStatus >= 400 && reqStatus < 500) {
-                        this._c._changeConnectStatus(Strophe.Status.DISCONNECTING,
+                        this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING,
                                                   null);
-                        this._c._doDisconnect();
+                        this._conn._doDisconnect();
                     }
                 }
             }
@@ -3640,7 +3640,7 @@ Strophe.Bosh.prototype = {
     _sendRestart: function ()
     {
         this._throttledRequestHandler();
-        clearTimeout(this._c._idleTimeout);
+        clearTimeout(this._conn._idleTimeout);
     },
 
     disconnect: function (pres)
@@ -3669,7 +3669,7 @@ Strophe.Bosh.prototype = {
             return req.getResponse();
         } catch (e) {
             if (e != "parsererror") { throw e; }
-            this._c.disconnect("strophe-parsererror");
+            this._conn.disconnect("strophe-parsererror");
         }
     },
 
@@ -3691,7 +3691,7 @@ Strophe.Bosh.prototype = {
 
         var req = new Strophe.Request(body.tree(),
                                       this._onRequestStateChange.bind(
-                                          this, this._c._dataRecv.bind(this._c)),
+                                          this, this._conn._dataRecv.bind(this._conn)),
                                       body.tree().getAttribute("rid"));
 
         this._requests.push(req);
@@ -3718,11 +3718,11 @@ Strophe.Bosh.prototype = {
                 if (cond == "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
-                this._c._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
+                this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this._c._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+                this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this._c._doDisconnect();
+            this._conn._doDisconnect();
             return Strophe.Status.CONNFAIL;
         }
 
@@ -3750,15 +3750,15 @@ Strophe.Bosh.prototype = {
     _no_auth_received: function (_callback)
     {
         if (_callback) {
-            _callback = _callback.bind(this._c);
+            _callback = _callback.bind(this._conn);
         } else {
-            _callback = this._c._connect_cb.bind(this._c);
+            _callback = this._conn._connect_cb.bind(this._conn);
         }
         var body = this._buildBody();
         this._requests.push(
                 new Strophe.Request(body.tree(),
                     this._onRequestStateChange.bind(
-                        this, _callback.bind(this._c)),
+                        this, _callback.bind(this._conn)),
                     body.tree().getAttribute("rid")));
         this._throttledRequestHandler();
     }
@@ -3774,7 +3774,7 @@ Strophe.Bosh.prototype = {
  *    A new Strophe.WebSocket object.
  */
 Strophe.Websocket = function(connection) {
-    this._c = connection;
+    this._conn = connection;
 };
 
 Strophe.Websocket.prototype = {
@@ -3796,9 +3796,9 @@ Strophe.Websocket.prototype = {
     _onOpen: function() {
         Strophe.log("Websocket open");
         var start = this._buildStream();
-        this._c.xmlOutput(start);
+        this._conn.xmlOutput(start);
         var startString = Strophe.serialize(start);
-        this._c.rawOutput(startString);
+        this._conn.rawOutput(startString);
         this.socket.send(startString);
     },
 
@@ -3808,7 +3808,7 @@ Strophe.Websocket.prototype = {
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
-        this._c._doDisconnect();
+        this._conn._doDisconnect();
     },
 
     /** PrivateFunction: _onMessage
@@ -3826,10 +3826,10 @@ Strophe.Websocket.prototype = {
     _onMessage: function(message) {
         if (message.data === "</stream:stream>") {
             var close = "</stream:stream>";
-            this._c.rawInput(close);
-            this._c.xmlInput(this._c._bodyWrap(document.createElement("stream:stream")));
-            if (!this._c.disconnecting) {
-                this._c._doDisconnect();
+            this._conn.rawInput(close);
+            this._conn.xmlInput(this._conn._bodyWrap(document.createElement("stream:stream")));
+            if (!this._conn.disconnecting) {
+                this._conn._doDisconnect();
             }
             return;
         }
@@ -3839,22 +3839,22 @@ Strophe.Websocket.prototype = {
         parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
-        var elem = this._c._bodyWrap(elem).tree();
+        var elem = this._conn._bodyWrap(elem).tree();
 
         if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
             return;
         }
 
-        if (this._c.disconnecting &&
+        if (this._conn.disconnecting &&
                 elem.firstChild.nodeName === "presence" &&
                 elem.firstChild.getAttribute("type") === "unavailable") {
-            this._c.xmlInput(elem);
-            this._c.rawInput(Strophe.serialize(elem));
+            this._conn.xmlInput(elem);
+            this._conn.rawInput(Strophe.serialize(elem));
             // if we are already disconnecting we will ignore the unavailable stanza and
             // wait for the </stream:stream> tag before we close the connection
             return;
         } else {
-            this._c._dataRecv(elem);
+            this._conn._dataRecv(elem);
         }
     },
 
@@ -3872,11 +3872,11 @@ Strophe.Websocket.prototype = {
 
         if (elem.nodeName != "stream:stream") {
             this.socket.onmessage = this._onMessage.bind(this);
-            elem = this._c._bodyWrap(elem).tree();
-            this._c._connect_cb(elem);
+            elem = this._conn._bodyWrap(elem).tree();
+            this._conn._connect_cb(elem);
         } else {
-            this._c.xmlInput(elem);
-            this._c.rawInput(Strophe.serialize(elem));
+            this._conn.xmlInput(elem);
+            this._conn.rawInput(Strophe.serialize(elem));
             //_connect_cb will check for stream:error and disconnect on error
             this._connect_cb(elem)
         }
@@ -3916,8 +3916,8 @@ Strophe.Websocket.prototype = {
         Strophe.error("WebSocket stream error: " + condition + " - " + text);
 
         // close the connection on stream_error
-        this._c._changeConnectStatus(connectstatus, condition);
-        this._c._doDisconnect();
+        this._conn._changeConnectStatus(connectstatus, condition);
+        this._conn._doDisconnect();
         return true;
     },
 
@@ -3928,7 +3928,7 @@ Strophe.Websocket.prototype = {
      */
     connect: function () {
         if(!this.socket) {
-            this.socket = new WebSocket(this._c.service, "xmpp");
+            this.socket = new WebSocket(this._conn.service, "xmpp");
             this.socket.onopen = this._onOpen.bind(this);
             this.socket.onerror = this._onError.bind(this);
             this.socket.onclose = this._onClose.bind(this);
@@ -3937,7 +3937,7 @@ Strophe.Websocket.prototype = {
     },
 
     send: function () {
-        this._c.flush();
+        this._conn.flush();
     },
 
     /** PrivateFunction: _sendRestart
@@ -3945,8 +3945,8 @@ Strophe.Websocket.prototype = {
      */
     _sendRestart: function ()
     {
-        clearTimeout(this._c._idleTimeout);
-        this._c._onIdle.bind(this._c)();
+        clearTimeout(this._conn._idleTimeout);
+        this._conn._onIdle.bind(this._conn)();
     },
 
     /** PrivateFunction: _doDisconnect
@@ -3965,11 +3965,11 @@ Strophe.Websocket.prototype = {
     {
         if (this.socket.readyState !== WebSocket.CLOSED) {
             if (pres) {
-                this._c.send(pres);
+                this._conn.send(pres);
             }
             var close = '</stream:stream>';
-            this._c.xmlOutput(this._c._bodyWrap(document.createElement("stream:stream")));
-            this._c.rawOutput(close);
+            this._conn.xmlOutput(this._conn._bodyWrap(document.createElement("stream:stream")));
+            this._conn.rawOutput(close);
             try {
                 this.socket.send(close);
             } catch (e) {}
@@ -4011,7 +4011,7 @@ Strophe.Websocket.prototype = {
     _buildStream: function ()
     {
         return $build("stream:stream", {
-            "to": this._c.domain,
+            "to": this._conn.domain,
             "xmlns": Strophe.NS.CLIENT,
             "xmlns:stream": Strophe.NS.STREAM,
             "version": '1.0'
@@ -4029,8 +4029,8 @@ Strophe.Websocket.prototype = {
      *  sends all queued stanzas 
      */
     _onIdle: function () {
-        var data = this._c._data;
-        if (data.length > 0 && !this._c.paused) {
+        var data = this._conn._data;
+        if (data.length > 0 && !this._conn.paused) {
             for (i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
                     if (data[i] === "restart") {
@@ -4038,12 +4038,12 @@ Strophe.Websocket.prototype = {
                     } else {
                         var stanza = data[i];
                     }
-                    this._c.xmlOutput(stanza);
-                    this._c.rawOutput(Strophe.serialize(stanza));
+                    this._conn.xmlOutput(stanza);
+                    this._conn.rawOutput(Strophe.serialize(stanza));
                     this.socket.send(Strophe.serialize(stanza));
                 }
             }
-            this._c._data = [];
+            this._conn._data = [];
         }
     }
 };
