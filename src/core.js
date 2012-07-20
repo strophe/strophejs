@@ -19,6 +19,12 @@
  *  Bidirectional-streams Over Synchronous HTTP (BOSH) to emulate
  *  a persistent, stateful, two-way connection to an XMPP server.  More
  *  information on BOSH can be found in XEP 124.
+ *  This version of Strophe also works with WebSockets. If instead of a 
+ *  BOSH-url a Connection is established with a Websocket url (ws://...)
+ *  Strophe will use the WebSocket instead.
+ *  WebSocket support implemented by Andreas Guth (guth@dbis.rwth-aachen.de)
+ *  For more information on XMPP-over WebSocket see this RFC draft:
+ *  http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-01
  */
 
 /** PrivateFunction: Function.prototype.bind
@@ -1600,7 +1606,7 @@ Strophe.Request.prototype = {
  *  Create and initialize a Strophe.Connection object.
  *
  *  Parameters:
- *    (String) service - The BOSH service URL.
+ *    (String) service - The BOSH or WebSocket service URL.
  *
  *  Returns:
  *    A new Strophe.Connection object.
@@ -3165,6 +3171,15 @@ Strophe.Connection.prototype = {
     }
 };
 
+/** PrivateConstructor: Strophe.Bosh
+ *  Create and initialize a Strophe.Bosh object.
+ *
+ *  Parameters:
+ *    (Strophe.Connection) connection - The Strophe.Connection that will use BOSH.
+ *
+ *  Returns:
+ *    A new Strophe.Bosh object.
+ */
 Strophe.Bosh = function(connection) {
     this._c = connection;
     /* request id for body tags */
@@ -3181,6 +3196,10 @@ Strophe.Bosh = function(connection) {
 }
 
 Strophe.Bosh.prototype = {
+    /** PrivateFunction: connect
+     *  _Private_ function that initializes the Bosh-connection.
+     *
+     */
     connect: function (wait, hold, route)
     {
         this.wait = wait || this.wait;
@@ -3747,6 +3766,15 @@ Strophe.Bosh.prototype = {
     }
 };
 
+/** PrivateConstructor: Strophe.Bosh
+ *  Create and initialize a Strophe.WebSocket object.
+ *
+ *  Parameters:
+ *    (Strophe.Connection) connection - The Strophe.Connection that will use WebSockets.
+ *
+ *  Returns:
+ *    A new Strophe.WebSocket object.
+ */
 Strophe.Websocket = function(connection) {
     this._c = connection;
 };
@@ -3763,7 +3791,8 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _onOpen
-     * _Private_ function to handle websockets connections.
+     * _Private_ function to handle websockets connection setup.
+     * The opening stream tag is sent here.
      *
      */
     _onOpen: function() {
@@ -3832,7 +3861,9 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _connect_cb_wrapper
-     * _Private_ function that handles the first connection messages
+     * _Private_ function that handles the first connection messages.
+     * On receiving an opening stream tag this callback replaces itself with the real
+     * message handler. On receiving a stream error the connection is terminated.
      */
     _connect_cb_wrapper: function(message) {
         var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
@@ -3873,6 +3904,8 @@ Strophe.Websocket.prototype = {
      *  Parameters:
      *    (Strophe.Request) bodyWrap - The received stanza.
      *    connectstatus - The ConnectStatus that will be set on error.
+     *  Returns:
+     *     true if there was a streamerror, false otherwise.
      */
     _check_streamerror: function (bodyWrap, connectstatus) {
         var errors = bodyWrap.getElementsByTagName("stream:error");
@@ -3883,11 +3916,18 @@ Strophe.Websocket.prototype = {
         var condition = error.childNodes[0].tagName;
         var text = error.getElementsByTagName("text")[0].textContent;
         Strophe.error("WebSocket stream error: " + condition + " - " + text);
+
+        // close the connection on stream_error
         this._c._changeConnectStatus(connectstatus, condition);
         this._c._doDisconnect();
         return true;
     },
 
+    /** PrivateFunction: connect
+     *  _Private_ function that creates a WebSocket for a connection and assigns
+     *  Callbacks to it. Does nothing if there already is a WebSocket.
+     *
+     */
     connect: function () {
         if(!this.socket) {
             this.socket = new WebSocket(this._c.service, "xmpp");
@@ -3938,11 +3978,27 @@ Strophe.Websocket.prototype = {
         }
     },
 
+    /** PrivateFunction: emptyQueue
+     * _Private_ function to check if the message queue is empty.
+     *
+     *  Returns:
+     *    True, because WebSockets don't have a queue.
+     */
     emptyQueue: function ()
     {
         return true;
     },
 
+    /** PrivateFunction: reqToData
+     * _Private_ function to get a stanza out of a request.
+     * WebSockets don' use requests, so the passed argument is just returned.
+     *
+     *  Parameters:
+     *    (Object) stanza - The stanza.
+     *
+     *  Returns:
+     *    The stanza that was passed.
+     */
     reqToData: function (req)
     {
         return req;
@@ -3966,12 +4022,13 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
-     *
      */
     _onDisconnectTimeout: function () {},
 
-    /**
+    /** PrivateFunction: _onIdle
+     *  _Private_ handler called by Strophe.Connection._onIdle
      *
+     *  sends all queued stanzas 
      */
     _onIdle: function () {
         var data = this._c._data;
