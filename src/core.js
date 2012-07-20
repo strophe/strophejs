@@ -3234,8 +3234,8 @@ Strophe.Bosh.prototype = {
     },
 
     send: function () {
-        this._throttledRequestHandler();
         clearTimeout(this._c._idleTimeout);
+        this._throttledRequestHandler();
         this._c._idleTimeout = setTimeout(this._c._onIdle.bind(this._c), 100);
     },
 
