@@ -1616,10 +1616,8 @@ Strophe.Connection = function (service)
     /* The path to the httpbind service. */
     this.service = service;
     if (service.indexOf("ws") === 0) {
-        this.protocol = Strophe.ProtocolType.WEBSOCKET;
         this.po = new Strophe.Websocket(this);
     } else {
-        this.protocol = Strophe.ProtocolType.BOSH;
         this.po = new Strophe.Bosh(this);
     }
     /* The connected JID. */
