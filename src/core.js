@@ -2395,7 +2395,7 @@ Strophe.Connection.prototype = {
                     this._changeConnectStatus(Strophe.Status.CONNFAIL,
                                               "bad-service");
                 }
-                this.disconnect();
+                this.disconnect("XHR open failed.");
                 return;
             }
 
@@ -2680,10 +2680,11 @@ Strophe.Connection.prototype = {
                     cond = "conflict";
                 }
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
+                this.disconnect("received terminate : " + cond);
             } else {
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+                this.disconnect("received terminate : unknown condition");
             }
-            this.disconnect();
             return;
         }
 
@@ -2892,7 +2893,7 @@ Strophe.Connection.prototype = {
             // client connections
             this._changeConnectStatus(Strophe.Status.CONNFAIL,
                                       'x-strophe-bad-non-anon-jid');
-            this.disconnect();
+            this.disconnect('x-strophe-bad-non-anon-jid');
         } else if (this._authentication.sasl_scram_sha1) {
             var cnonce = MD5.hexdigest(Math.random() * 1234567890);
 
@@ -3439,7 +3440,7 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") == "error") {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
-            this.disconnect();
+            this.disconnect('authentication failed');
         }
 
         return false;
