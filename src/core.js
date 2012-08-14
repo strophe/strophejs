@@ -335,15 +335,6 @@ Strophe = {
         FRAGMENT: 11
     },
 
-    /**
-     *
-     *
-     */
-    ProtocolType: {
-        BOSH: 1,
-        WEBSOCKET: 2
-    },
-
     /** PrivateConstants: Timeout Values
      *  Timeout values for error states.  These values are in seconds.
      *  These should not be changed unless you know exactly what you are
