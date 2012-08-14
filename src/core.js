@@ -3766,7 +3766,7 @@ Strophe.Bosh.prototype = {
     }
 };
 
-/** PrivateConstructor: Strophe.Bosh
+/** PrivateConstructor: Strophe.Websocket
  *  Create and initialize a Strophe.WebSocket object.
  *
  *  Parameters:
