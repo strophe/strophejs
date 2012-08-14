@@ -3222,6 +3222,11 @@ Strophe.Bosh.prototype = {
         this._throttledRequestHandler();
     },
 
+    /** PrivateFunction: send
+     *  _Private_ part of the Connection.send function for BOSH
+     *
+     * Just triggers the RequestHandler to send the messages that are in the queue
+     */
     send: function () {
         clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
@@ -3634,6 +3639,12 @@ Strophe.Bosh.prototype = {
         clearTimeout(this._conn._idleTimeout);
     },
 
+    /** PrivateFunction: disconnect
+     *  _Private_ part of Connection.disconnect for Bosh
+     *
+     *  Parameters:
+     *    (Request) pres - This stanza will be sent before disconnecting.
+     */
     disconnect: function (pres)
     {
         this._sendTerminate(pres);
@@ -3927,6 +3938,11 @@ Strophe.Websocket.prototype = {
         }
     },
 
+    /** PrivateFunction: send
+     *  _Private_ part of the Connection.send function for WebSocket
+     *
+     * Just flushes the messages that are in the queue
+     */
     send: function () {
         this._conn.flush();
     },
