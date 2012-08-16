@@ -3768,6 +3768,7 @@ Strophe.Bosh.prototype = {
 
 /** PrivateConstructor: Strophe.Websocket
  *  Create and initialize a Strophe.WebSocket object.
+ *  Currently only sets the connection Object.
  *
  *  Parameters:
  *    (Strophe.Connection) connection - The Strophe.Connection that will use WebSockets.
@@ -3784,7 +3785,7 @@ Strophe.Websocket.prototype = {
      * _Private_ function to handle websockets errors.
      *
      * Parameters:
-     * () error - The websocket error.
+     * (Object) error - The websocket error.
      */
     _onError: function(error) {
         Strophe.log("Websocket error " + error);
@@ -3799,6 +3800,7 @@ Strophe.Websocket.prototype = {
         Strophe.log("Websocket open");
         var start = this._buildStream();
         this._conn.xmlOutput(start);
+
         var startString = Strophe.serialize(start);
         this._conn.rawOutput(startString);
         this.socket.send(startString);
@@ -3806,6 +3808,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _onClose
      * _Private_ function to handle websockets closing.
+     * Just calls _doDisconnect for WebSockets
      *
      */
     _onClose: function(event) {
@@ -3826,6 +3829,7 @@ Strophe.Websocket.prototype = {
      * (string) message - The websocket message.
      */
     _onMessage: function(message) {
+        // check for closing stream
         if (message.data === "</stream:stream>") {
             var close = "</stream:stream>";
             this._conn.rawInput(close);
@@ -3835,7 +3839,9 @@ Strophe.Websocket.prototype = {
             }
             return;
         }
+        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
         var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
         string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
 
         parser = new DOMParser();
@@ -3847,6 +3853,7 @@ Strophe.Websocket.prototype = {
             return;
         }
 
+        //handle unavailable presence stanza before disconnecting
         if (this._conn.disconnecting &&
                 elem.firstChild.nodeName === "presence" &&
                 elem.firstChild.getAttribute("type") === "unavailable") {
@@ -3866,7 +3873,9 @@ Strophe.Websocket.prototype = {
      * message handler. On receiving a stream error the connection is terminated.
      */
     _connect_cb_wrapper: function(message) {
+        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
         var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
+        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
         string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
 
         var parser = new DOMParser();
@@ -3940,7 +3949,6 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: send
      *  _Private_ part of the Connection.send function for WebSocket
-     *
      * Just flushes the messages that are in the queue
      */
     send: function () {
@@ -3958,6 +3966,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _doDisconnect
      *  _Private_ function to disconnect.
+     *  tries to close the socket if it still open
      *
      */
     _doDisconnect: function ()
@@ -3968,6 +3977,13 @@ Strophe.Websocket.prototype = {
         this.socket = null;
     },
 
+    /** PrivateFunction: disconnect
+     *  _Private_ part of Connection.disconnect for WebSocket
+     *  Only sends a last stanza if one is given
+     *
+     *  Parameters:
+     *    (Request) pres - This stanza will be sent before disconnecting.
+     */
     disconnect: function (pres)
     {
         if (this.socket.readyState !== WebSocket.CLOSED) {
@@ -3987,7 +4003,7 @@ Strophe.Websocket.prototype = {
      * _Private_ function to check if the message queue is empty.
      *
      *  Returns:
-     *    True, because WebSockets don't have a queue.
+     *    True, because WebSocket messages are send immediately after queueing.
      */
     emptyQueue: function ()
     {
@@ -4027,6 +4043,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
+     *
+     *  This does nothing for WebSockets
      */
     _onDisconnectTimeout: function () {},
 
