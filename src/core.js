@@ -2319,7 +2319,7 @@ Strophe.Connection.prototype = {
         }
 
         // handle graceful disconnect
-        if (this.disconnecting && this._proto.emptyQueue()) {
+        if (this.disconnecting && this._proto._emptyQueue()) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
             this._doDisconnect();

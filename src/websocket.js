@@ -255,13 +255,13 @@ Strophe.Websocket.prototype = {
         }
     },
 
-    /** PrivateFunction: emptyQueue
+    /** PrivateFunction: _emptyQueue
      * _Private_ function to check if the message queue is empty.
      *
      *  Returns:
      *    True, because WebSocket messages are send immediately after queueing.
      */
-    emptyQueue: function ()
+    _emptyQueue: function ()
     {
         return true;
     },

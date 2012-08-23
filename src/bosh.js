@@ -519,7 +519,7 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
     },
 
-    emptyQueue: function ()
+    _emptyQueue: function ()
     {
         return this._requests.length === 0;
     },
