@@ -498,13 +498,13 @@ Strophe.Bosh.prototype = {
         clearTimeout(this._conn._idleTimeout);
     },
 
-    /** PrivateFunction: disconnect
+    /** PrivateFunction: _disconnect
      *  _Private_ part of Connection.disconnect for Bosh
      *
      *  Parameters:
      *    (Request) pres - This stanza will be sent before disconnecting.
      */
-    disconnect: function (pres)
+    _disconnect: function (pres)
     {
         this._sendTerminate(pres);
     },

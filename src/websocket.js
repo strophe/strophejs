@@ -233,14 +233,14 @@ Strophe.Websocket.prototype = {
         this.socket = null;
     },
 
-    /** PrivateFunction: disconnect
+    /** PrivateFunction: _disconnect
      *  _Private_ part of Connection.disconnect for WebSocket
      *  Only sends a last stanza if one is given
      *
      *  Parameters:
      *    (Request) pres - This stanza will be sent before disconnecting.
      */
-    disconnect: function (pres)
+    _disconnect: function (pres)
     {
         if (this.socket.readyState !== WebSocket.CLOSED) {
             if (pres) {

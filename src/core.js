@@ -2199,7 +2199,7 @@ Strophe.Connection.prototype = {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
-            this._proto.disconnect(pres);
+            this._proto._disconnect(pres);
         }
     },
 
