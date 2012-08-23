@@ -2293,7 +2293,7 @@ Strophe.Connection.prototype = {
     _dataRecv: function (req)
     {
         Strophe.info("_dataRecv called");
-        var elem = this._proto.reqToData(req);
+        var elem = this._proto._reqToData(req);
         if (elem === null) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
@@ -2398,7 +2398,7 @@ Strophe.Connection.prototype = {
 
         this.connected = true;
 
-        var bodyWrap = this._proto.reqToData(req);
+        var bodyWrap = this._proto._reqToData(req);
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {

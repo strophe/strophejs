@@ -266,7 +266,7 @@ Strophe.Websocket.prototype = {
         return true;
     },
 
-    /** PrivateFunction: reqToData
+    /** PrivateFunction: _reqToData
      * _Private_ function to get a stanza out of a request.
      * WebSockets don' use requests, so the passed argument is just returned.
      *
@@ -276,7 +276,7 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *    The stanza that was passed.
      */
-    reqToData: function (req)
+    _reqToData: function (req)
     {
         return req;
     },

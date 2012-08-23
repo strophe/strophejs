@@ -524,7 +524,7 @@ Strophe.Bosh.prototype = {
         return this._requests.length === 0;
     },
 
-    reqToData: function (req)
+    _reqToData: function (req)
     {
         try {
             return req.getResponse();
