@@ -8,7 +8,9 @@ NDPROJ_DIR = ndproj
 BASE_FILES = $(SRC_DIR)/base64.js \
 	$(SRC_DIR)/sha1.js \
 	$(SRC_DIR)/md5.js \
-	$(SRC_DIR)/core.js
+	$(SRC_DIR)/core.js \
+	$(SRC_DIR)/bosh.js \
+	$(SRC_DIR)/websocket.js
 
 STROPHE = strophe.js
 STROPHE_MIN = strophe.min.js
