@@ -1942,7 +1942,7 @@ Strophe.Connection.prototype = {
             this._queueData(elem);
         }
 
-        this._proto.send();
+        this._proto._send();
     },
 
     /** Function: flush

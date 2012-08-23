@@ -81,12 +81,12 @@ Strophe.Bosh.prototype = {
         this._throttledRequestHandler();
     },
 
-    /** PrivateFunction: send
+    /** PrivateFunction: _send
      *  _Private_ part of the Connection.send function for BOSH
      *
      * Just triggers the RequestHandler to send the messages that are in the queue
      */
-    send: function () {
+    _send: function () {
         clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
         this._conn._idleTimeout = setTimeout(this._conn._onIdle.bind(this._conn), 100);

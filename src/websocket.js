@@ -203,11 +203,11 @@ Strophe.Websocket.prototype = {
         }
     },
 
-    /** PrivateFunction: send
+    /** PrivateFunction: _send
      *  _Private_ part of the Connection.send function for WebSocket
      * Just flushes the messages that are in the queue
      */
-    send: function () {
+    _send: function () {
         this._conn.flush();
     },
 
