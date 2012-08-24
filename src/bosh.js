@@ -44,11 +44,11 @@ Strophe.Bosh = function(connection) {
 }
 
 Strophe.Bosh.prototype = {
-    /** PrivateFunction: connect
+    /** PrivateFunction: _connect
      *  _Private_ function that initializes the Bosh-connection.
      *
      */
-    connect: function (wait, hold, route)
+    _connect: function (wait, hold, route)
     {
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;

@@ -188,12 +188,12 @@ Strophe.Websocket.prototype = {
         return true;
     },
 
-    /** PrivateFunction: connect
+    /** PrivateFunction: _connect
      *  _Private_ function that creates a WebSocket for a connection and assigns
      *  Callbacks to it. Does nothing if there already is a WebSocket.
      *
      */
-    connect: function () {
+    _connect: function () {
         if(!this.socket) {
             this.socket = new WebSocket(this._conn.service, "xmpp");
             this.socket.onopen = this._onOpen.bind(this);

@@ -1803,7 +1803,7 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        this._proto.connect(wait, hold, route)
+        this._proto._connect(wait, hold, route)
     },
 
     /** Function: attach
