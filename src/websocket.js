@@ -37,29 +37,146 @@ Strophe.Websocket = function(connection) {
 };
 
 Strophe.Websocket.prototype = {
-    /** PrivateFunction: _onError
-     * _Private_ function to handle websockets errors.
+    /** PrivateFunction: _buildStream
+     *  _Private_ helper function to generate the <stream> start tag for WebSockets
      *
-     * Parameters:
-     * (Object) error - The websocket error.
+     *  Returns:
+     *    A Strophe.Builder with a <stream> element.
      */
-    _onError: function(error) {
-        Strophe.log("Websocket error " + error);
+    _buildStream: function ()
+    {
+        return $build("stream:stream", {
+            "to": this._conn.domain,
+            "xmlns": Strophe.NS.CLIENT,
+            "xmlns:stream": Strophe.NS.STREAM,
+            "version": '1.0'
+        });
     },
 
-    /** PrivateFunction: _onOpen
-     * _Private_ function to handle websockets connection setup.
-     * The opening stream tag is sent here.
+    /** PrivateFunction: _check_streamerror
+     * _Private_ checks a message for stream:error
+     *
+     *  Parameters:
+     *    (Strophe.Request) bodyWrap - The received stanza.
+     *    connectstatus - The ConnectStatus that will be set on error.
+     *  Returns:
+     *     true if there was a streamerror, false otherwise.
+     */
+    _check_streamerror: function (bodyWrap, connectstatus) {
+        var errors = bodyWrap.getElementsByTagName("stream:error");
+        if (errors.length === 0) {
+            return false;
+        }
+        var error = errors[0];
+        var condition = error.childNodes[0].tagName;
+        var text = error.getElementsByTagName("text")[0].textContent;
+        Strophe.error("WebSocket stream error: " + condition + " - " + text);
+
+        // close the connection on stream_error
+        this._conn._changeConnectStatus(connectstatus, condition);
+        this._conn._doDisconnect();
+        return true;
+    },
+
+    /** PrivateFunction: _connect
+     *  _Private_ function that creates a WebSocket for a connection and assigns
+     *  Callbacks to it. Does nothing if there already is a WebSocket.
      *
      */
-    _onOpen: function() {
-        Strophe.log("Websocket open");
-        var start = this._buildStream();
-        this._conn.xmlOutput(start);
+    _connect: function () {
+        if(!this.socket) {
+            this.socket = new WebSocket(this._conn.service, "xmpp");
+            this.socket.onopen = this._onOpen.bind(this);
+            this.socket.onerror = this._onError.bind(this);
+            this.socket.onclose = this._onClose.bind(this);
+            this.socket.onmessage = this._connect_cb_wrapper.bind(this);
+        }
+    },
 
-        var startString = Strophe.serialize(start);
-        this._conn.rawOutput(startString);
-        this.socket.send(startString);
+    /** PrivateFunction: _connect_cb
+     * _Private_ gets called by the connection in _connect_cb
+     * checks for stream:error
+     *
+     *  Parameters:
+     *    (Strophe.Request) bodyWrap - The received stanza.
+     */
+    _connect_cb: function(bodyWrap) {
+        var error = this._check_streamerror(bodyWrap, Strophe.Status.CONNFAIL);
+        if (error) {
+            return Strophe.Status.CONNFAIL;
+        }
+    },
+
+    /** PrivateFunction: _connect_cb_wrapper
+     * _Private_ function that handles the first connection messages.
+     * On receiving an opening stream tag this callback replaces itself with the real
+     * message handler. On receiving a stream error the connection is terminated.
+     */
+    _connect_cb_wrapper: function(message) {
+        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
+        var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
+        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
+        string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+
+        var parser = new DOMParser();
+        var elem = parser.parseFromString(string, "text/xml").documentElement;
+
+        if (elem.nodeName != "stream:stream") {
+            this.socket.onmessage = this._onMessage.bind(this);
+            elem = this._conn._bodyWrap(elem).tree();
+            this._conn._connect_cb(elem);
+        } else {
+            this._conn.xmlInput(elem);
+            this._conn.rawInput(Strophe.serialize(elem));
+            //_connect_cb will check for stream:error and disconnect on error
+            this._connect_cb(elem)
+        }
+    },
+
+    /** PrivateFunction: _disconnect
+     *  _Private_ part of Connection.disconnect for WebSocket
+     *  Only sends a last stanza if one is given
+     *
+     *  Parameters:
+     *    (Request) pres - This stanza will be sent before disconnecting.
+     */
+    _disconnect: function (pres)
+    {
+        if (this.socket.readyState !== WebSocket.CLOSED) {
+            if (pres) {
+                this._conn.send(pres);
+            }
+            var close = '</stream:stream>';
+            this._conn.xmlOutput(this._conn._bodyWrap(document.createElement("stream:stream")));
+            this._conn.rawOutput(close);
+            try {
+                this.socket.send(close);
+            } catch (e) {}
+        }
+    },
+
+    /** PrivateFunction: _doDisconnect
+     *  _Private_ function to disconnect.
+     *  tries to close the socket if it still open
+     *
+     */
+    _doDisconnect: function ()
+    {
+        if (this.socket) { try {
+            this.socket.close();
+        } catch (e) {} }
+        this.socket = null;
+    },
+
+    /** PrivateFunction: _emptyQueue
+     * _Private_ function to check if the message queue is empty.
+     *
+     *  Returns:
+     *    True, because WebSocket messages are send immediately after queueing.
+     */
+    _emptyQueue: function ()
+    {
+        return true;
     },
 
     /** PrivateFunction: _onClose
@@ -72,6 +189,47 @@ Strophe.Websocket.prototype = {
         this._conn._doDisconnect();
     },
 
+    /** PrivateFunction: _onDisconnectTimeout
+     *  _Private_ timeout handler for handling non-graceful disconnection.
+     *
+     *  This does nothing for WebSockets
+     */
+    _onDisconnectTimeout: function () {},
+
+    /** PrivateFunction: _onError
+     * _Private_ function to handle websockets errors.
+     *
+     * Parameters:
+     * (Object) error - The websocket error.
+     */
+    _onError: function(error) {
+        Strophe.log("Websocket error " + error);
+    },
+
+    /** PrivateFunction: _onIdle
+     *  _Private_ handler called by Strophe.Connection._onIdle
+     *
+     *  sends all queued stanzas 
+     */
+    _onIdle: function () {
+        var data = this._conn._data;
+        if (data.length > 0 && !this._conn.paused) {
+            for (i = 0; i < data.length; i++) {
+                if (data[i] !== null) {
+                    if (data[i] === "restart") {
+                        var stanza = this._buildStream();
+                    } else {
+                        var stanza = data[i];
+                    }
+                    this._conn.xmlOutput(stanza);
+                    this._conn.rawOutput(Strophe.serialize(stanza));
+                    this.socket.send(Strophe.serialize(stanza));
+                }
+            }
+            this._conn._data = [];
+        }
+    },
+     
     /** PrivateFunction: _onMessage
      * _Private_ function to handle websockets messages.
      *
@@ -123,147 +281,19 @@ Strophe.Websocket.prototype = {
         }
     },
 
-    /** PrivateFunction: _connect_cb_wrapper
-     * _Private_ function that handles the first connection messages.
-     * On receiving an opening stream tag this callback replaces itself with the real
-     * message handler. On receiving a stream error the connection is terminated.
-     */
-    _connect_cb_wrapper: function(message) {
-        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
-        var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
-        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
-
-        var parser = new DOMParser();
-        var elem = parser.parseFromString(string, "text/xml").documentElement;
-
-        if (elem.nodeName != "stream:stream") {
-            this.socket.onmessage = this._onMessage.bind(this);
-            elem = this._conn._bodyWrap(elem).tree();
-            this._conn._connect_cb(elem);
-        } else {
-            this._conn.xmlInput(elem);
-            this._conn.rawInput(Strophe.serialize(elem));
-            //_connect_cb will check for stream:error and disconnect on error
-            this._connect_cb(elem)
-        }
-    },
-
-    /** PrivateFunction: _connect_cb
-     * _Private_ gets called by the connection in _connect_cb
-     * checks for stream:error
-     *
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
-     */
-    _connect_cb: function(bodyWrap) {
-        var error = this._check_streamerror(bodyWrap, Strophe.Status.CONNFAIL);
-        if (error) {
-            return Strophe.Status.CONNFAIL;
-        }
-    },
-
-    /** PrivateFunction: _check_streamerror
-     * _Private_ checks a message for stream:error
-     *
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
-     *    connectstatus - The ConnectStatus that will be set on error.
-     *  Returns:
-     *     true if there was a streamerror, false otherwise.
-     */
-    _check_streamerror: function (bodyWrap, connectstatus) {
-        var errors = bodyWrap.getElementsByTagName("stream:error");
-        if (errors.length === 0) {
-            return false;
-        }
-        var error = errors[0];
-        var condition = error.childNodes[0].tagName;
-        var text = error.getElementsByTagName("text")[0].textContent;
-        Strophe.error("WebSocket stream error: " + condition + " - " + text);
-
-        // close the connection on stream_error
-        this._conn._changeConnectStatus(connectstatus, condition);
-        this._conn._doDisconnect();
-        return true;
-    },
-
-    /** PrivateFunction: _connect
-     *  _Private_ function that creates a WebSocket for a connection and assigns
-     *  Callbacks to it. Does nothing if there already is a WebSocket.
+    /** PrivateFunction: _onOpen
+     * _Private_ function to handle websockets connection setup.
+     * The opening stream tag is sent here.
      *
      */
-    _connect: function () {
-        if(!this.socket) {
-            this.socket = new WebSocket(this._conn.service, "xmpp");
-            this.socket.onopen = this._onOpen.bind(this);
-            this.socket.onerror = this._onError.bind(this);
-            this.socket.onclose = this._onClose.bind(this);
-            this.socket.onmessage = this._connect_cb_wrapper.bind(this);
-        }
-    },
+    _onOpen: function() {
+        Strophe.log("Websocket open");
+        var start = this._buildStream();
+        this._conn.xmlOutput(start);
 
-    /** PrivateFunction: _send
-     *  _Private_ part of the Connection.send function for WebSocket
-     * Just flushes the messages that are in the queue
-     */
-    _send: function () {
-        this._conn.flush();
-    },
-
-    /** PrivateFunction: _sendRestart
-     *  Send an xmpp:restart stanza.
-     */
-    _sendRestart: function ()
-    {
-        clearTimeout(this._conn._idleTimeout);
-        this._conn._onIdle.bind(this._conn)();
-    },
-
-    /** PrivateFunction: _doDisconnect
-     *  _Private_ function to disconnect.
-     *  tries to close the socket if it still open
-     *
-     */
-    _doDisconnect: function ()
-    {
-        if (this.socket) { try {
-            this.socket.close();
-        } catch (e) {} }
-        this.socket = null;
-    },
-
-    /** PrivateFunction: _disconnect
-     *  _Private_ part of Connection.disconnect for WebSocket
-     *  Only sends a last stanza if one is given
-     *
-     *  Parameters:
-     *    (Request) pres - This stanza will be sent before disconnecting.
-     */
-    _disconnect: function (pres)
-    {
-        if (this.socket.readyState !== WebSocket.CLOSED) {
-            if (pres) {
-                this._conn.send(pres);
-            }
-            var close = '</stream:stream>';
-            this._conn.xmlOutput(this._conn._bodyWrap(document.createElement("stream:stream")));
-            this._conn.rawOutput(close);
-            try {
-                this.socket.send(close);
-            } catch (e) {}
-        }
-    },
-
-    /** PrivateFunction: _emptyQueue
-     * _Private_ function to check if the message queue is empty.
-     *
-     *  Returns:
-     *    True, because WebSocket messages are send immediately after queueing.
-     */
-    _emptyQueue: function ()
-    {
-        return true;
+        var startString = Strophe.serialize(start);
+        this._conn.rawOutput(startString);
+        this.socket.send(startString);
     },
 
     /** PrivateFunction: _reqToData
@@ -281,50 +311,20 @@ Strophe.Websocket.prototype = {
         return req;
     },
 
-    /** PrivateFunction: _buildStream
-     *  _Private_ helper function to generate the <stream> start tag for WebSockets
-     *
-     *  Returns:
-     *    A Strophe.Builder with a <stream> element.
+    /** PrivateFunction: _send
+     *  _Private_ part of the Connection.send function for WebSocket
+     * Just flushes the messages that are in the queue
      */
-    _buildStream: function ()
-    {
-        return $build("stream:stream", {
-            "to": this._conn.domain,
-            "xmlns": Strophe.NS.CLIENT,
-            "xmlns:stream": Strophe.NS.STREAM,
-            "version": '1.0'
-        });
+    _send: function () {
+        this._conn.flush();
     },
 
-    /** PrivateFunction: _onDisconnectTimeout
-     *  _Private_ timeout handler for handling non-graceful disconnection.
-     *
-     *  This does nothing for WebSockets
+    /** PrivateFunction: _sendRestart
+     *  Send an xmpp:restart stanza.
      */
-    _onDisconnectTimeout: function () {},
-
-    /** PrivateFunction: _onIdle
-     *  _Private_ handler called by Strophe.Connection._onIdle
-     *
-     *  sends all queued stanzas 
-     */
-    _onIdle: function () {
-        var data = this._conn._data;
-        if (data.length > 0 && !this._conn.paused) {
-            for (i = 0; i < data.length; i++) {
-                if (data[i] !== null) {
-                    if (data[i] === "restart") {
-                        var stanza = this._buildStream();
-                    } else {
-                        var stanza = data[i];
-                    }
-                    this._conn.xmlOutput(stanza);
-                    this._conn.rawOutput(Strophe.serialize(stanza));
-                    this.socket.send(Strophe.serialize(stanza));
-                }
-            }
-            this._conn._data = [];
-        }
+    _sendRestart: function ()
+    {
+        clearTimeout(this._conn._idleTimeout);
+        this._conn._onIdle.bind(this._conn)();
     }
 };
