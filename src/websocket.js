@@ -306,9 +306,9 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *    The stanza that was passed.
      */
-    _reqToData: function (req)
+    _reqToData: function (stanza)
     {
-        return req;
+        return stanza;
     },
 
     /** PrivateFunction: _send
