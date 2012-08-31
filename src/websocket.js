@@ -95,6 +95,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _connect_cb
      * _Private_ gets called by the connection in _connect_cb
+     *
      * checks for stream:error
      *
      *  Parameters:
@@ -109,6 +110,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _connect_cb_wrapper
      * _Private_ function that handles the first connection messages.
+     *
      * On receiving an opening stream tag this callback replaces itself with the real
      * message handler. On receiving a stream error the connection is terminated.
      */
@@ -135,7 +137,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _disconnect
      *  _Private_ part of Connection.disconnect for WebSocket
-     *  Only sends a last stanza if one is given
+     *
+     *  Disconnects and sends a last stanza if one is given
      *
      *  Parameters:
      *    (Request) pres - This stanza will be sent before disconnecting.
@@ -157,8 +160,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _doDisconnect
      *  _Private_ function to disconnect.
-     *  tries to close the socket if it still open
      *
+     *  Tries to close the socket if it still open
      */
     _doDisconnect: function ()
     {
@@ -181,8 +184,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _onClose
      * _Private_ function to handle websockets closing.
-     * Just calls _doDisconnect for WebSockets
      *
+     * Just calls _doDisconnect for WebSockets
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
@@ -283,8 +286,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _onOpen
      * _Private_ function to handle websockets connection setup.
-     * The opening stream tag is sent here.
      *
+     * The opening stream tag is sent here.
      */
     _onOpen: function() {
         Strophe.log("Websocket open");
@@ -298,7 +301,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _reqToData
      * _Private_ function to get a stanza out of a request.
-     * WebSockets don' use requests, so the passed argument is just returned.
+     * WebSockets don't use requests, so the passed argument is just returned.
      *
      *  Parameters:
      *    (Object) stanza - The stanza.
@@ -313,6 +316,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _send
      *  _Private_ part of the Connection.send function for WebSocket
+     *
      * Just flushes the messages that are in the queue
      */
     _send: function () {
@@ -320,6 +324,7 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _sendRestart
+     *
      *  Send an xmpp:restart stanza.
      */
     _sendRestart: function ()

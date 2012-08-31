@@ -65,8 +65,9 @@ Strophe.Bosh.prototype = {
     },
 
     /** PrivateFunction: _connect
-     *  _Private_ function that initializes the Bosh-connection.
+     *  _Private_ function that initializes the BOSH connection.
      *
+     *  Creates and sends the Request that initializes the BOSH connection.
      */
     _connect: function (wait, hold, route)
     {
@@ -159,6 +160,7 @@ Strophe.Bosh.prototype = {
     /** PrivateFunction: _doDisconnect
      *  _Private_ function to disconnect.
      *
+     *  Resets the SID and RID.
      */
     _doDisconnect: function ()
     {
@@ -166,6 +168,12 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
     },
 
+    /** PrivateFunction: _emptyQueue
+     * _Private_ function to check if the Request queue is empty.
+     *
+     *  Returns:
+     *    True, if there are no Requests queued, False otherwise.
+     */
     _emptyQueue: function ()
     {
         return this._requests.length === 0;
@@ -191,9 +199,9 @@ Strophe.Bosh.prototype = {
         }
     },
 
-    /** Function: _no_auth_received
-     *
-     * called on stream start/restart when no stream:features
+    /** PrivateFunction: _no_auth_received
+     *  
+     * Called on stream start/restart when no stream:features
      * has been received and sends a blank poll request.
      */
     _no_auth_received: function (_callback)
@@ -214,11 +222,11 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
-     *
+     *   
+     *  Cancels all remaining Requests and clears the queue.
      */
     _onDisconnectTimeout: function ()
     {
-        // cancel all remaining requests and clear the queue
         var req;
         while (this._requests.length > 0) {
             req = this._requests.pop();
@@ -230,8 +238,10 @@ Strophe.Bosh.prototype = {
         }
     },
 
-    /**
-     *
+    /** PrivateFunction: _onIdle
+     *  _Private_ handler called by Strophe.Connection._onIdle
+     *   
+     *  Sends all queued Requests or polls with empty Request if there are none. 
      */
     _onIdle: function () {
         var data = this._conn._data;
@@ -536,6 +546,18 @@ Strophe.Bosh.prototype = {
         this._processRequest(i);
     },
 
+    /** PrivateFunction: _reqToData
+     * _Private_ function to get a stanza out of a request.
+     *
+     * Tries to extract a stanza out of a Request Object.
+     * When this fails the current connection will be disconnected.
+     *
+     *  Parameters:
+     *    (Object) req - The Request.
+     *
+     *  Returns:
+     *    The stanza that was passed.
+     */
     _reqToData: function (req)
     {
         try {
@@ -583,6 +605,7 @@ Strophe.Bosh.prototype = {
     },
 
     /** PrivateFunction: _sendRestart
+     *
      *  Send an xmpp:restart stanza.
      */
     _sendRestart: function ()
