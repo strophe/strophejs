@@ -80,8 +80,8 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _connect
      *  _Private_ function that creates a WebSocket for a connection and assigns
-     *  Callbacks to it. Does nothing if there already is a WebSocket.
      *
+     *  Callbacks to it. Does nothing if there already is a WebSocket.
      */
     _connect: function () {
         if(!this.socket) {
@@ -301,6 +301,7 @@ Strophe.Websocket.prototype = {
 
     /** PrivateFunction: _reqToData
      * _Private_ function to get a stanza out of a request.
+     *
      * WebSockets don't use requests, so the passed argument is just returned.
      *
      *  Parameters:
