@@ -79,9 +79,10 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _connect
-     *  _Private_ function that creates a WebSocket for a connection and assigns
+     *  _Private_ function called by Strophe.Connection.connect
      *
-     *  Callbacks to it. Does nothing if there already is a WebSocket.
+     *  Creates a WebSocket for a connection and assigns Callbacks to it.
+     *  Does nothing if there already is a WebSocket.
      */
     _connect: function () {
         if(!this.socket) {
@@ -94,7 +95,7 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _connect_cb
-     * _Private_ gets called by the connection in _connect_cb
+     *  _Private_ function called by Strophe.Connection._connect_cb
      *
      * checks for stream:error
      *
@@ -136,7 +137,7 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _disconnect
-     *  _Private_ part of Connection.disconnect for WebSocket
+     *  _Private_ function called by Strophe.Connection.disconnect
      *
      *  Disconnects and sends a last stanza if one is given
      *
@@ -210,7 +211,7 @@ Strophe.Websocket.prototype = {
     },
 
     /** PrivateFunction: _onIdle
-     *  _Private_ handler called by Strophe.Connection._onIdle
+     *  _Private_ function called by Strophe.Connection._onIdle
      *
      *  sends all queued stanzas 
      */
