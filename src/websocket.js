@@ -222,11 +222,12 @@ Strophe.Websocket.prototype = {
                 if (data[i] !== null) {
                     if (data[i] === "restart") {
                         var stanza = this._buildStream();
+                        var rawStanza = this._removeClosingTag(stanza)
                     } else {
                         var stanza = data[i];
+                        var rawStanza = Strophe.serialize(stanza)
                     }
                     this._conn.xmlOutput(stanza);
-                    var rawStanza = this._removeClosingTag(stanza)
                     this._conn.rawOutput(rawStanza);
                     this.socket.send(rawStanza);
                 }
