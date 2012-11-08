@@ -117,9 +117,9 @@ Strophe.Websocket.prototype = {
      */
     _connect_cb_wrapper: function(message) {
         //Inject namespaces into stream tags. has to be done because no SAX parser is used.
-        var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
+        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");;
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
 
         var parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
@@ -258,9 +258,9 @@ Strophe.Websocket.prototype = {
             return;
         }
         //Inject namespaces into stream tags. has to be done because no SAX parser is used.
-        var string = message.data.replace(/^<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/^<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
 
         parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
