@@ -313,7 +313,7 @@ Strophe.Websocket.prototype = {
      */
     _removeClosingTag: function(elem) {
         var string = Strophe.serialize(elem);
-        string = string.replace(/<stream:stream (.*[^/])\/>$/, "<stream:stream $1>");
+        string = string.replace(/<(stream:stream .*[^/])\/>$/, "<$1>");
         return string;
     },
 
