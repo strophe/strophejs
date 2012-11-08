@@ -226,14 +226,15 @@ Strophe.Websocket.prototype = {
                         var stanza = data[i];
                     }
                     this._conn.xmlOutput(stanza);
-                    this._conn.rawOutput(Strophe.serialize(stanza));
-                    this.socket.send(Strophe.serialize(stanza));
+                    var rawStanza = this._removeClosingTag(stanza)
+                    this._conn.rawOutput(rawStanza);
+                    this.socket.send(rawStanza);
                 }
             }
             this._conn._data = [];
         }
     },
-     
+
     /** PrivateFunction: _onMessage
      * _Private_ function to handle websockets messages.
      *
@@ -295,9 +296,24 @@ Strophe.Websocket.prototype = {
         var start = this._buildStream();
         this._conn.xmlOutput(start);
 
-        var startString = Strophe.serialize(start);
+        var startString = this._removeClosingTag(start);
         this._conn.rawOutput(startString);
         this.socket.send(startString);
+    },
+
+    /** PrivateFunction: _removeClosingTag
+     *  _Private_ function to Make the first <stream:stream> non-selfclosing
+     *
+     *  Parameters:
+     *      (Object) elem - The <stream:stream> tag.
+     *
+     *  Returns:
+     *      The stream:stream tag as String
+     */
+    _removeClosingTag: function(elem) {
+        var string = Strophe.serialize(elem);
+        string = string.replace(/<stream:stream (.*[^/])\/>$/, "<stream:stream $1>");
+        return string;
     },
 
     /** PrivateFunction: _reqToData
