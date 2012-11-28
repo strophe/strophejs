@@ -1275,7 +1275,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     this.name = name;
     this.type = type;
     this.id = id;
-    this.options = options || {matchbare: false};
+    this.options = options || {matchBare: false};
     
     // default matchBare to false if undefined
     if (!this.options.matchBare) {
