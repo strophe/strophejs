@@ -212,8 +212,8 @@ $(document).ready(function () {
 
     test("Quoting strings", function () {
         var input = '"beep \\40"';
-        var conn = new Strophe.Connection();
-        var output = conn._quote(input);
+        var saslmd5 = new Strophe.SASLMD5();
+        var output = saslmd5._quote(input);
         equal(output, "\"\\\"beep \\\\40\\\"\"",
                "string should be quoted and escaped");
     });
@@ -282,4 +282,58 @@ $(document).ready(function () {
         equal(conn._requests.length, 1, "_requests should be same length");
         equal(spy.called, false, "callback should not be called");
     });
+
+  module("SASL Mechanisms");
+
+  test("SASL Plain Auth", function () {
+    var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+
+    ok(Strophe.SASLPlain.test(conn), "plain should pass the test");
+
+    var saslplain = new Strophe.SASLPlain();
+    saslplain.onStart(conn);
+    var response = saslplain.onChallenge(conn, null);
+    equal(response, [conn.authzid, conn.authcid, conn.pass].join("\u0000"),
+          "checking plain auth challenge");
+    saslplain.onSuccess();
+  });
+
+  test("SASL SCRAM-SHA-1 Auth", function () {
+    var conn = {pass: "pencil", authcid: "user",
+                authzid: "user@xmpp.org", _sasl_data: []};
+
+    ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
+
+    var saslsha1 = new Strophe.SASLSHA1();
+    saslsha1.onStart(conn);
+    // test taken from example section on:
+    // URL: http://tools.ietf.org/html/rfc5802#section-5
+    var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
+    equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
+          "checking first auth challenge");
+    var response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
+    equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
+          "checking second auth challenge");
+    saslsha1.onSuccess();
+  });
+
+  test("SASL DIGEST-MD-5 Auth", function () {
+    var conn = {pass: "secret", authcid: "chris",
+                authzid: "user@xmpp.org", servtype: "imap",
+                domain: "elwood.innosoft.com",
+                _sasl_data: []};
+
+    ok(Strophe.SASLMD5.test(conn), "md-5 should pass the test");
+
+    var saslmd5 = new Strophe.SASLMD5();
+    saslmd5.onStart(conn);
+    // test taken from example section on:
+    // URL: http://www.ietf.org/rfc/rfc2831.txt
+    var response = saslmd5.onChallenge(conn, "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8", "OA6MHXh6VqTrRk");
+    equal(response, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth",
+          "checking first auth challenge");
+    var response = saslmd5.onChallenge(conn, "rspauth=ea40f60335c427b5527b84dbabcdfffd");
+    equal(response, "", "checking second auth challenge");
+    saslmd5.onSuccess();
+  });
 });
