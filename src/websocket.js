@@ -116,6 +116,8 @@ Strophe.Websocket.prototype = {
      * message handler. On receiving a stream error the connection is terminated.
      */
     _connect_cb_wrapper: function(message) {
+        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
+        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
         string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
 
@@ -258,9 +260,9 @@ Strophe.Websocket.prototype = {
             return;
         }
         var string = message.data;
-        if string.search("xmlns:stream" == -1) {
+        if (string.search("xmlns:stream" == -1)) {
             //Inject namespaces into stream tags if they are missing. Has to be done because no SAX parser is used.
-            string = string.replace(/<stream:(.*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+            string = string.replace(/<stream:([^>]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         }
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
         string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
