@@ -2595,6 +2595,10 @@ Strophe.Connection.prototype = {
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
             this._onDisconnectTimeout();
+        } else {
+            if (window.jQuery !== undefined) {
+                window.jQuery(document).trigger('strophe-http-' + reqStatus + '-error');
+            }
         }
     },
 
