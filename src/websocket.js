@@ -274,7 +274,7 @@ Strophe.Websocket.prototype = {
             return;
         }
         var string = message.data;
-        if (string.search("xmlns:stream" == -1)) {
+        if (string.search("xmlns:stream") == -1) {
             //Inject namespaces into stream tags if they are missing. Has to be done because no SAX parser is used.
             string = string.replace(/<stream:([^>]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         }
