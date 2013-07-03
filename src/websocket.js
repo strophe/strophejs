@@ -85,13 +85,15 @@ Strophe.Websocket.prototype = {
      *  Does nothing if there already is a WebSocket.
      */
     _connect: function () {
-        if(!this.socket) {
-            this.socket = new WebSocket(this._conn.service, "xmpp");
-            this.socket.onopen = this._onOpen.bind(this);
-            this.socket.onerror = this._onError.bind(this);
-            this.socket.onclose = this._onClose.bind(this);
-            this.socket.onmessage = this._connect_cb_wrapper.bind(this);
-        }
+        // Ensure that there is no open WebSocket from a previous Connection.
+        this._doDisconnect();
+
+        // Create the new WobSocket
+        this.socket = new WebSocket(this._conn.service, "xmpp");
+        this.socket.onopen = this._onOpen.bind(this);
+        this.socket.onerror = this._onError.bind(this);
+        this.socket.onclose = this._onClose.bind(this);
+        this.socket.onmessage = this._connect_cb_wrapper.bind(this);
     },
 
     /** PrivateFunction: _connect_cb
