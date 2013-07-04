@@ -206,8 +206,7 @@ Strophe.Websocket.prototype = {
      * Nothing to do here for WebSockets
      */
     _onClose: function(event) {
-        Strophe.log("Websocket disconnected");
-        this._conn._doDisconnect();
+        Strophe.log("Websocket closed");
     },
 
     /** PrivateFunction: _no_auth_received
