@@ -161,7 +161,6 @@ Strophe.Websocket.prototype = {
                 Strophe.info("Couldn't send closing stream tag.");
             }
 
-            this._conn.deleteTimedHandler(this._conn._disconnectTimeout);
             this._conn._doDisconnect();
         }
     },

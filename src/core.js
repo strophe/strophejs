@@ -2274,6 +2274,12 @@ Strophe.Connection.prototype = {
      */
     _doDisconnect: function ()
     {
+        // Cancel Disconnect Timeout
+        if (this._disconnectTimeout != null) {
+            this.deleteTimedHandler(this._disconnectTimeout);
+            this._disconnectTimeout = null;
+        }
+
         Strophe.info("_doDisconnect was called");
         this.authenticated = false;
         this.disconnecting = false;
@@ -2335,8 +2341,6 @@ Strophe.Connection.prototype = {
 
         // handle graceful disconnect
         if (this.disconnecting && this._proto._emptyQueue()) {
-            this.deleteTimedHandler(this._disconnectTimeout);
-            this._disconnectTimeout = null;
             this._doDisconnect();
             return;
         }
