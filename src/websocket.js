@@ -86,7 +86,7 @@ Strophe.Websocket.prototype = {
      */
     _connect: function () {
         // Ensure that there is no open WebSocket from a previous Connection.
-        this._doDisconnect();
+        this._closeSocket();
 
         // Create the new WobSocket
         this.socket = new WebSocket(this._conn.service, "xmpp");
@@ -169,9 +169,19 @@ Strophe.Websocket.prototype = {
     /** PrivateFunction: _doDisconnect
      *  _Private_ function to disconnect.
      *
-     *  Tries to close the socket if it still open
+     *  Just closes the Socket for WebSockets
      */
     _doDisconnect: function ()
+    {
+        this._closeSocket();
+    },
+
+    /** PrivateFunction: _closeSocket
+     *  _Private_ function to close the WebSocket.
+     *
+     *  Closes the socket if it is still open and deletes it
+     */
+    _closeSocket: function ()
     {
         if (this.socket) { try {
             this.socket.close();
@@ -193,7 +203,7 @@ Strophe.Websocket.prototype = {
     /** PrivateFunction: _onClose
      * _Private_ function to handle websockets closing.
      *
-     * Just calls _doDisconnect for WebSockets
+     * Nothing to do here for WebSockets
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
