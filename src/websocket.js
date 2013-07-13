@@ -172,6 +172,7 @@ Strophe.Websocket.prototype = {
      */
     _doDisconnect: function ()
     {
+        Strophe.info("WebSockets _doDisconnect was called");
         this._closeSocket();
     },
 
@@ -215,11 +216,13 @@ Strophe.Websocket.prototype = {
      */
     _no_auth_received: function (_callback)
     {
+        Strophe.error("Server did not send any auth methods")
+        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
         if (_callback) {
             _callback = _callback.bind(this._conn);
-        } else {
-            _callback = this._conn._connect_cb.bind(this._conn);
+            _callback();
         }
+        this._conn._doDisconnect();
     },
 
     /** PrivateFunction: _onDisconnectTimeout
