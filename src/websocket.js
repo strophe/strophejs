@@ -205,7 +205,7 @@ Strophe.Websocket.prototype = {
      * Nothing to do here for WebSockets
      */
     _onClose: function(event) {
-        Strophe.log("Websocket closed");
+        Strophe.info("Websocket closed");
     },
 
     /** PrivateFunction: _no_auth_received
@@ -236,7 +236,7 @@ Strophe.Websocket.prototype = {
      * (Object) error - The websocket error.
      */
     _onError: function(error) {
-        Strophe.log("Websocket error " + error);
+        Strophe.error("Websocket error " + error);
     },
 
     /** PrivateFunction: _onIdle
@@ -325,7 +325,7 @@ Strophe.Websocket.prototype = {
      * The opening stream tag is sent here.
      */
     _onOpen: function() {
-        Strophe.log("Websocket open");
+        Strophe.info("Websocket open");
         var start = this._buildStream();
         this._conn.xmlOutput(start);
 
