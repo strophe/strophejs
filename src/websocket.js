@@ -189,7 +189,7 @@ Strophe.Websocket.prototype = {
      * Just calls _doDisconnect for WebSockets
      */
     _onClose: function(event) {
-        Strophe.log("Websocket disconnected");
+        Strophe.info("Websocket disconnected");
         this._conn._doDisconnect();
     },
 
@@ -221,7 +221,7 @@ Strophe.Websocket.prototype = {
      * (Object) error - The websocket error.
      */
     _onError: function(error) {
-        Strophe.log("Websocket error " + error);
+        Strophe.error("Websocket error " + error);
     },
 
     /** PrivateFunction: _onIdle
@@ -310,7 +310,7 @@ Strophe.Websocket.prototype = {
      * The opening stream tag is sent here.
      */
     _onOpen: function() {
-        Strophe.log("Websocket open");
+        Strophe.info("Websocket open");
         var start = this._buildStream();
         this._conn.xmlOutput(start);
 
