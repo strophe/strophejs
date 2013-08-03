@@ -1496,6 +1496,7 @@ Strophe.Request = function (elem, func, rid, sends)
     this.sends = sends || 0;
     this.abort = false;
     this.dead = null;
+
     this.age = function () {
         if (!this.date) { return 0; }
         var now = new Date();
@@ -1598,11 +1599,12 @@ Strophe.Request.prototype = {
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
+ *    (Object) options - A hash of configuration options
  *
  *  Returns:
  *    A new Strophe.Connection object.
  */
-Strophe.Connection = function (service)
+Strophe.Connection = function (service, options)
 {
     /* The path to the httpbind service. */
     this.service = service;
@@ -1639,6 +1641,9 @@ Strophe.Connection = function (service)
     this.authenticated = false;
     this.disconnecting = false;
     this.connected = false;
+
+    // Configuration options
+    this._options = options || {};
 
     this.errors = 0;
 

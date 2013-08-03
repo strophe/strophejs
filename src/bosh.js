@@ -476,6 +476,14 @@ Strophe.Bosh.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
+                if (this._conn._options.customHeaders){
+                    var headers = this._conn._options.customHeaders;
+                    for (var header in headers) {
+                        if (headers.hasOwnProperty(header)) {
+                            req.xhr.setRequestHeader(header, headers[header]);
+                        }
+                    }
+                }
                 req.xhr.send(req.data);
             };
 
