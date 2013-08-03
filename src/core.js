@@ -1490,6 +1490,7 @@ Strophe.Request = function (elem, func, rid, sends)
     this.sends = sends || 0;
     this.abort = false;
     this.dead = null;
+
     this.age = function () {
         if (!this.date) { return 0; }
         var now = new Date();
@@ -1592,11 +1593,12 @@ Strophe.Request.prototype = {
  *
  *  Parameters:
  *    (String) service - The BOSH service URL.
+ *    (Object) options - A hash of configuration options
  *
  *  Returns:
  *    A new Strophe.Connection object.
  */
-Strophe.Connection = function (service)
+Strophe.Connection = function (service, options)
 {
     /* The path to the httpbind service. */
     this.service = service;
@@ -1633,6 +1635,9 @@ Strophe.Connection = function (service)
     this.authenticated = false;
     this.disconnecting = false;
     this.connected = false;
+
+    // Configuration options
+    this._options = options || {};
 
     this.errors = 0;
 
@@ -2350,6 +2355,7 @@ Strophe.Connection.prototype = {
      */
     _processRequest: function (i)
     {
+        var self = this;
         var req = this._requests[i];
         var reqStatus = -1;
 
@@ -2418,6 +2424,14 @@ Strophe.Connection.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
+                if (self._options.customHeaders){
+                  var headers = self._options.customHeaders;
+                  for (var header in headers) {
+                    if (headers.hasOwnProperty(header)) {
+                      req.xhr.setRequestHeader(header, headers[header]);
+                    }
+                  }
+                }
                 req.xhr.send(req.data);
             };
 
