@@ -92,8 +92,7 @@ Strophe.Bosh.prototype = {
             });
         }
 
-        var _connect_cb = this._conn.connect_callback || this._conn._connect_cb;
-        this._conn.connect_callback = null;
+        var _connect_cb = this._conn._connect_cb;
 
         this._requests.push(
             new Strophe.Request(body.tree(),
@@ -409,6 +408,7 @@ Strophe.Bosh.prototype = {
      */
     _processRequest: function (i)
     {
+        var self = this;
         var req = this._requests[i];
         var reqStatus = -1;
 
@@ -477,8 +477,8 @@ Strophe.Bosh.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
-                if (this._conn._options.customHeaders){
-                    var headers = this._conn._options.customHeaders;
+                if (self._conn._options.customHeaders){
+                    var headers = self._conn._options.customHeaders;
                     for (var header in headers) {
                         if (headers.hasOwnProperty(header)) {
                             req.xhr.setRequestHeader(header, headers[header]);
