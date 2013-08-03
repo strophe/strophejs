@@ -92,7 +92,8 @@ Strophe.Bosh.prototype = {
             });
         }
 
-        var _connect_cb = this._conn._connect_cb;
+        var _connect_cb = this._conn.connect_callback || this._conn._connect_cb;
+        this._conn.connect_callback = null;
 
         this._requests.push(
             new Strophe.Request(body.tree(),
