@@ -1843,8 +1843,7 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        var _connect_cb = this.connect_callback || this._connect_cb;
-        this.connect_callback = null;
+        var _connect_cb = this._connect_cb;
 
         this._requests.push(
             new Strophe.Request(body.tree(),
