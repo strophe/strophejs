@@ -2425,12 +2425,12 @@ Strophe.Connection.prototype = {
             var sendFunc = function () {
                 req.date = new Date();
                 if (self._options.customHeaders){
-                  var headers = self._options.customHeaders;
-                  for (var header in headers) {
-                    if (headers.hasOwnProperty(header)) {
-                      req.xhr.setRequestHeader(header, headers[header]);
+                    var headers = self._options.customHeaders;
+                    for (var header in headers) {
+                        if (headers.hasOwnProperty(header)) {
+                            req.xhr.setRequestHeader(header, headers[header]);
+                        }
                     }
-                  }
                 }
                 req.xhr.send(req.data);
             };
