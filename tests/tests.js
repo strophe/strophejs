@@ -255,7 +255,7 @@ $(document).ready(function () {
 
         var spy = sinon.spy();
 
-        conn._onRequestStateChange(spy, req);
+        conn._proto._onRequestStateChange(spy, req);
 
         equal(req.abort, false, "abort flag should be toggled");
         equal(conn._requests.length, 1, "_requests should be same length");
@@ -277,7 +277,7 @@ $(document).ready(function () {
 
         var spy = sinon.spy();
 
-        conn._onRequestStateChange(spy, req);
+        conn._proto._onRequestStateChange(spy, req);
 
         equal(conn._requests.length, 1, "_requests should be same length");
         equal(spy.called, false, "callback should not be called");
