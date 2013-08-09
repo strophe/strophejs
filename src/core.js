@@ -2403,6 +2403,12 @@ Strophe.Connection.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
+                /* This is a chrome CORS fix, 
+                 * Chrome changes the request method from POST to 
+                 * OPTIONS thus not carriying the initial xml stanza. 
+                 * Set content type of the request to avoid this problem 
+                 * */
+                req.xhr.setRequestHeader('Content-Type', 'text/plain');
                 req.xhr.send(req.data);
             };
 
