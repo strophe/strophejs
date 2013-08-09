@@ -110,7 +110,13 @@ class BOSHClient:
                     if elems[0].name == 'success':
                         retb, elems = self.sendBody(self.buildBody())
                         
-                        if elems[0].firstChildElement().name == 'bind':
+                        has_bind = False
+                        for child in elems[0].children:
+                            if child.name == 'bind':
+                                has_bind = True
+                                break
+
+                        if has_bind:
                             iq = domish.Element(('jabber:client', 'iq'))
                             iq['type'] = 'set'
                             iq.addUniqueId()
