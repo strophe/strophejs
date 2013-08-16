@@ -1855,6 +1855,11 @@ Strophe.Connection.prototype = {
         this.jid = jid;
         this.sid = sid;
         this.rid = rid;
+
+        this._proto.jid = jid;
+        this._proto.sid = sid;
+        this._proto.rid = rid;
+
         this.connect_callback = callback;
 
         this.domain = Strophe.getDomainFromJid(this.jid);
