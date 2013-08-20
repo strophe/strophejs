@@ -2291,9 +2291,10 @@ Strophe.Connection.prototype = {
         }
 
         Strophe.info("_doDisconnect was called");
+        this._proto._doDisconnect();
+
         this.authenticated = false;
         this.disconnecting = false;
-        this._proto._doDisconnect();
 
         // tell the parent we disconnected
         if (this.connected) {
