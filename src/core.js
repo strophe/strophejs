@@ -2480,19 +2480,20 @@ Strophe.Connection.prototype = {
         var matched = [];
         var i, mech, auth_str, hashed_auth_str,
             found_authentication = false;
-        if (hasFeatures && mechanisms.length > 0) {
+        if (!hasFeatures) {
+            this._proto._no_auth_received(_callback);
+            return;
+        };
+        if (mechanisms.length > 0) {
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
                 if (this.mechanisms[mech]) matched.push(this.mechanisms[mech]);
             }
-
-            this._authentication.legacy_auth =
-                bodyWrap.getElementsByTagName("auth").length > 0;
-
-            found_authentication =
-                this._authentication.legacy_auth ||
-                matched.length > 0;
         }
+        this._authentication.legacy_auth =
+            bodyWrap.getElementsByTagName("auth").length > 0;
+        found_authentication = this._authentication.legacy_auth ||
+            matched.length > 0;
         if (!found_authentication) {
             this._proto._no_auth_received(_callback);
             return;
