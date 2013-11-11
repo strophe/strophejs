@@ -8,3 +8,5 @@ plugins/*.min.js
 *.tar.gz
 *.zip
 *~
+*.swp
+node_modules
