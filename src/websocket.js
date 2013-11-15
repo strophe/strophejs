@@ -68,9 +68,32 @@ Strophe.Websocket.prototype = {
             return false;
         }
         var error = errors[0];
-        var condition = error.childNodes[0].tagName;
-        var text = error.getElementsByTagName("text")[0].textContent;
-        Strophe.error("WebSocket stream error: " + condition + " - " + text);
+
+        var condition = "";
+        var text = "";
+
+        ns = "urn:ietf:params:xml:ns:xmpp-streams";
+        for (i = 0; i < error.childNodes.length; i++) {
+            e = error.childNodes[i];
+            if (e.getAttribute("xmlns") != ns)
+                break;
+            if (e.nodeName == "text")
+                text = e.textContent;
+            else
+                condition = e.nodeName;
+        }
+
+        errorString = "WebSocket stream error: ";
+
+        if (condition)
+            errorString += condition;
+        else
+            errorString += "unknown";
+
+        if (text)
+            errorString += " - " + condition;
+
+        Strophe.error(errorString);
 
         // close the connection on stream_error
         this._conn._changeConnectStatus(connectstatus, condition);
