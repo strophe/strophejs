@@ -3134,7 +3134,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Stro
    */
 Strophe.SASLSHA1 = function() {};
 
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 20);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.test = function(connection) {
   return connection.authcid !== null;
@@ -3223,7 +3223,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLSHA1.prototype.name] = Strop
  */
 Strophe.SASLMD5 = function() {};
 
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 20);
+Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
 
 Strophe.SASLMD5.test = function(connection) {
   return connection.authcid !== null;
