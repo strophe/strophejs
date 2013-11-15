@@ -2483,7 +2483,7 @@ Strophe.Connection.prototype = {
         if (!hasFeatures) {
             this._proto._no_auth_received(_callback);
             return;
-        };
+        }
         if (mechanisms.length > 0) {
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
@@ -2519,11 +2519,11 @@ Strophe.Connection.prototype = {
       for (i = 0; i < matched.length - 1; ++i) {
         var higher = i;
         for (var j = i + 1; j < matched.length; ++j) {
-          if (matched[j].priority > matched[higher].priority) {
+          if (matched[j].prototype.priority > matched[higher].prototype.priority) {
             higher = j;
           }
         }
-        if (higher > j) {
+        if (higher != i) {
           var swap = matched[i];
           matched[i] = matched[higher];
           matched[higher] = swap;
