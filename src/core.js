@@ -2483,7 +2483,7 @@ Strophe.Connection.prototype = {
         if (!hasFeatures) {
             this._proto._no_auth_received(_callback);
             return;
-        };
+        }
         if (mechanisms.length > 0) {
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
@@ -2519,11 +2519,11 @@ Strophe.Connection.prototype = {
       for (i = 0; i < matched.length - 1; ++i) {
         var higher = i;
         for (var j = i + 1; j < matched.length; ++j) {
-          if (matched[j].priority > matched[higher].priority) {
+          if (matched[j].prototype.priority > matched[higher].prototype.priority) {
             higher = j;
           }
         }
-        if (higher > j) {
+        if (higher != i) {
           var swap = matched[i];
           matched[i] = matched[higher];
           matched[higher] = swap;
@@ -3134,7 +3134,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Stro
    */
 Strophe.SASLSHA1 = function() {};
 
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 20);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.test = function(connection) {
   return connection.authcid !== null;
@@ -3223,7 +3223,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLSHA1.prototype.name] = Strop
  */
 Strophe.SASLMD5 = function() {};
 
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 20);
+Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
 
 Strophe.SASLMD5.test = function(connection) {
   return connection.authcid !== null;
