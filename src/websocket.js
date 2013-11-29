@@ -183,9 +183,9 @@ Strophe.Websocket.prototype = {
             } catch (e) {
                 Strophe.info("Couldn't send closing stream tag.");
             }
-
-            this._conn._doDisconnect();
         }
+
+        this._conn._doDisconnect();
     },
 
     /** PrivateFunction: _doDisconnect
