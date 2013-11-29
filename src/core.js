@@ -2305,10 +2305,8 @@ Strophe.Connection.prototype = {
         this.addHandlers = [];
 
         // tell the parent we disconnected
-        if (this.connected) {
-            this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
-            this.connected = false;
-        }
+        this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
+        this.connected = false;
     },
 
     /** PrivateFunction: _dataRecv
