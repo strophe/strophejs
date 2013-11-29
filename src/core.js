@@ -2373,7 +2373,7 @@ Strophe.Connection.prototype = {
             } else {
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this.disconnect();
+            this.disconnect('unknown stream-error');
             return;
         }
 
@@ -2569,7 +2569,7 @@ Strophe.Connection.prototype = {
             // client connections
             this._changeConnectStatus(Strophe.Status.CONNFAIL,
                                       'x-strophe-bad-non-anon-jid');
-            this.disconnect();
+            this.disconnect('x-strophe-bad-non-anon-jid');
         } else {
           // fall back to legacy authentication
           this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
@@ -2864,7 +2864,7 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") == "error") {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
-            this.disconnect();
+            this.disconnect('authentication failed');
         }
 
         return false;
