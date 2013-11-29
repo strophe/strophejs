@@ -1,16 +1,38 @@
 {
-  "name"          : "Strophe.js",
-  "description"   : "Strophe.js is an XMPP library for JavaScript",
-  "version"       : "1.0.2",
-  "homepage"      : "http://strophe.im/strophejs",
-  "repository"    : { "type": "git", "url": "git://github.com/metajack/strophejs.git" },
-  "keywords"      : ["xmpp", "message", "browser"],
-  "author"        : "",
-  "contributors"  : [],
-  "licenses"      : ["MIT"],
-  "dependencies"  : [],
-  "main"          : "./strophe.js",
-  "scripts"       : { "install": "make", "update": "make" },
-  "directories"   : { "lib": "./src", "test": "./tests" },
-  "engines"       : { "browser": "*" }
+  "name": "Strophe.js",
+  "description": "Strophe.js is an XMPP library for JavaScript",
+  "version": "1.0.2",
+  "homepage": "http://strophe.im/strophejs",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/metajack/strophejs.git"
+  },
+  "keywords": [
+    "xmpp",
+    "message",
+    "browser"
+  ],
+  "author": "",
+  "contributors": [],
+  "licenses": [
+    "MIT"
+  ],
+  "dependencies": [],
+  "main": "./strophe.js",
+  "scripts": {
+    "install": "make",
+    "update": "make"
+  },
+  "directories": {
+    "lib": "./src",
+    "test": "./tests"
+  },
+  "engines": {
+    "browser": "*"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-concat": "~0.3.0"
+  }
 }
