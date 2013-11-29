@@ -2296,12 +2296,6 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.disconnecting = false;
 
-        // tell the parent we disconnected
-        if (this.connected) {
-            this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
-            this.connected = false;
-        }
-
         // delete handlers
         this.handlers = [];
         this.timedHandlers = [];
@@ -2309,6 +2303,12 @@ Strophe.Connection.prototype = {
         this.removeHandlers = [];
         this.addTimeds = [];
         this.addHandlers = [];
+
+        // tell the parent we disconnected
+        if (this.connected) {
+            this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
+            this.connected = false;
+        }
     },
 
     /** PrivateFunction: _dataRecv
