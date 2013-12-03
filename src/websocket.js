@@ -5,7 +5,6 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* jslint configuration: */
 /*global document, window, setTimeout, clearTimeout, console,
     XMLHttpRequest, ActiveXObject,
     Base64, MD5,
@@ -75,23 +74,26 @@ Strophe.Websocket.prototype = {
         ns = "urn:ietf:params:xml:ns:xmpp-streams";
         for (i = 0; i < error.childNodes.length; i++) {
             e = error.childNodes[i];
-            if (e.getAttribute("xmlns") != ns)
+            if (e.getAttribute("xmlns") !== ns) {
                 break;
-            if (e.nodeName == "text")
+            } if (e.nodeName === "text") {
                 text = e.textContent;
-            else
+            } else {
                 condition = e.nodeName;
+            }
         }
 
         errorString = "WebSocket stream error: ";
 
-        if (condition)
+        if (condition) {
             errorString += condition;
-        else
+        } else {
             errorString += "unknown";
+        }
 
-        if (text)
+        if (text) {
             errorString += " - " + condition;
+        }
 
         Strophe.error(errorString);
 
@@ -144,12 +146,12 @@ Strophe.Websocket.prototype = {
         //Inject namespaces into stream tags. has to be done because no SAX parser is used.
         var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
 
         var parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
-        if (elem.nodeName != "stream:stream") {
+        if (elem.nodeName !== "stream:stream") {
             this.socket.onmessage = this._onMessage.bind(this);
             elem = this._conn._bodyWrap(elem).tree();
             this._conn._connect_cb(elem);
@@ -157,7 +159,7 @@ Strophe.Websocket.prototype = {
             this._conn.xmlInput(elem);
             this._conn.rawInput(Strophe.serialize(elem));
             //_connect_cb will check for stream:error and disconnect on error
-            this._connect_cb(elem)
+            this._connect_cb(elem);
         }
     },
 
@@ -244,7 +246,7 @@ Strophe.Websocket.prototype = {
      */
     _no_auth_received: function (_callback)
     {
-        Strophe.error("Server did not send any auth methods")
+        Strophe.error("Server did not send any auth methods");
         this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
         if (_callback) {
             _callback = _callback.bind(this._conn);
@@ -275,19 +277,20 @@ Strophe.Websocket.prototype = {
     /** PrivateFunction: _onIdle
      *  _Private_ function called by Strophe.Connection._onIdle
      *
-     *  sends all queued stanzas 
+     *  sends all queued stanzas
      */
     _onIdle: function () {
         var data = this._conn._data;
         if (data.length > 0 && !this._conn.paused) {
             for (i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
+                    var stanza, rawStanza;
                     if (data[i] === "restart") {
-                        var stanza = this._buildStream();
-                        var rawStanza = this._removeClosingTag(stanza)
+                        stanza = this._buildStream();
+                        rawStanza = this._removeClosingTag(stanza);
                     } else {
-                        var stanza = data[i];
-                        var rawStanza = Strophe.serialize(stanza)
+                        stanza = data[i];
+                        rawStanza = Strophe.serialize(stanza);
                     }
                     this._conn.xmlOutput(stanza);
                     this._conn.rawOutput(rawStanza);
@@ -322,17 +325,17 @@ Strophe.Websocket.prototype = {
             return;
         }
         var string = message.data;
-        if (string.search("xmlns:stream") == -1) {
+        if (string.search("xmlns:stream") === -1) {
             //Inject namespaces into stream tags if they are missing. Has to be done because no SAX parser is used.
             string = string.replace(/<stream:([^>]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
         }
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
 
         parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
-        var elem = this._conn._bodyWrap(elem).tree();
+        elem = this._conn._bodyWrap(elem).tree();
 
         if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
             return;
@@ -347,9 +350,8 @@ Strophe.Websocket.prototype = {
             // if we are already disconnecting we will ignore the unavailable stanza and
             // wait for the </stream:stream> tag before we close the connection
             return;
-        } else {
-            this._conn._dataRecv(elem);
         }
+        this._conn._dataRecv(elem);
     },
 
     /** PrivateFunction: _onOpen
@@ -378,7 +380,7 @@ Strophe.Websocket.prototype = {
      */
     _removeClosingTag: function(elem) {
         var string = Strophe.serialize(elem);
-        string = string.replace(/<(stream:stream .*[^/])\/>$/, "<$1>");
+        string = string.replace(/<(stream:stream .*[^\/])\/>$/, "<$1>");
         return string;
     },
 
