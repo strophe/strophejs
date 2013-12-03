@@ -1,5 +1,5 @@
 Strophe.js is a JavaScript library for speaking XMPP via BOSH (XEP 124
-and 206) and WebSockets (draft-moffitt-xmpp-over-websocket-03). It is
+and 206) and WebSockets (draft-ietf-xmpp-websocket-00). It is
 licensed under the MIT license, except for the files sha1.js, base64.js
 and md5.js, which are licensed as public domain and BSD (see these files
 for details).
