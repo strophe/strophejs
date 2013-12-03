@@ -1,5 +1,30 @@
 # Strophe.js Change Log
 
+## Version 1.1.0 - 2013-12-4
+* Add Support for XMPP-over-WebSocket
+* Authentication mechanisms are now modular and can be toggled
+* Transport protocols are now modular and will be chosen based on the
+  connection URL. Currently supported protocols are BOSH and WebSocket
+* Add Strings to some disconnects that indicate the reason
+* Fix Connection status staying at CONNFAIL or CONNECTING in certain
+  error scenarios
+* Added a package.json for use with npm
+* Fix handlers not being removed after disconnect
+* Fix legacy non-sasl authentication
+* Add better tests for BOSH bind
+* Fix use of deprecated functions in tests
+* Remove some dead code
+* Remove deprecated documentation
+* Fix Memory leak in IE9
+* Add An options object can be passed to a Connection constructor now
+* Add "Route" Parameter for BOSH Connections
+* Add Maximum number of connection attempts before disconnecting
+* Add conflict condition for AUTHFAIL
+* Add XHTML message support
+* Fix parsing chat messages in IE
+* Add SCRAM-SHA-1 SASL mechanism
+* Fix escaping of messages
+
 ## Version 1.0.2 - 2011-06-19
 
 * Fix security bug where DIGEST-MD5 client nonce was not properly
