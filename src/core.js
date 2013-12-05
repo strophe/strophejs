@@ -2592,9 +2592,13 @@ Strophe.Connection.prototype = {
       var challenge = Base64.decode(Strophe.getText(elem));
       var response = this._sasl_mechanism.onChallenge(this, challenge);
 
-      this.send($build('response', {
-        xmlns: Strophe.NS.SASL
-      }).t(Base64.encode(response)).tree());
+      var stanza = $build('response', {
+          xmlns: Strophe.NS.SASL
+      });
+      if (response !== "") {
+        stanza.t(Base64.encode(response));
+      }
+      this.send(stanza.tree());
 
       return true;
     },
