@@ -19,7 +19,7 @@
  *  Bidirectional-streams Over Synchronous HTTP (BOSH) to emulate
  *  a persistent, stateful, two-way connection to an XMPP server.  More
  *  information on BOSH can be found in XEP 124.
- *  This version of Strophe also works with WebSockets. If instead of a 
+ *  This version of Strophe also works with WebSockets. If instead of a
  *  BOSH-url a Connection is established with a Websocket url (ws://...)
  *  Strophe will use the WebSocket instead.
  *  WebSocket support implemented by Andreas Guth (guth@dbis.rwth-aachen.de)
@@ -33,7 +33,7 @@
  *  This Function object extension method creates a bound method similar
  *  to those in Python.  This means that the 'this' object will point
  *  to the instance you want.  See
- *  <a href='https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind'>MDC's bind() documentation</a> and 
+ *  <a href='https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind'>MDC's bind() documentation</a> and
  *  <a href='http://benjamin.smedbergs.us/blog/2007-01-03/bound-functions-and-function-imports-in-javascript/'>Bound Functions and Function Imports in JavaScript</a>
  *  for a complete explanation.
  *
@@ -42,7 +42,7 @@
  *
  *  Parameters:
  *    (Object) obj - The object that will become 'this' in the bound function.
- *    (Object) argN - An option argument that will be prepended to the 
+ *    (Object) argN - An option argument that will be prepended to the
  *      arguments given for the function call
  *
  *  Returns:
@@ -206,67 +206,67 @@ Strophe = {
     },
 
 
-    /** Constants: XHTML_IM Namespace 
-     *  contains allowed tags, tag attributes, and css properties. 
+    /** Constants: XHTML_IM Namespace
+     *  contains allowed tags, tag attributes, and css properties.
      *  Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
      *  See http://xmpp.org/extensions/xep-0071.html#profile-summary for the list of recommended
      *  allowed tags and their attributes.
      */
     XHTML: {
-		tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
-		attributes: {
-			'a':          ['href'],
-			'blockquote': ['style'],
-			'br':         [],
-			'cite':       ['style'],
-			'em':         [],
-			'img':        ['src', 'alt', 'style', 'height', 'width'],
-			'li':         ['style'],
-			'ol':         ['style'],
-			'p':          ['style'],
-			'span':       ['style'],
-			'strong':     [],
-			'ul':         ['style'],
-			'body':       []
-		},
-		css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
-		validTag: function(tag)
-		{
-			for(var i = 0; i < Strophe.XHTML.tags.length; i++) {
-				if(tag == Strophe.XHTML.tags[i]) {
-					return true;
-				}
-			}
-			return false;
-		},
-		validAttribute: function(tag, attribute)
-		{
-			if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
-				for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
-					if(attribute == Strophe.XHTML.attributes[tag][i]) {
-						return true;
-					}
-				}
-			}
-			return false;
-		},
-		validCSS: function(style)
-		{
-			for(var i = 0; i < Strophe.XHTML.css.length; i++) {
-				if(style == Strophe.XHTML.css[i]) {
-					return true;
-				}
-			}
-			return false;
-		}
+                tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
+                attributes: {
+                        'a':          ['href'],
+                        'blockquote': ['style'],
+                        'br':         [],
+                        'cite':       ['style'],
+                        'em':         [],
+                        'img':        ['src', 'alt', 'style', 'height', 'width'],
+                        'li':         ['style'],
+                        'ol':         ['style'],
+                        'p':          ['style'],
+                        'span':       ['style'],
+                        'strong':     [],
+                        'ul':         ['style'],
+                        'body':       []
+                },
+                css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
+                validTag: function(tag)
+                {
+                        for(var i = 0; i < Strophe.XHTML.tags.length; i++) {
+                                if(tag == Strophe.XHTML.tags[i]) {
+                                        return true;
+                                }
+                        }
+                        return false;
+                },
+                validAttribute: function(tag, attribute)
+                {
+                        if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
+                                for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
+                                        if(attribute == Strophe.XHTML.attributes[tag][i]) {
+                                                return true;
+                                        }
+                                }
+                        }
+                        return false;
+                },
+                validCSS: function(style)
+                {
+                        for(var i = 0; i < Strophe.XHTML.css.length; i++) {
+                                if(style == Strophe.XHTML.css[i]) {
+                                        return true;
+                                }
+                        }
+                        return false;
+                }
     },
 
-    /** Function: addNamespace 
+    /** Function: addNamespace
      *  This function is used to extend the current namespaces in
-     *	Strophe.NS.  It takes a key and a value with the key being the
-     *	name of the new namespace, with its actual value.
-     *	For example:
-     *	Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
+     *  Strophe.NS.  It takes a key and a value with the key being the
+     *  name of the new namespace, with its actual value.
+     *  For example:
+     *  Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
      *
      *  Parameters:
      *    (String) name - The name under which the namespace will be
@@ -411,10 +411,10 @@ Strophe = {
         var doc;
 
         // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
-        // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be 
-		// less than 10 in the case of IE9 and below.
-        if (document.implementation.createDocument === undefined || 
-			document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
+        // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
+                // less than 10 in the case of IE9 and below.
+        if (document.implementation.createDocument === undefined ||
+                        document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
             doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
@@ -532,7 +532,7 @@ Strophe = {
      *  Parameters:
      *     (String) text - text to escape.
      *
-     *	Returns:
+     *  Returns:
      *      Escaped text.
      */
     xmlescape: function(text)
@@ -1183,12 +1183,13 @@ Strophe.Builder.prototype = {
      */
     cnode: function (elem)
     {
+        var impNode;
         var xmlGen = Strophe.xmlGenerator();
         try {
-            var impNode = (xmlGen.importNode !== undefined);
+            impNode = (xmlGen.importNode !== undefined);
         }
         catch (e) {
-            var impNode = false;
+            impNode = false;
         }
         var newElem = impNode ?
                       xmlGen.importNode(elem, true) :
@@ -1282,7 +1283,7 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options)
     this.type = type;
     this.id = id;
     this.options = options || {matchBare: false};
-    
+
     // default matchBare to false if undefined
     if (!this.options.matchBare) {
         this.options.matchBare = false;
@@ -1312,7 +1313,7 @@ Strophe.Handler.prototype = {
     {
         var nsMatch;
         var from = null;
-        
+
         if (this.options.matchBare) {
             from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
         } else {
@@ -1665,12 +1666,12 @@ Strophe.Connection = function (service, options)
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
         if (Strophe._connectionPlugins.hasOwnProperty(k)) {
-	    var ptype = Strophe._connectionPlugins[k];
+            var ptype = Strophe._connectionPlugins[k];
             // jslint complaints about the below line, but this is fine
             var F = function () {};
             F.prototype = ptype;
             this[k] = new F();
-	    this[k].init(this);
+            this[k].init(this);
         }
     }
 };
@@ -1791,7 +1792,7 @@ Strophe.Connection.prototype = {
      *    (Integer) hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-	 *    (String) route
+     *    (String) route
      */
     connect: function (jid, pass, callback, wait, hold, route)
     {
@@ -1823,7 +1824,7 @@ Strophe.Connection.prototype = {
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
-        this._proto._connect(wait, hold, route)
+        this._proto._connect(wait, hold, route);
     },
 
     /** Function: attach
@@ -2070,7 +2071,7 @@ Strophe.Connection.prototype = {
                 message: "Cannot queue non-DOMElement."
             };
         }
-        
+
         this._data.push(element);
     },
 
@@ -2214,9 +2215,10 @@ Strophe.Connection.prototype = {
 
         Strophe.info("Disconnect was called because: " + reason);
         if (this.connected) {
+            var pres = false;
             this.disconnecting = true;
             if (this.authenticated) {
-                var pres = $pres({
+                pres = $pres({
                     xmlns: Strophe.NS.CLIENT,
                     type: 'unavailable'
                 });
@@ -2285,7 +2287,7 @@ Strophe.Connection.prototype = {
     _doDisconnect: function ()
     {
         // Cancel Disconnect Timeout
-        if (this._disconnectTimeout != null) {
+        if (this._disconnectTimeout !== null) {
             this.deleteTimedHandler(this._disconnectTimeout);
             this._disconnectTimeout = null;
         }
@@ -2760,10 +2762,10 @@ Strophe.Connection.prototype = {
     {
         if (elem.getAttribute("type") == "error") {
             Strophe.info("SASL binding failed.");
-			var conflict = elem.getElementsByTagName("conflict"), condition;
-			if (conflict.length > 0) {
-				condition = 'conflict';
-			}
+            var conflict = elem.getElementsByTagName("conflict"), condition;
+            if (conflict.length > 0) {
+                condition = 'conflict';
+            }
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition);
             return false;
         }
@@ -3019,7 +3021,7 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
    *  Mechanism priority.
    */
   this.priority = priority;
-}
+};
 
 Strophe.SASLMechanism.prototype = {
   _sasl_data: [],
@@ -3112,7 +3114,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection, challenge) {
   auth_str = auth_str + "\u0000";
   auth_str = auth_str + connection.pass;
   return auth_str;
-}
+};
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
 
@@ -3132,7 +3134,6 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Stro
       p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
    S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
 
-   
    */
 Strophe.SASLSHA1 = function() {};
 
@@ -3149,8 +3150,8 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
   auth_str += ",r=";
   auth_str += cnonce;
 
-  this._sasl_data["cnonce"] = cnonce;
-  this._sasl_data["client-first-message-bare"] = auth_str;
+  this._sasl_data.cnonce = cnonce;
+  this._sasl_data.client-first-message-bare = auth_str;
 
   auth_str = "n,," + auth_str;
 
@@ -3159,9 +3160,9 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     var nonce, salt, iter, Hi, U, U_old;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
-    var authMessage = this._sasl_data["client-first-message-bare"] + "," +
+    var authMessage = this._sasl_data.client-first-message-bare + "," +
       challenge + ",";
-    var cnonce = this._sasl_data["cnonce"]
+    var cnonce = this._sasl_data.cnonce;
     var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
 
     while (challenge.match(attribMatch)) {
@@ -3180,7 +3181,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
       }
     }
 
-    if (!(nonce.substr(0, cnonce.length) === cnonce)) {
+    if (nonce.substr(0, cnonce.length) !== cnonce) {
       this._sasl_data = [];
       return connection._sasl_failure_cb();
     }
@@ -3189,7 +3190,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     authMessage += responseText;
 
     salt = Base64.decode(salt);
-    salt += "\0\0\0\1";
+    salt += "\x00\x00\x00\x01";
 
     Hi = U_old = core_hmac_sha1(connection.pass, salt);
     for (i = 1; i < iter; i++) {
@@ -3244,7 +3245,7 @@ Strophe.SASLMD5.prototype._quote = function (str)
   {
     return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
     //" end string workaround for emacs
-  },
+  };
 
 
 Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cnonce) {
@@ -3306,8 +3307,8 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
     return "";
   }.bind(this);
 
-  return responseText
-}
+  return responseText;
+};
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
 
