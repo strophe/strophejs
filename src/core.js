@@ -1650,7 +1650,7 @@ Strophe.Connection = function (service, options)
     this.paused = false;
 
     this._data = [];
-    this._uniqueId = Math.round(Math.random() * 10000);
+    this._uniqueId = 0;
 
     this._sasl_success_handler = null;
     this._sasl_failure_handler = null;
@@ -1708,7 +1708,7 @@ Strophe.Connection.prototype = {
         this.errors = 0;
 
         this._requests = [];
-        this._uniqueId = Math.round(Math.random()*10000);
+        this._uniqueId = 0;
     },
 
     /** Function: pause
