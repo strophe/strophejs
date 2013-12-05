@@ -1622,7 +1622,7 @@ Strophe.Connection = function (service, options)
     this.features = null;
 
     // SASL
-    this._sasl_data = [];
+    this._sasl_data = {};
     this.do_session = false;
     this.do_bind = false;
 
@@ -2673,7 +2673,7 @@ Strophe.Connection.prototype = {
                 this._sasl_challenge_handler = null;
               }
 
-              this._sasl_data = [];
+              this._sasl_data = {};
               return this._sasl_failure_cb(null);
             }
         }
@@ -3024,7 +3024,7 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
 };
 
 Strophe.SASLMechanism.prototype = {
-  _sasl_data: [],
+  _sasl_data: {},
 
   /**
    *  Function: test
@@ -3151,7 +3151,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
   auth_str += cnonce;
 
   this._sasl_data.cnonce = cnonce;
-  this._sasl_data.client-first-message-bare = auth_str;
+  this._sasl_data["client-first-message-bare"] = auth_str;
 
   auth_str = "n,," + auth_str;
 
@@ -3160,7 +3160,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     var nonce, salt, iter, Hi, U, U_old;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
-    var authMessage = this._sasl_data.client-first-message-bare + "," +
+    var authMessage = this._sasl_data["client-first-message-bare"] + "," +
       challenge + ",";
     var cnonce = this._sasl_data.cnonce;
     var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
@@ -3182,7 +3182,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     }
 
     if (nonce.substr(0, cnonce.length) !== cnonce) {
-      this._sasl_data = [];
+      this._sasl_data = {};
       return connection._sasl_failure_cb();
     }
 
