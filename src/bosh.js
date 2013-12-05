@@ -13,7 +13,7 @@
 
 /** File: strophe.js
  *  A JavaScript library to enable BOSH in Strophejs.
- *  
+ *
  *  this library uses Bidirectional-streams Over Synchronous HTTP (BOSH)
  *  to emulate a persistent, stateful, two-way connection to an XMPP server.
  *  More information on BOSH can be found in XEP 124.
@@ -150,7 +150,7 @@ Strophe.Bosh = function(connection) {
     this.window = 5;
 
     this._requests = [];
-}
+};
 
 Strophe.Bosh.prototype = {
     /** PrivateFunction: _buildBody
@@ -309,7 +309,7 @@ Strophe.Bosh.prototype = {
     },
 
     /** PrivateFunction: _no_auth_received
-     *  
+     *
      * Called on stream start/restart when no stream:features
      * has been received and sends a blank poll request.
      */
@@ -331,7 +331,7 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
-     *   
+     *
      *  Cancels all remaining Requests and clears the queue.
      */
     _onDisconnectTimeout: function ()
@@ -349,8 +349,8 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _onIdle
      *  _Private_ handler called by Strophe.Connection._onIdle
-     *   
-     *  Sends all queued Requests or polls with empty Request if there are none. 
+     *
+     *  Sends all queued Requests or polls with empty Request if there are none.
      */
     _onIdle: function () {
         var data = this._conn._data;
