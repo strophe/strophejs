@@ -2158,17 +2158,6 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /** PrivateFunction _bodyWrap
-     *  _Private_ helper function to wrap a stanza in a <body> tag.
-     *  This is used so Strophe can process stanzas from WebSockets like BOSH
-     */
-    _bodyWrap: function (stanza)
-    {
-        return $build('body', {
-            xmlns: Strophe.NS.HTTPBIND
-        }).cnode(stanza);
-    },
-
     /** PrivateFunction: _doDisconnect
      *  _Private_ function to disconnect.
      *

@@ -136,6 +136,30 @@ Strophe.Websocket.prototype = {
         }
     },
 
+    _ensure_ns: function(string) {
+        if (string.search("<stream:stream ") !== 0) {
+            return string;
+        }
+        // strip selfclosing
+        string = string.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
+        if (string.search(' xmlns:stream="http://etherx.jabber.org/streams"') < 0) {
+            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xmlns:stream="http://etherx.jabber.org/streams">');
+        }
+        if (string.search(' xmlns="jabber:client"') < 0) {
+            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xmlns="jabber:client">');
+        }
+        if (string.search(' xml:lang="[a-z]+"') < 0) {
+            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xml:lang="en">');
+        }
+        if (string.search(' version="1.0"') < 0) {
+            if (string.search(' version="') >= 0) {
+                return false;
+        }
+        string = string.replace(/^<stream:(.*)>/, '<stream:$1 version="1.0">');
+        }
+        return string;
+    },
+
     /** PrivateFunction: _connect_cb_wrapper
      * _Private_ function that handles the first connection messages.
      *
@@ -144,7 +168,7 @@ Strophe.Websocket.prototype = {
      */
     _connect_cb_wrapper: function(message) {
         //Inject namespaces into stream tags. has to be done because no SAX parser is used.
-        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+        var string = this._ensure_ns(message.data);
         //Make the initial stream:stream selfclosing to parse it without a SAX parser.
         string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
 
@@ -153,11 +177,20 @@ Strophe.Websocket.prototype = {
 
         if (elem.nodeName !== "stream:stream") {
             this.socket.onmessage = this._onMessage.bind(this);
-            elem = this._conn._bodyWrap(elem).tree();
+            elem = this._streamWrap(elem).tree();
             this._conn._connect_cb(elem);
         } else {
             this._conn.xmlInput(elem);
             this._conn.rawInput(Strophe.serialize(elem));
+
+            // Save attributes from the stream tag to apply them on all following messages
+            this.streamAttributes = {};
+            var attrs = elem.attributes;
+            for (i = 0; i < attrs.length; i++) {
+                var a = attrs[i];
+                this.streamAttributes[a.name] = a.value;
+            }
+
             //_connect_cb will check for stream:error and disconnect on error
             this._connect_cb(elem);
         }
@@ -178,7 +211,7 @@ Strophe.Websocket.prototype = {
                 this._conn.send(pres);
             }
             var close = '</stream:stream>';
-            this._conn.xmlOutput(this._conn._bodyWrap(document.createElement("stream:stream")));
+            this._conn.xmlOutput(document.createElement("stream:stream"));
             this._conn.rawOutput(close);
             try {
                 this.socket.send(close);
@@ -200,6 +233,16 @@ Strophe.Websocket.prototype = {
         Strophe.info("WebSockets _doDisconnect was called");
         this._closeSocket();
     },
+
+    /** PrivateFunction _streamWrap
+     *  _Private_ helper function to wrap a stanza in a <stream> tag.
+     *  This is used so Strophe can process stanzas from WebSockets like BOSH
+     */
+    _streamWrap: function (stanza)
+    {
+        return $build('stream', this.streamAttributes).cnode(stanza);
+    },
+
 
     /** PrivateFunction: _closeSocket
      *  _Private_ function to close the WebSocket.
@@ -318,7 +361,7 @@ Strophe.Websocket.prototype = {
         if (message.data === "</stream:stream>") {
             var close = "</stream:stream>";
             this._conn.rawInput(close);
-            this._conn.xmlInput(this._conn._bodyWrap(document.createElement("stream:stream")));
+            this._conn.xmlInput(document.createElement("stream:stream"));
             if (!this._conn.disconnecting) {
                 this._conn._doDisconnect();
             }
@@ -335,11 +378,11 @@ Strophe.Websocket.prototype = {
         parser = new DOMParser();
         var elem = parser.parseFromString(string, "text/xml").documentElement;
 
-        elem = this._conn._bodyWrap(elem).tree();
-
         if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
             return;
         }
+
+        elem = this._streamWrap(elem).tree();
 
         //handle unavailable presence stanza before disconnecting
         if (this._conn.disconnecting &&
