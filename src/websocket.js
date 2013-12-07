@@ -154,7 +154,7 @@ Strophe.Websocket.prototype = {
             error = "Wrong xmlns in stream:stream: " + ns;
         }
 
-        var ns_stream = message.getAttribute("xmlns:stream");
+        var ns_stream = message.namespaceURI;
         if (typeof ns_stream !== "string") {
             error = "Missing xmlns:stream in stream:stream";
         } else if (ns_stream !== "http://etherx.jabber.org/streams") {
