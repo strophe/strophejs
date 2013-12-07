@@ -199,7 +199,7 @@ Strophe.Websocket.prototype = {
                 this._connect_cb(streamStart);
 
                 // ensure received stream:stream is NOT selfclosing and save it for following messages
-                this.streamAttributes = message.data.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
+                this.streamStart = message.data.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
             }
         } else {
             var string = this._streamWrap(message.data);
@@ -253,7 +253,7 @@ Strophe.Websocket.prototype = {
      */
     _streamWrap: function (stanza)
     {
-        return this.streamAttributes + stanza + '</stream:stream>';
+        return this.streamStart + stanza + '</stream:stream>';
     },
 
 
