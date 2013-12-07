@@ -136,28 +136,45 @@ Strophe.Websocket.prototype = {
         }
     },
 
-    _ensure_ns: function(string) {
-        if (string.search("<stream:stream ") !== 0) {
-            return string;
+    /** PrivateFunction: _handleStreamStart
+     * _Private_ function that checks the opening stream:stream tag for errors.
+     *
+     * Disconnects if there is an error and returns false, true otherwise.
+     *
+     *  Parameters:
+     *    (Node) message - Stanza containing the stream:stream.
+     */
+    _handleStreamStart: function(message) {
+        var error = false;
+        // Check for errors in the stream:stream tag
+        var ns = message.getAttribute("xmlns");
+        if (typeof ns !== "string") {
+            error = "Missing xmlns in stream:stream";
+        } else if (ns !== "jabber:client") {
+            error = "Wrong xmlns in stream:stream: " + ns;
         }
-        // strip selfclosing
-        string = string.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
-        if (string.search(' xmlns:stream="http://etherx.jabber.org/streams"') < 0) {
-            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xmlns:stream="http://etherx.jabber.org/streams">');
+
+        var ns_stream = message.getAttribute("xmlns:stream");
+        if (typeof ns_stream !== "string") {
+            error = "Missing xmlns:stream in stream:stream";
+        } else if (ns_stream !== "http://etherx.jabber.org/streams") {
+            error = "Wrong xmlns:stream in stream:stream: " + ns_stream;
         }
-        if (string.search(' xmlns="jabber:client"') < 0) {
-            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xmlns="jabber:client">');
+
+        var ver = message.getAttribute("version");
+        if (typeof ver !== "string") {
+            error = "Missing version in stream:stream";
+        } else if (ver !== "1.0") {
+            error = "Wrong version in stream:stream: " + ver;
         }
-        if (string.search(' xml:lang="[a-z]+"') < 0) {
-            string = string.replace(/^<stream:(.*)>/, '<stream:$1 xml:lang="en">');
+
+        if (error) {
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, error);
+            this._conn._doDisconnect();
+            return false;
         }
-        if (string.search(' version="1.0"') < 0) {
-            if (string.search(' version="') >= 0) {
-                return false;
-        }
-        string = string.replace(/^<stream:(.*)>/, '<stream:$1 version="1.0">');
-        }
-        return string;
+
+        return true;
     },
 
     /** PrivateFunction: _connect_cb_wrapper
@@ -167,32 +184,28 @@ Strophe.Websocket.prototype = {
      * message handler. On receiving a stream error the connection is terminated.
      */
     _connect_cb_wrapper: function(message) {
-        //Inject namespaces into stream tags. has to be done because no SAX parser is used.
-        var string = this._ensure_ns(message.data);
-        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
+        if (message.data.search("<stream:stream ") === 0) {
+            //Make the initial stream:stream selfclosing to parse it without a SAX parser.
+            var data = message.data.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
 
-        var parser = new DOMParser();
-        var elem = parser.parseFromString(string, "text/xml").documentElement;
+            var streamStart = new DOMParser().parseFromString(data, "text/xml").documentElement;
+            this._conn.xmlInput(streamStart);
+            this._conn.rawInput(message.data);
 
-        if (elem.nodeName !== "stream:stream") {
-            this.socket.onmessage = this._onMessage.bind(this);
-            elem = this._streamWrap(elem).tree();
-            this._conn._connect_cb(elem);
-        } else {
-            this._conn.xmlInput(elem);
-            this._conn.rawInput(Strophe.serialize(elem));
+            //_handleStreamSteart will check for XML errors and disconnect on error
+            if (this._handleStreamStart(streamStart)) {
 
-            // Save attributes from the stream tag to apply them on all following messages
-            this.streamAttributes = {};
-            var attrs = elem.attributes;
-            for (i = 0; i < attrs.length; i++) {
-                var a = attrs[i];
-                this.streamAttributes[a.name] = a.value;
+                //_connect_cb will check for stream:error and disconnect on error
+                this._connect_cb(streamStart);
+
+                // ensure received stream:stream is NOT selfclosing and save it for following messages
+                this.streamAttributes = message.data.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
             }
-
-            //_connect_cb will check for stream:error and disconnect on error
-            this._connect_cb(elem);
+        } else {
+            var string = this._streamWrap(message.data);
+            var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
+            this.socket.onmessage = this._onMessage.bind(this);
+            this._conn._connect_cb(elem);
         }
     },
 
@@ -240,7 +253,7 @@ Strophe.Websocket.prototype = {
      */
     _streamWrap: function (stanza)
     {
-        return $build('stream', this.streamAttributes).cnode(stanza);
+        return this.streamAttributes + stanza + '</stream:stream>';
     },
 
 
@@ -357,6 +370,7 @@ Strophe.Websocket.prototype = {
      * (string) message - The websocket message.
      */
     _onMessage: function(message) {
+        var elem;
         // check for closing stream
         if (message.data === "</stream:stream>") {
             var close = "</stream:stream>";
@@ -366,23 +380,22 @@ Strophe.Websocket.prototype = {
                 this._conn._doDisconnect();
             }
             return;
-        }
-        var string = message.data;
-        if (string.search("xmlns:stream") === -1) {
-            //Inject namespaces into stream tags if they are missing. Has to be done because no SAX parser is used.
-            string = string.replace(/<stream:([^>]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
-        }
-        //Make the initial stream:stream selfclosing to parse it without a SAX parser.
-        string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
+        } else if (message.data.search("<stream:stream ") === 0) {
+            //Make the initial stream:stream selfclosing to parse it without a SAX parser.
+            data = message.data.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
+            elem = new DOMParser().parseFromString(data, "text/xml").documentElement;
 
-        parser = new DOMParser();
-        var elem = parser.parseFromString(string, "text/xml").documentElement;
+            if (!this._handleStreamStart(elem)) {
+                return;
+            }
+        } else {
+            data = this._streamWrap(message.data);
+            elem = new DOMParser().parseFromString(data, "text/xml").documentElement;
+        }
 
         if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
             return;
         }
-
-        elem = this._streamWrap(elem).tree();
 
         //handle unavailable presence stanza before disconnecting
         if (this._conn.disconnecting &&
