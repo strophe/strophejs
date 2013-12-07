@@ -205,7 +205,7 @@ Strophe.Websocket.prototype = {
             var string = this._streamWrap(message.data);
             var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
             this.socket.onmessage = this._onMessage.bind(this);
-            this._conn._connect_cb(elem);
+            this._conn._connect_cb(elem, null, message.data);
         }
     },
 
@@ -344,6 +344,7 @@ Strophe.Websocket.prototype = {
                     if (data[i] === "restart") {
                         stanza = this._buildStream();
                         rawStanza = this._removeClosingTag(stanza);
+                        stanza = stanza.tree();
                     } else {
                         stanza = data[i];
                         rawStanza = Strophe.serialize(stanza);
@@ -407,7 +408,7 @@ Strophe.Websocket.prototype = {
             // wait for the </stream:stream> tag before we close the connection
             return;
         }
-        this._conn._dataRecv(elem);
+        this._conn._dataRecv(elem, message.data);
     },
 
     /** PrivateFunction: _onOpen
@@ -418,7 +419,7 @@ Strophe.Websocket.prototype = {
     _onOpen: function() {
         Strophe.info("Websocket open");
         var start = this._buildStream();
-        this._conn.xmlOutput(start);
+        this._conn.xmlOutput(start.tree());
 
         var startString = this._removeClosingTag(start);
         this._conn.rawOutput(startString);

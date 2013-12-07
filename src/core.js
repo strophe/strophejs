@@ -2201,8 +2201,9 @@ Strophe.Connection.prototype = {
      *
      *  Parameters:
      *    (Strophe.Request) req - The request that has data ready.
+     *    (string) req - The stanza a raw string (optiona).
      */
-    _dataRecv: function (req)
+    _dataRecv: function (req, raw)
     {
         Strophe.info("_dataRecv called");
         var elem = this._proto._reqToData(req);
@@ -2212,7 +2213,11 @@ Strophe.Connection.prototype = {
             this.xmlInput(elem);
         }
         if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
-            this.rawInput(Strophe.serialize(elem));
+            if (raw) {
+                this.rawInput(raw);
+            } else {
+                this.rawInput(Strophe.serialize(elem));
+            }
         }
 
         // remove handlers scheduled for deletion
@@ -2308,7 +2313,7 @@ Strophe.Connection.prototype = {
      *      Useful for plugins with their own xmpp connect callback (when their)
      *      want to do something special).
      */
-    _connect_cb: function (req, _callback)
+    _connect_cb: function (req, _callback, raw)
     {
         Strophe.info("_connect_cb was called");
 
@@ -2321,7 +2326,11 @@ Strophe.Connection.prototype = {
             this.xmlInput(bodyWrap);
         }
         if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
-            this.rawInput(Strophe.serialize(bodyWrap));
+            if (raw) {
+                this.rawInput(raw);
+            } else {
+                this.rawInput(Strophe.serialize(bodyWrap));
+            }
         }
 
         var conncheck = this._proto._connect_cb(bodyWrap);
