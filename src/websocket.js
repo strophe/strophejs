@@ -10,15 +10,23 @@
     Base64, MD5,
     Strophe, $build, $msg, $iq, $pres */
 
-/** File: strophe.js
+/** Class: Strophe.WebSocket
+ *  _Private_ helper class that handles WebSocket Connections
+ *
+ *  The Strophe.WebSocket class is used internally by Strophe.Connection
+ *  to encapsulate WebSocket sessions. It is not meant to be used from user's code.
+ */
+
+/** File: websocket.js
  *  A JavaScript library to enable XMPP over Websocket in Strophejs.
  *
  *  This file implements XMPP over WebSockets for Strophejs.
  *  If a Connection is established with a Websocket url (ws://...)
- *  Strophe will use WebSockets instead of BOSH.
- *  WebSocket support implemented by Andreas Guth (guth@dbis.rwth-aachen.de)
+ *  Strophe will use WebSockets.
  *  For more information on XMPP-over WebSocket see this RFC draft:
  *  http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-01
+ *
+ *  WebSocket support implemented by Andreas Guth (andreas.guth@rwth-aachen.de)
  */
 
 /** PrivateConstructor: Strophe.Websocket

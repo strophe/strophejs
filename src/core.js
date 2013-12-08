@@ -15,16 +15,14 @@
  *  A JavaScript library for XMPP BOSH/XMPP over Websocket.
  *
  *  This is the JavaScript version of the Strophe library.  Since JavaScript
- *  has no facilities for persistent TCP connections, this library uses
+ *  had no facilities for persistent TCP connections, this library uses
  *  Bidirectional-streams Over Synchronous HTTP (BOSH) to emulate
  *  a persistent, stateful, two-way connection to an XMPP server.  More
  *  information on BOSH can be found in XEP 124.
- *  This version of Strophe also works with WebSockets. If instead of a
- *  BOSH-url a Connection is established with a Websocket url (ws://...)
- *  Strophe will use the WebSocket instead.
- *  WebSocket support implemented by Andreas Guth (guth@dbis.rwth-aachen.de)
+ *
+ *  This version of Strophe also works with WebSockets.
  *  For more information on XMPP-over WebSocket see this RFC draft:
- *  http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-01
+ *  http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00
  */
 
 /** PrivateFunction: Function.prototype.bind
@@ -261,23 +259,6 @@ Strophe = {
                 }
     },
 
-    /** Function: addNamespace
-     *  This function is used to extend the current namespaces in
-     *  Strophe.NS.  It takes a key and a value with the key being the
-     *  name of the new namespace, with its actual value.
-     *  For example:
-     *  Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
-     *
-     *  Parameters:
-     *    (String) name - The name under which the namespace will be
-     *      referenced under Strophe.NS
-     *    (String) value - The actual namespace.
-     */
-    addNamespace: function (name, value)
-    {
-      Strophe.NS[name] = value;
-    },
-
     /** Constants: Connection Status Constants
      *  Connection status constants for use by the connection handler
      *  callback.
@@ -351,6 +332,23 @@ Strophe = {
      */
     TIMEOUT: 1.1,
     SECONDARY_TIMEOUT: 0.1,
+
+    /** Function: addNamespace
+     *  This function is used to extend the current namespaces in
+     *  Strophe.NS.  It takes a key and a value with the key being the
+     *  name of the new namespace, with its actual value.
+     *  For example:
+     *  Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
+     *
+     *  Parameters:
+     *    (String) name - The name under which the namespace will be
+     *      referenced under Strophe.NS
+     *    (String) value - The actual namespace.
+     */
+    addNamespace: function (name, value)
+    {
+      Strophe.NS[name] = value;
+    },
 
     /** Function: forEachChild
      *  Map a function over some or all child elements of a given element.
@@ -1469,8 +1467,8 @@ Strophe.TimedHandler.prototype = {
  *
  *  This class is the main part of Strophe.  It manages a BOSH connection
  *  to an XMPP server and dispatches events to the user callbacks as
- *  data arrives.  It supports SASL PLAIN, SASL DIGEST-MD5, and legacy
- *  authentication.
+ *  data arrives.  It supports SASL PLAIN, SASL DIGEST-MD5, SASL SCRAM-SHA1
+ *  and legacy authentication.
  *
  *  After creating a Strophe.Connection object, the user will typically
  *  call connect() with a user supplied callback to handle connection level
@@ -1488,6 +1486,11 @@ Strophe.TimedHandler.prototype = {
 
 /** Constructor: Strophe.Connection
  *  Create and initialize a Strophe.Connection object.
+ *
+ *  The transport-protocol for this connection will be chosen automatically
+ *  based on the given service parameter. URLs starting with "ws://" or
+ *  "wss://" will use WebSockets, URLs starting with "http://", "https://"
+ *  or without a protocol will use BOSH.
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
@@ -1607,9 +1610,10 @@ Strophe.Connection.prototype = {
      *  Pause the request manager.
      *
      *  This will prevent Strophe from sending any more requests to the
-     *  server.  This is very useful for temporarily pausing while a lot
-     *  of send() calls are happening quickly.  This causes Strophe to
-     *  send the data in a single request, saving many request trips.
+     *  server.  This is very useful for temporarily pausing
+     *  BOSH-Connections while a lot of send() calls are happening quickly.
+     *  This causes Strophe to send the data in a single request, saving
+     *  many request trips.
      */
     pause: function ()
     {
@@ -1668,8 +1672,9 @@ Strophe.Connection.prototype = {
      *  constants.  The error condition will be one of the conditions
      *  defined in RFC 3920 or the condition 'strophe-parsererror'.
      *
-     *  Please see XEP 124 for a more detailed explanation of the optional
-     *  parameters below.
+     *  The Parameters _wait_, _hold_ and _route_ are optional and only relevant
+     *  for BOSH connections. Please see XEP 124 for a more detailed explanation
+     *  of the optional parameters.
      *
      *  Parameters:
      *    (String) jid - The user's JID.  This may be a bare JID,
@@ -1683,7 +1688,7 @@ Strophe.Connection.prototype = {
      *    (Integer) hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-     *    (String) route
+     *    (String) route - The optional route value.
      */
     connect: function (jid, pass, callback, wait, hold, route)
     {
@@ -1775,6 +1780,12 @@ Strophe.Connection.prototype = {
      *  >   (user code)
      *  > };
      *
+     *  Due to limitations of current Browsers' XML-Parsers the opening and closing
+     *  <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
+     *
+     *  BOSH-Connections will have all stanzas wrapped in a <body> tag. See
+     *  <Strophe.Bosh.strip> if you want to strip this tag.
+     *
      *  Parameters:
      *    (XMLElement) elem - The XML data received by the connection.
      */
@@ -1791,6 +1802,12 @@ Strophe.Connection.prototype = {
      *  > Strophe.Connection.xmlOutput = function (elem) {
      *  >   (user code)
      *  > };
+     *
+     *  Due to limitations of current Browsers' XML-Parsers the opening and closing
+     *  <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
+     *
+     *  BOSH-Connections will have all stanzas wrapped in a <body> tag. See
+     *  <Strophe.Bosh.strip> if you want to strip this tag.
      *
      *  Parameters:
      *    (XMLElement) elem - The XMLdata sent by the connection.
@@ -2897,26 +2914,58 @@ if (callback) {
     callback(Strophe, $build, $msg, $iq, $pres);
 }
 
+/** Class: Strophe.SASLMechanism
+ *
+ *  encapsulates SASL authentication mechanisms.
+ *
+ *  User code may override the priority for each mechanism or disable it completely.
+ *  See <priority> for information about changing priority and <test> for informatian on
+ *  how to disable a mechanism.
+ *
+ *  By default, all mechanisms are enabled and the priorities are
+ *
+ *  SCRAM-SHA1 - 40
+ *  DIGEST-MD5 - 30
+ *  Plain - 20
+ */
+
 /**
- * Constructor: Strophe.SASLMechanism
+ * PrivateConstructor: Strophe.SASLMechanism
  * SASL auth mechanism abstraction.
  *
  *  Parameters:
  *    (String) name - SASL Mechanism name.
  *    (Boolean) isClientFirst - If client should send response first without challenge.
  *    (Number) priority - Priority.
+ *
+ *  Returns:
+ *    A new Strophe.SASLMechanism object.
  */
 Strophe.SASLMechanism = function(name, isClientFirst, priority) {
-  /** Variable: name
+  /** PrivateVariable: name
    *  Mechanism name.
    */
   this.name = name;
-  /** Variable: isClientFirst
+  /** PrivateVariable: isClientFirst
    *  If client sends response without initial server challenge.
    */
   this.isClientFirst = isClientFirst;
   /** Variable: priority
-   *  Mechanism priority.
+   *  Determines which <SASLMechanism> is chosen for authentication (Higher is better).
+   *  Users may override this to prioritize mechanisms differently.
+   *
+   *  In the default configuration the priorities are
+   *
+   *  SCRAM-SHA1 - 40
+   *  DIGEST-MD5 - 30
+   *  Plain - 20
+   *
+   *  Example: (This will cause Strophe to choose the mechanism that the server sent first) 
+   *
+   *  > Strophe.SASLMD5.priority = Strophe.SASLSHA1.priority;
+   *
+   *  See <SASL mechanisms> for a list of available mechanisms.
+   *
    */
   this.priority = priority;
 };
@@ -2927,6 +2976,14 @@ Strophe.SASLMechanism.prototype = {
   /**
    *  Function: test
    *  Checks if mechanism able to run.
+   *  To disable a mechanism, make this return false;
+   *
+   *  To disable plain authentication run
+   *  > Strophe.SASLPlain.test = function() {
+   *  >   return false;
+   *  > }
+   *
+   *  See <SASL mechanisms> for a list of available mechanisms.
    *
    *  Parameters:
    *    (Strophe.Connection) connection - Target Connection.
@@ -2938,7 +2995,7 @@ Strophe.SASLMechanism.prototype = {
     return true;
   },
 
-  /** Function: onStart
+  /** PrivateFunction: onStart
    *  Called before starting mechanism on some connection.
    *
    *  Parameters:
@@ -2949,7 +3006,7 @@ Strophe.SASLMechanism.prototype = {
     this._connection = connection;
   },
 
-  /** Function: onChallenge
+  /** PrivateFunction: onChallenge
    *  Called by protocol implementation on incoming challenge. If client is
    *  first (isClientFirst == true) challenge will be null on the first call.
    *
@@ -2964,14 +3021,14 @@ Strophe.SASLMechanism.prototype = {
     throw new Error("You should implement challenge handling!");
   },
 
-  /** Function: onFailure
+  /** PrivateFunction: onFailure
    *  Protocol informs mechanism implementation about SASL failure.
    */
   onFailure: function() {
     this._connection = null;
   },
 
-  /** Function: onSuccess
+  /** PrivateFunction: onSuccess
    *  Protocol informs mechanism implementation about SASL success.
    */
   onSuccess: function() {
@@ -2979,9 +3036,18 @@ Strophe.SASLMechanism.prototype = {
   }
 };
 
+  /** Constants: SASL mechanisms
+   *  Available authentication mechanisms
+   *
+   *  Strophe.SASLAnonymous - SASL Anonymous authentication.
+   *  Strophe.SASLPlain - SASL Plain authentication.
+   *  Strophe.SASLMD5 - SASL Digest-MD5 authentication
+   *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
+   */
+
 // Building SASL callbacks
 
-/** Constructor: SASLAnonymous
+/** PrivateConstructor: SASLAnonymous
  *  SASL Anonymous authentication.
  */
 Strophe.SASLAnonymous = function() {};
@@ -2994,7 +3060,7 @@ Strophe.SASLAnonymous.test = function(connection) {
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLAnonymous.prototype.name] = Strophe.SASLAnonymous;
 
-/** Constructor: SASLPlain
+/** PrivateConstructor: SASLPlain
  *  SASL Plain authentication.
  */
 Strophe.SASLPlain = function() {};
@@ -3016,24 +3082,24 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection, challenge) {
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
 
-/** Constructor: SASLSHA1
+/** PrivateConstructor: SASLSHA1
  *  SASL SCRAM SHA 1 authentication.
  */
-
-  /* TEST:
-   This is a simple example of a SCRAM-SHA-1 authentication exchange
-   when the client doesn't support channel bindings (username 'user' and
-   password 'pencil' are used):
-
-   C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
-   S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
-      i=4096
-   C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
-      p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
-   S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
-
-   */
 Strophe.SASLSHA1 = function() {};
+
+/* TEST:
+ * This is a simple example of a SCRAM-SHA-1 authentication exchange
+ * when the client doesn't support channel bindings (username 'user' and
+ * password 'pencil' are used):
+ *
+ * C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
+ * S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
+ * i=4096
+ * C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
+ * p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
+ * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
+ *
+ */
 
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
@@ -3119,7 +3185,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLSHA1.prototype.name] = Strophe.SASLSHA1;
 
-/** Constructor: SASLMD5
+/** PrivateConstructor: SASLMD5
  *  SASL DIGEST MD5 authentication.
  */
 Strophe.SASLMD5 = function() {};
