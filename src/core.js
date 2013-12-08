@@ -2210,7 +2210,11 @@ Strophe.Connection.prototype = {
         if (elem === null) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
-            this.xmlInput(elem);
+            if (elem.nodeName === this._proto.strip && elem.childNodes.length) {
+                this.xmlInput(elem.childNodes[0]);
+            } else {
+                this.xmlInput(elem);
+            }
         }
         if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
             if (raw) {
@@ -2323,7 +2327,11 @@ Strophe.Connection.prototype = {
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
-            this.xmlInput(bodyWrap);
+            if (bodyWrap.nodeName === this._proto.strip && bodyWrap.childNodes.length) {
+                this.xmlInput(bodyWrap.childNodes[0]);
+            } else {
+                this.xmlInput(bodyWrap);
+            }
         }
         if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
             if (raw) {

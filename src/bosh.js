@@ -149,6 +149,9 @@ Strophe.Bosh = function(connection) {
     this.wait = 60;
     this.window = 5;
 
+    // set this to "body" to strip away the body tag in xmlInput/Output
+    this.strip = null;
+
     this._requests = [];
 };
 
@@ -612,7 +615,11 @@ Strophe.Bosh.prototype = {
             req.sends++;
 
             if (this._conn.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
-                this._conn.xmlOutput(req.xmlData);
+                if (req.xmlData.nodeName === this.strip && req.xmlData.childNodes.length) {
+                    this._conn.xmlOutput(req.xmlData.childNodes[0]);
+                } else {
+                    this._conn.xmlOutput(req.xmlData);
+                }
             }
             if (this._conn.rawOutput !== Strophe.Connection.prototype.rawOutput) {
                 this._conn.rawOutput(req.data);

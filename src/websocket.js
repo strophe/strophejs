@@ -33,6 +33,7 @@
  */
 Strophe.Websocket = function(connection) {
     this._conn = connection;
+    this.strip = "stream:stream";
 };
 
 Strophe.Websocket.prototype = {
