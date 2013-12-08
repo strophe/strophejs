@@ -202,6 +202,12 @@ Strophe.Websocket.prototype = {
                 // ensure received stream:stream is NOT selfclosing and save it for following messages
                 this.streamStart = message.data.replace(/^<stream:(.*)\/>$/, "<stream:$1>");
             }
+        } else if (message.data === "</stream:stream>") {
+            this._conn.rawInput(message.data);
+            this._conn.xmlInput(document.createElement("stream:stream"));
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, error);
+            this._conn._doDisconnect();
+            return;
         } else {
             var string = this._streamWrap(message.data);
             var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
