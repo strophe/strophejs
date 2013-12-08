@@ -149,13 +149,13 @@ Strophe.Bosh = function(connection) {
     this.wait = 60;
     this.window = 5;
 
-    // set this to "body" to strip away the body tag in xmlInput/Output
-    this.strip = null;
-
     this._requests = [];
 };
 
 Strophe.Bosh.prototype = {
+    // Do Strophe.Bosh.prototype.strip = "body" to strip away the body tag for xmlInput/Output
+    strip: null,
+
     /** PrivateFunction: _buildBody
      *  _Private_ helper function to generate the <body/> wrapper for BOSH.
      *
