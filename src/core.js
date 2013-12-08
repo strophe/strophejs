@@ -2289,7 +2289,8 @@ Strophe.Connection.prototype = {
                         that.handlers.push(hand);
                     }
                 } catch(e) {
-                    //if the handler throws an exception, we consider it as false
+                    // if the handler throws an exception, we consider it as false
+                    Strophe.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                 }
             }
         });
