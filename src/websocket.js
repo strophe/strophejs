@@ -24,7 +24,7 @@
  *  If a Connection is established with a Websocket url (ws://...)
  *  Strophe will use WebSockets.
  *  For more information on XMPP-over WebSocket see this RFC draft:
- *  http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-01
+ *  http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00
  *
  *  WebSocket support implemented by Andreas Guth (andreas.guth@rwth-aachen.de)
  */
