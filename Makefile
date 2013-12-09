@@ -2,6 +2,7 @@ SHELL=/bin/bash
 
 SRC_DIR = src
 DOC_DIR = doc
+DOC_TEMP = doc-temp
 PLUGIN_DIR = plugins
 NDPROJ_DIR = ndproj
 
@@ -65,7 +66,10 @@ doc:
 	@@echo "Building Strophe documentation..."
 	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
-	@@NaturalDocs -q -i $(SRC_DIR) -i $(PLUGINS_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@mkdir $(DOC_TEMP)
+	@@cp $(STROPHE) $(DOC_TEMP)
+	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -i $(PLUGIN_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@rm -rf strophejs-$(VERSION)
 	@@echo "Documentation built."
 	@@echo
 
