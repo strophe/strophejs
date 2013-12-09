@@ -6,9 +6,11 @@
 * Transport protocols are now modular and will be chosen based on the
   connection URL. Currently supported protocols are BOSH and WebSocket
 * Add Strings to some disconnects that indicate the reason
+* Add option to strip <body> tags before passing to xmlInput/xmlOutput
 * Fix Connection status staying at CONNFAIL or CONNECTING in certain
   error scenarios
-* Added a package.json for use with npm
+* Add package.json for use with npm
+* Add bower.json for use with bower
 * Fix handlers not being removed after disconnect
 * Fix legacy non-sasl authentication
 * Add better tests for BOSH bind
