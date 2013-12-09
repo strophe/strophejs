@@ -2960,7 +2960,7 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
    *  DIGEST-MD5 - 30
    *  Plain - 20
    *
-   *  Example: (This will cause Strophe to choose the mechanism that the server sent first) 
+   *  Example: (This will cause Strophe to choose the mechanism that the server sent first)
    *
    *  > Strophe.SASLMD5.priority = Strophe.SASLSHA1.priority;
    *
