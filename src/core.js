@@ -1492,6 +1492,18 @@ Strophe.TimedHandler.prototype = {
  *  "wss://" will use WebSockets, URLs starting with "http://", "https://"
  *  or without a protocol will use BOSH.
  *
+ *  To make Strophe connect to the current host you can leave out the protocol
+ *  and host part and just pass the path, e.g.
+ *
+ *  > var conn = new Strophe.Connection("/http-bind/");
+ *
+ *  If you want to do this with a WebSocket connection you will still have to
+ *  prefix the path with "ws" or "wss" to tell Strophe to use WebSockets, so
+ *
+ *  > var conn = new Strophe.Connection("wss/xmpp-websocket");
+ *
+ *  would connect to "wss://HOSTNAME/xmpp-websocket".
+ *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
  *    (Object) options - A hash of configuration options

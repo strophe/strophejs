@@ -42,6 +42,13 @@
 Strophe.Websocket = function(connection) {
     this._conn = connection;
     this.strip = "stream:stream";
+
+    var service = connection.service;
+    var protocol = service.split("/")[0];
+
+    if (protocol != "ws:" && protocol != "wss:") {
+        connection.service = protocol + "://" + window.location.host + service.slice(protocol.length);
+    }
 };
 
 Strophe.Websocket.prototype = {
