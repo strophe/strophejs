@@ -1499,13 +1499,21 @@ Strophe.TimedHandler.prototype = {
  *
  *  If you want to do this with a WebSocket connection you will still have to
  *  prefix the path with "ws" or "wss" to tell Strophe to use WebSockets, so
+ *  to connect to "wss://HOSTNAME/xmpp-websocket", you would call 
  *
  *  > var conn = new Strophe.Connection("wss/xmpp-websocket");
  *
- *  would connect to "wss://HOSTNAME/xmpp-websocket".
+ *  If you want to use WebSockets but also support older Browsers that don't
+ *  have WebSocket support, you can pass an object with a .ws and .bosh string.
+ *
+ *  > var conn = new Strophe.Connection({ws:   "wss/xmpp-websocket",
+ *  >                                    bosh: "/http-bind/"});
+ *
+ *  This will use the WebSocket endpoint if the browser supports it and fall
+ *  back to BOSH if it doesn't.
  *
  *  Parameters:
- *    (String) service - The BOSH or WebSocket service URL.
+ *    (String/Object) service - The BOSH or WebSocket service URL(s).
  *    (Object) options - A hash of configuration options
  *
  *  Returns:
@@ -1513,9 +1521,17 @@ Strophe.TimedHandler.prototype = {
  */
 Strophe.Connection = function (service, options)
 {
+    if (typeof service === "object") {
+        if (typeof service.ws === "string" && typeof window.WebSocket === "function") {
+            this.service = service.ws;
+        } else {
+            this.service = service.bosh;
+        }
+    } else {
+        this.service = service;
+    }
     /* The path to the httpbind service. */
-    this.service = service;
-    if (service.indexOf("ws") === 0) {
+    if (this.service.indexOf("ws") === 0) {
         this._proto = new Strophe.Websocket(this);
     } else {
         this._proto = new Strophe.Bosh(this);
