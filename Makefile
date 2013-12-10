@@ -69,7 +69,7 @@ doc:
 	@@mkdir $(DOC_TEMP)
 	@@cp $(STROPHE) $(DOC_TEMP)
 	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -i $(PLUGIN_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
-	@@rm -rf strophejs-$(VERSION)
+	@@rm -rf $(DOC_TEMP)
 	@@echo "Documentation built."
 	@@echo
 
@@ -94,7 +94,7 @@ clean:
 	@@rm -f $(PLUGIN_FILES_MIN)
 	@@echo "Minified plugins cleaned."
 	@@echo "Cleaning documentation..."
-	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR)
+	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Documentation cleaned."
 	@@echo
 
