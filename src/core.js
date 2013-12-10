@@ -1499,7 +1499,7 @@ Strophe.TimedHandler.prototype = {
  *
  *  If you want to do this with a WebSocket connection you will still have to
  *  prefix the path with "ws" or "wss" to tell Strophe to use WebSockets, so
- *  to connect to "wss://HOSTNAME/xmpp-websocket", you would call 
+ *  to connect to "wss://HOSTNAME/xmpp-websocket", you would call
  *
  *  > var conn = new Strophe.Connection("wss/xmpp-websocket");
  *
@@ -1607,9 +1607,7 @@ Strophe.Connection.prototype = {
      */
     reset: function ()
     {
-        this.rid = Math.floor(Math.random() * 4294967295);
-
-        this.sid = null;
+        this._proto._reset();
 
         // SASL
         this.do_session = false;
@@ -1777,26 +1775,7 @@ Strophe.Connection.prototype = {
      */
     attach: function (jid, sid, rid, callback, wait, hold, wind)
     {
-        this.jid = jid;
-        this.sid = sid;
-        this.rid = rid;
-
-        this._proto.jid = jid;
-        this._proto.sid = sid;
-        this._proto.rid = rid;
-
-        this.connect_callback = callback;
-
-        this.domain = Strophe.getDomainFromJid(this.jid);
-
-        this.authenticated = true;
-        this.connected = true;
-
-        this.wait = wait || this.wait;
-        this.hold = hold || this.hold;
-        this.window = wind || this.window;
-
-        this._changeConnectStatus(Strophe.Status.ATTACHED, null);
+        this._proto.attach(jid, sid, rid, callback, wait, hold, wind);
     },
 
     /** Function: xmlInput
@@ -2396,21 +2375,6 @@ Strophe.Connection.prototype = {
         this._authentication.sasl_plain = false;
         this._authentication.sasl_digest_md5 = false;
         this._authentication.sasl_anonymous = false;
-
-        // check to make sure we don't overwrite these if _connect_cb is
-        // called multiple times in the case of missing stream:features
-        if (!this.sid) {
-            this.sid = bodyWrap.getAttribute("sid");
-        }
-        if (!this.stream_id) {
-            this.stream_id = bodyWrap.getAttribute("authid");
-        }
-        var wind = bodyWrap.getAttribute('requests');
-        if (wind) { this.window = parseInt(wind, 10); }
-        var hold = bodyWrap.getAttribute('hold');
-        if (hold) { this.hold = parseInt(hold, 10); }
-        var wait = bodyWrap.getAttribute('wait');
-        if (wait) { this.wait = parseInt(wait, 10); }
 
         this._authentication.legacy_auth = false;
 

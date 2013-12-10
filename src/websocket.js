@@ -119,6 +119,17 @@ Strophe.Websocket.prototype = {
         return true;
     },
 
+    /** PrivateFunction: _reset
+     *  Reset the connection.
+     *
+     *  This function is called by the reset function of the Strophe Connection.
+     *  Is not needed by WebSockets.
+     */
+    _reset: function ()
+    {
+        return;
+    },
+
     /** PrivateFunction: _connect
      *  _Private_ function called by Strophe.Connection.connect
      *
