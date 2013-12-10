@@ -166,14 +166,14 @@ Strophe.Websocket.prototype = {
         var ns = message.getAttribute("xmlns");
         if (typeof ns !== "string") {
             error = "Missing xmlns in stream:stream";
-        } else if (ns !== "jabber:client") {
+        } else if (ns !== Strophe.NS.CLIENT) {
             error = "Wrong xmlns in stream:stream: " + ns;
         }
 
         var ns_stream = message.namespaceURI;
         if (typeof ns_stream !== "string") {
             error = "Missing xmlns:stream in stream:stream";
-        } else if (ns_stream !== "http://etherx.jabber.org/streams") {
+        } else if (ns_stream !== Strophe.NS.STREAM) {
             error = "Wrong xmlns:stream in stream:stream: " + ns_stream;
         }
 
