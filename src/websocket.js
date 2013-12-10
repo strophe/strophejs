@@ -202,7 +202,9 @@ Strophe.Websocket.prototype = {
     _connect_cb_wrapper: function(message) {
         if (message.data.indexOf("<stream:stream ") === 0 || message.data.indexOf("<?xml") === 0) {
             // Strip the XML Declaration, if there is one
-            var data = message.data.replace(/<\?xml .*?\?>/, "");
+            var data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
+            if (data === '') return;
+
             //Make the initial stream:stream selfclosing to parse it without a SAX parser.
             data = message.data.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
 
