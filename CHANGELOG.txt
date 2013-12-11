@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.1.0 - 2013-12-4
+## Version 1.1.0 - 2013-12-11
 * Add Support for XMPP-over-WebSocket
 * Authentication mechanisms are now modular and can be toggled
 * Transport protocols are now modular and will be chosen based on the
