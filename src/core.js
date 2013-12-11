@@ -1497,23 +1497,23 @@ Strophe.TimedHandler.prototype = {
  *
  *  > var conn = new Strophe.Connection("/http-bind/");
  *
- *  If you want to do this with a WebSocket connection you will still have to
- *  prefix the path with "ws" or "wss" to tell Strophe to use WebSockets, so
- *  to connect to "wss://HOSTNAME/xmpp-websocket", you would call
+ *  If you want to connect to the current host with a WebSocket connection you
+ *  can tell Strophe to use WebSockets through a "protocol" attribute in the
+ *  optional options parameter. Valid values are "ws" for WebSocket and "wss"
+ *  for Secure WebSocket.
+ *  So to connect to "wss://CURRENT_HOSTNAME/xmpp-websocket" you would call
  *
- *  > var conn = new Strophe.Connection("wss/xmpp-websocket");
+ *  > var conn = new Strophe.Connection("/xmpp-websocket/", {protocol: "wss"});
  *
- *  If you want to use WebSockets but also support older Browsers that don't
- *  have WebSocket support, you can pass an object with a .ws and .bosh string.
+ *  Note that relative URLs starting _NOT_ with a "/" will also include the path
+ *  of the current site.
  *
- *  > var conn = new Strophe.Connection({ws:   "wss/xmpp-websocket",
- *  >                                    bosh: "/http-bind/"});
- *
- *  This will use the WebSocket endpoint if the browser supports it and fall
- *  back to BOSH if it doesn't.
+ *  Also because downgrading security is not permitted by browsers, when using
+ *  relative URLs both BOSH and WebSocket connections will use their secure
+ *  variants if the current connection to the site is also secure (https).
  *
  *  Parameters:
- *    (String/Object) service - The BOSH or WebSocket service URL(s).
+ *    (String) service - The BOSH or WebSocket service URL.
  *    (Object) options - A hash of configuration options
  *
  *  Returns:
@@ -1521,17 +1521,16 @@ Strophe.TimedHandler.prototype = {
  */
 Strophe.Connection = function (service, options)
 {
-    if (typeof service === "object") {
-        if (typeof service.ws === "string" && typeof window.WebSocket === "function") {
-            this.service = service.ws;
-        } else {
-            this.service = service.bosh;
-        }
-    } else {
-        this.service = service;
-    }
-    /* The path to the httpbind service. */
-    if (this.service.indexOf("ws") === 0) {
+    // The service URL
+    this.service = service;
+
+    // Configuration options
+    this._options = options || {};
+    var proto = this._options.protocol || "";
+
+    // Select protocal based on service or options
+    if (service.indexOf("ws:") === 0 || service.indexOf("wss:") === 0 ||
+            proto.indexOf("ws") === 0) {
         this._proto = new Strophe.Websocket(this);
     } else {
         this._proto = new Strophe.Bosh(this);
@@ -1564,9 +1563,6 @@ Strophe.Connection = function (service, options)
     this.authenticated = false;
     this.disconnecting = false;
     this.connected = false;
-
-    // Configuration options
-    this._options = options || {};
 
     this.errors = 0;
 

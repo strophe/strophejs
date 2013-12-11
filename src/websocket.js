@@ -44,10 +44,26 @@ Strophe.Websocket = function(connection) {
     this.strip = "stream:stream";
 
     var service = connection.service;
-    var protocol = service.split("/")[0];
+    if (service.indexOf("ws:") !== 0 && service.indexOf("wss:") !== 0) {
+        // If the service is not an absolute URL, assume it is a path and put the absolute
+        // URL together from options, current URL and the path.
+        var new_service = "";
 
-    if (protocol != "ws:" && protocol != "wss:") {
-        connection.service = protocol + "://" + window.location.host + service.slice(protocol.length);
+        if (connection._options.protocol === "ws" && window.location.protocol !== "https:") {
+            new_service += "ws";
+        } else {
+            new_service += "wss";
+        }
+
+        new_service += "://" + window.location.host;
+
+        if (service.indexOf("/") !== 0) {
+            new_service += window.location.pathname + service;
+        } else {
+            new_service += service;
+        }
+
+        connection.service = new_service;
     }
 };
 
