@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.1.1 - 2013-12-16
+* Fix BOSH attach is working again
+
 ## Version 1.1.0 - 2013-12-11
 * Add Support for XMPP-over-WebSocket
 * Authentication mechanisms are now modular and can be toggled
