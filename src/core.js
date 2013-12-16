@@ -1497,6 +1497,8 @@ Strophe.TimedHandler.prototype = {
  *
  *  > var conn = new Strophe.Connection("/http-bind/");
  *
+ *  WebSocket options:
+ *
  *  If you want to connect to the current host with a WebSocket connection you
  *  can tell Strophe to use WebSockets through a "protocol" attribute in the
  *  optional options parameter. Valid values are "ws" for WebSocket and "wss"
@@ -1505,12 +1507,22 @@ Strophe.TimedHandler.prototype = {
  *
  *  > var conn = new Strophe.Connection("/xmpp-websocket/", {protocol: "wss"});
  *
- *  Note that relative URLs starting _NOT_ with a "/" will also include the path
+ *  Note that relative URLs _NOT_ starting with a "/" will also include the path
  *  of the current site.
  *
  *  Also because downgrading security is not permitted by browsers, when using
  *  relative URLs both BOSH and WebSocket connections will use their secure
  *  variants if the current connection to the site is also secure (https).
+ *
+ *  BOSH options:
+ *
+ *  by adding "sync" to the options, you can control if requests will
+ *  be made synchronously or not. The default behaviour is asynchronous.
+ *  If you want to make requests synchronous, make "sync" evaluate to true:
+ *  > var conn = new Strophe.Connection("/http-bind/", {sync: true});
+ *  You can also toggle this on an already established connection:
+ *  > conn.options.sync = true;
+ *
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
@@ -1525,8 +1537,8 @@ Strophe.Connection = function (service, options)
     this.service = service;
 
     // Configuration options
-    this._options = options || {};
-    var proto = this._options.protocol || "";
+    this.options = options || {};
+    var proto = this.options.protocol || "";
 
     // Select protocal based on service or options
     if (service.indexOf("ws:") === 0 || service.indexOf("wss:") === 0 ||

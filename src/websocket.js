@@ -49,7 +49,7 @@ Strophe.Websocket = function(connection) {
         // URL together from options, current URL and the path.
         var new_service = "";
 
-        if (connection._options.protocol === "ws" && window.location.protocol !== "https:") {
+        if (connection.options.protocol === "ws" && window.location.protocol !== "https:") {
             new_service += "ws";
         } else {
             new_service += "wss";

@@ -644,7 +644,7 @@ Strophe.Bosh.prototype = {
                           "." + req.sends + " posting");
 
             try {
-                req.xhr.open("POST", this._conn.service, true);
+                req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
@@ -659,8 +659,8 @@ Strophe.Bosh.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
-                if (self._conn._options.customHeaders){
-                    var headers = self._conn._options.customHeaders;
+                if (self._conn.options.customHeaders){
+                    var headers = self._conn.options.customHeaders;
                     for (var header in headers) {
                         if (headers.hasOwnProperty(header)) {
                             req.xhr.setRequestHeader(header, headers[header]);
