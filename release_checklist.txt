@@ -4,6 +4,7 @@
 *** Make sure all tests pass
 *** Decide on version number
 *** Update CHANGELOG.txt
+*** Update bower.json and package.json versions
 *** Tag code with version (git tag -s release-VERSION head)
 *** Push repo and tags (git push && git push --tags)
 *** Create version.txt with version
