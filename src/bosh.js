@@ -644,7 +644,7 @@ Strophe.Bosh.prototype = {
                           "." + req.sends + " posting");
 
             try {
-                req.xhr.open("POST", this._conn.service, true);
+                req.xhr.open("POST", this._conn.service, this._conn._options.sync ? false : true);
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
