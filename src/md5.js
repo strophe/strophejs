@@ -7,15 +7,11 @@
  * See http://pajhome.org.uk/crypt/md5 for more info.
  */
 
-var MD5 = (function () {
-    /*
-     * Configurable variables. You may need to tweak these to be compatible with
-     * the server-side, but the defaults work in most cases.
-     */
-    var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase */
-    var b64pad  = ""; /* base-64 pad character. "=" for strict RFC compliance */
-    var chrsz   = 8;  /* bits per input character. 8 - ASCII; 16 - Unicode */
+/*
+ * Everything that isn't used by Strophe has been stripped here!
+ */
 
+var MD5 = (function () {
     /*
      * Add integers, wrapping at 2^32. This uses 16-bit operations internally
      * to work around bugs in some JS interpreters.
@@ -35,14 +31,12 @@ var MD5 = (function () {
 
     /*
      * Convert a string to an array of little-endian words
-     * If chrsz is ASCII, characters >255 have their hi-byte silently ignored.
      */
     var str2binl = function (str) {
         var bin = [];
-        var mask = (1 << chrsz) - 1;
-        for(var i = 0; i < str.length * chrsz; i += chrsz)
+        for(var i = 0; i < str.length * 8; i += 8)
         {
-            bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (i%32);
+            bin[i>>5] |= (str.charCodeAt(i / 8) & 255) << (i%32);
         }
         return bin;
     };
@@ -52,10 +46,9 @@ var MD5 = (function () {
      */
     var binl2str = function (bin) {
         var str = "";
-        var mask = (1 << chrsz) - 1;
-        for(var i = 0; i < bin.length * 32; i += chrsz)
+        for(var i = 0; i < bin.length * 32; i += 8)
         {
-            str += String.fromCharCode((bin[i>>5] >>> (i % 32)) & mask);
+            str += String.fromCharCode((bin[i>>5] >>> (i % 32)) & 255);
         }
         return str;
     };
@@ -64,33 +57,12 @@ var MD5 = (function () {
      * Convert an array of little-endian words to a hex string.
      */
     var binl2hex = function (binarray) {
-        var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+        var hex_tab = "0123456789abcdef";
         var str = "";
         for(var i = 0; i < binarray.length * 4; i++)
         {
             str += hex_tab.charAt((binarray[i>>2] >> ((i%4)*8+4)) & 0xF) +
                 hex_tab.charAt((binarray[i>>2] >> ((i%4)*8  )) & 0xF);
-        }
-        return str;
-    };
-
-    /*
-     * Convert an array of little-endian words to a base-64 string
-     */
-    var binl2b64 = function (binarray) {
-        var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        var str = "";
-        var triplet, j;
-        for(var i = 0; i < binarray.length * 4; i += 3)
-        {
-            triplet = (((binarray[i   >> 2] >> 8 * ( i   %4)) & 0xFF) << 16) |
-                (((binarray[i+1 >> 2] >> 8 * ((i+1)%4)) & 0xFF) << 8 ) |
-                ((binarray[i+2 >> 2] >> 8 * ((i+2)%4)) & 0xFF);
-            for(j = 0; j < 4; j++)
-            {
-                if(i * 8 + j * 6 > binarray.length * 32) { str += b64pad; }
-                else { str += tab.charAt((triplet >> 6*(3-j)) & 0x3F); }
-            }
         }
         return str;
     };
@@ -216,24 +188,6 @@ var MD5 = (function () {
     };
 
 
-    /*
-     * Calculate the HMAC-MD5, of a key and some data
-     */
-    var core_hmac_md5 = function (key, data) {
-        var bkey = str2binl(key);
-        if(bkey.length > 16) { bkey = core_md5(bkey, key.length * chrsz); }
-
-        var ipad = new Array(16), opad = new Array(16);
-        for(var i = 0; i < 16; i++)
-        {
-            ipad[i] = bkey[i] ^ 0x36363636;
-            opad[i] = bkey[i] ^ 0x5C5C5C5C;
-        }
-
-        var hash = core_md5(ipad.concat(str2binl(data)), 512 + data.length * chrsz);
-        return core_md5(opad.concat(hash), 512 + 128);
-    };
-
     var obj = {
         /*
          * These are the functions you'll usually want to call.
@@ -241,34 +195,11 @@ var MD5 = (function () {
          * strings.
          */
         hexdigest: function (s) {
-            return binl2hex(core_md5(str2binl(s), s.length * chrsz));
-        },
-
-        b64digest: function (s) {
-            return binl2b64(core_md5(str2binl(s), s.length * chrsz));
+            return binl2hex(core_md5(str2binl(s), s.length * 8));
         },
 
         hash: function (s) {
-            return binl2str(core_md5(str2binl(s), s.length * chrsz));
-        },
-
-        hmac_hexdigest: function (key, data) {
-            return binl2hex(core_hmac_md5(key, data));
-        },
-
-        hmac_b64digest: function (key, data) {
-            return binl2b64(core_hmac_md5(key, data));
-        },
-
-        hmac_hash: function (key, data) {
-            return binl2str(core_hmac_md5(key, data));
-        },
-
-        /*
-         * Perform a simple self-test to see if the VM is working
-         */
-        test: function () {
-            return MD5.hexdigest("abc") === "900150983cd24fb0d6963f7d28e17f72";
+            return binl2str(core_md5(str2binl(s), s.length * 8));
         }
     };
 
