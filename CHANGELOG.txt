@@ -1,6 +1,11 @@
 # Strophe.js Change Log
 
 ## Version 1.1.1 - 2013-12-16
+* Add option for synchronous BOSH connections
+* moved bower.json to other repository
+* Remove unused code in sha1 and md5 modules
+
+## Version 1.1.1 - 2013-12-16
 * Fix BOSH attach is working again
 
 ## Version 1.1.0 - 2013-12-11
