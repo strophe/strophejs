@@ -1749,8 +1749,8 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.errors = 0;
 
-        // parse jid for domain and resource
-        this.domain = this.domain || Strophe.getDomainFromJid(this.jid);
+        // parse jid for domain
+        this.domain = Strophe.getDomainFromJid(this.jid);
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 
