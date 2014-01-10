@@ -3121,7 +3121,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 
   this.onChallenge = function (connection, challenge)
   {
-    var nonce, salt, iter, Hi, U, U_old;
+    var nonce, salt, iter, Hi, U, U_old, i, k;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
     var authMessage = this._sasl_data["client-first-message-bare"] + "," +
@@ -3130,7 +3130,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
 
     while (challenge.match(attribMatch)) {
-      matches = challenge.match(attribMatch);
+      var matches = challenge.match(attribMatch);
       challenge = challenge.replace(matches[0], "");
       switch (matches[1]) {
       case "r":
