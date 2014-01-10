@@ -2574,7 +2574,7 @@ Strophe.Connection.prototype = {
             var serverSignature;
             var success = Base64.decode(Strophe.getText(elem));
             var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
-            matches = success.match(attribMatch);
+            var matches = success.match(attribMatch);
             if (matches[1] == "v") {
                 serverSignature = matches[2];
             }
@@ -2971,8 +2971,6 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
 };
 
 Strophe.SASLMechanism.prototype = {
-  _sasl_data: {},
-
   /**
    *  Function: test
    *  Checks if mechanism able to run.
@@ -3114,8 +3112,8 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
   auth_str += ",r=";
   auth_str += cnonce;
 
-  this._sasl_data.cnonce = cnonce;
-  this._sasl_data["client-first-message-bare"] = auth_str;
+  connection._sasl_data.cnonce = cnonce;
+  connection._sasl_data["client-first-message-bare"] = auth_str;
 
   auth_str = "n,," + auth_str;
 
@@ -3124,9 +3122,9 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     var nonce, salt, iter, Hi, U, U_old, i, k;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
-    var authMessage = this._sasl_data["client-first-message-bare"] + "," +
+    var authMessage = connection._sasl_data["client-first-message-bare"] + "," +
       challenge + ",";
-    var cnonce = this._sasl_data.cnonce;
+    var cnonce = connection._sasl_data.cnonce;
     var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
 
     while (challenge.match(attribMatch)) {
@@ -3146,7 +3144,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     }
 
     if (nonce.substr(0, cnonce.length) !== cnonce) {
-      this._sasl_data = {};
+      connection._sasl_data = {};
       return connection._sasl_failure_cb();
     }
 
