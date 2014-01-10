@@ -13,6 +13,7 @@
  * These are the functions you'll usually want to call
  * They take string arguments and return either hex or base-64 encoded strings
  */
+function b64_sha1(s){return binb2b64(core_sha1(str2binb(s),s.length * 8));}
 function str_sha1(s){return binb2str(core_sha1(str2binb(s),s.length * 8));}
 function b64_hmac_sha1(key, data){ return binb2b64(core_hmac_sha1(key, data));}
 function str_hmac_sha1(key, data){ return binb2str(core_hmac_sha1(key, data));}
