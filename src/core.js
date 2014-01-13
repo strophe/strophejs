@@ -5,11 +5,11 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* jslint configuration: */
+/* jshint undef: true, unused: true:, noarg: true, latedef: true */
 /*global document, window, setTimeout, clearTimeout, console,
-    XMLHttpRequest, ActiveXObject,
-    Base64, MD5,
-    Strophe, $build, $msg, $iq, $pres */
+    ActiveXObject, Base64, MD5, DOMParser */
+// from sha1.js
+/*global core_hmac_sha1, binb2str, str_hmac_sha1, str_sha1, b64_hmac_sha1*/
 
 /** File: strophe.js
  *  A JavaScript library for XMPP BOSH/XMPP over Websocket.
@@ -570,9 +570,10 @@ Strophe = {
      */
     xmlHtmlNode: function (html)
     {
+        var node;
         //ensure text is escaped
         if (window.DOMParser) {
-            parser = new DOMParser();
+            var parser = new DOMParser();
             node = parser.parseFromString(html, "text/xml");
         } else {
             node = new ActiveXObject("Microsoft.XMLDOM");
@@ -658,7 +659,7 @@ Strophe = {
      */
     createHtml: function (elem)
     {
-        var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue, children, child;
+        var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue;
         if (elem.nodeType == Strophe.ElementType.NORMAL) {
             tag = elem.nodeName.toLowerCase();
             if(Strophe.XHTML.validTag(tag)) {
@@ -863,10 +864,12 @@ Strophe = {
      *      be one of the values in Strophe.LogLevel.
      *    (String) msg - The log message.
      */
+    /* jshint ignore:start */
     log: function (level, msg)
     {
         return;
     },
+    /* jshint ignore:end */
 
     /** Function: debug
      *  Log a message at the Strophe.LogLevel.DEBUG level.
@@ -1598,7 +1601,7 @@ Strophe.Connection = function (service, options)
         if (Strophe._connectionPlugins.hasOwnProperty(k)) {
             var ptype = Strophe._connectionPlugins[k];
             // jslint complaints about the below line, but this is fine
-            var F = function () {};
+            var F = function () {}; // jshint ignore:line
             F.prototype = ptype;
             this[k] = new F();
             this[k].init(this);
@@ -1804,10 +1807,12 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XML data received by the connection.
      */
+    /* jshint unused:false */
     xmlInput: function (elem)
     {
         return;
     },
+    /* jshint unused:true */
 
     /** Function: xmlOutput
      *  User overrideable function that receives XML data sent to the
@@ -1827,10 +1832,12 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XMLdata sent by the connection.
      */
+    /* jshint unused:false */
     xmlOutput: function (elem)
     {
         return;
     },
+    /* jshint unused:true */
 
     /** Function: rawInput
      *  User overrideable function that receives raw data coming into the
@@ -1844,10 +1851,12 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data received by the connection.
      */
+    /* jshint unused:false */
     rawInput: function (data)
     {
         return;
     },
+    /* jshint unused:true */
 
     /** Function: rawOutput
      *  User overrideable function that receives raw data sent to the
@@ -1861,10 +1870,12 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data sent by the connection.
      */
+    /* jshint unused:false */
     rawOutput: function (data)
     {
         return;
     },
+    /* jshint unused:true */
 
     /** Function: send
      *  Send a stanza.
@@ -2393,8 +2404,7 @@ Strophe.Connection.prototype = {
         }
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         var matched = [];
-        var i, mech, auth_str, hashed_auth_str,
-            found_authentication = false;
+        var i, mech, found_authentication = false;
         if (!hasFeatures) {
             this._proto._no_auth_received(_callback);
             return;
@@ -2534,6 +2544,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
+    /* jshint unused:false */
     _auth1_cb: function (elem)
     {
         // build plaintext auth iq
@@ -2558,6 +2569,7 @@ Strophe.Connection.prototype = {
 
         return false;
     },
+    /* jshint unused:true */
 
     /** PrivateFunction: _sasl_success_cb
      *  _Private_ handler for succesful SASL authentication.
@@ -2748,6 +2760,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
+    /* jshint unused:false */
     _sasl_failure_cb: function (elem)
     {
         // delete unneeded handlers
@@ -2765,6 +2778,7 @@ Strophe.Connection.prototype = {
         this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
         return false;
     },
+    /* jshint unused:true */
 
     /** PrivateFunction: _auth2_cb
      *  _Private_ handler to finish legacy authentication.
@@ -2897,8 +2911,6 @@ Strophe.Connection.prototype = {
         }
         this.timedHandlers = newList;
 
-        var body, time_elapsed;
-
         clearTimeout(this._idleTimeout);
 
         this._proto._onIdle();
@@ -2989,9 +3001,11 @@ Strophe.SASLMechanism.prototype = {
    *  Returns:
    *    (Boolean) If mechanism was able to run.
    */
+  /* jshint unused:false */
   test: function(connection) {
     return true;
   },
+  /* jshint unused:true */
 
   /** PrivateFunction: onStart
    *  Called before starting mechanism on some connection.
@@ -3015,9 +3029,11 @@ Strophe.SASLMechanism.prototype = {
    *  Returns:
    *    (String) Mechanism response.
    */
+  /* jshint unused:false */
   onChallenge: function(connection, challenge) {
     throw new Error("You should implement challenge handling!");
   },
+  /* jshint unused:true */
 
   /** PrivateFunction: onFailure
    *  Protocol informs mechanism implementation about SASL failure.
@@ -3069,7 +3085,7 @@ Strophe.SASLPlain.test = function(connection) {
   return connection.authcid !== null;
 };
 
-Strophe.SASLPlain.prototype.onChallenge = function(connection, challenge) {
+Strophe.SASLPlain.prototype.onChallenge = function(connection) {
   var auth_str = connection.authzid;
   auth_str = auth_str + "\u0000";
   auth_str = auth_str + connection.authcid;
@@ -3264,7 +3280,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function (connection, challenge)
+  this.onChallenge = function ()
   {
     return "";
   }.bind(this);

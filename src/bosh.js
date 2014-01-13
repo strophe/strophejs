@@ -5,11 +5,10 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* jslint configuration: */
-/*global document, window, setTimeout, clearTimeout, console,
+/* jshint undef: true, unused: true:, noarg: true, latedef: true */
+/*global window, setTimeout, clearTimeout,
     XMLHttpRequest, ActiveXObject,
-    Base64, MD5,
-    Strophe, $build, $msg, $iq, $pres */
+    Strophe, $build */
 
 
 /** PrivateClass: Strophe.Request
@@ -416,7 +415,7 @@ Strophe.Bosh.prototype = {
             req.xhr.abort();
             // jslint complains, but this is fine. setting to empty func
             // is necessary for IE6
-            req.xhr.onreadystatechange = function () {};
+            req.xhr.onreadystatechange = function () {}; // jshint ignore:line
         }
     },
 
@@ -438,8 +437,8 @@ Strophe.Bosh.prototype = {
 
         if (this._requests.length < 2 && data.length > 0 &&
             !this._conn.paused) {
-            body = this._buildBody();
-            for (i = 0; i < data.length; i++) {
+            var body = this._buildBody();
+            for (var i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
                     if (data[i] === "restart") {
                         body.attrs({
@@ -464,7 +463,7 @@ Strophe.Bosh.prototype = {
         }
 
         if (this._requests.length > 0) {
-            time_elapsed = this._requests[0].age();
+            var time_elapsed = this._requests[0].age();
             if (this._requests[0].dead !== null) {
                 if (this._requests[0].timeDead() >
                     Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {

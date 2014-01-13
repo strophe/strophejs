@@ -5,10 +5,9 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/*global document, window, setTimeout, clearTimeout, console,
-    XMLHttpRequest, ActiveXObject,
-    Base64, MD5,
-    Strophe, $build, $msg, $iq, $pres */
+/* jshint undef: true, unused: true:, noarg: true, latedef: true */
+/*global document, window, clearTimeout, WebSocket,
+    DOMParser, Strophe, $build */
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
@@ -103,9 +102,9 @@ Strophe.Websocket.prototype = {
         var condition = "";
         var text = "";
 
-        ns = "urn:ietf:params:xml:ns:xmpp-streams";
-        for (i = 0; i < error.childNodes.length; i++) {
-            e = error.childNodes[i];
+        var ns = "urn:ietf:params:xml:ns:xmpp-streams";
+        for (var i = 0; i < error.childNodes.length; i++) {
+            var e = error.childNodes[i];
             if (e.getAttribute("xmlns") !== ns) {
                 break;
             } if (e.nodeName === "text") {
@@ -115,7 +114,7 @@ Strophe.Websocket.prototype = {
             }
         }
 
-        errorString = "WebSocket stream error: ";
+        var errorString = "WebSocket stream error: ";
 
         if (condition) {
             errorString += condition;
@@ -251,7 +250,7 @@ Strophe.Websocket.prototype = {
         } else if (message.data === "</stream:stream>") {
             this._conn.rawInput(message.data);
             this._conn.xmlInput(document.createElement("stream:stream"));
-            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, error);
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Received closing stream");
             this._conn._doDisconnect();
             return;
         } else {
@@ -339,7 +338,7 @@ Strophe.Websocket.prototype = {
      *
      * Nothing to do here for WebSockets
      */
-    _onClose: function(event) {
+    _onClose: function() {
         if(this._conn.connected && !this._conn.disconnecting) {
             Strophe.error("Websocket closed unexcectedly");
             this._conn._doDisconnect();
@@ -391,7 +390,7 @@ Strophe.Websocket.prototype = {
     _onIdle: function () {
         var data = this._conn._data;
         if (data.length > 0 && !this._conn.paused) {
-            for (i = 0; i < data.length; i++) {
+            for (var i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
                     var stanza, rawStanza;
                     if (data[i] === "restart") {
@@ -424,7 +423,7 @@ Strophe.Websocket.prototype = {
      * (string) message - The websocket message.
      */
     _onMessage: function(message) {
-        var elem;
+        var elem, data;
         // check for closing stream
         if (message.data === "</stream:stream>") {
             var close = "</stream:stream>";
