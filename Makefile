@@ -66,10 +66,9 @@ doc:
 	@@echo "Building Strophe documentation..."
 	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
-	@@mkdir $(DOC_TEMP)
+	@@if [ ! -d $(DOC_TEMP) ]; then mkdir $(DOC_TEMP); fi
 	@@cp $(STROPHE) $(DOC_TEMP)
 	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -i $(PLUGIN_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
-	@@rm -rf $(DOC_TEMP)
 	@@echo "Documentation built."
 	@@echo
 
@@ -96,6 +95,8 @@ clean:
 	@@echo "Cleaning documentation..."
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Documentation cleaned."
+	@@rm -rf strophejs-$(VERSION) strophejs-$(VERSION).zip strophejs-$(VERSION).tar.gz
+	@@echo "Release cleaned."
 	@@echo
 
 .PHONY: all normal min doc release clean
