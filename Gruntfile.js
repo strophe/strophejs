@@ -9,9 +9,10 @@ if (fs.existsSync("/usr/bin/naturaldocs")) {
 }
 
 module.exports = function(grunt){
+    var pkg = grunt.file.readJSON('package.json');
 
     grunt.initConfig({
-        pkg: grunt.file.readJSON('package.json'),
+        pkg: pkg,
 
         clean: {
             "prepare-doc": ["<%= natural_docs.docs.inputs[0] %>", "<%= natural_docs.docs.project %>"],
@@ -28,7 +29,7 @@ module.exports = function(grunt){
             },
             options: {
                 process: function(src){
-                    return src.replace('@VERSION@', '<%= pkg.version %>');
+                    return src.replace('@VERSION@', pkg.version);
                 }
             }
         },
