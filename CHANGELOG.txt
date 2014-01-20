@@ -1,6 +1,13 @@
 # Strophe.js Change Log
 
-## Version 1.1.1 - 2013-12-16
+## Version 1.1.3 - 2013-01-20
+* Fix SCRAM-SHA1 auth now works for multiple connections at the same time
+* Fix Connecting to a different server with the same connection after disconnect
+* Add Gruntfile so StropheJS can now also be built using grunt
+* Fix change in sha1.js that broke the caps plugin
+* Fix all warnings from jshint.
+
+## Version 1.1.2 - 2013-01-04
 * Add option for synchronous BOSH connections
 * moved bower.json to other repository
 * Remove unused code in sha1 and md5 modules

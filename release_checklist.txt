@@ -4,10 +4,10 @@
 *** Make sure all tests pass
 *** Decide on version number
 *** Update CHANGELOG.txt
-*** Tag code with version (git tag -s release-VERSION head)
+*** Tag code with version (git tag -s release-VERSION HEAD)
 *** Push repo and tags (git push && git push --tags)
-*** Create version.txt with version
-*** Run make release
+*** update version in package.json
+*** Run grunt release
 *** Upload zip file and tarball to GitHub
 *** Add documentation to strophe.im repo
 *** Update website
