@@ -1951,11 +1951,7 @@ Strophe.Connection.prototype = {
         }
 
         var expectedFrom = elem.getAttribute("to");
-        if (expectedFrom === null) {
-            expectedFrom = Strophe.getBareJidFromJid(this.jid);
-            var domain = this.domain;
-            var fulljid = this.jid;
-        }
+        var fulljid = this.jid;
 
         var handler = this.addHandler(function (stanza) {
             // remove timeout handler if there is one
@@ -1963,8 +1959,17 @@ Strophe.Connection.prototype = {
                 that.deleteTimedHandler(timeoutHandler);
             }
 
+            var acceptable = false;
             var from = stanza.getAttribute("from");
-            if (from !== expectedFrom && from !== domain && from !== fulljid) {
+            if (from === expectedFrom ||
+               (expectedFrom === null &&
+                   (from === Strophe.getBareJidFromJid(fulljid) ||
+                    from === Strophe.getDomainFromJid(fulljid) ||
+                    from === fulljid))) {
+                acceptable = true;
+            }
+
+            if (!acceptable) {
                 throw {
                     name: "StropheError",
                     message: "Got answer to IQ from wrong jid:" + from +
