@@ -1950,10 +1950,24 @@ Strophe.Connection.prototype = {
             elem.setAttribute("id", id);
         }
 
+        var expectedFrom = elem.getAttribute("to");
+        if (expectedFrom === null) {
+            expectedFrom = Strophe.getBareJidFromJid(this.jid);
+        }
+
         var handler = this.addHandler(function (stanza) {
             // remove timeout handler if there is one
             if (timeoutHandler) {
                 that.deleteTimedHandler(timeoutHandler);
+            }
+
+            var from = stanza.getAttribute("from");
+            if (from !== expectedFrom) {
+                throw {
+                    name: "StropheError",
+                    message: "Got answer to IQ from wrong jid:" + from +
+                             "\nExpected jid: " + expectedFrom
+                };
             }
 
             var iqtype = stanza.getAttribute('type');
@@ -1968,7 +1982,7 @@ Strophe.Connection.prototype = {
             } else {
                 throw {
                     name: "StropheError",
-            message: "Got bad IQ type of " + iqtype
+                    message: "Got bad IQ type of " + iqtype
                 };
             }
         }, null, 'iq', null, id);
