@@ -1953,6 +1953,8 @@ Strophe.Connection.prototype = {
         var expectedFrom = elem.getAttribute("to");
         if (expectedFrom === null) {
             expectedFrom = Strophe.getBareJidFromJid(this.jid);
+            var domain = this.domain;
+            var fulljid = this.jid;
         }
 
         var handler = this.addHandler(function (stanza) {
@@ -1962,7 +1964,7 @@ Strophe.Connection.prototype = {
             }
 
             var from = stanza.getAttribute("from");
-            if (from !== expectedFrom) {
+            if (from !== expectedFrom && from !== domain && from !== fulljid) {
                 throw {
                     name: "StropheError",
                     message: "Got answer to IQ from wrong jid:" + from +
