@@ -155,6 +155,7 @@ Strophe.Bosh = function(connection) {
     this.hold = 1;
     this.wait = 60;
     this.window = 5;
+    this.errors = 0;
 
     this._requests = [];
 };
@@ -202,6 +203,7 @@ Strophe.Bosh.prototype = {
     {
         this.rid = Math.floor(Math.random() * 4294967295);
         this.sid = null;
+        this.errors = 0;
     },
 
     /** PrivateFunction: _connect
@@ -213,6 +215,7 @@ Strophe.Bosh.prototype = {
     {
         this.wait = wait || this.wait;
         this.hold = hold || this.hold;
+        this.errors = 0;
 
         // build the body tag
         var body = this._buildBody().attrs({
@@ -376,7 +379,7 @@ Strophe.Bosh.prototype = {
         Strophe.warn("request errored, status: " + reqStatus +
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
-            this._onDisconnectTimeout();
+            this._conn._onDisconnectTimeout();
         }
     },
 
@@ -608,7 +611,7 @@ Strophe.Bosh.prototype = {
 
         // make sure we limit the number of retries
         if (req.sends > this.maxRetries) {
-            this._onDisconnectTimeout();
+            this._conn._onDisconnectTimeout();
             return;
         }
 

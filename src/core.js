@@ -1579,8 +1579,6 @@ Strophe.Connection = function (service, options)
     this.disconnecting = false;
     this.connected = false;
 
-    this.errors = 0;
-
     this.paused = false;
 
     this._data = [];
@@ -1636,8 +1634,6 @@ Strophe.Connection.prototype = {
         this.authenticated = false;
         this.disconnecting = false;
         this.connected = false;
-
-        this.errors = 0;
 
         this._requests = [];
         this._uniqueId = 0;
@@ -1750,7 +1746,6 @@ Strophe.Connection.prototype = {
         this.disconnecting = false;
         this.connected = false;
         this.authenticated = false;
-        this.errors = 0;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
