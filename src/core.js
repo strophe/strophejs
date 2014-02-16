@@ -2143,6 +2143,12 @@ Strophe.Connection.prototype = {
         // this must be done in the Idle loop so that we don't change
         // the handlers during iteration
         this.removeHandlers.push(handRef);
+        // If a handler is being deleted while it is being added,
+        // prevent it from getting added
+        var i = this.addHandlers.indexOf(handRef);
+        if (i >= 0) {
+            this.addHandlers.splice(i, 1);
+        }
     },
 
     /** Function: disconnect
