@@ -195,6 +195,7 @@ Strophe = {
         MUC: "http://jabber.org/protocol/muc",
         SASL: "urn:ietf:params:xml:ns:xmpp-sasl",
         STREAM: "http://etherx.jabber.org/streams",
+        FRAMING: "urn:ietf:params:xml:ns:xmpp-framing",
         BIND: "urn:ietf:params:xml:ns:xmpp-bind",
         SESSION: "urn:ietf:params:xml:ns:xmpp-session",
         VERSION: "jabber:iq:version",
@@ -282,7 +283,8 @@ Strophe = {
         CONNECTED: 5,
         DISCONNECTED: 6,
         DISCONNECTING: 7,
-        ATTACHED: 8
+        ATTACHED: 8,
+        REDIRECT: 9
     },
 
     /** Constants: Log Level Constants
