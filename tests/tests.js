@@ -96,22 +96,23 @@ $(document).ready(function () {
     });
 
     test("Builder with XML attribute escaping test", function () {
-        var text = "<b>";
-        var expected = "<presence to='&lt;b&gt;' xmlns='jabber:client'/>";
+		//Attribute order will vary in IE11, requiring RegExp instead of straight text comparison.
+		var text = "<b>";
         var pres = $pres({to: text});
-        equal(pres.toString(), expected, "< should be escaped");
+		assertRegexMatch(pres, /\<presence(\s+to\=\'\&lt\;b\&gt\;\'|\s+xmlns\=\'jabber\:client\'){2}\s*\/\>/, "< should be escaped");
 
         text = "foo&bar";
-        expected = "<presence to='foo&amp;bar' xmlns='jabber:client'/>";
         pres = $pres({to: text});
-        equal(pres.toString(), expected, "& should be escaped");
+		assertRegexMatch(pres, /\<presence(\s+to\=\'foo\&amp\;bar\'|\s+xmlns\=\'jabber\:client\'){2}\s*\/\>/, "& should be escaped");
     });
 
     test("c() accepts text and passes it to xmlElement", function () {
         var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
             .c("nick", {xmlns: "http://jabber.org/protocol/nick"}, "Darcy");
-        var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>";
-        equal(pres.toString(), expected, "'Darcy' should be a child of <presence>");
+		/* Expected XML body. Attribute order will vary in IE11, requiring RegEx:
+			<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>
+		*/
+        assertRegexMatch(pres.toString(), /\<presence\s+.*\>\<nick\s+.*\>Darcy\<\/nick\>\<\/presence\>/, "'Darcy' should be a child of <presence>");
     });
 
     module("XML");
@@ -150,11 +151,14 @@ $(document).ready(function () {
     
     test("XML serializing", function() {
         var parser = new DOMParser();
+		var expectPattern = /\<foo(\s+attr1\=\'abc\'|\s+attr2\=\'edf\'){2}\s*\>bar\<\/foo\>/
         // Attributes
         var element1 = parser.parseFromString("<foo attr1='abc' attr2='edf'>bar</foo>","text/xml").documentElement;
-        equal(Strophe.serialize(element1), "<foo attr1='abc' attr2='edf'>bar</foo>", "should be serialized");
+        assertRegexMatch(Strophe.serialize(element1), expectPattern, "should be serialized");
         var element2 = parser.parseFromString("<foo attr1=\"abc\" attr2=\"edf\">bar</foo>","text/xml").documentElement;
-        equal(Strophe.serialize(element2), "<foo attr1='abc' attr2='edf'>bar</foo>", "should be serialized");
+		//Expect: <foo attr1='abc' attr2='edf'>bar</foo>
+		//IE11 will vary the attribute order.
+        assertRegexMatch(Strophe.serialize(element2), expectPattern, "should be serialized");
         // Escaping values
         var element3 = parser.parseFromString("<foo>a &gt; &apos;b&apos; &amp; &quot;b&quot; &lt; c</foo>","text/xml").documentElement;
         equal(Strophe.serialize(element3), "<foo>a &gt; &apos;b&apos; &amp; &quot;b&quot; &lt; c</foo>", "should be serialized");
