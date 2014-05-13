@@ -610,7 +610,7 @@ Strophe.Bosh.prototype = {
         }
 
         // make sure we limit the number of retries
-        if (req.sends > this.maxRetries) {
+        if (req.sends > this._conn.maxRetries) {
             this._conn._onDisconnectTimeout();
             return;
         }
