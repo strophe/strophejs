@@ -2231,6 +2231,10 @@ Strophe.Connection.prototype = {
      */
     _doDisconnect: function ()
     {
+        if (typeof this._idleTimeout == "number") {
+            clearTimeout(this._idleTimeout);
+        }
+
         // Cancel Disconnect Timeout
         if (this._disconnectTimeout !== null) {
             this.deleteTimedHandler(this._disconnectTimeout);
@@ -2329,7 +2333,7 @@ Strophe.Connection.prototype = {
             } else {
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this.disconnect('unknown stream-error');
+            this._doDisconnect();
             return;
         }
 
