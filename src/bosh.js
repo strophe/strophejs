@@ -438,8 +438,11 @@ Strophe.Bosh.prototype = {
             data.push(null);
         }
 
-        if (this._requests.length < 2 && data.length > 0 &&
-            !this._conn.paused) {
+        if (this._conn.paused) {
+            return;
+        }
+
+        if (this._requests.length < 2 && data.length > 0) {
             var body = this._buildBody();
             for (var i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
