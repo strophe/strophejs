@@ -1477,6 +1477,10 @@ Strophe.Connection = function (service, options)
     if (service.indexOf("ws:") === 0 || service.indexOf("wss:") === 0 ||
             proto.indexOf("ws") === 0) {
         this._proto = new Strophe.Websocket(this);
+    } else if (service.indexOf("p2p") === 0) {
+        this._proto = new Strophe.WebRTC(this, options);
+    } else if (service.indexOf("lo") === 0) {
+        this._proto = new Strophe.Loopback(this);
     } else {
         this._proto = new Strophe.Bosh(this);
     }
