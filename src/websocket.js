@@ -370,6 +370,11 @@ Strophe.Websocket.prototype = {
      */
     _onDisconnectTimeout: function () {},
 
+    /** PrivateFunction: _abortAllRequests
+     *  _Private_ helper function that makes sure all pending requests are aborted.
+     */
+    _abortAllRequests: function () {},
+
     /** PrivateFunction: _onError
      * _Private_ function to handle websockets errors.
      *

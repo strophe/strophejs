@@ -2158,6 +2158,8 @@ Strophe.Connection.prototype = {
      *  by sending unavailable presence and sending BOSH body of type
      *  terminate.  A timeout handler makes sure that disconnection happens
      *  even if the BOSH server does not respond.
+     *  If the Connection object isn't connected, at least tries to abort all pending requests
+     *  so the connection object won't generate successful requests (which were already opened).
      *
      *  The user supplied connection callback will be notified of the
      *  progress as this process happens.
@@ -2183,6 +2185,9 @@ Strophe.Connection.prototype = {
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
             this._proto._disconnect(pres);
+        } else {
+            Strophe.info("Disconnect was called before Strophe connected to the server");
+            this._proto._abortAllRequests();
         }
     },
 
