@@ -1635,6 +1635,7 @@ Strophe.Connection.prototype = {
         this.disconnecting = false;
         this.connected = false;
 
+        this._data = [];
         this._requests = [];
         this._uniqueId = 0;
     },
