@@ -4255,7 +4255,7 @@ Strophe.Bosh.prototype = {
                                     this._onRequestStateChange.bind(
                                         this, this._conn._dataRecv.bind(this._conn)),
                                     body.tree().getAttribute("rid")));
-            this._processRequest(this._requests.length - 1);
+            this._throttledRequestHandler();
         }
 
         if (this._requests.length > 0) {
