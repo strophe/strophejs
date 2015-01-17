@@ -7,7 +7,7 @@ Strophe.js is a JavaScript library for speaking XMPP via BOSH
 and [XEP 206](http://xmpp.org/extensions/xep-0206.html)) and WebSockets
 (draft-ietf-xmpp-websocket-00).
 
-It is primary purpose is to enable web-based, real-time XMPP applications that
+Its primary purpose is to enable web-based, real-time XMPP applications that
 run in any browser.
 
 The book [Professional XMPP Programming with JavaScript and jQuery](http://professionalxmpp.com)
