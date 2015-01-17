@@ -8,17 +8,8 @@ DOC_TEMP = doc-temp
 PLUGIN_DIR = plugins
 NDPROJ_DIR = ndproj
 
-BASE_FILES = $(SRC_DIR)/base64.js \
-	$(SRC_DIR)/sha1.js \
-	$(SRC_DIR)/md5.js \
-	$(SRC_DIR)/core.js \
-	$(SRC_DIR)/bosh.js \
-	$(SRC_DIR)/websocket.js
-
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
-
-VERSION = $(shell if [ -f version.txt ]; then cat version.txt; else VERSION=`git rev-list HEAD -n1`; echo $${VERSION:0:7}; fi)
 
 all: normal min
 normal: stamp-bower $(STROPHE)
@@ -32,7 +23,7 @@ stamp-bower: stamp-npm bower.json
 	$(BOWER) install
 	touch stamp-bower
 
-$(STROPHE): $(BASE_FILES)
+$(STROPHE): stamp-bower
 	@@echo "Building" $(STROPHE) "..."
 	$(GRUNT) concat
 	@@echo
@@ -56,7 +47,7 @@ release:
 	@@echo "Release created."
 	@@echo
 
-check:: stamp-bower
+check:: stamp-bower normal
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 
 clean:

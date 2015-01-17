@@ -78,6 +78,7 @@ var Base64 = (function () {
 
     return obj;
 })();
+
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -254,6 +255,7 @@ function binb2b64(binarray)
   }
   return str;
 }
+
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
@@ -461,6 +463,7 @@ var MD5 = (function () {
 
     return obj;
 })();
+
 /*
     This program is distributed under the terms of the MIT license.
     Please see the LICENSE file for details.
@@ -625,7 +628,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "cdfcf7e",
+    VERSION: "1.1.4dev1",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -855,7 +858,7 @@ Strophe = {
      */
     isTagEqual: function (el, name)
     {
-        return el.tagName.toLowerCase() == name.toLowerCase();
+        return el.tagName == name;
     },
 
     /** PrivateVariable: _xmlGenerator
@@ -1093,7 +1096,7 @@ Strophe = {
             el = Strophe.xmlElement(elem.tagName);
 
             for (i = 0; i < elem.attributes.length; i++) {
-                el.setAttribute(elem.attributes[i].nodeName.toLowerCase(),
+                el.setAttribute(elem.attributes[i].nodeName,
                                 elem.attributes[i].value);
             }
 
@@ -1124,7 +1127,7 @@ Strophe = {
     {
         var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue;
         if (elem.nodeType == Strophe.ElementType.NORMAL) {
-            tag = elem.nodeName.toLowerCase();
+            tag = elem.nodeName;
             if(Strophe.XHTML.validTag(tag)) {
                 try {
                     el = Strophe.xmlElement(tag);
@@ -1418,7 +1421,7 @@ Strophe = {
         result = "<" + nodeName;
         for (i = 0; i < elem.attributes.length; i++) {
                if(elem.attributes[i].nodeName != "_realname") {
-                 result += " " + elem.attributes[i].nodeName.toLowerCase() +
+                 result += " " + elem.attributes[i].nodeName +
                 "='" + elem.attributes[i].value
                     .replace(/&/g, "&amp;")
                        .replace(/\'/g, "&apos;")
@@ -2694,6 +2697,10 @@ Strophe.Connection.prototype = {
      */
     _doDisconnect: function ()
     {
+        if (typeof this._idleTimeout == "number") {
+            clearTimeout(this._idleTimeout);
+        }
+
         // Cancel Disconnect Timeout
         if (this._disconnectTimeout !== null) {
             this.deleteTimedHandler(this._disconnectTimeout);
@@ -2773,9 +2780,9 @@ Strophe.Connection.prototype = {
             return;
         }
 
-        var typ = elem.getAttribute("type");
+        var type = elem.getAttribute("type");
         var cond, conflict;
-        if (typ !== null && typ == "terminate") {
+        if (type !== null && type == "terminate") {
             // Don't process stanzas that come in after disconnect
             if (this.disconnecting) {
                 return;
@@ -2792,7 +2799,7 @@ Strophe.Connection.prototype = {
             } else {
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this.disconnect('unknown stream-error');
+            this._doDisconnect();
             return;
         }
 
@@ -2883,10 +2890,7 @@ Strophe.Connection.prototype = {
         this._authentication.legacy_auth = false;
 
         // Check for the stream:features tag
-        var hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0;
-        if (!hasFeatures) {
-            hasFeatures = bodyWrap.getElementsByTagName("features").length > 0;
-        }
+        var hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         var matched = [];
         var i, mech, found_authentication = false;
@@ -3782,6 +3786,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Stroph
     window.$iq = arguments[3];
     window.$pres = arguments[4];
 });
+
 /*
     This program is distributed under the terms of the MIT license.
     Please see the LICENSE file for details.
@@ -3891,7 +3896,7 @@ Strophe.Request.prototype = {
         if (window.XMLHttpRequest) {
             xhr = new XMLHttpRequest();
             if (xhr.overrideMimeType) {
-                xhr.overrideMimeType("text/xml");
+                xhr.overrideMimeType("text/xml; charset=utf-8");
             }
         } else if (window.ActiveXObject) {
             xhr = new ActiveXObject("Microsoft.XMLHTTP");
@@ -4222,8 +4227,11 @@ Strophe.Bosh.prototype = {
             data.push(null);
         }
 
-        if (this._requests.length < 2 && data.length > 0 &&
-            !this._conn.paused) {
+        if (this._conn.paused) {
+            return;
+        }
+
+        if (this._requests.length < 2 && data.length > 0) {
             var body = this._buildBody();
             for (var i = 0; i < data.length; i++) {
                 if (data[i] !== null) {
@@ -4394,7 +4402,7 @@ Strophe.Bosh.prototype = {
         }
 
         // make sure we limit the number of retries
-        if (req.sends > this.maxRetries) {
+        if (req.sends > this._conn.maxRetries) {
             this._conn._onDisconnectTimeout();
             return;
         }
@@ -4431,6 +4439,7 @@ Strophe.Bosh.prototype = {
 
             try {
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
+                req.xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
@@ -4627,6 +4636,7 @@ Strophe.Bosh.prototype = {
         }
     }
 };
+
 /*
     This program is distributed under the terms of the MIT license.
     Please see the LICENSE file for details.
@@ -4722,7 +4732,7 @@ Strophe.Websocket.prototype = {
      *     true if there was a streamerror, false otherwise.
      */
     _check_streamerror: function (bodyWrap, connectstatus) {
-        var errors = bodyWrap.getElementsByTagName("stream:error");
+        var errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "error");
         if (errors.length === 0) {
             return false;
         }
