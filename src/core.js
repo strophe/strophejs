@@ -2009,14 +2009,13 @@ Strophe.Connection.prototype = {
                     message: "Got bad IQ type of " + iqtype
                 };
             }
-        }, null, 'iq', null, id);
+        }, null, 'iq', ['error', 'result'], id);
 
         // if timeout specified, setup timeout handler.
         if (timeout) {
             timeoutHandler = this.addTimedHandler(timeout, function () {
                 // get rid of normal handler
                 that.deleteHandler(handler);
-
                 // call errback on timeout with null stanza
                 if (errback) {
                     errback(null);
@@ -2024,9 +2023,7 @@ Strophe.Connection.prototype = {
                 return false;
             });
         }
-
         this.send(elem);
-
         return id;
     },
 
