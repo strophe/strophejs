@@ -57,7 +57,7 @@ release:
 
 clean:
 	rm -f stamp-npm stamp-bower
-	rm -rf node_modules components
+	rm -rf node_modules bower_components
 	@@echo "Cleaning" node_modules "..."
 	@@rm -rf node_modules
 	@@echo "Cleaning" $(STROPHE) "..."

@@ -2,6 +2,7 @@ stamp-npm
 stamp-bower
 version.txt
 node_modules
+bower_components
 strophejs-*/
 ndproj
 doc
