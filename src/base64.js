@@ -27,6 +27,7 @@ var Base64 = (function () {
                 enc4 = chr3 & 63;
 
                 if (isNaN(chr2)) {
+                    enc2 = ((chr1 & 3) << 4);
                     enc3 = enc4 = 64;
                 } else if (isNaN(chr3)) {
                     enc4 = 64;
