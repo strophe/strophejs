@@ -2101,6 +2101,7 @@ Strophe.Connection.prototype = {
         this.disconnecting = false;
         this.connected = false;
 
+        this._data = [];
         this._requests = [];
         this._uniqueId = 0;
     },
@@ -2558,8 +2559,8 @@ Strophe.Connection.prototype = {
      *  they must all match for the handler to be invoked.
      *
      *  The handler will receive the stanza that triggered it as its argument.
-     *  The handler should return true if it is to be invoked again;
-     *  returning false will remove the handler after it returns.
+     *  *The handler should return true if it is to be invoked again;
+     *  returning false will remove the handler after it returns.*
      *
      *  As a convenience, the ns parameters applies to the top level element
      *  and also any of its immediate children.  This is primarily to make
