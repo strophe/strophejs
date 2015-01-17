@@ -1968,7 +1968,7 @@ Strophe.Connection.prototype = {
         var expectedFrom = elem.getAttribute("to");
         var fulljid = this.jid;
 
-        var handler = this.addHandler(function (stanza) {
+        var handlerFunc = function (stanza) {
             // remove timeout handler if there is one
             if (timeoutHandler) {
                 that.deleteTimedHandler(timeoutHandler);
@@ -2007,20 +2007,26 @@ Strophe.Connection.prototype = {
                     message: "Got bad IQ type of " + iqtype
                 };
             }
-        }, null, 'iq', null, id);
+        };
 
-        // if timeout specified, setup timeout handler.
-        if (timeout) {
-            timeoutHandler = this.addTimedHandler(timeout, function () {
-                // get rid of normal handler
-                that.deleteHandler(handler);
+        // when sending iq the result is an iq with same id and type of result or error
+        var handlerResult = this.addHandler(handlerFunc, null, 'iq', 'result', id);
+        var handlerError = this.addHandler(handlerFunc, null, 'iq', 'error', id);
 
-                // call errback on timeout with null stanza
-                if (errback) {
-                    errback(null);
-                }
-                return false;
-            });
+        for(handler in [handlerResult, handlerError]) {
+            // if timeout specified, setup timeout handler.
+            if (timeout) {
+                timeoutHandler = this.addTimedHandler(timeout, function () {
+                    // get rid of normal handler
+                    that.deleteHandler(handler);
+
+                    // call errback on timeout with null stanza
+                    if (errback) {
+                        errback(null);
+                    }
+                    return false;
+                });
+            }
         }
 
         this.send(elem);
