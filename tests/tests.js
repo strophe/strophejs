@@ -214,6 +214,27 @@ define([
 									{matchBare: true});
 			equal(hand.isMatch(elem), true, "Bare JID should match");
 		});
+
+		test("Stanza name matching", function () {
+			var elem = $iq().tree();
+			var hand = new Strophe.Handler(null, null, 'iq');
+			equal(hand.isMatch(elem), true, "The handler should match on stanza name");
+
+			hand = new Strophe.Handler(null, null, 'message');
+			notEqual(hand.isMatch(elem), true, "The handler should not match wrong stanza name");
+		});
+
+		test("Stanza type matching", function () {
+			var elem = $iq({type: 'error'}).tree();
+			var hand = new Strophe.Handler(null, null, 'iq', 'error');
+			equal(hand.isMatch(elem), true, "The handler should match on stanza type");
+
+			hand = new Strophe.Handler(null, null, 'iq', 'result');
+			notEqual(hand.isMatch(elem), true, "The handler should not match wrong stanza type");
+
+			hand = new Strophe.Handler(null, null, 'iq', ['error', 'result']);
+			notEqual(hand.isMatch(elem), true, "The handler should match if stanza type is in array of types");
+		});
 		
 		module("Misc");
 

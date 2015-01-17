@@ -26,17 +26,9 @@
  */
 
 /** PrivateFunction: Function.prototype.bind
- *  Bind a function to an instance.
- *
- *  This Function object extension method creates a bound method similar
- *  to those in Python.  This means that the 'this' object will point
- *  to the instance you want.  See
- *  <a href='https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind'>MDC's bind() documentation</a> and
- *  <a href='http://benjamin.smedbergs.us/blog/2007-01-03/bound-functions-and-function-imports-in-javascript/'>Bound Functions and Function Imports in JavaScript</a>
- *  for a complete explanation.
- *
- *  This extension already exists in some browsers (namely, Firefox 3), but
- *  we provide it to support those that don't.
+ *  Bind a function to an instance. This is a polyfill for the ES5 bind method.
+ *  which already exists in more modern browsers, but we provide it to support
+ *  those that don't.
  *
  *  Parameters:
  *    (Object) obj - The object that will become 'this' in the bound function.
@@ -59,6 +51,15 @@ if (!Function.prototype.bind) {
                               _concat.call(_args,
                                            _slice.call(arguments, 0)));
         };
+    };
+}
+
+/** PrivateFunction: Array.isArray
+ *  This is a polyfill for the ES5 Array.isArray method.
+ */
+if (!Array.isArray) {
+    Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
     };
 }
 
@@ -1354,9 +1355,10 @@ Strophe.Handler.prototype = {
             nsMatch = nsMatch || elem.getAttribute("xmlns") == this.ns;
         }
 
+        var elem_type = elem.getAttribute("type");
         if (nsMatch &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-            (!this.type || elem.getAttribute("type") == this.type) &&
+            (!this.type || (Array.isArray(this.type) ? elem_type in this.type : elem_type == this.type)) &&
             (!this.id || elem.getAttribute("id") == this.id) &&
             (!this.from || from == this.from)) {
                 return true;
