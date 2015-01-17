@@ -1,0 +1,31 @@
+{
+  "name": "strophe.js",
+  "description": "Strophe.js is an XMPP library for JavaScript",
+  "license": "MIT",
+  "main": "strophe.js",
+  "authors": [ { "name": "Jack Moffit (metajack)" } ],
+  "homepage": "http://strophe.im/strophejs",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/strophe/strophejs.git"
+  },
+  "keywords": [
+    "xmpp",
+    "message",
+    "bosh",
+    "websocket",
+    "browser"
+  ],
+  "ignore": [
+    ".*",
+    "release_checklist.txt",
+    "Makefile",
+    "Gruntfile.js",
+    "component.json",
+    "contrib",
+    "examples",
+    "tests",
+    "plugins",
+    "src"
+  ]
+}
