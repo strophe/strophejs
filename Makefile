@@ -1,6 +1,7 @@
-SHELL	?= /usr/env/bin/bash
-BOWER	?= node_modules/.bin/bower
-GRUNT	?= ./node_modules/.bin/grunt
+SHELL		?= /usr/env/bin/bash
+BOWER		?= node_modules/.bin/bower
+GRUNT		?= ./node_modules/.bin/grunt
+PHANTOMJS	?= ./node_modules/.bin/phantomjs
 SRC_DIR = src
 DOC_DIR = doc
 DOC_TEMP = doc-temp
@@ -55,6 +56,9 @@ release:
 	@@echo "Release created."
 	@@echo
 
+check:: stamp-bower
+	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
+
 clean:
 	rm -f stamp-npm stamp-bower
 	rm -rf node_modules bower_components
@@ -71,4 +75,4 @@ clean:
 	@@echo "Done."
 	@@echo
 
-.PHONY: all normal min doc release clean
+.PHONY: all normal min doc release clean check

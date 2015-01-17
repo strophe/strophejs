@@ -22,6 +22,16 @@ module.exports = function(grunt){
             "js": ["<%= concat.dist.dest %>", "strophe.min.js"]
         },
 
+        qunit: {
+            all: {
+                options: {
+                    urls: [
+                        'http://localhost:8000/tests/strophe.html',
+                    ]
+                }
+            }
+        },
+
         concat: {
             dist: {
                 src: ['src/base64.js', "src/sha1.js", "src/md5.js", "src/core.js", "src/bosh.js", "src/websocket.js" ],
@@ -111,6 +121,7 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-natural-docs');
     grunt.loadNpmTasks('grunt-mkdir');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
 
     grunt.registerTask("default", ["jshint", "min"]);
     grunt.registerTask("min", ["concat", "uglify"]);
