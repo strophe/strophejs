@@ -12,7 +12,6 @@ STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 
 all: clean build
-build: stamp-bower $(STROPHE)
 
 stamp-npm: package.json
 	npm install
@@ -22,7 +21,7 @@ stamp-bower: stamp-npm bower.json
 	$(BOWER) install
 	touch stamp-bower
 
-$(STROPHE): stamp-bower
+build: stamp-bower
 	@@echo "Building" $(STROPHE) "..."
 	$(GRUNT) build
 	@@echo
@@ -42,7 +41,7 @@ release:
 	@@echo "Release created."
 	@@echo
 
-check:: stamp-bower normal
+check::
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 
 clean:
@@ -55,4 +54,4 @@ clean:
 	@@echo "Done."
 	@@echo
 
-.PHONY: all doc release clean check
+.PHONY: all build doc release clean check

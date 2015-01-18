@@ -1,18 +1,14 @@
-require.config({
-    baseUrl: "../",
-    paths: {
-		"jquery":		"bower_components/jquery/dist/jquery",
-		"sinon":		"bower_components/sinon/index",
-		"sinon-qunit":	"bower_components/sinon-qunit/lib/sinon-qunit",
-		"strophe":		"strophe",
-		"tests":		"tests/tests"
-    },
-    shim: {
-        'sinon-qunit':          { deps: ['sinon']},
-        'strophe':              { exports: 'Strophe' },
-    }
-});
-
+config.baseUrl = '../';
+config.paths.jquery         = "bower_components/jquery/dist/jquery";
+config.paths.sinon          = "bower_components/sinon/index";
+config.paths["sinon-qunit"] = "bower_components/sinon-qunit/lib/sinon-qunit";
+config.paths.strophe        = "strophe";
+config.paths.tests          = "tests/tests";
+config.shim = {
+    'sinon-qunit':    { deps: ['sinon']},
+    'strophe':        { exports: 'Strophe' },
+};
+require.config(config);
 require(["tests"], function(tests) {
     tests.run();
     QUnit.start();
