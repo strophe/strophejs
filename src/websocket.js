@@ -253,6 +253,8 @@ Strophe.Websocket.prototype = {
             this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Received closing stream");
             this._conn._doDisconnect();
             return;
+        } else if (message.data.indexOf("<open ") === 0){
+          // nop
         } else {
             var string = this._streamWrap(message.data);
             var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
@@ -305,6 +307,10 @@ Strophe.Websocket.prototype = {
      */
     _streamWrap: function (stanza)
     {
+        if (this.streamStart === undefined){
+          // streamStart is not set. Therefore, the xmpp server does not wrap messages in a "<stream>" tag
+          this.streamStart = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams'>";
+        }
         return this.streamStart + stanza + '</stream:stream>';
     },
 
