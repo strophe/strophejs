@@ -11,9 +11,8 @@ NDPROJ_DIR = ndproj
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 
-all: normal min
-normal: stamp-bower $(STROPHE)
-min: stamp-bower $(STROPHE_MIN)
+all: clean build
+build: stamp-bower $(STROPHE)
 
 stamp-npm: package.json
 	npm install
@@ -25,12 +24,8 @@ stamp-bower: stamp-npm bower.json
 
 $(STROPHE): stamp-bower
 	@@echo "Building" $(STROPHE) "..."
-	$(GRUNT) concat
+	$(GRUNT) build
 	@@echo
-
-$(STROPHE_MIN): $(STROPHE)
-	@@echo "Building" $(STROPHE_MIN) "..."
-	$(GRUNT) min
 
 doc:
 	@@echo "Building Strophe documentation..."
@@ -51,19 +46,13 @@ check:: stamp-bower normal
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 
 clean:
-	rm -f stamp-npm stamp-bower
-	rm -rf node_modules bower_components
-	@@echo "Cleaning" node_modules "..."
-	@@rm -rf node_modules
-	@@echo "Cleaning" $(STROPHE) "..."
+	@@rm -f stamp-npm stamp-bower
+	@@rm -rf node_modules bower_components
 	@@rm -f $(STROPHE)
-	@@echo "Cleaning" $(STROPHE_MIN) "..."
 	@@rm -f $(STROPHE_MIN)
-	@@echo "Cleaning minified plugins..."
 	@@rm -f $(PLUGIN_FILES_MIN)
-	@@echo "Cleaning documentation..."
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Done."
 	@@echo
 
-.PHONY: all normal min doc release clean check
+.PHONY: all doc release clean check
