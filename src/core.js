@@ -752,6 +752,7 @@ Strophe = {
      */
     escapeNode: function (node)
     {
+        if (typeof node !== "string") { return node; }
         return node.replace(/^\s+|\s+$/g, '')
             .replace(/\\/g,  "\\5c")
             .replace(/ /g,   "\\20")
@@ -776,6 +777,7 @@ Strophe = {
      */
     unescapeNode: function (node)
     {
+        if (typeof node !== "string") { return node; }
         return node.replace(/\\20/g, " ")
             .replace(/\\22/g, '"')
             .replace(/\\26/g, "&")
