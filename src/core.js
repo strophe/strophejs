@@ -2946,7 +2946,8 @@ Strophe.Connection.prototype = {
 };
 
 if (callback) {
-    callback(Strophe, $build, $msg, $iq, $pres);
+    //callback(Strophe, $build, $msg, $iq, $pres);
+    callback(typeof module === 'undefined' ? this['Strophe'] = {} : module, $build, $msg, $iq, $pres, Strophe);
 }
 
 /** Class: Strophe.SASLMechanism
@@ -3313,10 +3314,21 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
 
-})(function () {
-    window.Strophe = arguments[0];
-    window.$build = arguments[1];
-    window.$msg = arguments[2];
-    window.$iq = arguments[3];
-    window.$pres = arguments[4];
+// })(function () {
+//     window.Strophe = arguments[0];
+//     window.$build = arguments[1];
+//     window.$msg = arguments[2];
+//     window.$iq = arguments[3];
+//     window.$pres = arguments[4];
+})(function (module, $build, $msg, $iq, $pres, Strophe) {
+  Strophe.$build = $build;
+  Strophe.$msg = $msg;
+  Strophe.$iq = $iq;
+  Strophe.$pres = $pres;
+  this.$build = $build;
+  this.$msg = $msg;
+  this.$iq = $iq;
+  this.$pres = $pres;
+  this.Strophe = Strophe;
+  module.exports = Strophe;
 });
