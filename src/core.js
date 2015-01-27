@@ -3269,6 +3269,9 @@
         $build:     $build,
         $msg:       $msg,
         $iq:        $iq,
-        $pres:      $pres
+        $pres:      $pres,
+        SHA1:       SHA1,
+        Base64:     Base64,
+        MD5:        MD5
     };
 }));
