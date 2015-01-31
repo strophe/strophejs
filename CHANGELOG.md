@@ -1,5 +1,17 @@
 # Strophe.js Change Log
 
+## Version 1.1.4 - Unreleased
+* Add bower package manager support.
+* Add commandline testing support via qunit-phantomjs-runner
+* Add integrated testing via TravisCI.
+* #25 Item-not-found-error caused by long term request.
+* #30 Base64 encoding problem in some older browsers.
+* #45 Move xhlr plugin to strophejs-plugins repo.
+* #62 Add `xmlunescape` method.
+* #70 `_onDisconnectTimeout` never tiggers because maxRetries is undefined.
+* #73 `getElementsByTagName` problem with namespaced elements.
+* #90 The queue data was not reset in .reset() method.
+
 ## Version 1.1.3 - 2014-01-20
 * Fix SCRAM-SHA1 auth now works for multiple connections at the same time
 * Fix Connecting to a different server with the same connection after disconnect

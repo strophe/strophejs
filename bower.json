@@ -1,0 +1,42 @@
+{
+  "name": "strophe.js",
+  "description": "Strophe.js is an XMPP library for JavaScript",
+  "license": "MIT",
+  "main": "strophe.js",
+  "authors": [
+    {
+      "name": "Jack Moffit (metajack)"
+    }
+  ],
+  "homepage": "http://strophe.im/strophejs",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/strophe/strophejs.git"
+  },
+  "keywords": [
+    "xmpp",
+    "message",
+    "bosh",
+    "websocket",
+    "browser"
+  ],
+  "ignore": [
+    ".*",
+    "release_checklist.txt",
+    "Makefile",
+    "Gruntfile.js",
+    "component.json",
+    "contrib",
+    "examples",
+    "tests",
+    "plugins",
+    "src"
+  ],
+  "dependencies": {
+    "sinon": "http://sinonjs.org/releases/sinon-1.12.2.js",
+    "sinon-qunit": "~2.0.0",
+    "qunit": "~1.16.0",
+    "jquery": "1.11.0",
+    "requirejs": "~2.1.15"
+  }
+}

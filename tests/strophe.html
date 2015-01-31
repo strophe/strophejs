@@ -7,16 +7,12 @@
           Function.prototype.bind = undefined;
           // -->
     </script>
-
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+	<script src="../bower_components/qunit/qunit/qunit.js"></script>
+    <script>QUnit.config.autostart = false;</script>
+	<script src="../bower_components/requirejs/require.js" data-main="main.js"></script>
     <link rel="stylesheet"
-          href="http://code.jquery.com/qunit/qunit-git.css"
+	      href="../bower_components/qunit/qunit/qunit.css"
           type="text/css">
-    <script src="http://code.jquery.com/qunit/qunit-git.js"></script>
-    <script src="http://cjohansen.no/sinon/releases/sinon-0.8.0.js"></script>
-    <script src="http://cjohansen.no/sinon/releases/sinon-qunit-0.8.0.js"></script>
-    <script src='../strophe.js'></script>
-    <script src='tests.js'></script>
     
     <title>Strophe.js Tests</title>
   </head>
@@ -24,7 +20,10 @@
     <h1 id="qunit-header">Strophe.js Tests</h1>
     <h2 id="qunit-banner"></h2>
     <h2 id="qunit-userAgent"></h2>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
     <ol id="qunit-tests"></ol>
     <div id="main"></div>
+	<div id="qunit-testresult"></div>
   </body>
 </html>

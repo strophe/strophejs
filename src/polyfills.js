@@ -50,6 +50,15 @@ if (!Function.prototype.bind) {
     };
 }
 
+/** PrivateFunction: Array.isArray
+ *  This is a polyfill for the ES5 Array.isArray method.
+ */
+if (!Array.isArray) {
+    Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+}
+
 /** PrivateFunction: Array.prototype.indexOf
  *  Return the index of an object in an array.
  *

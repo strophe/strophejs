@@ -1,12 +1,12 @@
+stamp-npm
+stamp-bower
 version.txt
-strophe.js
-strophe.min.js
 node_modules
+bower_components
 strophejs-*/
 ndproj
 doc
 .taperc
-plugins/*.min.js
 *.tar.gz
 *.zip
 *~

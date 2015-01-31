@@ -409,8 +409,14 @@ Strophe.Bosh.prototype = {
      *
      *  Cancels all remaining Requests and clears the queue.
      */
-    _onDisconnectTimeout: function ()
-    {
+    _onDisconnectTimeout: function () {
+        this._abortAllRequests();
+    },
+
+    /** PrivateFunction: _abortAllRequests
+     *  _Private_ helper function that makes sure all pending requests are aborted.
+     */
+    _abortAllRequests: function _abortAllRequests() {
         var req;
         while (this._requests.length > 0) {
             req = this._requests.pop();
@@ -465,7 +471,7 @@ Strophe.Bosh.prototype = {
                                     this._onRequestStateChange.bind(
                                         this, this._conn._dataRecv.bind(this._conn)),
                                     body.tree().getAttribute("rid")));
-            this._processRequest(this._requests.length - 1);
+            this._throttledRequestHandler();
         }
 
         if (this._requests.length > 0) {
