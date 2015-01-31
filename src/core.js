@@ -1295,7 +1295,7 @@
             var elem_type = elem.getAttribute("type");
             if (nsMatch &&
                 (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-                (!this.type || (Array.isArray(this.type) ? elem_type in this.type : elem_type == this.type)) &&
+                (!this.type || (Array.isArray(this.type) ? this.type.indexOf(elem_type) != -1 : elem_type == this.type)) &&
                 (!this.id || elem.getAttribute("id") == this.id) &&
                 (!this.from || from == this.from)) {
                     return true;
