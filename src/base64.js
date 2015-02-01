@@ -14,11 +14,12 @@
     }
 }(this, function () {
     var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
     var obj = {
         /**
-        * Encodes a string in base64
-        * @param {String} input The string to encode in base64.
-        */
+         * Encodes a string in base64
+         * @param {String} input The string to encode in base64.
+         */
         encode: function (input) {
             var output = "";
             var chr1, chr2, chr3;
@@ -50,9 +51,9 @@
         },
 
         /**
-        * Decodes a base64 string.
-        * @param {String} input The string to decode.
-        */
+         * Decodes a base64 string.
+         * @param {String} input The string to decode.
+         */
         decode: function (input) {
             var output = "";
             var chr1, chr2, chr3;

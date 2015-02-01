@@ -23,9 +23,9 @@
     }
 }(this, function (b) {
     /*
-    * Add integers, wrapping at 2^32. This uses 16-bit operations internally
-    * to work around bugs in some JS interpreters.
-    */
+     * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+     * to work around bugs in some JS interpreters.
+     */
     var safe_add = function (x, y) {
         var lsw = (x & 0xFFFF) + (y & 0xFFFF);
         var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
@@ -33,15 +33,15 @@
     };
 
     /*
-    * Bitwise rotate a 32-bit number to the left.
-    */
+     * Bitwise rotate a 32-bit number to the left.
+     */
     var bit_rol = function (num, cnt) {
         return (num << cnt) | (num >>> (32 - cnt));
     };
 
     /*
-    * Convert a string to an array of little-endian words
-    */
+     * Convert a string to an array of little-endian words
+     */
     var str2binl = function (str) {
         var bin = [];
         for(var i = 0; i < str.length * 8; i += 8)
@@ -52,8 +52,8 @@
     };
 
     /*
-    * Convert an array of little-endian words to a string
-    */
+     * Convert an array of little-endian words to a string
+     */
     var binl2str = function (bin) {
         var str = "";
         for(var i = 0; i < bin.length * 32; i += 8)
@@ -64,8 +64,8 @@
     };
 
     /*
-    * Convert an array of little-endian words to a hex string.
-    */
+     * Convert an array of little-endian words to a hex string.
+     */
     var binl2hex = function (binarray) {
         var hex_tab = "0123456789abcdef";
         var str = "";
@@ -78,8 +78,8 @@
     };
 
     /*
-    * These functions implement the four basic operations the algorithm uses.
-    */
+     * These functions implement the four basic operations the algorithm uses.
+     */
     var md5_cmn = function (q, a, b, x, s, t) {
         return safe_add(bit_rol(safe_add(safe_add(a, q),safe_add(x, t)), s),b);
     };
@@ -101,8 +101,8 @@
     };
 
     /*
-    * Calculate the MD5 of an array of little-endian words, and a bit length
-    */
+     * Calculate the MD5 of an array of little-endian words, and a bit length
+     */
     var core_md5 = function (x, len) {
         /* append padding */
         x[len >> 5] |= 0x80 << ((len) % 32);
@@ -199,10 +199,10 @@
 
     var obj = {
         /*
-        * These are the functions you'll usually want to call.
-        * They take string arguments and return either hex or base-64 encoded
-        * strings.
-        */
+         * These are the functions you'll usually want to call.
+         * They take string arguments and return either hex or base-64 encoded
+         * strings.
+         */
         hexdigest: function (s) {
             return binl2hex(core_md5(str2binl(s), s.length * 8));
         },
