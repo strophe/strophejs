@@ -18,26 +18,25 @@ require.config({
 		"strophe-base64":       "src/base64",
 		"strophe-bosh":         "src/bosh",
 		"strophe-core":         "src/core",
-		"strophe-full":         "src/wrapper",
+		"strophe":              "src/wrapper",
 		"strophe-md5":          "src/md5",
 		"strophe-sha1":         "src/sha1",
 		"strophe-websocket":    "src/websocket",
         "strophe-polyfill":     "src/polyfill",
 
         // Examples
-        "basic":        "examples/basic",
+        "basic":            "examples/basic",
 
         // Tests
-		"jquery":		"bower_components/jquery/dist/jquery",
-		"sinon":		"bower_components/sinon/index",
-		"sinon-qunit":	"bower_components/sinon-qunit/lib/sinon-qunit",
-		"strophe":	    "src/strophe",
-		"tests":		"tests/tests"
+		"jquery":		    "bower_components/jquery/dist/jquery",
+		"sinon":		    "bower_components/sinon/index",
+		"sinon-qunit":      "bower_components/sinon-qunit/lib/sinon-qunit",
+		"tests":		    "tests/tests"
     }
 });
 
 if (typeof(require) === 'function') {
-    require(["strophe-full"], function(Strophe) {
+    require(["strophe"], function(Strophe) {
         window.Strophe = Strophe;
     });
 }

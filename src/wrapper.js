@@ -1,4 +1,4 @@
-define("strophe-full", [
+define("strophe", [
     "strophe-core",
     "strophe-bosh",
     "strophe-websocket"

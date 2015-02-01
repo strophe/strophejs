@@ -2,7 +2,6 @@ config.baseUrl = '../';
 config.paths.jquery         = "bower_components/jquery/dist/jquery";
 config.paths.sinon          = "bower_components/sinon/index";
 config.paths["sinon-qunit"] = "bower_components/sinon-qunit/lib/sinon-qunit";
-config.paths.strophe        = "strophe";
 config.paths.tests          = "tests/tests";
 config.shim = {
     'sinon-qunit':    { deps: ['sinon']}
