@@ -233,7 +233,7 @@ define([
 			notEqual(hand.isMatch(elem), true, "The handler should not match wrong stanza type");
 
 			hand = new Strophe.Handler(null, null, 'iq', ['error', 'result']);
-			notEqual(hand.isMatch(elem), true, "The handler should match if stanza type is in array of types");
+			equal(hand.isMatch(elem), true, "The handler should match if stanza type is in array of types");
 		});
 		
 		module("Misc");
