@@ -310,7 +310,7 @@ Strophe = {
     /** Function: isTagEqual
      *  Compare an element's tag name with a string.
      *
-     *  This function is case insensitive.
+     *  This function is case sensitive.
      *
      *  Parameters:
      *    (XMLElement) el - A DOM element.
