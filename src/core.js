@@ -6,10 +6,7 @@
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
-/*global document, window, setTimeout, clearTimeout, console,
-    ActiveXObject, Base64, MD5, DOMParser */
-// from sha1.js
-/*global core_hmac_sha1, binb2str, str_hmac_sha1, str_sha1, b64_hmac_sha1*/
+/*global define, document, window, setTimeout, clearTimeout, console, ActiveXObject, DOMParser */
 
 /** File: strophe.js
  *  A JavaScript library for XMPP BOSH/XMPP over Websocket.
@@ -24,12 +21,27 @@
  *  For more information on XMPP-over WebSocket see this RFC draft:
  *  http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00
  */
-
-/* All of the Strophe globals are defined in this special function below so
- * that references to the globals become closures.  This will ensure that
- * on page reload, these references will still be available to callbacks
- * that are still executing.
- */
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([
+            'strophe-sha1',
+            'strophe-base64',
+            'strophe-md5',
+            "strophe-polyfill"
+        ], function () {
+            return factory.apply(this, arguments);
+        });
+    } else {
+        // Browser globals
+        var o = factory(root.SHA1, root.Base64, root.MD5);
+        window.Strophe = o.Strophe;
+        window.$build =  o.$build;
+        window.$iq =     o.$iq;
+        window.$msg =    o.$msg;
+        window.$pres =   o.$pres;
+    }
+}(this, function (SHA1, Base64, MD5) {
 
 var Strophe;
 
@@ -45,6 +57,7 @@ var Strophe;
  *    A new Strophe.Builder object.
  */
 function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
+
 /** Function: $msg
  *  Create a Strophe.Builder with a <message/> element as the root.
  *
@@ -54,9 +67,8 @@ function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
  *  Returns:
  *    A new Strophe.Builder object.
  */
-/* jshint ignore:start */
 function $msg(attrs) { return new Strophe.Builder("message", attrs); }
-/* jshint ignore:end */
+
 /** Function: $iq
  *  Create a Strophe.Builder with an <iq/> element as the root.
  *
@@ -67,6 +79,7 @@ function $msg(attrs) { return new Strophe.Builder("message", attrs); }
  *    A new Strophe.Builder object.
  */
 function $iq(attrs) { return new Strophe.Builder("iq", attrs); }
+
 /** Function: $pres
  *  Create a Strophe.Builder with a <presence/> element as the root.
  *
@@ -3156,26 +3169,26 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     salt = Base64.decode(salt);
     salt += "\x00\x00\x00\x01";
 
-    Hi = U_old = core_hmac_sha1(connection.pass, salt);
+    Hi = U_old = SHA1.core_hmac_sha1(connection.pass, salt);
     for (i = 1; i < iter; i++) {
-      U = core_hmac_sha1(connection.pass, binb2str(U_old));
+      U = SHA1.core_hmac_sha1(connection.pass, SHA1.binb2str(U_old));
       for (k = 0; k < 5; k++) {
         Hi[k] ^= U[k];
       }
       U_old = U;
     }
-    Hi = binb2str(Hi);
+    Hi = SHA1.binb2str(Hi);
 
-    clientKey = core_hmac_sha1(Hi, "Client Key");
-    serverKey = str_hmac_sha1(Hi, "Server Key");
-    clientSignature = core_hmac_sha1(str_sha1(binb2str(clientKey)), authMessage);
-    connection._sasl_data["server-signature"] = b64_hmac_sha1(serverKey, authMessage);
+    clientKey = SHA1.core_hmac_sha1(Hi, "Client Key");
+    serverKey = SHA1.str_hmac_sha1(Hi, "Server Key");
+    clientSignature = SHA1.core_hmac_sha1(SHA1.str_sha1(SHA1.binb2str(clientKey)), authMessage);
+    connection._sasl_data["server-signature"] = SHA1.b64_hmac_sha1(serverKey, authMessage);
 
     for (k = 0; k < 5; k++) {
       clientKey[k] ^= clientSignature[k];
     }
 
-    responseText += ",p=" + Base64.encode(binb2str(clientKey));
+    responseText += ",p=" + Base64.encode(SHA1.binb2str(clientKey));
 
     return responseText;
   }.bind(this);
@@ -3266,9 +3279,8 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function ()
-  {
-    return "";
+  this.onChallenge = function () {
+      return "";
   }.bind(this);
 
   return responseText;
@@ -3276,3 +3288,14 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
 
+return {
+    Strophe:    Strophe,
+    $build:     $build,
+    $msg:       $msg,
+    $iq:        $iq,
+    $pres:      $pres,
+    SHA1:       SHA1,
+    Base64:     Base64,
+    MD5:        MD5
+};
+}));

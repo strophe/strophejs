@@ -3,9 +3,15 @@ define([
 	'sinon',
 	'sinon-qunit',
 	'strophe'
-	], function($, sinon, sinon_qunit, Strophe) {
+	], function($, sinon, sinon_qunit, wrapper) {
 
 	var run = function () {
+        var $build = wrapper.$build;
+        var $iq  = wrapper.$iq;
+        var $msg = wrapper.$msg;
+        var $pres = wrapper.$pres;
+        var Strophe = wrapper.Strophe;
+
 		module("JIDs");
 
 		test("Normal JID", function () {
@@ -329,16 +335,14 @@ define([
 		test("SASL SCRAM-SHA-1 Auth", function () {
 			var conn = {pass: "pencil", authcid: "user",
 						authzid: "user@xmpp.org", _sasl_data: []};
-
 			ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
-
 			var saslsha1 = new Strophe.SASLSHA1();
 			saslsha1.onStart(conn);
 			// test taken from example section on:
 			// URL: http://tools.ietf.org/html/rfc5802#section-5
 			var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
-			equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
-				"checking first auth challenge");
+			equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
+
 			response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
 			equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
 				"checking second auth challenge");

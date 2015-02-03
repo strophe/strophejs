@@ -6,8 +6,19 @@
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
-/*global window, clearTimeout, WebSocket,
-    DOMParser, Strophe, $build */
+/* global define, window, clearTimeout, WebSocket, DOMParser, Strophe, $build */
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['strophe-core'], function (wrapper) {
+            return factory(wrapper.Strophe);
+        });
+    } else {
+        // Browser globals
+        return factory(Strophe);
+    }
+}(this, function (Strophe) {
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
@@ -508,3 +519,5 @@ Strophe.Websocket.prototype = {
         this._conn._onIdle.bind(this._conn)();
     }
 };
+return Strophe;
+}));

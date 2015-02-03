@@ -19,7 +19,7 @@ module.exports = function(grunt){
             "doc": ["<%= natural_docs.docs.output %>"],
             "prepare-release": ["strophejs-<%= pkg.version %>"],
             "release": ["strophejs-<%= pkg.version %>.zip", "strophejs-<%= pkg.version %>.tar.gz"],
-            "js": ["<%= concat.dist.dest %>", "strophe.min.js"]
+            "js": ["strophe.js", "strophe.min.js"]
         },
 
         qunit: {
@@ -39,24 +39,13 @@ module.exports = function(grunt){
                 }
             }
         },
-        concat: {
-            dist: {
-                src: ['src/wrap_header.js', 'src/base64.js', 'src/sha1.js', 'src/md5.js', 'src/polyfills.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
-                dest: '<%= pkg.name %>'
-            },
-            options: {
-                process: function(src){
-                    return src.replace('@VERSION@', pkg.version);
-                }
-            }
-        },
 
         copy: {
             "prepare-release": {
                 files:[
                     {
                         expand: true,
-                        src:['<%= concat.dist.dest %>', 'strophe.min.js', 'LICENSE.txt', 'README.txt',
+                        src:['', 'strophe.min.js', 'LICENSE.txt', 'README.txt',
                             'contrib/**', 'examples/**', 'plugins/**', 'tests/**', 'doc/**'],
                         dest:"strophejs-<%= pkg.version %>"
                     }
@@ -65,7 +54,7 @@ module.exports = function(grunt){
             "prepare-doc": {
                 files:[
                     {
-                        src:['<%= concat.dist.dest %>'],
+                        src:['strophe.js'],
                         dest:"<%= natural_docs.docs.inputs[0] %>"
                     }
                 ]
@@ -92,13 +81,13 @@ module.exports = function(grunt){
                 banner: '/*! <%= pkg.name %> v<%= pkg.version %> - built on <%= grunt.template.today("dd-mm-yyyy") %> */\n'
             },
             dist: {
-                files: { 'strophe.min.js': ['<%= concat.dist.dest %>'] }
+                files: { 'strophe.min.js': ['strophe.js'] }
             }
         },
 
         watch: {
             files: ['<%= jshint.files %>'],
-            tasks: ['concat', 'uglify']
+            tasks: ['build', 'uglify']
         },
 
         natural_docs: {
@@ -124,7 +113,6 @@ module.exports = function(grunt){
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-natural-docs');
@@ -132,10 +120,26 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-contrib-qunit');
 
     grunt.registerTask("default", ["jshint", "min"]);
-    grunt.registerTask("min", ["concat", "uglify"]);
+    grunt.registerTask("min", ["build", "uglify"]);
     grunt.registerTask("prepare-release", ["copy:prepare-release"]);
-    grunt.registerTask("doc", ["concat", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
+    grunt.registerTask("doc", ["build", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
     grunt.registerTask("test", ["connect", "qunit"]);
+
+    grunt.registerTask('concat', 'Create a new build', function () {
+        var done = this.async();
+        require('child_process').exec(
+                './node_modules/requirejs/bin/r.js -o build.js optimize=none out=strophe.js',
+            function (err, stdout, stderr) {
+                if (err) {
+                    grunt.log.write('build failed with error code '+err.code);
+                    grunt.log.write(stderr);
+                }
+                grunt.log.write(stdout);
+                done();
+            }
+        );
+        grunt.task.run('uglify');
+    });
 };
