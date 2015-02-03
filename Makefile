@@ -23,12 +23,14 @@ stamp-bower: stamp-npm bower.json
 	$(BOWER) install
 	touch stamp-bower
 
-$(STROPHE): stamp-bower
+$(STROPHE)::
+	make stamp-bower
 	@@echo "Building" $(STROPHE) "..."
 	$(GRUNT) concat
 	@@echo
 
-$(STROPHE_MIN): $(STROPHE)
+$(STROPHE_MIN)::
+	make $(STROPHE)
 	@@echo "Building" $(STROPHE_MIN) "..."
 	$(GRUNT) min
 
@@ -66,4 +68,4 @@ clean:
 	@@echo "Done."
 	@@echo
 
-.PHONY: all normal min doc release clean check
+.PHONY: all normal min doc release clean check $(STROPHE) $(STROPHE_MIN)
