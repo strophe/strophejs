@@ -2596,8 +2596,20 @@ Strophe.Connection.prototype = {
             this._sasl_challenge_handler = null;
         }
 
-        this._addSysHandler(this._sasl_auth1_cb.bind(this), null,
-                            "stream:features", null, null);
+        var streamfeature_handlers = [];
+        var wrapper = function(handlers, elem) {
+            while (handlers.length) {
+                this.deleteHandler(handlers.pop());
+            }
+            this._sasl_auth1_cb.bind(this)(elem);
+            return false;
+        };
+        streamfeature_handlers.push(this._addSysHandler(function(elem) {
+            wrapper.bind(this)(streamfeature_handlers, elem);
+        }.bind(this), null, "stream:features", null, null));
+        streamfeature_handlers.push(this._addSysHandler(function(elem) {
+            wrapper.bind(this)(streamfeature_handlers, elem);
+        }.bind(this), Strophe.NS.STREAM, "features", null, null));
 
         // we must send an xmpp:restart now
         this._sendRestart();
