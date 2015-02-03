@@ -11,9 +11,7 @@ NDPROJ_DIR = ndproj
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 
-all: normal min
-normal: stamp-bower $(STROPHE)
-min: stamp-bower $(STROPHE_MIN)
+all: $(STROPHE_MIN)
 
 stamp-npm: package.json
 	npm install
@@ -49,7 +47,7 @@ release:
 	@@echo "Release created."
 	@@echo
 
-check:: stamp-bower normal
+check:: stamp-bower
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 
 clean:
@@ -68,4 +66,4 @@ clean:
 	@@echo "Done."
 	@@echo
 
-.PHONY: all normal min doc release clean check $(STROPHE) $(STROPHE_MIN)
+.PHONY: all doc release clean check $(STROPHE) $(STROPHE_MIN)
