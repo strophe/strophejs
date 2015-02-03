@@ -31,7 +31,14 @@ module.exports = function(grunt){
                 }
             }
         },
-
+        connect: {
+            server: {
+                options: {
+                    port: 8000,
+                    base: '.'
+                }
+            }
+        },
         concat: {
             dist: {
                 src: ['src/wrap_header.js', 'src/base64.js', 'src/sha1.js', 'src/md5.js', 'src/polyfills.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
@@ -113,6 +120,7 @@ module.exports = function(grunt){
     });
 
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-connect');
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
@@ -129,5 +137,5 @@ module.exports = function(grunt){
     grunt.registerTask("doc", ["concat", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
-
+    grunt.registerTask("test", ["connect", "qunit"]);
 };
