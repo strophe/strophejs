@@ -35,11 +35,18 @@
     } else {
         // Browser globals
         var o = factory(root.SHA1, root.Base64, root.MD5);
-        window.Strophe = o.Strophe;
-        window.$build =  o.$build;
-        window.$iq =     o.$iq;
-        window.$msg =    o.$msg;
-        window.$pres =   o.$pres;
+        window.Strophe =        o.Strophe;
+        window.$build =         o.$build;
+        window.$iq =            o.$iq;
+        window.$msg =           o.$msg;
+        window.$pres =          o.$pres;
+        window.SHA1 =           o.SHA1;
+        window.Base64 =         o.Base64;
+        window.MD5 =            o.MD5;
+        window.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
+        window.b64_sha1 =       o.SHA1.b64_sha1;
+        window.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
+        window.str_sha1 =       o.SHA1.str_sha1;
     }
 }(this, function (SHA1, Base64, MD5) {
 
@@ -3289,13 +3296,13 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
 
 return {
-    Strophe:    Strophe,
-    $build:     $build,
-    $msg:       $msg,
-    $iq:        $iq,
-    $pres:      $pres,
-    SHA1:       SHA1,
-    Base64:     Base64,
-    MD5:        MD5
+    Strophe:        Strophe,
+    $build:         $build,
+    $msg:           $msg,
+    $iq:            $iq,
+    $pres:          $pres,
+    SHA1:           SHA1,
+    Base64:         Base64,
+    MD5:            MD5,
 };
 }));
