@@ -40,6 +40,18 @@ module.exports = function(grunt){
             }
         },
 
+        concat: {
+            dist: {
+                src: ['src/wrap_header.js', 'src/base64.js', 'src/sha1.js', 'src/md5.js', 'src/polyfills.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
+                dest: '<%= pkg.name %>'
+            },
+            options: {
+                process: function(src){
+                    return src.replace('@VERSION@', pkg.version);
+                }
+            }
+        },
+
         copy: {
             "prepare-release": {
                 files:[
@@ -87,7 +99,7 @@ module.exports = function(grunt){
 
         watch: {
             files: ['<%= jshint.files %>'],
-            tasks: ['build', 'uglify']
+            tasks: ['concat', 'uglify']
         },
 
         natural_docs: {
@@ -114,23 +126,24 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-natural-docs');
     grunt.loadNpmTasks('grunt-mkdir');
     grunt.loadNpmTasks('grunt-contrib-qunit');
 
     grunt.registerTask("default", ["jshint", "min"]);
-    grunt.registerTask("min", ["build", "uglify"]);
+    grunt.registerTask("min", ["concat", "uglify"]);
     grunt.registerTask("prepare-release", ["copy:prepare-release"]);
-    grunt.registerTask("doc", ["build", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
+    grunt.registerTask("doc", ["concat", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
     grunt.registerTask("test", ["connect", "qunit"]);
 
-    grunt.registerTask('concat', 'Create a new build', function () {
+    grunt.registerTask('almond', 'Create an almond build with r.js', function () {
         var done = this.async();
         require('child_process').exec(
-                './node_modules/requirejs/bin/r.js -o build.js optimize=none out=strophe.js',
+                './node_modules/requirejs/bin/r.js -o build.js optimize=none out=strophe.almond.js',
             function (err, stdout, stderr) {
                 if (err) {
                     grunt.log.write('build failed with error code '+err.code);
