@@ -3286,7 +3286,8 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function () {
+  this.onChallenge = function ()
+  {
       return "";
   }.bind(this);
 

@@ -11,7 +11,7 @@ NDPROJ_DIR = ndproj
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 
-all: clean $(STROPHE_MIN)
+all: $(STROPHE_MIN)
 
 stamp-npm: package.json
 	npm install
