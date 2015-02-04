@@ -19,7 +19,7 @@ module.exports = function(grunt){
             "doc": ["<%= natural_docs.docs.output %>"],
             "prepare-release": ["strophejs-<%= pkg.version %>"],
             "release": ["strophejs-<%= pkg.version %>.zip", "strophejs-<%= pkg.version %>.tar.gz"],
-            "js": ["strophe.js", "strophe.min.js"]
+            "js": ["<%= concat.dist.dest %>", "strophe.min.js"]
         },
 
         qunit: {
@@ -57,7 +57,7 @@ module.exports = function(grunt){
                 files:[
                     {
                         expand: true,
-                        src:['', 'strophe.min.js', 'LICENSE.txt', 'README.txt',
+                        src:['<%= concat.dist.dest %>', 'strophe.min.js', 'LICENSE.txt', 'README.txt',
                             'contrib/**', 'examples/**', 'plugins/**', 'tests/**', 'doc/**'],
                         dest:"strophejs-<%= pkg.version %>"
                     }
@@ -66,7 +66,7 @@ module.exports = function(grunt){
             "prepare-doc": {
                 files:[
                     {
-                        src:['strophe.js'],
+                        src:['<%= concat.dist.dest %>'],
                         dest:"<%= natural_docs.docs.inputs[0] %>"
                     }
                 ]
@@ -93,7 +93,7 @@ module.exports = function(grunt){
                 banner: '/*! <%= pkg.name %> v<%= pkg.version %> - built on <%= grunt.template.today("dd-mm-yyyy") %> */\n'
             },
             dist: {
-                files: { 'strophe.min.js': ['strophe.js'] }
+                files: { 'strophe.min.js': ['<%= concat.dist.dest %>'] }
             }
         },
 
@@ -125,8 +125,8 @@ module.exports = function(grunt){
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-contrib-concat");
+    grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-natural-docs');
     grunt.loadNpmTasks('grunt-mkdir');
