@@ -5,6 +5,7 @@
 * Add commandline testing support via qunit-phantomjs-runner
 * Add integrated testing via TravisCI.
 * #25 Item-not-found-error caused by long term request.
+* #29 Add support for the Asynchronous Module Definition (AMD) and require.js
 * #30 Base64 encoding problem in some older browsers.
 * #45 Move xhlr plugin to strophejs-plugins repo.
 * #62 Add `xmlunescape` method.
