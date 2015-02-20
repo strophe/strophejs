@@ -3897,7 +3897,8 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function () {
+  this.onChallenge = function ()
+  {
       return "";
   }.bind(this);
 
@@ -4801,14 +4802,17 @@ return Strophe;
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['strophe-core'], function (wrapper) {
-            return factory(wrapper.Strophe);
+        define(['strophe-core'], function (core) {
+            return factory(
+                core.Strophe,
+                core.$build
+            );
         });
     } else {
         // Browser globals
-        return factory(Strophe);
+        return factory(Strophe, $build);
     }
-}(this, function (Strophe) {
+}(this, function (Strophe, $build) {
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
