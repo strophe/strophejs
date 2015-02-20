@@ -1,7 +1,7 @@
 {
   "name": "strophe.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
-  "version": "1.1.4dev1",
+  "version": "1.2.0",
   "homepage": "http://strophe.im/strophejs",
   "repository": {
     "type": "git",
@@ -30,7 +30,8 @@
     "dodo",
     "Lee Boynton (lboynton)",
     "Theo Cushion (theozaurus)",
-    "Brendon Crawford (brendoncrawford)"
+    "Brendon Crawford (brendoncrawford)",
+    "JC Brand (jcbrand)"
   ],
   "licenses": [
     "MIT"
