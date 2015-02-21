@@ -8,19 +8,6 @@
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
 /*global define, document, window, setTimeout, clearTimeout, console, ActiveXObject, DOMParser */
 
-/** File: strophe.js
- *  A JavaScript library for XMPP BOSH/XMPP over Websocket.
- *
- *  This is the JavaScript version of the Strophe library.  Since JavaScript
- *  had no facilities for persistent TCP connections, this library uses
- *  Bidirectional-streams Over Synchronous HTTP (BOSH) to emulate
- *  a persistent, stateful, two-way connection to an XMPP server.  More
- *  information on BOSH can be found in XEP 124.
- *
- *  This version of Strophe also works with WebSockets.
- *  For more information on XMPP-over WebSocket see this RFC draft:
- *  http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00
- */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
