@@ -22,7 +22,7 @@ require.config({
 		"strophe-md5":          "src/md5",
 		"strophe-sha1":         "src/sha1",
 		"strophe-websocket":    "src/websocket",
-        "strophe-polyfill":     "src/polyfill",
+        "strophe-polyfill":     "src/polyfills",
 
         // Examples
         "basic":            "examples/basic",
