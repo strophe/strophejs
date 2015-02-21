@@ -11,7 +11,17 @@
  * Everything that isn't used by Strophe has been stripped here!
  */
 
-var MD5 = (function () {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(function () {
+            return factory();
+        });
+    } else {
+        // Browser globals
+        root.MD5 = factory();
+    }
+}(this, function (b) {
     /*
      * Add integers, wrapping at 2^32. This uses 16-bit operations internally
      * to work around bugs in some JS interpreters.
@@ -187,7 +197,6 @@ var MD5 = (function () {
         return [a, b, c, d];
     };
 
-
     var obj = {
         /*
          * These are the functions you'll usually want to call.
@@ -202,6 +211,5 @@ var MD5 = (function () {
             return binl2str(core_md5(str2binl(s), s.length * 8));
         }
     };
-
     return obj;
-})();
+}));

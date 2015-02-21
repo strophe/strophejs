@@ -39,6 +39,7 @@ module.exports = function(grunt){
                 }
             }
         },
+
         concat: {
             dist: {
                 src: ['src/wrap_header.js', 'src/base64.js', 'src/sha1.js', 'src/md5.js', 'src/polyfills.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
@@ -138,4 +139,20 @@ module.exports = function(grunt){
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
     grunt.registerTask("test", ["connect", "qunit"]);
+
+    grunt.registerTask('almond', 'Create an almond build with r.js', function () {
+        var done = this.async();
+        require('child_process').exec(
+                './node_modules/requirejs/bin/r.js -o build.js optimize=none out=strophe.almond.js',
+            function (err, stdout, stderr) {
+                if (err) {
+                    grunt.log.write('build failed with error code '+err.code);
+                    grunt.log.write(stderr);
+                }
+                grunt.log.write(stdout);
+                done();
+            }
+        );
+        grunt.task.run('uglify');
+    });
 };

@@ -7,12 +7,6 @@
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
 
-/** File: polyfills.js
- *  A JavaScript library for XMPP BOSH/XMPP over Websocket.
- *
- *  This file contains some polyfills used by strophe.js
- */
-
 /** PrivateFunction: Function.prototype.bind
  *  Bind a function to an instance.
  *
