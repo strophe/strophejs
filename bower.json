@@ -26,7 +26,7 @@
     "Gruntfile.js",
     "contrib",
     "examples",
-    "tests",
+    "tests"
   ],
   "dependencies": {
     "sinon": "http://sinonjs.org/releases/sinon-1.12.2.js",
