@@ -27,7 +27,6 @@
     "contrib",
     "examples",
     "tests",
-    "src"
   ],
   "dependencies": {
     "sinon": "http://sinonjs.org/releases/sinon-1.12.2.js",
