@@ -716,7 +716,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "1.2.0",
+    VERSION: "1.2.1",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4822,8 +4822,8 @@ return Strophe;
  *  This file implements XMPP over WebSockets for Strophejs.
  *  If a Connection is established with a Websocket url (ws://...)
  *  Strophe will use WebSockets.
- *  For more information on XMPP-over WebSocket see this RFC draft:
- *  http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00
+ *  For more information on XMPP-over-WebSocket see RFC 7395:
+ *  http://tools.ietf.org/html/rfc7395
  *
  *  WebSocket support implemented by Andreas Guth (andreas.guth@rwth-aachen.de)
  */

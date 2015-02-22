@@ -6,7 +6,7 @@
 *** Update CHANGELOG.txt
 *** Check for correct version number in package.json
 *** Run grunt release
-*** Tag code with version (git tag -s release-VERSION HEAD)
+*** Tag code with version (git tag -s vVERSION )
 *** Push repo and tags (git push && git push --tags)
 *** Add documentation to strophe.im repo
 *** Update website
