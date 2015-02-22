@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.2.1 - 2015-02-22 
+* Rerelease of 1.2.0 but with a semver tag and proper formatting of bower.json
+  for usage with Bower.io.
+
 ## Version 1.2.0 - 2015-02-21
 * Add bower package manager support.
 * Add commandline testing support via qunit-phantomjs-runner
