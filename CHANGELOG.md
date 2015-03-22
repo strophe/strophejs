@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.2 - 2015-03-22
+* Explicitly define AMD modules to prevent errors with AlmondJS and AngularJS
+
 ## Version 1.2.1 - 2015-02-22 
 * Rerelease of 1.2.0 but with a semver tag and proper formatting of bower.json
   for usage with Bower.io.

@@ -29,7 +29,7 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(function () {
+        define('strophe-base64', function () {
             return factory();
         });
     } else {
@@ -130,7 +130,7 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(function () {
+        define('strophe-sha1', function () {
             return factory();
         });
     } else {
@@ -326,7 +326,7 @@ return {
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(function () {
+        define('strophe-md5', function () {
             return factory();
         });
     } else {
@@ -630,7 +630,7 @@ if (!Array.prototype.indexOf)
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define([
+        define('strophe-core', [
             'strophe-sha1',
             'strophe-base64',
             'strophe-md5',
@@ -3927,7 +3927,7 @@ return {
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['strophe-core'], function (core) {
+        define('strophe-bosh', ['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
                 core.$build
@@ -4797,7 +4797,7 @@ return Strophe;
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['strophe-core'], function (core) {
+        define('strophe-websocket', ['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
                 core.$build
