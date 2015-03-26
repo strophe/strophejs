@@ -2386,7 +2386,10 @@ Strophe.Connection.prototype = {
         this._authentication.legacy_auth = false;
 
         // Check for the stream:features tag
-        var hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
+        var hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0;
+        if (!hasFeatures) {
+            hasFeatures = bodyWrap.getElementsByTagName("features").length > 0;
+        }
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         var matched = [];
         var i, mech, found_authentication = false;
