@@ -10,7 +10,6 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-websocket', ['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
