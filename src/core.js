@@ -1681,8 +1681,10 @@ Strophe.Connection.prototype = {
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
      *    (String) route - The optional route value.
+     *    (String) authcid - The optional alternative authentication identity
+     *      (username) if intending to impersonate another user.
      */
-    connect: function (jid, pass, callback, wait, hold, route)
+    connect: function (jid, pass, callback, wait, hold, route, authcid)
     {
         this.jid = jid;
         /** Variable: authzid
@@ -1692,7 +1694,7 @@ Strophe.Connection.prototype = {
         /** Variable: authcid
          *  Authentication identity (User name).
          */
-        this.authcid = Strophe.getNodeFromJid(this.jid);
+        this.authcid = authcid || Strophe.getNodeFromJid(this.jid);
         /** Variable: pass
          *  Authentication identity (User password).
          */
