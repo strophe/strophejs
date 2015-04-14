@@ -28,7 +28,6 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-base64', function () {
             return factory();
         });
@@ -129,7 +128,6 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-sha1', function () {
             return factory();
         });
@@ -325,7 +323,6 @@ return {
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-md5', function () {
             return factory();
         });
@@ -629,7 +626,6 @@ if (!Array.prototype.indexOf)
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-core', [
             'strophe-sha1',
             'strophe-base64',
@@ -716,7 +712,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "1.2.1",
+    VERSION: "1.2.2",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2301,8 +2297,10 @@ Strophe.Connection.prototype = {
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
      *    (String) route - The optional route value.
+     *    (String) authcid - The optional alternative authentication identity
+     *      (username) if intending to impersonate another user.
      */
-    connect: function (jid, pass, callback, wait, hold, route)
+    connect: function (jid, pass, callback, wait, hold, route, authcid)
     {
         this.jid = jid;
         /** Variable: authzid
@@ -2312,7 +2310,7 @@ Strophe.Connection.prototype = {
         /** Variable: authcid
          *  Authentication identity (User name).
          */
-        this.authcid = Strophe.getNodeFromJid(this.jid);
+        this.authcid = authcid || Strophe.getNodeFromJid(this.jid);
         /** Variable: pass
          *  Authentication identity (User password).
          */
@@ -3926,7 +3924,6 @@ return {
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-bosh', ['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
@@ -4796,7 +4793,6 @@ return Strophe;
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
         define('strophe-websocket', ['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
