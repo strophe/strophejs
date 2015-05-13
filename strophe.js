@@ -2296,7 +2296,7 @@ Strophe.Connection.prototype = {
       * });  
       */
     addHttpErrHndl: function(status_code, callback){
-      this.errHndl[status_code] = callback;
+      this.errHndl[status_code] = callback.apply(this);
     },
 
     /** Function: connect
@@ -4338,7 +4338,7 @@ Strophe.Bosh.prototype = {
         } else {
           var errHndl = this._conn.errHndl[reqStatus]
           if(errHndl){
-            errHndl(reqStatus).apply(this);
+            errHndl(reqStatus);
           }
         }
     },
