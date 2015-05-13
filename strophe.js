@@ -2165,6 +2165,9 @@ Strophe.Connection = function (service, options)
     // Max retries before disconnecting
     this.maxRetries = 5;
 
+    //Http error:handler map
+    this.errHndl = {};
+
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
 
@@ -2267,6 +2270,35 @@ Strophe.Connection.prototype = {
         } else {
             return ++this._uniqueId + "";
         }
+    },
+
+    /** Function: addHttpErrHndl
+      * Add handler to HTTP error
+      *
+      * If we have http error like 500 (Internal Server Error) when jabber host is 
+      * incorrect, then function "hndl" binded to status code (e.g 500) will fire.
+      * Specify error handlers before call "connect" function.
+      *
+      * This handlers will fire only with http-bind service only.
+      *
+      * Parameters:
+      *   (Integer) status_code - Http status code (e.g 500, 403 and others)
+      *   (Function) hndl - Function that will fire on Http error
+      *
+      * Example:
+      * function Error500(){
+      *   //do staff
+      * }
+      *
+      * $(document).ready(function(){
+      *   var conn = Strophe.connect(http://example.com/http-bind);
+      *   conn.addHttpErrHndl(500, Error500);
+      *   conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect); <= this will call 
+      * HTTP 500 error and triger Error500() function
+      * });  
+      */
+    addHttpErrHndl: function(status_code, hndl){
+      this.errHndl[status_code] = hndl;
     },
 
     /** Function: connect
@@ -4305,6 +4337,11 @@ Strophe.Bosh.prototype = {
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
+        } else {
+          var errHndl = this._conn.errHndl[reqStatus]
+          if(errHndl){
+            errHndl();
+          }
         }
     },
 
