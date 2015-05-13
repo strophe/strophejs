@@ -2273,20 +2273,18 @@ Strophe.Connection.prototype = {
     },
 
     /** Function: addHttpErrHndl
-      * Add handler to HTTP error
+      * Add callback to HTTP error
       *
-      * If we have http error like 500 (Internal Server Error) when jabber host is 
-      * incorrect, then function "hndl" binded to status code (e.g 500) will fire.
-      * Specify error handlers before call "connect" function.
+      * The ability to create a callback function for HTTP errors.
       *
       * This handlers will fire only with http-bind service only.
       *
       * Parameters:
       *   (Integer) status_code - Http status code (e.g 500, 403 and others)
-      *   (Function) hndl - Function that will fire on Http error
+      *   (Function) callback - Function that will fire on Http error
       *
       * Example:
-      * function Error500(){
+      * function Error500(err_code){
       *   //do staff
       * }
       *
@@ -2297,8 +2295,8 @@ Strophe.Connection.prototype = {
       * HTTP 500 error and triger Error500() function
       * });  
       */
-    addHttpErrHndl: function(status_code, hndl){
-      this.errHndl[status_code] = hndl;
+    addHttpErrHndl: function(status_code, callback){
+      this.errHndl[status_code] = callback;
     },
 
     /** Function: connect
@@ -4340,7 +4338,7 @@ Strophe.Bosh.prototype = {
         } else {
           var errHndl = this._conn.errHndl[reqStatus]
           if(errHndl){
-            errHndl();
+            errHndl(reqStatus);
           }
         }
     },
