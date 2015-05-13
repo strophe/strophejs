@@ -4338,7 +4338,7 @@ Strophe.Bosh.prototype = {
         } else {
           var errHndl = this._conn.errHndl[reqStatus]
           if(errHndl){
-            errHndl(reqStatus);
+            errHndl(reqStatus).apply(this);
           }
         }
     },
