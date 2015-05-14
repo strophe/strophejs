@@ -2296,7 +2296,7 @@ Strophe.Connection.prototype = {
       * });  
       */
     addHttpErrHndl: function(status_code, callback){
-      this.errHndl[status_code] = callback.apply(this);
+      this.errHndl[status_code] = callback;
     },
 
     /** Function: connect
@@ -4338,7 +4338,7 @@ Strophe.Bosh.prototype = {
         } else {
           var errHndl = this._conn.errHndl[reqStatus]
           if(errHndl){
-            errHndl(reqStatus);
+            errHndl.apply(this, [reqStatus,]);
           }
         }
     },
@@ -4395,7 +4395,6 @@ Strophe.Bosh.prototype = {
      */
     _onIdle: function () {
         var data = this._conn._data;
-
         // if no requests are in progress, poll
         if (this._conn.authenticated && this._requests.length === 0 &&
             data.length === 0 && !this._conn.disconnecting) {
