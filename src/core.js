@@ -1093,7 +1093,11 @@ Strophe.Builder.prototype = {
     {
         for (var k in moreattrs) {
             if (moreattrs.hasOwnProperty(k)) {
-                this.node.setAttribute(k, moreattrs[k]);
+                if (moreattrs[k] === undefined) {
+                    this.node.removeAttribute(k);
+                } else {
+                    this.node.setAttribute(k, moreattrs[k]);
+                }
             }
         }
         return this;
