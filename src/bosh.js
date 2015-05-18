@@ -217,19 +217,6 @@ Strophe.Bosh.prototype = {
         this.errors = 0;
     },
 
-    /** PrivateFunction: _addHTTPErrorHandler
-     *  Add handler to HTTP error
-     *
-     *  The ability to create a callback function for HTTP errors.
-     *
-     *  Parameters:
-     *    (Integer) status_code - Http status code (e.g 500, 400, 404 and others)
-     *    (Function) callback - Function that will fire on Http error
-     */
-    _addHTTPErrorHandler: function(status_code, callback){
-        this.http_error_handlers[status_code] = callback;
-    },
-
     /** PrivateFunction: _connect
      *  _Private_ function that initializes the BOSH connection.
      *
@@ -405,7 +392,7 @@ Strophe.Bosh.prototype = {
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
         } else {
-          var err_callback = this._conn.httpErrorHandlers[reqStatus];
+          var err_callback = this._conn.httpErrorHandler[reqStatus];
           if(err_callback){
             err_callback.apply(this, [reqStatus,]);
           }
@@ -464,7 +451,6 @@ Strophe.Bosh.prototype = {
      */
     _onIdle: function () {
         var data = this._conn._data;
-
         // if no requests are in progress, poll
         if (this._conn.authenticated && this._requests.length === 0 &&
             data.length === 0 && !this._conn.disconnecting) {

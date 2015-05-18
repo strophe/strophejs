@@ -2143,6 +2143,8 @@ Strophe.Connection = function (service, options)
     this.removeHandlers = [];
     this.addTimeds = [];
     this.addHandlers = [];
+    //HttpError handlers
+    this.httpErrorHandler = {};
 
     this._authentication = {};
     this._idleTimeout = null;
@@ -2268,6 +2270,34 @@ Strophe.Connection.prototype = {
             return ++this._uniqueId + "";
         }
     },
+
+    /** Function: addHTTPErrorHandler
+     *  Add callback to HTTP error
+     *
+     *  The ability to create a callback function for HTTP errors.
+     *
+     *  This handlers will fire only with http-bind service only.
+     *
+     *  Parameters:
+     *    (Integer) status_code - Http status code (e.g 500, 400, 404 and others)
+     *    (Function) callback - Function that will fire on Http error
+     *
+     *  Example:
+     *  function Error500(err_code){
+     *    //do staff
+     *  }
+     *
+     *  $(document).ready(function(){
+     *    var conn = Strophe.connect(http://example.com/http-bind);
+     *    conn.addHttpErrHndl(500, Error500);
+     *    conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect); <= this will triger 
+     *    HTTP 500 error and call Error500() function
+     *  });  
+     */
+    addHTTPErrorHandler: function(status_code, callback){
+        this.httpErrorHandler[status_code] = callback;
+    },
+
 
     /** Function: connect
      *  Starts the connection process.
@@ -4305,7 +4335,12 @@ Strophe.Bosh.prototype = {
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
-        } 
+        } else {
+          var err_callback = this._conn.httpErrorHandler[reqStatus];
+          if(err_callback){
+            err_callback.apply(this, [reqStatus,]);
+          }
+        }
     },
 
     /** PrivateFunction: _no_auth_received

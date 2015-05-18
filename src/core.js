@@ -1527,8 +1527,8 @@ Strophe.Connection = function (service, options)
     this.removeHandlers = [];
     this.addTimeds = [];
     this.addHandlers = [];
-    //Http error:handler map
-    this.httpErrorHandlers = {};
+    //HttpError handlers
+    this.httpErrorHandler = {};
 
     this._authentication = {};
     this._idleTimeout = null;
@@ -1679,8 +1679,7 @@ Strophe.Connection.prototype = {
      *  });  
      */
     addHTTPErrorHandler: function(status_code, callback){
-        console.log(this._proto);
-        this._proto._addHTTPErrorHandler(status_code, callback);
+        this.httpErrorHandler[status_code] = callback;
     },
 
 
