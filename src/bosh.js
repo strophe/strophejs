@@ -391,6 +391,11 @@ Strophe.Bosh.prototype = {
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
+        } else {
+          var err_callback = this._conn.httpErrorHandler[reqStatus];
+          if(err_callback){
+            err_callback.apply(this, [reqStatus,]);
+          }
         }
     },
 
@@ -446,7 +451,6 @@ Strophe.Bosh.prototype = {
      */
     _onIdle: function () {
         var data = this._conn._data;
-
         // if no requests are in progress, poll
         if (this._conn.authenticated && this._requests.length === 0 &&
             data.length === 0 && !this._conn.disconnecting) {
