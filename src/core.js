@@ -1679,7 +1679,7 @@ Strophe.Connection.prototype = {
      *  });  
      */
     addHTTPErrorHandler: function(status_code, callback){
-        this.httpErrorHandler[status_code] = callback;
+        this.httpErrorHandlers[status_code] = callback;
     },
 
 

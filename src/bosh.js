@@ -392,7 +392,7 @@ Strophe.Bosh.prototype = {
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
         } else {
-            var err_callback = this._conn.httpErrorHandler[reqStatus];
+            var err_callback = this._conn.httpErrorHandlers[reqStatus];
             if (err_callback) {
                 err_callback.apply(this, [reqStatus,]);
             }
