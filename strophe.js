@@ -2144,7 +2144,7 @@ Strophe.Connection = function (service, options)
     this.addTimeds = [];
     this.addHandlers = [];
     //HttpError handlers
-    this.httpErrorHandler = {};
+    this.httpErrorHandlers = {};
 
     this._authentication = {};
     this._idleTimeout = null;
@@ -2276,7 +2276,7 @@ Strophe.Connection.prototype = {
      *
      *  The ability to create a callback function for HTTP errors.
      *
-     *  This handlers will fire only with http-bind service only.
+     *  These handlers will fire only in the case of BOSH and the http-bind service.
      *
      *  Parameters:
      *    (Integer) status_code - Http status code (e.g 500, 400, 404 and others)
@@ -4336,10 +4336,10 @@ Strophe.Bosh.prototype = {
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
         } else {
-          var err_callback = this._conn.httpErrorHandler[reqStatus];
-          if(err_callback){
-            err_callback.apply(this, [reqStatus,]);
-          }
+            var err_callback = this._conn.httpErrorHandler[reqStatus];
+            if (err_callback) {
+                err_callback.apply(this, [reqStatus,]);
+            }
         }
     },
 
