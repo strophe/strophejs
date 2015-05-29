@@ -1443,7 +1443,7 @@ Strophe.TimedHandler.prototype = {
  *  The user will also have several event handlers defined by using
  *  addHandler() and addTimedHandler().  These will allow the user code to
  *  respond to interesting stanzas or do something periodically with the
- *  connection.  These handlers will be active once authentication is
+ *  connection. These handlers will be active once authentication is
  *  finished.
  *
  *  To send data to the connection, use send().
@@ -1481,10 +1481,11 @@ Strophe.TimedHandler.prototype = {
  *
  *  BOSH options:
  *
- *  by adding "sync" to the options, you can control if requests will
+ *  By adding "sync" to the options, you can control if requests will
  *  be made synchronously or not. The default behaviour is asynchronous.
  *  If you want to make requests synchronous, make "sync" evaluate to true:
  *  > var conn = new Strophe.Connection("/http-bind/", {sync: true});
+ *
  *  You can also toggle this on an already established connection:
  *  > conn.options.sync = true;
  *
@@ -1746,7 +1747,15 @@ Strophe.Connection.prototype = {
      */
     attach: function (jid, sid, rid, callback, wait, hold, wind)
     {
-        this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        if (this._proto instanceof Strophe.Bosh) {
+            this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        } else {
+            throw {
+                name: 'StropheSessionError',
+                message: 'The "attach" method can only be used with a BOSH connection.'
+            };
+        }
+    },
     },
 
     /** Function: xmlInput
