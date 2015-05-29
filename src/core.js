@@ -1523,7 +1523,7 @@ Strophe.Connection = function (service, options)
         this._proto = new Strophe.Bosh(this);
     }
 
-    if (options.keepalive && this._proto instanceof Strophe.Bosh) {
+    if (this.options.keepalive && this._proto instanceof Strophe.Bosh) {
         window.addEventListener("beforeunload", this._proto._cacheSession.bind(this._proto), false);
     }
 
@@ -1783,6 +1783,8 @@ Strophe.Connection.prototype = {
      *  tokens.
      *
      *  This function must therefore be called instead of connect or attach.
+     *
+     *  For an example on how to use it, please see examples/restore.js
      *
      *  Parameters:
      *    (String) jid - The user's JID.  This may be a bare JID or a full JID.
