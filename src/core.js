@@ -1800,7 +1800,7 @@ Strophe.Connection.prototype = {
      */
     restore: function (jid, callback, wait, hold, wind)
     {
-        if (this._sessionCachingSupported) {
+        if (this._sessionCachingSupported()) {
             this._proto._restore(jid, callback, wait, hold, wind);
         } else {
             throw {
