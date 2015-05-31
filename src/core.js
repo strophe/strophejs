@@ -1495,9 +1495,9 @@ Strophe.TimedHandler.prototype = {
  *  The "keepalive" option can be used to instruct Strophe to maintain the
  *  current BOSH session across interruptions such as webpage reloads.
  *
- *  It will do this by caching the sessions tokens, and when "connect" is
- *  called it will check whether there are cached tokens with which it can
- *  resume an existing session.
+ *  It will do this by caching the sessions tokens in sessionStorage, and when
+ *  "restore" is called it will check whether there are cached tokens with
+ *  which it can resume an existing session.
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
