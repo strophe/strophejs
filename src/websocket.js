@@ -105,7 +105,12 @@ Strophe.Websocket.prototype = {
      *     true if there was a streamerror, false otherwise.
      */
     _check_streamerror: function (bodyWrap, connectstatus) {
-        var errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "error");
+        var errors;
+        if (bodyWrap.getElementsByTagNameNS) {
+            errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "error");
+        } else {
+            errors = bodyWrap.getElementsByTagName("stream:error");
+        }
         if (errors.length === 0) {
             return false;
         }

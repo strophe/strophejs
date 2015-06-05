@@ -2403,7 +2403,12 @@ Strophe.Connection.prototype = {
         this._authentication.legacy_auth = false;
 
         // Check for the stream:features tag
-        var hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
+        var hasFeatures;
+        if (bodyWrap.getElementsByTagNameNS) {
+            hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
+        } else {
+            hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0 || bodyWrap.getElementsByTagName("features").length > 0;
+        }
         var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         var matched = [];
         var i, mech, found_authentication = false;
