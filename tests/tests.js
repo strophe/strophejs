@@ -28,24 +28,24 @@ define([
             equal(Strophe.XHTML.validTag('IMg'), false);
 
             // Check all tags mentioned in XEP-0071
-            equal(Strophe.XHTML.validTag('a', true));
-            equal(Strophe.XHTML.validTag('blockquote', true));
-            equal(Strophe.XHTML.validTag('body', true));
-            equal(Strophe.XHTML.validTag('br', true));
-            equal(Strophe.XHTML.validTag('cite', true));
-            equal(Strophe.XHTML.validTag('em', true));
-            equal(Strophe.XHTML.validTag('img', true));
-            equal(Strophe.XHTML.validTag('li', true));
-            equal(Strophe.XHTML.validTag('ol', true));
-            equal(Strophe.XHTML.validTag('p', true));
-            equal(Strophe.XHTML.validTag('span', true));
-            equal(Strophe.XHTML.validTag('strong', true));
-            equal(Strophe.XHTML.validTag('ul', true));
+            equal(Strophe.XHTML.validTag('a'), true);
+            equal(Strophe.XHTML.validTag('blockquote'), true);
+            equal(Strophe.XHTML.validTag('body'), true);
+            equal(Strophe.XHTML.validTag('br'), true);
+            equal(Strophe.XHTML.validTag('cite'), true);
+            equal(Strophe.XHTML.validTag('em'), true);
+            equal(Strophe.XHTML.validTag('img'), true);
+            equal(Strophe.XHTML.validTag('li'), true);
+            equal(Strophe.XHTML.validTag('ol'), true);
+            equal(Strophe.XHTML.validTag('p'), true);
+            equal(Strophe.XHTML.validTag('span'), true);
+            equal(Strophe.XHTML.validTag('strong'), true);
+            equal(Strophe.XHTML.validTag('ul'), true);
 
             // Check tags not mentioned in XEP-0071
-            equal(Strophe.XHTML.validTag('script', true));
-            equal(Strophe.XHTML.validTag('blink', true));
-            equal(Strophe.XHTML.validTag('article', true));
+            equal(Strophe.XHTML.validTag('script'), false);
+            equal(Strophe.XHTML.validTag('blink'), false);
+            equal(Strophe.XHTML.validTag('article'), false);
         });
 
         module("JIDs");
