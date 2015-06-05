@@ -163,17 +163,29 @@ Strophe = {
                         'body':       []
                 },
                 css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
-                validTag: function(tag)
-                {
-                        for(var i = 0; i < Strophe.XHTML.tags.length; i++) {
-                                if(tag == Strophe.XHTML.tags[i]) {
+                /** Function: XHTML.validTag
+                 *
+                 * Utility method to determine whether a tag is allowed
+                 * in the XHTML_IM namespace.
+                 *
+                 * XHTML tag names are case sensitive and must be lower case.
+                 */
+                validTag: function(tag) {
+                        for (var i = 0; i < Strophe.XHTML.tags.length; i++) {
+                                if (tag == Strophe.XHTML.tags[i]) {
                                         return true;
                                 }
                         }
                         return false;
                 },
-                validAttribute: function(tag, attribute)
-                {
+                /** Function: XHTML.validAttribute
+                 *
+                 * Utility method to determine whether an attribute is allowed
+                 * as recommended per XEP-0071
+                 *
+                 * XHTML attribute names are case sensitive and must be lower case.
+                 */
+                validAttribute: function(tag, attribute) {
                         if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
                                 for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
                                         if(attribute == Strophe.XHTML.attributes[tag][i]) {
@@ -616,7 +628,7 @@ Strophe = {
     {
         var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue;
         if (elem.nodeType == Strophe.ElementType.NORMAL) {
-            tag = elem.nodeName;
+            tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
             if(Strophe.XHTML.validTag(tag)) {
                 try {
                     el = Strophe.xmlElement(tag);
