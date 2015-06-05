@@ -1536,7 +1536,15 @@ Strophe.Connection = function (service, options)
     }
 
     if (this.options.keepalive && this._proto instanceof Strophe.Bosh) {
-        window.addEventListener("beforeunload", this._proto._cacheSession.bind(this._proto), false);
+        if ('onbeforeunload' in window) {
+            window.addEventListener("beforeunload", this._proto._cacheSession.bind(this._proto), false);
+        } else if ('onunload' in window) {
+            window.addEventListener("unload", this._proto._cacheSession.bind(this._proto), false);
+        } else if ('onpagehide' in window) {
+            // Mobile Safari (at least older versions) doesn't support unload or beforeunload.
+            // Apple recommends "pagehide" instead.
+            window.addEventListener("pagehide", this._proto._cacheSession.bind(this._proto), false);
+        }
     }
 
     /* The connected JID. */
