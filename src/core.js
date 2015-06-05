@@ -1563,12 +1563,12 @@ Strophe.Connection = function (service, options)
     this._idleTimeout = null;
     this._disconnectTimeout = null;
 
-    this.do_authentication = true;
     this.authenticated = false;
-    this.disconnecting = false;
     this.connected = false;
-
+    this.disconnecting = false;
+    this.do_authentication = true;
     this.paused = false;
+    this.restored = false;
 
     this._data = [];
     this._uniqueId = 0;
@@ -1621,8 +1621,9 @@ Strophe.Connection.prototype = {
         this._authentication = {};
 
         this.authenticated = false;
-        this.disconnecting = false;
         this.connected = false;
+        this.disconnecting = false;
+        this.restored = false;
 
         this._data = [];
         this._requests = [];
@@ -1738,6 +1739,7 @@ Strophe.Connection.prototype = {
         this.disconnecting = false;
         this.connected = false;
         this.authenticated = false;
+        this.restored = false;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
@@ -2305,6 +2307,7 @@ Strophe.Connection.prototype = {
 
         this.authenticated = false;
         this.disconnecting = false;
+        this.restored = false;
 
         // delete handlers
         this.handlers = [];

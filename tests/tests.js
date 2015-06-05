@@ -417,6 +417,7 @@ define([
 			var conn = new Strophe.Connection("");
 			var boshSpy = sinon.spy(conn._proto, "_restore");
 			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
+            equal(conn.restored, false);
 			try {
 				conn.restore();
 			} catch (e) {
@@ -437,18 +438,22 @@ define([
 				equal(e.message, 'The "restore" method can only be used with a BOSH connection.',
 				    'The conn.restore method can only be used with a BOSH connection.');
 			}
+            equal(conn.restored, false);
 		});
 
         test('when calling "restore" without a restorable session, an exception is raised', function () {
+            window.sessionStorage.removeItem('strophe-bosh-session');
 			var conn = new Strophe.Connection("", {"keepalive": true});
 			var boshSpy = sinon.spy(conn._proto, "_restore");
 			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
+            equal(conn.restored, false);
 			try {
 				conn.restore();
 			} catch (e) {
 				equal(e.name, "StropheSessionError");
 				equal(e.message, "_restore: no restoreable session.");
             }
+            equal(conn.restored, false);
             equal(boshSpy.called, true);
             equal(checkSpy.called, true);
         });
@@ -477,11 +482,13 @@ define([
             conn._proto.rid = '123456';
             conn._proto.sid = '987654321';
             conn._proto._cacheSession();
+            equal(conn.restored, false);
 
 			var boshSpy = sinon.spy(conn._proto, "_restore");
 			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
             var attachSpsy = sinon.spy(conn._proto, "_attach");
             conn.restore();
+            equal(conn.restored, true);
             equal(boshSpy.called, true);
             equal(checkSpy.called, true);
             equal(attachSpsy.called, true);

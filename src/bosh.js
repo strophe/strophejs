@@ -324,6 +324,7 @@ Strophe.Bosh.prototype = {
     {
         var session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
         if (typeof session !== "undefined" && session !== null && session.rid && session.sid && session.jid) {
+            this._conn.restored = true;
             this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
         } else {
             throw { name: "StropheSessionError", message: "_restore: no restoreable session." };
