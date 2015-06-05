@@ -12,9 +12,45 @@ define([
         var $pres = wrapper.$pres;
         var Strophe = wrapper.Strophe;
 
-		module("JIDs");
+        module("Utility Methods");
 
-		test("Normal JID", function () {
+        test("validTag", function () {
+            /* Utility method to determine whether a tag is allowed
+             * in the XHTML_IM namespace.
+             *
+             * Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
+             * See http://xmpp.org/extensions/xep-0071.html#profile-summary for the list of recommended
+             */
+            // Tags must always be lower case (as per XHMTL)
+            equal(Strophe.XHTML.validTag('BODY'), false);
+            equal(Strophe.XHTML.validTag('A'), false);
+            equal(Strophe.XHTML.validTag('Img'), false);
+            equal(Strophe.XHTML.validTag('IMg'), false);
+
+            // Check all tags mentioned in XEP-0071
+            equal(Strophe.XHTML.validTag('a'), true);
+            equal(Strophe.XHTML.validTag('blockquote'), true);
+            equal(Strophe.XHTML.validTag('body'), true);
+            equal(Strophe.XHTML.validTag('br'), true);
+            equal(Strophe.XHTML.validTag('cite'), true);
+            equal(Strophe.XHTML.validTag('em'), true);
+            equal(Strophe.XHTML.validTag('img'), true);
+            equal(Strophe.XHTML.validTag('li'), true);
+            equal(Strophe.XHTML.validTag('ol'), true);
+            equal(Strophe.XHTML.validTag('p'), true);
+            equal(Strophe.XHTML.validTag('span'), true);
+            equal(Strophe.XHTML.validTag('strong'), true);
+            equal(Strophe.XHTML.validTag('ul'), true);
+
+            // Check tags not mentioned in XEP-0071
+            equal(Strophe.XHTML.validTag('script'), false);
+            equal(Strophe.XHTML.validTag('blink'), false);
+            equal(Strophe.XHTML.validTag('article'), false);
+        });
+
+        module("JIDs");
+
+        test("Normal JID", function () {
 			var jid = "darcy@pemberley.lit/library";
 			equal(Strophe.getNodeFromJid(jid), "darcy",
 				"Node should be 'darcy'");
