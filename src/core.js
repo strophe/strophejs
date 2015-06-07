@@ -1442,9 +1442,9 @@ Strophe.TimedHandler.prototype = {
 /** Class: Strophe.Connection
  *  XMPP Connection manager.
  *
- *  This class is the main part of Strophe.  It manages a BOSH connection
- *  to an XMPP server and dispatches events to the user callbacks as
- *  data arrives.  It supports SASL PLAIN, SASL DIGEST-MD5, SASL SCRAM-SHA1
+ *  This class is the main part of Strophe.  It manages a BOSH or websocket
+ *  connection to an XMPP server and dispatches events to the user callbacks
+ *  as data arrives. It supports SASL PLAIN, SASL DIGEST-MD5, SASL SCRAM-SHA1
  *  and legacy authentication.
  *
  *  After creating a Strophe.Connection object, the user will typically
@@ -1455,7 +1455,7 @@ Strophe.TimedHandler.prototype = {
  *  The user will also have several event handlers defined by using
  *  addHandler() and addTimedHandler().  These will allow the user code to
  *  respond to interesting stanzas or do something periodically with the
- *  connection.  These handlers will be active once authentication is
+ *  connection. These handlers will be active once authentication is
  *  finished.
  *
  *  To send data to the connection, use send().
@@ -1493,13 +1493,23 @@ Strophe.TimedHandler.prototype = {
  *
  *  BOSH options:
  *
- *  by adding "sync" to the options, you can control if requests will
+ *  By adding "sync" to the options, you can control if requests will
  *  be made synchronously or not. The default behaviour is asynchronous.
  *  If you want to make requests synchronous, make "sync" evaluate to true:
  *  > var conn = new Strophe.Connection("/http-bind/", {sync: true});
+ *
  *  You can also toggle this on an already established connection:
  *  > conn.options.sync = true;
  *
+ *  The "customHeaders" option can be used to provide custom HTTP headers to be
+ *  included in the XMLHttpRequests made.
+ *
+ *  The "keepalive" option can be used to instruct Strophe to maintain the
+ *  current BOSH session across interruptions such as webpage reloads.
+ *
+ *  It will do this by caching the sessions tokens in sessionStorage, and when
+ *  "restore" is called it will check whether there are cached tokens with
+ *  which it can resume an existing session.
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
@@ -1524,6 +1534,19 @@ Strophe.Connection = function (service, options)
     } else {
         this._proto = new Strophe.Bosh(this);
     }
+
+    if (this.options.keepalive && this._proto instanceof Strophe.Bosh) {
+        if ('onbeforeunload' in window) {
+            window.addEventListener("beforeunload", this._proto._cacheSession.bind(this._proto), false);
+        } else if ('onunload' in window) {
+            window.addEventListener("unload", this._proto._cacheSession.bind(this._proto), false);
+        } else if ('onpagehide' in window) {
+            // Mobile Safari (at least older versions) doesn't support unload or beforeunload.
+            // Apple recommends "pagehide" instead.
+            window.addEventListener("pagehide", this._proto._cacheSession.bind(this._proto), false);
+        }
+    }
+
     /* The connected JID. */
     this.jid = "";
     /* the JIDs domain */
@@ -1548,12 +1571,12 @@ Strophe.Connection = function (service, options)
     this._idleTimeout = null;
     this._disconnectTimeout = null;
 
-    this.do_authentication = true;
     this.authenticated = false;
-    this.disconnecting = false;
     this.connected = false;
-
+    this.disconnecting = false;
+    this.do_authentication = true;
     this.paused = false;
+    this.restored = false;
 
     this._data = [];
     this._uniqueId = 0;
@@ -1606,8 +1629,9 @@ Strophe.Connection.prototype = {
         this._authentication = {};
 
         this.authenticated = false;
-        this.disconnecting = false;
         this.connected = false;
+        this.disconnecting = false;
+        this.restored = false;
 
         this._data = [];
         this._requests = [];
@@ -1723,6 +1747,7 @@ Strophe.Connection.prototype = {
         this.disconnecting = false;
         this.connected = false;
         this.authenticated = false;
+        this.restored = false;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
@@ -1758,7 +1783,72 @@ Strophe.Connection.prototype = {
      */
     attach: function (jid, sid, rid, callback, wait, hold, wind)
     {
-        this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        if (this._proto instanceof Strophe.Bosh) {
+            this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        } else {
+            throw {
+                name: 'StropheSessionError',
+                message: 'The "attach" method can only be used with a BOSH connection.'
+            };
+        }
+    },
+
+    /** Function: restore
+     *  Attempt to restore a cached BOSH session.
+     *
+     *  This function is only useful in conjunction with providing the
+     *  "keepalive":true option when instantiating a new Strophe.Connection.
+     *
+     *  When "keepalive" is set to true, Strophe will cache the BOSH tokens
+     *  RID (Request ID) and SID (Session ID) and then when this function is
+     *  called, it will attempt to restore the session from those cached
+     *  tokens.
+     *
+     *  This function must therefore be called instead of connect or attach.
+     *
+     *  For an example on how to use it, please see examples/restore.js
+     *
+     *  Parameters:
+     *    (String) jid - The user's JID.  This may be a bare JID or a full JID.
+     *    (Function) callback - The connect callback function.
+     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
+     *      time the server will wait before returning an empty result for
+     *      a request.  The default setting of 60 seconds is recommended.
+     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
+     *      number of connections the server will hold at one time.  This
+     *      should almost always be set to 1 (the default).
+     *    (Integer) wind - The optional HTTBIND window value.  This is the
+     *      allowed range of request ids that are valid.  The default is 5.
+     */
+    restore: function (jid, callback, wait, hold, wind)
+    {
+        if (this._sessionCachingSupported()) {
+            this._proto._restore(jid, callback, wait, hold, wind);
+        } else {
+            throw {
+                name: 'StropheSessionError',
+                message: 'The "restore" method can only be used with a BOSH connection.'
+            };
+        }
+    },
+
+    /** PrivateFunction: _sessionCachingSupported
+     * Checks whether sessionStorage and JSON are supported and whether we're
+     * using BOSH.
+     */
+    _sessionCachingSupported: function ()
+    {
+        if (this._proto instanceof Strophe.Bosh) {
+            if (!JSON) { return false; }
+            try {
+                window.sessionStorage.setItem('_strophe_', '_strophe_');
+                window.sessionStorage.removeItem('_strophe_');
+            } catch (e) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     },
 
     /** Function: xmlInput
@@ -2225,6 +2315,7 @@ Strophe.Connection.prototype = {
 
         this.authenticated = false;
         this.disconnecting = false;
+        this.restored = false;
 
         // delete handlers
         this.handlers = [];

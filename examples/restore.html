@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <!-- Session caching and restoring example. -->
+
+  <head>
+    <title>Strophe.js Persistent Session Example</title>
+    <script src="../main.js"></script>
+	<script src="../bower_components/requirejs/require.js" data-main="restore.js"></script>
+  </head>
+
+  <body>
+    <div id='login' style='text-align: center'>
+      <form name='cred'>
+        <label for='jid'>JID:</label>
+        <input type='text' id='jid'>
+        <label for='pass'>Password:</label>
+        <input type='password' id='pass'>
+        <input type='button' id='connect' value='connect'>
+      </form>
+    </div>
+    <hr>
+    <div id='log'></div>
+  </body>
+</html>
