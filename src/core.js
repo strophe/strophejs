@@ -2298,7 +2298,7 @@ Strophe.Connection.prototype = {
      *  This is the last piece of the disconnection logic.  This resets the
      *  connection and alerts the user's connection callback.
      */
-    _doDisconnect: function ()
+    _doDisconnect: function (condition)
     {
         if (typeof this._idleTimeout == "number") {
             clearTimeout(this._idleTimeout);
@@ -2326,7 +2326,7 @@ Strophe.Connection.prototype = {
         this.addHandlers = [];
 
         // tell the parent we disconnected
-        this._changeConnectStatus(Strophe.Status.DISCONNECTED, null);
+        this._changeConnectStatus(Strophe.Status.DISCONNECTED, condition);
         this.connected = false;
     },
 
@@ -2403,7 +2403,7 @@ Strophe.Connection.prototype = {
             } else {
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this._doDisconnect();
+            this._doDisconnect(cond);
             return;
         }
 
