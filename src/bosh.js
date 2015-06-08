@@ -366,8 +366,8 @@ Strophe.Bosh.prototype = {
         var cond, conflict;
         if (typ !== null && typ == "terminate") {
             // an error occurred
-            Strophe.error("BOSH-Connection failed: " + cond);
             cond = bodyWrap.getAttribute("condition");
+            Strophe.error("BOSH-Connection failed: " + cond);
             conflict = bodyWrap.getElementsByTagName("conflict");
             if (cond !== null) {
                 if (cond == "remote-stream-error" && conflict.length > 0) {
@@ -377,7 +377,7 @@ Strophe.Bosh.prototype = {
             } else {
                 this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
-            this._conn._doDisconnect();
+            this._conn._doDisconnect(cond);
             return Strophe.Status.CONNFAIL;
         }
 
@@ -641,8 +641,7 @@ Strophe.Bosh.prototype = {
                     reqStatus >= 12000) {
                     this._hitError(reqStatus);
                     if (reqStatus >= 400 && reqStatus < 500) {
-                        this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING,
-                                                  null);
+                        this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING, null);
                         this._conn._doDisconnect();
                     }
                 }
