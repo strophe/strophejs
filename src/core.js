@@ -1535,18 +1535,6 @@ Strophe.Connection = function (service, options)
         this._proto = new Strophe.Bosh(this);
     }
 
-    if (this.options.keepalive && this._proto instanceof Strophe.Bosh) {
-        if ('onbeforeunload' in window) {
-            window.addEventListener("beforeunload", this._proto._cacheSession.bind(this._proto), false);
-        } else if ('onunload' in window) {
-            window.addEventListener("unload", this._proto._cacheSession.bind(this._proto), false);
-        } else if ('onpagehide' in window) {
-            // Mobile Safari (at least older versions) doesn't support unload or beforeunload.
-            // Apple recommends "pagehide" instead.
-            window.addEventListener("pagehide", this._proto._cacheSession.bind(this._proto), false);
-        }
-    }
-
     /* The connected JID. */
     this.jid = "";
     /* the JIDs domain */

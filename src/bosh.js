@@ -197,11 +197,12 @@ Strophe.Bosh.prototype = {
             rid: this.rid++,
             xmlns: Strophe.NS.HTTPBIND
         });
-
         if (this.sid !== null) {
             bodyWrap.attrs({sid: this.sid});
         }
-
+        if (this._conn.options.keepalive) {
+            this._cacheSession();
+        }
         return bodyWrap;
     },
 
@@ -340,7 +341,7 @@ Strophe.Bosh.prototype = {
      */
     _cacheSession: function ()
     {
-        if (this._conn.connected) {
+        if (this._conn.authenticated) {
             if (this._conn.jid && this.rid && this.sid) {
                 window.sessionStorage.setItem('strophe-bosh-session', JSON.stringify({
                     'jid': this._conn.jid,
