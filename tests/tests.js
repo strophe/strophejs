@@ -159,8 +159,30 @@ define([
 		test("c() accepts text and passes it to xmlElement", function () {
 			var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
 				.c("nick", {xmlns: "http://jabber.org/protocol/nick"}, "Darcy");
-			var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'><nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick></presence>";
+			var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'>"+
+                                "<nick xmlns='http://jabber.org/protocol/nick'>Darcy</nick>"+
+                           "</presence>";
 			equal(pres.toString(), expected, "'Darcy' should be a child of <presence>");
+		});
+
+		test("c() return the child element if it is a text node.", function () {
+            // See this issue: https://github.com/strophe/strophejs/issues/124
+
+			var pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
+				.c("show", {}, "dnd")
+                .c("status", {}, "In a meeting");
+			var expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'>"+
+                                "<show>dnd</show><status>In a meeting</status>"+
+                           "</presence>";
+			equal(pres.toString(), expected, "");
+
+			pres = $pres({from: "darcy@pemberley.lit", to: "books@chat.pemberley.lit"})
+				.c("show", {}, "")
+                .c("status", {}, "");
+			expected = "<presence from='darcy@pemberley.lit' to='books@chat.pemberley.lit' xmlns='jabber:client'>"+
+                                "<show/><status/>"+
+                           "</presence>";
+			equal(pres.toString(), expected, "");
 		});
 
 		module("XML");
