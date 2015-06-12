@@ -445,7 +445,29 @@ define([
             conn._proto._buildBody();
             equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
 			equal(cacheSpy.called, true);
-		});
+        });
+
+        test('the request ID (RID) has the proper value whenever a session is restored', function () {
+            window.sessionStorage.removeItem('strophe-bosh-session');
+			var conn = new Strophe.Connection("", {"keepalive": true});
+            conn.authenticated = true;
+            conn.jid = 'dummy@localhost';
+            conn._proto.rid = '123456';
+            conn._proto.sid = '987654321';
+            conn._proto._cacheSession();
+            delete conn._proto.rid;
+            conn.restore();
+            var body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123456');
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123457');
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123458');
+            delete conn._proto.rid;
+            conn.restore();
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123459');
+        });
 
 		test("restore can only be called with BOSH and when {keepalive: true} is passed to Strophe.Connection", function () {
 			var conn = new Strophe.Connection("");
@@ -516,18 +538,23 @@ define([
             conn._proto.rid = '123456';
             conn._proto.sid = '987654321';
             conn._proto._cacheSession();
+            delete conn._proto.rid;
+            delete conn._proto.sid;
+            delete conn._proto.jid;
             equal(conn.restored, false);
 
 			var boshSpy = sinon.spy(conn._proto, "_restore");
 			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
             var attachSpsy = sinon.spy(conn._proto, "_attach");
             conn.restore();
+            equal(conn.jid,'dummy@localhost');
+            equal(conn._proto.rid,'123456');
+            equal(conn._proto.sid,'987654321');
             equal(conn.restored, true);
             equal(boshSpy.called, true);
             equal(checkSpy.called, true);
             equal(attachSpsy.called, true);
         });
-
 	};
 	return {run: run};
 });
