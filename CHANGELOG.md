@@ -4,6 +4,7 @@
 * #109 Explicitly define AMD modules to prevent errors with AlmondJS and AngularJS.
 * #111 Fixed IE9 compatibility.
 * #113 Permit connecting with an alternative authcid.
+* #116 tree.attrs() now removes Elements when they are set to undefined
 * #119 Provide the 'keepalive' option to keep a BOSH session alive across page loads.
 * #121 Ensure that the node names of HTML elements copied into XHTML are lower case.
 * #124 Strophe's Builder will swallow elements if given a blank string as a 'text' parameter.

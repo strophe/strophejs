@@ -1051,23 +1051,27 @@ Strophe = {
         // there are more than two optional args
         var a, i, k;
         for (a = 1; a < arguments.length; a++) {
-            if (!arguments[a]) { continue; }
-            if (typeof(arguments[a]) == "string" ||
-                typeof(arguments[a]) == "number") {
-                node.appendChild(Strophe.xmlTextNode(arguments[a]));
-            } else if (typeof(arguments[a]) == "object" &&
-                       typeof(arguments[a].sort) == "function") {
-                for (i = 0; i < arguments[a].length; i++) {
-                    if (typeof(arguments[a][i]) == "object" &&
-                        typeof(arguments[a][i].sort) == "function") {
-                        node.setAttribute(arguments[a][i][0],
-                                          arguments[a][i][1]);
+            var arg = arguments[a];
+            if (!arg) { continue; }
+            if (typeof(arg) == "string" ||
+                typeof(arg) == "number") {
+                node.appendChild(Strophe.xmlTextNode(arg));
+            } else if (typeof(arg) == "object" &&
+                       typeof(arg.sort) == "function") {
+                for (i = 0; i < arg.length; i++) {
+                    var attr = arg[i];
+                    if (typeof(attr) == "object" &&
+                        typeof(attr.sort) == "function" &&
+                        attr[1] !== undefined) {
+                        node.setAttribute(attr[0], attr[1]);
                     }
                 }
-            } else if (typeof(arguments[a]) == "object") {
-                for (k in arguments[a]) {
-                    if (arguments[a].hasOwnProperty(k)) {
-                        node.setAttribute(k, arguments[a][k]);
+            } else if (typeof(arg) == "object") {
+                for (k in arg) {
+                    if (arg.hasOwnProperty(k)) {
+                        if (arg[k] !== undefined) {
+                            node.setAttribute(k, arg[k]);
+                        }
                     }
                 }
             }
