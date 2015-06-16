@@ -324,7 +324,8 @@ Strophe.Bosh.prototype = {
     _restore: function (jid, callback, wait, hold, wind)
     {
         var session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
-        if (typeof session !== "undefined" && session !== null && session.rid && session.sid && session.jid) {
+        if (typeof session !== "undefined" && session !== null && session.rid && session.sid &&
+                Strophe.getBareJidFromJid(session.jid) == jid) {
             this._conn.restored = true;
             this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
         } else {
