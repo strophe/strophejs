@@ -428,12 +428,46 @@ define([
 
 		module("BOSH Session resumption");
 
-		test("When passing in {keepalive: true} to Strophe.Connection, a beforeunload listener is registered", function () {
-			var addEventListenerSpy = sinon.spy(window, "addEventListener");
-			equal(addEventListenerSpy.called, false);
+		test("When passing in {keepalive: true} to Strophe.Connection, then the session tokens get cached automatically", function () {
 			var conn = new Strophe.Connection("", {"keepalive": true});
-			equal(addEventListenerSpy.calledWith("beforeunload"), true);
-		});
+            conn.jid = 'dummy@localhost';
+            conn._proto.sid = "5332346";
+            var cacheSpy = sinon.spy(conn._proto, '_cacheSession');
+			equal(cacheSpy.called, false);
+            conn._proto._buildBody();
+			equal(cacheSpy.called, true);
+            equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+            conn.authenticated = true;
+            conn._proto._buildBody();
+            ok(window.sessionStorage.getItem('strophe-bosh-session'));
+			equal(cacheSpy.called, true);
+            conn.authenticated = false;
+            conn._proto._buildBody();
+            equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+			equal(cacheSpy.called, true);
+        });
+
+        test('the request ID (RID) has the proper value whenever a session is restored', function () {
+            window.sessionStorage.removeItem('strophe-bosh-session');
+			var conn = new Strophe.Connection("", {"keepalive": true});
+            conn.authenticated = true;
+            conn.jid = 'dummy@localhost';
+            conn._proto.rid = '123456';
+            conn._proto.sid = '987654321';
+            conn._proto._cacheSession();
+            delete conn._proto.rid;
+            conn.restore();
+            var body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123456');
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123457');
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123458');
+            delete conn._proto.rid;
+            conn.restore();
+            body = conn._proto._buildBody();
+            equal(body.tree().getAttribute('rid'), '123459');
+        });
 
 		test("restore can only be called with BOSH and when {keepalive: true} is passed to Strophe.Connection", function () {
 			var conn = new Strophe.Connection("");
@@ -463,6 +497,22 @@ define([
             equal(conn.restored, false);
 		});
 
+        test('the _cacheSession method caches the BOSH session tokens', function () {
+            window.sessionStorage.removeItem('strophe-bosh-session');
+			var conn = new Strophe.Connection("http://fake", {"keepalive": true});
+            // Nothing gets cached if there aren't tokens to cache
+            conn._proto._cacheSession();
+            equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+            // Let's create some tokens to cache
+            conn.authenticated = true;
+            conn.jid = 'dummy@localhost';
+            conn._proto.rid = '123456';
+            conn._proto.sid = '987654321';
+            equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+            conn._proto._cacheSession();
+            notEqual(window.sessionStorage.getItem('strophe-bosh-session'), null);
+        });
+
         test('when calling "restore" without a restorable session, an exception is raised', function () {
             window.sessionStorage.removeItem('strophe-bosh-session');
 			var conn = new Strophe.Connection("", {"keepalive": true});
@@ -480,42 +530,63 @@ define([
             equal(checkSpy.called, true);
         });
 
-        test('the _cacheSession method caches the BOSH session tokens', function () {
+        test('"restore" takes an optional JID argument for more precise session verification', function () {
             window.sessionStorage.removeItem('strophe-bosh-session');
-			var conn = new Strophe.Connection("http://fake", {"keepalive": true});
-            // Nothing gets cached if there aren't tokens to cache
-            conn._proto._cacheSession();
-            equal(window.sessionStorage.getItem('strophe-bosh-session'), undefined);
+			var conn = new Strophe.Connection("", {"keepalive": true});
+			var boshSpy = sinon.spy(conn._proto, "_restore");
+			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
             // Let's create some tokens to cache
-            conn.connected = true;
+            conn.authenticated = true;
             conn.jid = 'dummy@localhost';
-            conn._proto.rid = '123456';
-            conn._proto.sid = '987654321';
-            equal(window.sessionStorage.getItem('strophe-bosh-session'), undefined);
+            conn._proto.rid = '1234567';
+            conn._proto.sid = '9876543210';
             conn._proto._cacheSession();
-            notEqual(window.sessionStorage.getItem('strophe-bosh-session'), undefined);
+
+            // Check that giving a different jid causes an exception to be
+            // raised.
+			try {
+				conn.restore('differentdummy@localhost');
+			} catch (e) {
+				equal(e.name, "StropheSessionError");
+				equal(e.message, "_restore: no restoreable session.");
+            }
+            equal(conn.restored, false);
+            equal(boshSpy.called, true);
+            equal(checkSpy.called, true);
+
+            // Check that passing in the right jid but with a resource is not a problem.
+            conn.restore('dummy@localhost/with_resource');
+            equal(conn.jid,'dummy@localhost');
+            equal(conn._proto.rid,'1234567');
+            equal(conn._proto.sid,'9876543210');
+            equal(conn.restored, true);
         });
 
         test('when calling "restore" with a restorable session, bosh._attach is called with the session tokens', function () {
             window.sessionStorage.removeItem('strophe-bosh-session');
 			var conn = new Strophe.Connection("", {"keepalive": true});
-            conn.connected = true;
+            conn.authenticated = true;
             conn.jid = 'dummy@localhost';
             conn._proto.rid = '123456';
             conn._proto.sid = '987654321';
             conn._proto._cacheSession();
+            delete conn._proto.rid;
+            delete conn._proto.sid;
+            delete conn._proto.jid;
             equal(conn.restored, false);
 
 			var boshSpy = sinon.spy(conn._proto, "_restore");
 			var checkSpy = sinon.spy(conn, "_sessionCachingSupported");
             var attachSpsy = sinon.spy(conn._proto, "_attach");
             conn.restore();
+            equal(conn.jid,'dummy@localhost');
+            equal(conn._proto.rid,'123456');
+            equal(conn._proto.sid,'987654321');
             equal(conn.restored, true);
             equal(boshSpy.called, true);
             equal(checkSpy.called, true);
             equal(attachSpsy.called, true);
         });
-
 	};
 	return {run: run};
 });

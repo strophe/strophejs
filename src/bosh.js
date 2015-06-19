@@ -197,11 +197,12 @@ Strophe.Bosh.prototype = {
             rid: this.rid++,
             xmlns: Strophe.NS.HTTPBIND
         });
-
         if (this.sid !== null) {
             bodyWrap.attrs({sid: this.sid});
         }
-
+        if (this._conn.options.keepalive) {
+            this._cacheSession();
+        }
         return bodyWrap;
     },
 
@@ -323,7 +324,13 @@ Strophe.Bosh.prototype = {
     _restore: function (jid, callback, wait, hold, wind)
     {
         var session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
-        if (typeof session !== "undefined" && session !== null && session.rid && session.sid && session.jid) {
+        if (typeof session !== "undefined" &&
+                   session !== null &&
+                   session.rid &&
+                   session.sid &&
+                   session.jid &&
+                   (typeof jid === "undefined" || Strophe.getBareJidFromJid(session.jid) == Strophe.getBareJidFromJid(jid)))
+        {
             this._conn.restored = true;
             this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
         } else {
@@ -340,7 +347,7 @@ Strophe.Bosh.prototype = {
      */
     _cacheSession: function ()
     {
-        if (this._conn.connected) {
+        if (this._conn.authenticated) {
             if (this._conn.jid && this.rid && this.sid) {
                 window.sessionStorage.setItem('strophe-bosh-session', JSON.stringify({
                     'jid': this._conn.jid,
