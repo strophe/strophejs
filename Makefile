@@ -5,7 +5,6 @@ PHANTOMJS	?= ./node_modules/.bin/phantomjs
 SRC_DIR = src
 DOC_DIR = doc
 DOC_TEMP = doc-temp
-PLUGIN_DIR = plugins
 NDPROJ_DIR = ndproj
 
 STROPHE 	= strophe.js
@@ -38,7 +37,7 @@ doc:
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
 	@@if [ ! -d $(DOC_TEMP) ]; then mkdir $(DOC_TEMP); fi
 	@@cp $(STROPHE) $(DOC_TEMP)
-	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -i $(PLUGIN_DIR) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
 	@@echo "Documentation built."
 	@@echo
 

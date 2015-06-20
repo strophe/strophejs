@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.2.2 - Unreleased
+## Version 1.2.2 - 2015-06-20
 * #109 Explicitly define AMD modules to prevent errors with AlmondJS and AngularJS.
 * #111 Fixed IE9 compatibility.
 * #113 Permit connecting with an alternative authcid.
