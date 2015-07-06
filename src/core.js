@@ -458,14 +458,16 @@ Strophe = {
                     var attr = arg[i];
                     if (typeof(attr) == "object" &&
                         typeof(attr.sort) == "function" &&
-                        attr[1] !== undefined) {
+                        attr[1] !== undefined &&
+                        attr[1] !== null) {
                         node.setAttribute(attr[0], attr[1]);
                     }
                 }
             } else if (typeof(arg) == "object") {
                 for (k in arg) {
                     if (arg.hasOwnProperty(k)) {
-                        if (arg[k] !== undefined) {
+                        if (arg[k] !== undefined &&
+                            arg[k] !== null) {
                             node.setAttribute(k, arg[k]);
                         }
                     }
