@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.3 - Unreleased
+* #127 IE-Fix: error on setting null value with setAttributet
+
 ## Version 1.2.2 - 2015-06-20
 * #109 Explicitly define AMD modules to prevent errors with AlmondJS and AngularJS.
 * #111 Fixed IE9 compatibility.
