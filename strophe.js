@@ -2856,7 +2856,7 @@ Strophe.Connection.prototype = {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 3000, this._onDisconnectTimeout.bind(this));
-            this._proto._disconnect(pres);
+            //this._proto._disconnect(pres);
         } else {
             Strophe.info("Disconnect was called before Strophe connected to the server");
             this._proto._abortAllRequests();
