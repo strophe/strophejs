@@ -22,15 +22,6 @@ module.exports = function(grunt){
             "js": ["<%= concat.dist.dest %>", "strophe.min.js"]
         },
 
-        qunit: {
-            all: {
-                options: {
-                    urls: [
-                        'http://localhost:8000/tests/strophe.html',
-                    ]
-                }
-            }
-        },
         connect: {
             server: {
                 options: {
@@ -138,7 +129,6 @@ module.exports = function(grunt){
     grunt.registerTask("doc", ["concat", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
-    grunt.registerTask("test", ["connect", "qunit"]);
 
     grunt.registerTask('almond', 'Create an almond build with r.js', function () {
         var done = this.async();

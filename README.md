@@ -25,6 +25,11 @@ covers Strophe in detail in the context of web applications.
 It has been tested on Firefox, Firefox for Android, IE, Safari, Mobile Safari,
 Chrome, Chrome for Android, Opera and the mobile Opera browser.
 
+## Running tests
+
+You'll need to have [GNU Make](https://www.gnu.org/software/make/) available.
+Then, simply run `make check` to run the tests.
+
 ## License
 
 It is licensed under the [MIT license](https://github.com/strophe/strophejs/raw/master/LICENSE.txt),
