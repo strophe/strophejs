@@ -1933,6 +1933,24 @@ Strophe.Connection.prototype = {
     },
     /* jshint unused:true */
 
+    /** Function: ridChange
+     *  User overrideable function that receives the new rid.
+     *
+     *  The default function does nothing. User code can override this with
+     *  > Strophe.Connection.ridChange = function (rid) {
+     *  >    (user code)
+     *  > };
+     *
+     *  Parameters:
+     *    (Number) rid - The current rid
+     */
+    /* jshint unused:false */
+    ridChange: function (rid)
+    {
+        return;
+    },
+    /* jshint unused:true */
+
     /** Function: send
      *  Send a stanza.
      *
