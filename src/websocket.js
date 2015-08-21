@@ -286,7 +286,7 @@ Strophe.Websocket.prototype = {
             if (pres) {
                 this._conn.send(pres);
             }
-            var close = $build("close", { "xmlns": Strophe.NS.FRAMING, });
+            var close = $build("close", { "xmlns": Strophe.NS.FRAMING });
             this._conn.xmlOutput(close);
             var closeString = Strophe.serialize(close);
             this._conn.rawOutput(closeString);

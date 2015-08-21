@@ -54,7 +54,7 @@ function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
 /** Function: $msg
  *  Create a Strophe.Builder with a <message/> element as the root.
  *
- *  Parmaeters:
+ *  Parameters:
  *    (Object) attrs - The <message/> element attributes in object notation.
  *
  *  Returns:
