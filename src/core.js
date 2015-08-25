@@ -1933,19 +1933,19 @@ Strophe.Connection.prototype = {
     },
     /* jshint unused:true */
 
-    /** Function: ridChange
-     *  User overrideable function that receives the new rid.
+    /** Function: nextValidRid
+     *  User overrideable function that receives the new valid rid.
      *
      *  The default function does nothing. User code can override this with
-     *  > Strophe.Connection.ridChange = function (rid) {
+     *  > Strophe.Connection.nextValidRid = function (rid) {
      *  >    (user code)
      *  > };
      *
      *  Parameters:
-     *    (Number) rid - The current rid
+     *    (Number) rid - The next valid rid
      */
     /* jshint unused:false */
-    ridChange: function (rid)
+    nextValidRid: function (rid)
     {
         return;
     },

@@ -218,7 +218,7 @@ Strophe.Bosh.prototype = {
         this.errors = 0;
         window.sessionStorage.removeItem('strophe-bosh-session');
 
-        this._conn.ridChange(this.rid);
+        this._conn.nextValidRid(this.rid);
     },
 
     /** PrivateFunction: _connect
@@ -425,7 +425,7 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
         window.sessionStorage.removeItem('strophe-bosh-session');
 
-        this._conn.ridChange(this.rid);
+        this._conn.nextValidRid(this.rid);
     },
 
     /** PrivateFunction: _emptyQueue
@@ -637,7 +637,7 @@ Strophe.Bosh.prototype = {
                     this._restartRequest(0);
                 }
 
-                this._conn.ridChange(Number(req.rid) + 1);
+                this._conn.nextValidRid(Number(req.rid) + 1);
 
                 // call handler
                 Strophe.debug("request id " +
