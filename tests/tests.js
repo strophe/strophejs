@@ -587,6 +587,106 @@ define([
             equal(checkSpy.called, true);
             equal(attachSpsy.called, true);
         });
-	};
+
+         module("BOSH next valid request id");
+
+         test("nextValidRid is called after successful request", function () {
+            Strophe.Connection.prototype._onIdle = function () {};
+            Strophe.Connection.prototype.nextValidRid = function (rid) {
+               equal(rid, 43, "RID is valid");
+            };
+
+            var conn = new Strophe.Connection("http://fake");
+            var spy = sinon.spy(conn, 'nextValidRid');
+
+            var req = {id: 43,
+                  sends: 1,
+                  xhr: {
+                     readyState: 4,
+                     status: 200
+                  },
+                  rid: 42
+            };
+
+            conn._requests = [req];
+
+            conn._proto._onRequestStateChange(function(){}, req);
+
+            equal(spy.calledOnce, true, "nextValidRid was called only once");
+         });
+
+         test("nextValidRid is not called after failed request", function () {
+            Strophe.Connection.prototype._onIdle = function () {};
+
+            var conn = new Strophe.Connection("http://fake");
+            var spy = sinon.spy(conn, 'nextValidRid');
+
+            var req = {id: 43,
+                  sends: 1,
+                  xhr: {
+                     readyState: 4,
+                     status: 0
+                  },
+                  rid: 42
+            };
+
+            conn._requests = [req];
+
+            conn._proto._onRequestStateChange(function(){}, req);
+
+            equal(spy.called, false, "nextValidRid was not called");
+         });
+
+         test("nextValidRid is called after failed request with disconnection", function () {
+            sinon.stub(Math, "random", function(){
+               return 1;
+            });
+
+            Strophe.Connection.prototype._onIdle = function () {};
+            Strophe.Connection.prototype.nextValidRid = function (rid) {
+               equal(rid, 4294967295, "RID is valid");
+            };
+
+            var conn = new Strophe.Connection("http://fake");
+            var spy = sinon.spy(conn, 'nextValidRid');
+
+            var req = {id: 43,
+                  sends: 1,
+                  xhr: {
+                     readyState: 4,
+                     status: 404
+                  },
+                  rid: 42
+            };
+
+            conn._requests = [req];
+
+            conn._proto._onRequestStateChange(function(){}, req);
+
+            equal(spy.calledOnce, true, "nextValidRid was called only once");
+
+            Math.random.restore();
+         });
+
+         test("nextValidRid is called after connection reset", function () {
+            sinon.stub(Math, "random", function(){
+               return 1;
+            });
+
+            Strophe.Connection.prototype._onIdle = function () {};
+            Strophe.Connection.prototype.nextValidRid = function (rid) {
+               equal(rid, 4294967295, "RID is valid");
+            };
+
+            var conn = new Strophe.Connection("http://fake");
+            var spy = sinon.spy(conn, 'nextValidRid');
+
+            conn.reset();
+
+            equal(spy.calledOnce, true, "nextValidRid was called only once");
+
+            Math.random.restore();
+         });
+   };
 	return {run: run};
 });
