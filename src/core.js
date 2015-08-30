@@ -1933,6 +1933,24 @@ Strophe.Connection.prototype = {
     },
     /* jshint unused:true */
 
+    /** Function: nextValidRid
+     *  User overrideable function that receives the new valid rid.
+     *
+     *  The default function does nothing. User code can override this with
+     *  > Strophe.Connection.nextValidRid = function (rid) {
+     *  >    (user code)
+     *  > };
+     *
+     *  Parameters:
+     *    (Number) rid - The next valid rid
+     */
+    /* jshint unused:false */
+    nextValidRid: function (rid)
+    {
+        return;
+    },
+    /* jshint unused:true */
+
     /** Function: send
      *  Send a stanza.
      *
