@@ -5,7 +5,7 @@ if (fs.existsSync("/usr/bin/naturaldocs")) {
 } else if (fs.existsSync("/usr/lib/bin/natural_docs")) {
     naturaldocs = "/usr/lib/bin/natural_docs";
 } else {
-    naturaldocs = "NaturalDocs";
+    naturaldocs = "naturaldocs";
 }
 
 module.exports = function(grunt){

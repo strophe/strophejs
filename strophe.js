@@ -670,7 +670,7 @@ function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
 /** Function: $msg
  *  Create a Strophe.Builder with a <message/> element as the root.
  *
- *  Parmaeters:
+ *  Parameters:
  *    (Object) attrs - The <message/> element attributes in object notation.
  *
  *  Returns:
@@ -712,7 +712,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "1.2.2",
+    VERSION: "1.2.3",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -1074,14 +1074,16 @@ Strophe = {
                     var attr = arg[i];
                     if (typeof(attr) == "object" &&
                         typeof(attr.sort) == "function" &&
-                        attr[1] !== undefined) {
+                        attr[1] !== undefined &&
+                        attr[1] !== null) {
                         node.setAttribute(attr[0], attr[1]);
                     }
                 }
             } else if (typeof(arg) == "object") {
                 for (k in arg) {
                     if (arg.hasOwnProperty(k)) {
-                        if (arg[k] !== undefined) {
+                        if (arg[k] !== undefined &&
+                            arg[k] !== null) {
                             node.setAttribute(k, arg[k]);
                         }
                     }
@@ -1608,7 +1610,7 @@ Strophe = {
  *  XML DOM builder.
  *
  *  This object provides an interface similar to JQuery but for building
- *  DOM element easily and rapidly.  All the functions except for toString()
+ *  DOM elements easily and rapidly.  All the functions except for toString()
  *  and tree() return the object, so calls can be chained.  Here's an
  *  example using the $iq() builder helper.
  *  > $iq({to: 'you', from: 'me', type: 'get', id: '1'})
@@ -2292,12 +2294,16 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    A unique string to be used for the id attribute.
      */
-    getUniqueId: function (suffix)
-    {
+    getUniqueId: function(suffix) {
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : r & 0x3 | 0x8;
+            return v.toString(16);
+        });
         if (typeof(suffix) == "string" || typeof(suffix) == "number") {
-            return ++this._uniqueId + ":" + suffix;
+            return uuid + ":" + suffix;
         } else {
-            return ++this._uniqueId + "";
+            return uuid + "";
         }
     },
 
@@ -2542,6 +2548,24 @@ Strophe.Connection.prototype = {
      */
     /* jshint unused:false */
     rawOutput: function (data)
+    {
+        return;
+    },
+    /* jshint unused:true */
+
+    /** Function: nextValidRid
+     *  User overrideable function that receives the new valid rid.
+     *
+     *  The default function does nothing. User code can override this with
+     *  > Strophe.Connection.nextValidRid = function (rid) {
+     *  >    (user code)
+     *  > };
+     *
+     *  Parameters:
+     *    (Number) rid - The next valid rid
+     */
+    /* jshint unused:false */
+    nextValidRid: function (rid)
     {
         return;
     },
@@ -4235,6 +4259,8 @@ Strophe.Bosh.prototype = {
         this.sid = null;
         this.errors = 0;
         window.sessionStorage.removeItem('strophe-bosh-session');
+
+        this._conn.nextValidRid(this.rid);
     },
 
     /** PrivateFunction: _connect
@@ -4347,7 +4373,7 @@ Strophe.Bosh.prototype = {
                    session.rid &&
                    session.sid &&
                    session.jid &&
-                   (typeof jid === "undefined" || Strophe.getBareJidFromJid(session.jid) == Strophe.getBareJidFromJid(jid)))
+                   (typeof jid === "undefined" || jid === "null" || Strophe.getBareJidFromJid(session.jid) == Strophe.getBareJidFromJid(jid)))
         {
             this._conn.restored = true;
             this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
@@ -4440,6 +4466,8 @@ Strophe.Bosh.prototype = {
         this.sid = null;
         this.rid = Math.floor(Math.random() * 4294967295);
         window.sessionStorage.removeItem('strophe-bosh-session');
+
+        this._conn.nextValidRid(this.rid);
     },
 
     /** PrivateFunction: _emptyQueue
@@ -4650,6 +4678,9 @@ Strophe.Bosh.prototype = {
                      this._requests[0].age() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait))) {
                     this._restartRequest(0);
                 }
+
+                this._conn.nextValidRid(Number(req.rid) + 1);
+
                 // call handler
                 Strophe.debug("request id " +
                               req.id + "." +
@@ -5233,7 +5264,7 @@ Strophe.Websocket.prototype = {
             if (pres) {
                 this._conn.send(pres);
             }
-            var close = $build("close", { "xmlns": Strophe.NS.FRAMING, });
+            var close = $build("close", { "xmlns": Strophe.NS.FRAMING });
             this._conn.xmlOutput(close);
             var closeString = Strophe.serialize(close);
             this._conn.rawOutput(closeString);
