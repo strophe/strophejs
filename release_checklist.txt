@@ -1,7 +1,7 @@
 # -*- mode: org -*-
 
 * Release Checklist
-*** Make sure all tests pass (run 'make check' or 'Grunt qunit')
+*** Make sure all tests pass (run 'make check')
 *** Decide on version number
 *** Update CHANGELOG.txt
 *** Check for correct version number in package.json and bower,json

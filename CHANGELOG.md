@@ -1,7 +1,10 @@
 # Strophe.js Change Log
 
-## Version 1.2.3 - Unreleased
-* #127 IE-Fix: error on setting null value with setAttributet
+## Version 1.2.3 - 2015-09-01
+* Bugfix. Check if JID is null when restoring a session.
+* #127 IE-Fix: error on setting null value with setAttributes
+* #138 New stub method nextValidRid
+* #144 Change ID generator to generate UUIDs
 
 ## Version 1.2.2 - 2015-06-20
 * #109 Explicitly define AMD modules to prevent errors with AlmondJS and AngularJS.

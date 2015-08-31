@@ -595,10 +595,8 @@ define([
             Strophe.Connection.prototype.nextValidRid = function (rid) {
                equal(rid, 43, "RID is valid");
             };
-
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
-
             var req = {id: 43,
                   sends: 1,
                   xhr: {
@@ -607,20 +605,15 @@ define([
                   },
                   rid: 42
             };
-
             conn._requests = [req];
-
             conn._proto._onRequestStateChange(function(){}, req);
-
             equal(spy.calledOnce, true, "nextValidRid was called only once");
          });
 
          test("nextValidRid is not called after failed request", function () {
             Strophe.Connection.prototype._onIdle = function () {};
-
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
-
             var req = {id: 43,
                   sends: 1,
                   xhr: {
@@ -629,11 +622,8 @@ define([
                   },
                   rid: 42
             };
-
             conn._requests = [req];
-
             conn._proto._onRequestStateChange(function(){}, req);
-
             equal(spy.called, false, "nextValidRid was not called");
          });
 
@@ -641,15 +631,12 @@ define([
             sinon.stub(Math, "random", function(){
                return 1;
             });
-
             Strophe.Connection.prototype._onIdle = function () {};
             Strophe.Connection.prototype.nextValidRid = function (rid) {
                equal(rid, 4294967295, "RID is valid");
             };
-
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
-
             var req = {id: 43,
                   sends: 1,
                   xhr: {
@@ -658,13 +645,9 @@ define([
                   },
                   rid: 42
             };
-
             conn._requests = [req];
-
             conn._proto._onRequestStateChange(function(){}, req);
-
             equal(spy.calledOnce, true, "nextValidRid was called only once");
-
             Math.random.restore();
          });
 
@@ -672,19 +655,14 @@ define([
             sinon.stub(Math, "random", function(){
                return 1;
             });
-
             Strophe.Connection.prototype._onIdle = function () {};
             Strophe.Connection.prototype.nextValidRid = function (rid) {
                equal(rid, 4294967295, "RID is valid");
             };
-
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
-
             conn.reset();
-
             equal(spy.calledOnce, true, "nextValidRid was called only once");
-
             Math.random.restore();
          });
    };
