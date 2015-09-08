@@ -393,6 +393,14 @@ Strophe.Websocket.prototype = {
      * (Object) error - The websocket error.
      */
     _onError: function(error) {
+        // Workaround
+        // https://github.com/strophe/strophejs/pull/145
+        // https://code.google.com/p/chromium/issues/detail?id=372776
+        // 
+        if (!this.socket || this.socket.readyState === 0) {
+          return;
+        }
+
         Strophe.error("Websocket error " + error);
         this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established was disconnected.");
         this._disconnect();
