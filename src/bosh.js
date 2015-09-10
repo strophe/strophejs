@@ -767,7 +767,9 @@ Strophe.Bosh.prototype = {
                 // expanding retry window
                 var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
                                        Math.pow(req.sends, 3)) * 1000;
-                setTimeout(sendFunc, backoff);
+                setTimeout(function() {
+                    sendFunc();
+                }, backoff);
             } else {
                 sendFunc();
             }
@@ -886,7 +888,9 @@ Strophe.Bosh.prototype = {
     _send: function () {
         clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
-        this._conn._idleTimeout = setTimeout(this._conn._onIdle.bind(this._conn), 100);
+        this._conn._idleTimeout = setTimeout(function() {
+            this._onIdle();
+        }.bind(this._conn), 100);
     },
 
     /** PrivateFunction: _sendRestart

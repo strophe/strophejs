@@ -1583,7 +1583,9 @@ Strophe.Connection = function (service, options)
     this.maxRetries = 5;
 
     // setup onIdle callback every 1/10th of a second
-    this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    this._idleTimeout = setTimeout(function() {
+        this._onIdle();
+    }.bind(this), 100);
 
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
@@ -2114,7 +2116,9 @@ Strophe.Connection.prototype = {
 
         this._proto._sendRestart();
 
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        this._idleTimeout = setTimeout(function() {
+            this._onIdle();
+        }.bind(this), 100);
     },
 
     /** Function: addTimedHandler
@@ -3043,7 +3047,9 @@ Strophe.Connection.prototype = {
 
         // reactivate the timer only if connected
         if (this.connected) {
-            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+            this._idleTimeout = setTimeout(function() {
+                this._onIdle();
+            }.bind(this), 100);
         }
     }
 };
