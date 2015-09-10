@@ -9,6 +9,7 @@ NDPROJ_DIR = ndproj
 
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
+STROPHE_LIGHT = strophe.light.js
 
 all: $(STROPHE_MIN)
 
@@ -23,7 +24,12 @@ stamp-bower: stamp-npm bower.json
 $(STROPHE)::
 	make stamp-bower
 	@@echo "Building" $(STROPHE) "..."
-	$(GRUNT) concat
+	$(GRUNT) concat:dist
+	@@echo
+
+$(STROPHE_LIGHT)::
+	@@echo "Building" $(STROPHE_LIGHT) "..."
+	$(GRUNT) concat:light
 	@@echo
 
 $(STROPHE_MIN)::
@@ -55,9 +61,10 @@ clean:
 	@@rm -rf node_modules bower_components
 	@@rm -f $(STROPHE)
 	@@rm -f $(STROPHE_MIN)
+	@@rm -f $(STROPHE_LIGHT)
 	@@rm -f $(PLUGIN_FILES_MIN)
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Done."
 	@@echo
 
-.PHONY: all doc release clean check $(STROPHE) $(STROPHE_MIN)
+.PHONY: all doc release clean check $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)

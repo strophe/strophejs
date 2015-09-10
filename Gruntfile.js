@@ -19,7 +19,7 @@ module.exports = function(grunt){
             "doc": ["<%= natural_docs.docs.output %>"],
             "prepare-release": ["strophejs-<%= pkg.version %>"],
             "release": ["strophejs-<%= pkg.version %>.zip", "strophejs-<%= pkg.version %>.tar.gz"],
-            "js": ["<%= concat.dist.dest %>", "strophe.min.js"]
+            "js": ["<%= concat.dist.dest %>", "strophe.min.js", "strophe.light.js"]
         },
 
         connect: {
@@ -35,6 +35,21 @@ module.exports = function(grunt){
             dist: {
                 src: ['src/wrap_header.js', 'src/base64.js', 'src/sha1.js', 'src/md5.js', 'src/polyfills.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
                 dest: '<%= pkg.name %>'
+            },
+            light: {
+                src: ['src/wrap_header.js', 'src/sha1.js', 'src/md5.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrap_footer.js'],
+                dest: 'strophe.light.js',
+                options: {
+                    process: function(src){
+                        return src.replace('@VERSION@', pkg.version)
+                            .replace(/Base64\.encode/g, 'btoa')
+                            .replace(/Base64\.decode/g, 'atob')
+                            .replace(/, (?:root\.)?Base64/g, '')
+                            .replace(/ +'strophe-base64',\r?\n/, '')
+                            .replace(/,\s+"strophe-polyfill"/, '')
+                            .replace(/ +(?:window\.)?Base64\s*[:=].*?Base64[,;]\r?\n/g, '');
+                    }
+                }
             },
             options: {
                 process: function(src){
@@ -124,9 +139,9 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-contrib-qunit');
 
     grunt.registerTask("default", ["jshint", "min"]);
-    grunt.registerTask("min", ["concat", "uglify"]);
+    grunt.registerTask("min", ["concat:dist", "uglify"]);
     grunt.registerTask("prepare-release", ["copy:prepare-release"]);
-    grunt.registerTask("doc", ["concat", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
+    grunt.registerTask("doc", ["concat:dist", "copy:prepare-doc", "mkdir:prepare-doc", "natural_docs"]);
     grunt.registerTask("release", ["default", "doc", "copy:prepare-release", "shell:tar", "shell:zip"]);
     grunt.registerTask("all", ["release", "clean"]);
 
