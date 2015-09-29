@@ -17,7 +17,28 @@
  * on page reload, these references will still be available to callbacks
  * that are still executing.
  */
-
+    function utf16to8(str) {  
+        var out, i, len, c;  
+      
+        out = "";  
+        len = str.length;  
+        for(i = 0; i < len; i++) {  
+        c = str.charCodeAt(i);  
+        if ((c >= 0x0000) && (c <= 0x007F)) {  
+            out += str.charAt(i);  
+        } else if (c > 0x07FF) {  
+            out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));  
+            out += String.fromCharCode(0x80 | ((c >>  6) & 0x3F));  
+            out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));  
+        } else {  
+            out += String.fromCharCode(0xC0 | ((c >>  6) & 0x1F));  
+            out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));  
+        }  
+        }  
+        return out;  
+    }  
+    
+    
 /* jshint ignore:start */
 (function (callback) {
 /* jshint ignore:end */
@@ -44,6 +65,8 @@
          * @param {String} input The string to encode in base64.
          */
         encode: function (input) {
+            input=utf16to8(input);
+            
             var output = "";
             var chr1, chr2, chr3;
             var enc1, enc2, enc3, enc4;
