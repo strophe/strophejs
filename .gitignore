@@ -10,3 +10,6 @@ doc
 *.tar.gz
 *.zip
 *~
+
+*.iml
+.idea/

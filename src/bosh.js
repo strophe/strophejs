@@ -18,7 +18,7 @@
         });
     } else {
         // Browser globals
-        return factory(Strophe, $build);
+        return factory(root.Strophe, root.$build);
     }
 }(this, function (Strophe, $build) {
 
