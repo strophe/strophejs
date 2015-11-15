@@ -3223,20 +3223,6 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Stro
  */
 Strophe.SASLSHA1 = function() {};
 
-/* TEST:
- * This is a simple example of a SCRAM-SHA-1 authentication exchange
- * when the client doesn't support channel bindings (username 'user' and
- * password 'pencil' are used):
- *
- * C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
- * S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
- * i=4096
- * C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
- * p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
- * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
- *
- */
-
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.test = function(connection) {

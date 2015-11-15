@@ -390,22 +390,34 @@ define([
 			saslplain.onSuccess();
 		});
 
-		test("SASL SCRAM-SHA-1 Auth", function () {
-			var conn = {pass: "pencil", authcid: "user",
-						authzid: "user@xmpp.org", _sasl_data: []};
-			ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
-			var saslsha1 = new Strophe.SASLSHA1();
-			saslsha1.onStart(conn);
-			// test taken from example section on:
-			// URL: http://tools.ietf.org/html/rfc5802#section-5
-			var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
-			equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
+        test("SASL SCRAM-SHA-1 Auth", function () {
+            /* This is a simple example of a SCRAM-SHA-1 authentication exchange
+             * when the client doesn't support channel bindings (username 'user' and
+             * password 'pencil' are used):
+             *
+             * C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
+             * S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
+             * i=4096
+             * C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
+             * p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
+             * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
+             *
+             */
+            var conn = {pass: "pencil", authcid: "user",
+                        authzid: "user@xmpp.org", _sasl_data: []};
+            ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
+            var saslsha1 = new Strophe.SASLSHA1();
+            saslsha1.onStart(conn);
+            // test taken from example section on:
+            // URL: http://tools.ietf.org/html/rfc5802#section-5
+            var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
+            equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
 
-			response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
-			equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
-				"checking second auth challenge");
-			saslsha1.onSuccess();
-		});
+            response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
+            equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
+                "checking second auth challenge");
+            saslsha1.onSuccess();
+        });
 
 		test("SASL DIGEST-MD-5 Auth", function () {
 			var conn = {pass: "secret", authcid: "chris",
