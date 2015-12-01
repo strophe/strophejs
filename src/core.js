@@ -2041,7 +2041,7 @@ Strophe.Connection.prototype = {
             var acceptable = false;
             var from = stanza.getAttribute("from");
             if (from === expectedFrom ||
-               (expectedFrom === null &&
+               (!expectedFrom &&
                    (from === Strophe.getBareJidFromJid(fulljid) ||
                     from === Strophe.getDomainFromJid(fulljid) ||
                     from === fulljid))) {
