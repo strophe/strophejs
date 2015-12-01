@@ -18,6 +18,7 @@ require.config({
 		"strophe-base64":       "src/base64",
 		"strophe-bosh":         "src/bosh",
 		"strophe-core":         "src/core",
+		"strophe-utils":        "src/utils",
 		"strophe":              "src/wrapper",
 		"strophe-md5":          "src/md5",
 		"strophe-sha1":         "src/sha1",

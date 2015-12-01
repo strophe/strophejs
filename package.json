@@ -71,6 +71,7 @@
     "grunt-mkdir": "~0.1.1",
     "grunt-natural-docs": "~0.1.1",
     "grunt-shell": "~0.6.1",
+    "http-server": "^0.7.4",
     "requirejs": "~2.1.15"
   }
 }

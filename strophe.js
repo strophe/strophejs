@@ -531,6 +531,18 @@ return {
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
+/* global define */
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('strophe-polyfill', [], function () {
+            return factory();
+        });
+    } else {
+        // Browser globals
+        return factory();
+    }
+}(this, function () {
 
 /** PrivateFunction: Function.prototype.bind
  *  Bind a function to an instance.
@@ -613,7 +625,7 @@ if (!Array.prototype.indexOf)
             return -1;
         };
     }
-
+}));
 /*
     This program is distributed under the terms of the MIT license.
     Please see the LICENSE file for details.
@@ -630,13 +642,14 @@ if (!Array.prototype.indexOf)
             'strophe-sha1',
             'strophe-base64',
             'strophe-md5',
+            'strophe-utils',
             "strophe-polyfill"
         ], function () {
             return factory.apply(this, arguments);
         });
     } else {
         // Browser globals
-        var o = factory(root.SHA1, root.Base64, root.MD5);
+        var o = factory(root.SHA1, root.Base64, root.MD5, root.stropheUtils);
         window.Strophe =        o.Strophe;
         window.$build =         o.$build;
         window.$iq =            o.$iq;
@@ -650,7 +663,7 @@ if (!Array.prototype.indexOf)
         window.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
         window.str_sha1 =       o.SHA1.str_sha1;
     }
-}(this, function (SHA1, Base64, MD5) {
+}(this, function (SHA1, Base64, MD5, utils) {
 
 var Strophe;
 
@@ -2656,7 +2669,7 @@ Strophe.Connection.prototype = {
             var acceptable = false;
             var from = stanza.getAttribute("from");
             if (from === expectedFrom ||
-               (expectedFrom === null &&
+               (!expectedFrom &&
                    (from === Strophe.getBareJidFromJid(fulljid) ||
                     from === Strophe.getDomainFromJid(fulljid) ||
                     from === fulljid))) {
@@ -3256,7 +3269,6 @@ Strophe.Connection.prototype = {
         stanza.t(Base64.encode(response));
       }
       this.send(stanza.tree());
-
       return true;
     },
 
@@ -3829,7 +3841,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
   auth_str = auth_str + connection.authcid;
   auth_str = auth_str + "\u0000";
   auth_str = auth_str + connection.pass;
-  return auth_str;
+  return utils.utf16to8(auth_str);
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
@@ -3839,30 +3851,15 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Stro
  */
 Strophe.SASLSHA1 = function() {};
 
-/* TEST:
- * This is a simple example of a SCRAM-SHA-1 authentication exchange
- * when the client doesn't support channel bindings (username 'user' and
- * password 'pencil' are used):
- *
- * C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
- * S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
- * i=4096
- * C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
- * p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
- * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
- *
- */
-
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.test = function(connection) {
-  return connection.authcid !== null;
+    return connection.authcid !== null;
 };
 
 Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cnonce) {
   var cnonce = test_cnonce || MD5.hexdigest(Math.random() * 1234567890);
-
-  var auth_str = "n=" + connection.authcid;
+  var auth_str = "n=" + utils.utf16to8(connection.authcid);
   auth_str += ",r=";
   auth_str += cnonce;
 
@@ -3871,9 +3868,8 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 
   auth_str = "n,," + auth_str;
 
-  this.onChallenge = function (connection, challenge)
-  {
-    var nonce, salt, iter, Hi, U, U_old, i, k;
+  this.onChallenge = function (connection, challenge) {
+    var nonce, salt, iter, Hi, U, U_old, i, k, pass;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
     var authMessage = connection._sasl_data["client-first-message-bare"] + "," +
@@ -3908,9 +3904,10 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     salt = Base64.decode(salt);
     salt += "\x00\x00\x00\x01";
 
-    Hi = U_old = SHA1.core_hmac_sha1(connection.pass, salt);
+    pass = utils.utf16to8(connection.pass);
+    Hi = U_old = SHA1.core_hmac_sha1(pass, salt);
     for (i = 1; i < iter; i++) {
-      U = SHA1.core_hmac_sha1(connection.pass, SHA1.binb2str(U_old));
+      U = SHA1.core_hmac_sha1(pass, SHA1.binb2str(U_old));
       for (k = 0; k < 5; k++) {
         Hi[k] ^= U[k];
       }
@@ -3928,7 +3925,6 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     }
 
     responseText += ",p=" + Base64.encode(SHA1.binb2str(clientKey));
-
     return responseText;
   }.bind(this);
 
@@ -3998,15 +3994,13 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
     digest_uri = digest_uri + "/" + host;
   }
 
-  var A1 = MD5.hash(connection.authcid +
-                    ":" + realm + ":" + this._connection.pass) +
-    ":" + nonce + ":" + cnonce;
+  var cred = utils.utf16to8(connection.authcid + ":" + realm + ":" + this._connection.pass);
+  var A1 = MD5.hash(cred) + ":" + nonce + ":" + cnonce;
   var A2 = 'AUTHENTICATE:' + digest_uri;
 
   var responseText = "";
   responseText += 'charset=utf-8,';
-  responseText += 'username=' +
-    this._quote(connection.authcid) + ',';
+  responseText += 'username=' + this._quote(utils.utf16to8(connection.authcid)) + ',';
   responseText += 'realm=' + this._quote(realm) + ',';
   responseText += 'nonce=' + this._quote(nonce) + ',';
   responseText += 'nc=00000001,';
@@ -4018,8 +4012,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function ()
-  {
+  this.onChallenge = function () {
       return "";
   }.bind(this);
 
@@ -5507,9 +5500,29 @@ Strophe.Websocket.prototype = {
 return Strophe;
 }));
 
+(function(root){
+    if(typeof define === 'function' && define.amd){
+        define("strophe", [
+            "strophe-core",
+            "strophe-bosh",
+            "strophe-websocket"
+        ], function (wrapper) {
+            return wrapper;
+        });
+    }
+})(this);
+
 /* jshint ignore:start */
 if (callback) {
-    return callback(Strophe, $build, $msg, $iq, $pres);
+    if(typeof define === 'function' && define.amd){
+        //For backwards compatability
+        var n_callback = callback;
+        require(["strophe"],function(o){
+            n_callback(o.Strophe,o.$build,o.$msg,o.$iq,o.$pres);
+        });
+    }else{
+        return callback(Strophe, $build, $msg, $iq, $pres);
+    }
 }
 
 
