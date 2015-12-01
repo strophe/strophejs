@@ -11,31 +11,22 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         define('strophe-core', [
-            'strophe-sha1',
             'strophe-base64',
-            'strophe-md5',
             'strophe-utils',
-            "strophe-polyfill"
         ], function () {
             return factory.apply(this, arguments);
         });
     } else {
         // Browser globals
-        var o = factory(root.SHA1, root.Base64, root.MD5, root.stropheUtils);
+        var o = factory(root.Base64, root.stropheUtils);
         window.Strophe =        o.Strophe;
         window.$build =         o.$build;
         window.$iq =            o.$iq;
         window.$msg =           o.$msg;
         window.$pres =          o.$pres;
-        window.SHA1 =           o.SHA1;
         window.Base64 =         o.Base64;
-        window.MD5 =            o.MD5;
-        window.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
-        window.b64_sha1 =       o.SHA1.b64_sha1;
-        window.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
-        window.str_sha1 =       o.SHA1.str_sha1;
     }
-}(this, function (SHA1, Base64, MD5, utils) {
+}(this, function (Base64, utils) {
 
 var Strophe;
 
@@ -1756,100 +1747,6 @@ Strophe.Connection.prototype = {
         this._proto._connect(wait, hold, route);
     },
 
-    /** Function: attach
-     *  Attach to an already created and authenticated BOSH session.
-     *
-     *  This function is provided to allow Strophe to attach to BOSH
-     *  sessions which have been created externally, perhaps by a Web
-     *  application.  This is often used to support auto-login type features
-     *  without putting user credentials into the page.
-     *
-     *  Parameters:
-     *    (String) jid - The full JID that is bound by the session.
-     *    (String) sid - The SID of the BOSH session.
-     *    (String) rid - The current RID of the BOSH session.  This RID
-     *      will be used by the next request.
-     *    (Function) callback The connect callback function.
-     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
-     *      time the server will wait before returning an empty result for
-     *      a request.  The default setting of 60 seconds is recommended.
-     *      Other settings will require tweaks to the Strophe.TIMEOUT value.
-     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
-     *      number of connections the server will hold at one time.  This
-     *      should almost always be set to 1 (the default).
-     *    (Integer) wind - The optional HTTBIND window value.  This is the
-     *      allowed range of request ids that are valid.  The default is 5.
-     */
-    attach: function (jid, sid, rid, callback, wait, hold, wind)
-    {
-        if (this._proto instanceof Strophe.Bosh) {
-            this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
-        } else {
-            throw {
-                name: 'StropheSessionError',
-                message: 'The "attach" method can only be used with a BOSH connection.'
-            };
-        }
-    },
-
-    /** Function: restore
-     *  Attempt to restore a cached BOSH session.
-     *
-     *  This function is only useful in conjunction with providing the
-     *  "keepalive":true option when instantiating a new Strophe.Connection.
-     *
-     *  When "keepalive" is set to true, Strophe will cache the BOSH tokens
-     *  RID (Request ID) and SID (Session ID) and then when this function is
-     *  called, it will attempt to restore the session from those cached
-     *  tokens.
-     *
-     *  This function must therefore be called instead of connect or attach.
-     *
-     *  For an example on how to use it, please see examples/restore.js
-     *
-     *  Parameters:
-     *    (String) jid - The user's JID.  This may be a bare JID or a full JID.
-     *    (Function) callback - The connect callback function.
-     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
-     *      time the server will wait before returning an empty result for
-     *      a request.  The default setting of 60 seconds is recommended.
-     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
-     *      number of connections the server will hold at one time.  This
-     *      should almost always be set to 1 (the default).
-     *    (Integer) wind - The optional HTTBIND window value.  This is the
-     *      allowed range of request ids that are valid.  The default is 5.
-     */
-    restore: function (jid, callback, wait, hold, wind)
-    {
-        if (this._sessionCachingSupported()) {
-            this._proto._restore(jid, callback, wait, hold, wind);
-        } else {
-            throw {
-                name: 'StropheSessionError',
-                message: 'The "restore" method can only be used with a BOSH connection.'
-            };
-        }
-    },
-
-    /** PrivateFunction: _sessionCachingSupported
-     * Checks whether sessionStorage and JSON are supported and whether we're
-     * using BOSH.
-     */
-    _sessionCachingSupported: function ()
-    {
-        if (this._proto instanceof Strophe.Bosh) {
-            if (!JSON) { return false; }
-            try {
-                window.sessionStorage.setItem('_strophe_', '_strophe_');
-                window.sessionStorage.removeItem('_strophe_');
-            } catch (e) {
-                return false;
-            }
-            return true;
-        }
-        return false;
-    },
-
     /** Function: xmlInput
      *  User overrideable function that receives XML data coming into the
      *  connection.
@@ -3175,26 +3072,10 @@ Strophe.SASLMechanism.prototype = {
   /** Constants: SASL mechanisms
    *  Available authentication mechanisms
    *
-   *  Strophe.SASLAnonymous - SASL Anonymous authentication.
    *  Strophe.SASLPlain - SASL Plain authentication.
-   *  Strophe.SASLMD5 - SASL Digest-MD5 authentication
-   *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
    */
 
 // Building SASL callbacks
-
-/** PrivateConstructor: SASLAnonymous
- *  SASL Anonymous authentication.
- */
-Strophe.SASLAnonymous = function() {};
-
-Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
-
-Strophe.SASLAnonymous.test = function(connection) {
-  return connection.authcid === null;
-};
-
-Strophe.Connection.prototype.mechanisms[Strophe.SASLAnonymous.prototype.name] = Strophe.SASLAnonymous;
 
 /** PrivateConstructor: SASLPlain
  *  SASL Plain authentication.
@@ -3218,189 +3099,12 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
 
-/** PrivateConstructor: SASLSHA1
- *  SASL SCRAM SHA 1 authentication.
- */
-Strophe.SASLSHA1 = function() {};
-
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
-
-Strophe.SASLSHA1.test = function(connection) {
-    return connection.authcid !== null;
-};
-
-Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cnonce) {
-  var cnonce = test_cnonce || MD5.hexdigest(Math.random() * 1234567890);
-  var auth_str = "n=" + utils.utf16to8(connection.authcid);
-  auth_str += ",r=";
-  auth_str += cnonce;
-
-  connection._sasl_data.cnonce = cnonce;
-  connection._sasl_data["client-first-message-bare"] = auth_str;
-
-  auth_str = "n,," + auth_str;
-
-  this.onChallenge = function (connection, challenge) {
-    var nonce, salt, iter, Hi, U, U_old, i, k, pass;
-    var clientKey, serverKey, clientSignature;
-    var responseText = "c=biws,";
-    var authMessage = connection._sasl_data["client-first-message-bare"] + "," +
-      challenge + ",";
-    var cnonce = connection._sasl_data.cnonce;
-    var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
-
-    while (challenge.match(attribMatch)) {
-      var matches = challenge.match(attribMatch);
-      challenge = challenge.replace(matches[0], "");
-      switch (matches[1]) {
-      case "r":
-        nonce = matches[2];
-        break;
-      case "s":
-        salt = matches[2];
-        break;
-      case "i":
-        iter = matches[2];
-        break;
-      }
-    }
-
-    if (nonce.substr(0, cnonce.length) !== cnonce) {
-      connection._sasl_data = {};
-      return connection._sasl_failure_cb();
-    }
-
-    responseText += "r=" + nonce;
-    authMessage += responseText;
-
-    salt = Base64.decode(salt);
-    salt += "\x00\x00\x00\x01";
-
-    pass = utils.utf16to8(connection.pass);
-    Hi = U_old = SHA1.core_hmac_sha1(pass, salt);
-    for (i = 1; i < iter; i++) {
-      U = SHA1.core_hmac_sha1(pass, SHA1.binb2str(U_old));
-      for (k = 0; k < 5; k++) {
-        Hi[k] ^= U[k];
-      }
-      U_old = U;
-    }
-    Hi = SHA1.binb2str(Hi);
-
-    clientKey = SHA1.core_hmac_sha1(Hi, "Client Key");
-    serverKey = SHA1.str_hmac_sha1(Hi, "Server Key");
-    clientSignature = SHA1.core_hmac_sha1(SHA1.str_sha1(SHA1.binb2str(clientKey)), authMessage);
-    connection._sasl_data["server-signature"] = SHA1.b64_hmac_sha1(serverKey, authMessage);
-
-    for (k = 0; k < 5; k++) {
-      clientKey[k] ^= clientSignature[k];
-    }
-
-    responseText += ",p=" + Base64.encode(SHA1.binb2str(clientKey));
-    return responseText;
-  }.bind(this);
-
-  return auth_str;
-};
-
-Strophe.Connection.prototype.mechanisms[Strophe.SASLSHA1.prototype.name] = Strophe.SASLSHA1;
-
-/** PrivateConstructor: SASLMD5
- *  SASL DIGEST MD5 authentication.
- */
-Strophe.SASLMD5 = function() {};
-
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
-
-Strophe.SASLMD5.test = function(connection) {
-  return connection.authcid !== null;
-};
-
-/** PrivateFunction: _quote
- *  _Private_ utility function to backslash escape and quote strings.
- *
- *  Parameters:
- *    (String) str - The string to be quoted.
- *
- *  Returns:
- *    quoted string
- */
-Strophe.SASLMD5.prototype._quote = function (str)
-  {
-    return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-    //" end string workaround for emacs
-  };
-
-
-Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cnonce) {
-  var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
-  var cnonce = test_cnonce || MD5.hexdigest("" + (Math.random() * 1234567890));
-  var realm = "";
-  var host = null;
-  var nonce = "";
-  var qop = "";
-  var matches;
-
-  while (challenge.match(attribMatch)) {
-    matches = challenge.match(attribMatch);
-    challenge = challenge.replace(matches[0], "");
-    matches[2] = matches[2].replace(/^"(.+)"$/, "$1");
-    switch (matches[1]) {
-    case "realm":
-      realm = matches[2];
-      break;
-    case "nonce":
-      nonce = matches[2];
-      break;
-    case "qop":
-      qop = matches[2];
-      break;
-    case "host":
-      host = matches[2];
-      break;
-    }
-  }
-
-  var digest_uri = connection.servtype + "/" + connection.domain;
-  if (host !== null) {
-    digest_uri = digest_uri + "/" + host;
-  }
-
-  var cred = utils.utf16to8(connection.authcid + ":" + realm + ":" + this._connection.pass);
-  var A1 = MD5.hash(cred) + ":" + nonce + ":" + cnonce;
-  var A2 = 'AUTHENTICATE:' + digest_uri;
-
-  var responseText = "";
-  responseText += 'charset=utf-8,';
-  responseText += 'username=' + this._quote(utils.utf16to8(connection.authcid)) + ',';
-  responseText += 'realm=' + this._quote(realm) + ',';
-  responseText += 'nonce=' + this._quote(nonce) + ',';
-  responseText += 'nc=00000001,';
-  responseText += 'cnonce=' + this._quote(cnonce) + ',';
-  responseText += 'digest-uri=' + this._quote(digest_uri) + ',';
-  responseText += 'response=' + MD5.hexdigest(MD5.hexdigest(A1) + ":" +
-                                              nonce + ":00000001:" +
-                                              cnonce + ":auth:" +
-                                              MD5.hexdigest(A2)) + ",";
-  responseText += 'qop=auth';
-
-  this.onChallenge = function () {
-      return "";
-  }.bind(this);
-
-  return responseText;
-};
-
-Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
-
 return {
     Strophe:        Strophe,
     $build:         $build,
     $msg:           $msg,
     $iq:            $iq,
     $pres:          $pres,
-    SHA1:           SHA1,
     Base64:         Base64,
-    MD5:            MD5,
 };
 }));
