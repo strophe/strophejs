@@ -2480,7 +2480,14 @@ Strophe.Connection.prototype = {
 
         this.connected = true;
 
-        var bodyWrap = this._proto._reqToData(req);
+        var bodyWrap;
+        try {
+            bodyWrap = this._proto._reqToData(req);
+        } catch (e) {
+            if (e != "badformat") { throw e; }
+            this._changeConnectStatus(Strophe.Status.CONNFAIL, 'bad-format');
+            this._doDisconnect('bad-format');
+        }
         if (!bodyWrap) { return; }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {

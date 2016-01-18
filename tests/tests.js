@@ -327,6 +327,22 @@ define([
 				"bound function should get all arguments");
 		});
 
+		test("Connfail for invalid XML", function () {
+			var req = new Strophe.Request('', function(){});
+			req.xhr = {
+				responseText: 'text'
+			};
+
+			var conn = new Strophe.Connection("http://fake");
+			conn.connect_callback = function(status, condition) {
+				if(status === Strophe.Status.CONNFAIL) {
+					equal(condition, "bad-format", "connection should fail with condition bad-format");
+				}
+			};
+
+			conn._connect_cb(req);
+		});
+
 		module("XHR error handling");
 
 		// Note that these tests are pretty dependent on the actual code.
