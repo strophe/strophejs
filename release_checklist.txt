@@ -6,6 +6,7 @@
 *** Update CHANGELOG.txt
 *** Check for correct version number in package.json and bower,json
 *** Run "make release"
+*** Commit the newly generated files (mention it's a new release)
 *** Tag code with version (git tag -s vVERSION )
 *** Push repo and tags (git push && git push --tags)
 *** Add documentation to strophe.im repo

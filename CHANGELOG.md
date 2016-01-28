@@ -2,6 +2,8 @@
 
 ## Version 1.2.4 - Unreleased
 * #147 Support for UTF-16 encoded usernames (e.g. Chinese)
+* #162 allow empty expectedFrom according to W3C DOM 3 Specification
+* #171 Improve invalid BOSH URL handling
 
 ## Version 1.2.3 - 2015-09-01
 * Bugfix. Check if JID is null when restoring a session.
