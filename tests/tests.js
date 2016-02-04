@@ -620,9 +620,6 @@ define([
 
          test("nextValidRid is called after successful request", function () {
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 43, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
@@ -636,6 +633,7 @@ define([
             conn._requests = [req];
             conn._proto._onRequestStateChange(function(){}, req);
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(43), true, "The RID was valid");
          });
 
          test("nextValidRid is not called after failed request", function () {
@@ -660,9 +658,6 @@ define([
                return 1;
             });
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 4294967295, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
@@ -676,6 +671,7 @@ define([
             conn._requests = [req];
             conn._proto._onRequestStateChange(function(){}, req);
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(4294967295), true, "The RID was valid");
             Math.random.restore();
          });
 
@@ -684,13 +680,11 @@ define([
                return 1;
             });
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 4294967295, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             conn.reset();
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(4294967295), true, "The RID was valid");
             Math.random.restore();
          });
    };
