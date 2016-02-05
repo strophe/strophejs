@@ -1548,13 +1548,17 @@ Strophe.TimedHandler.prototype = {
  *  which it can resume an existing session.
  *
  *  The "withCredentials" option should receive a Boolean value and is used to
- *  indicate wether cookies should be included as part of cross-domain
- *  requests. Set this value to true if you are connecting to a BOSH service
- *  running on a different domain and for some reason need to send cookies to
- *  it. In order for this to work, the server must also enable credentials by
- *  setting the Access-Control-Allow-Credentials response header to “true”.
- *  For most usecases however this setting should be false (which is the
- *  default).
+ *  indicate wether cookies should be included in ajax requests (by default
+ *  they're not).
+ *  Set this value to true if you are connecting to a BOSH service
+ *  and for some reason need to send cookies to it.
+ *  In order for this to work cross-domain, the server must also enable
+ *  credentials by setting the Access-Control-Allow-Credentials response header
+ *  to “true”. For most usecases however this setting should be false (which
+ *  is the default).
+ *  Additionally, when using Access-Control-Allow-Credentials, the
+ *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
+ *  instead must be restricted to actual domains.
  *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
