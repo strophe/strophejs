@@ -1482,6 +1482,7 @@ Strophe.TimedHandler.prototype = {
  *  > var conn = new Strophe.Connection("/http-bind/");
  *
  *  WebSocket options:
+ *  ------------------
  *
  *  If you want to connect to the current host with a WebSocket connection you
  *  can tell Strophe to use WebSockets through a "protocol" attribute in the
@@ -1499,6 +1500,7 @@ Strophe.TimedHandler.prototype = {
  *  variants if the current connection to the site is also secure (https).
  *
  *  BOSH options:
+ *  -------------
  *
  *  By adding "sync" to the options, you can control if requests will
  *  be made synchronously or not. The default behaviour is asynchronous.
@@ -1518,6 +1520,15 @@ Strophe.TimedHandler.prototype = {
  *  "restore" is called it will check whether there are cached tokens with
  *  which it can resume an existing session.
  *
+ *  The "withCredentials" option should receive a Boolean value and is used to
+ *  indicate wether cookies should be included as part of cross-domain
+ *  requests. Set this value to true if you are connecting to a BOSH service
+ *  running on a different domain and for some reason need to send cookies to
+ *  it. In order for this to work, the server must also enable credentials by
+ *  setting the Access-Control-Allow-Credentials response header to “true”.
+ *  For most usecases however this setting should be false (which is the
+ *  default).
+ *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
  *    (Object) options - A hash of configuration options
@@ -1529,7 +1540,6 @@ Strophe.Connection = function (service, options)
 {
     // The service URL
     this.service = service;
-
     // Configuration options
     this.options = options || {};
     var proto = this.options.protocol || "";
@@ -1583,7 +1593,7 @@ Strophe.Connection = function (service, options)
     // Max retries before disconnecting
     this.maxRetries = 5;
 
-    // setup onIdle callback every 1/10th of a second
+    // Call onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
 
     // initialize plugins

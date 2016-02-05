@@ -133,6 +133,34 @@ define([
             timeoutStub.restore();
         });
 
+        module("Strophe.Connection options");
+
+        test("withCredentials can be set on the XMLHttpRequest object", function () {
+            var stanza = $pres();
+            // Stub XMLHttpRequest.protototype.send so that it doesn't
+            // actually try to send out the request.
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            // Stub setTimeout to immediately call functions, otherwise our
+            // assertions fail due to async execution.
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                func.apply(arguments);
+            });
+
+            var conn = new Strophe.Connection("example.org");
+            conn.send(stanza);
+            equal(sendStub.called, true);
+            equal(sendStub.getCalls()[0].thisValue.withCredentials, false);
+
+            conn = new Strophe.Connection(
+                    "example.org",
+                    { "withCredentials": true });
+            conn.send(stanza);
+            equal(sendStub.called, true);
+            equal(sendStub.getCalls()[1].thisValue.withCredentials, true);
+            sendStub.restore();
+            timeoutStub.restore();
+        });
+
 		test("send() does not accept strings", function () {
 			var stanza = "<presence/>";
 			var conn = new Strophe.Connection("");

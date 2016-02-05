@@ -123,10 +123,8 @@ Strophe.Request.prototype = {
         } else if (window.ActiveXObject) {
             xhr = new ActiveXObject("Microsoft.XMLHTTP");
         }
-
         // use Function.bind() to prepend ourselves as an argument
         xhr.onreadystatechange = this.func.bind(null, this);
-
         return xhr;
     }
 };
@@ -735,6 +733,9 @@ Strophe.Bosh.prototype = {
             try {
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
                 req.xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+                if (this._conn.options.withCredentials) {
+                    req.xhr.withCredentials = true;
+                }
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
