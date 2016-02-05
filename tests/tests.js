@@ -118,18 +118,20 @@ define([
 			});
 		});
 		
-		test("send() accepts Builders (#27)", function () {
-			var stanza = $pres();
-			var conn = new Strophe.Connection("");
-			// fake connection callback to avoid errors
-			conn.connect_callback = function () {};
-			
-			ok(conn._data.length === 0, "Output queue is clean");
-			try {
-				conn.send(stanza);
-			} catch (e) {}
-			ok(conn._data.length === 1, "Output queue contains an element");
-		});
+        test("Strophe.Connection.prototype.send() accepts Builders (#27)", function () {
+            var stanza = $pres();
+            var conn = new Strophe.Connection("");
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                // Stub setTimeout to immediately call functions, otherwise our
+                // assertions fail due to async execution.
+                func.apply(arguments);
+            });
+            conn.send(stanza);
+            equal(sendStub.called, true, "XMLHttpRequest.send was called");
+            sendStub.restore();
+            timeoutStub.restore();
+        });
 
 		test("send() does not accept strings", function () {
 			var stanza = "<presence/>";
@@ -360,9 +362,7 @@ define([
 					abort: true};
 
 			conn._requests = [req];
-
 			var spy = sinon.spy();
-
 			conn._proto._onRequestStateChange(spy, req);
 
 			equal(req.abort, false, "abort flag should be toggled");
@@ -382,11 +382,8 @@ define([
 					}};
 
 			conn._requests = [req];
-
 			var spy = sinon.spy();
-
 			conn._proto._onRequestStateChange(spy, req);
-
 			equal(conn._requests.length, 1, "_requests should be same length");
 			equal(spy.called, false, "callback should not be called");
 		});
