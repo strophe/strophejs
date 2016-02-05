@@ -29,8 +29,45 @@
                 }
             }
             return out;
-        }
+        },
 
+        addCookies: function (cookies) {
+            /* Parameters:
+             *  (Object) cookies - either a map of cookie names
+             *    to string values or to maps of cookie values.
+             *
+             * For example:
+             * { "myCookie": "1234" }
+             *
+             * or:
+             * { "myCookie": {
+             *      "value": "1234",
+             *      "domain": ".example.org",
+             *      "path": "/",
+             *      "expires": expirationDate
+             *      }
+             *  }
+             *
+             *  These values get passed to Strophe.Connection via
+             *   options.cookies
+             */
+            var cookieName, cookieObj, isObj, cookieValue, expires, domain, path;
+            for (cookieName in (cookies || {})) {
+                expires = '';
+                domain = '';
+                path = '';
+                cookieObj = cookies[cookieName];
+                isObj = typeof cookieObj == "object";
+                cookieValue = escape(unescape(isObj ? cookieObj.value : cookieObj));
+                if (isObj) {
+                    expires = cookieObj.expires ? ";expires="+cookieObj.expires : '';
+                    domain = cookieObj.domain ? ";domain="+cookieObj.domain : '';
+                    path = cookieObj.path ? ";path="+cookieObj.path : '';
+                }
+                document.cookie =
+                    cookieName+'='+cookieValue + expires + domain + path;
+            }
+        }
     };
     return utils;
 }));

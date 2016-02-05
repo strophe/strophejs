@@ -1481,6 +1481,33 @@ Strophe.TimedHandler.prototype = {
  *
  *  > var conn = new Strophe.Connection("/http-bind/");
  *
+ *  Options common to both Websocket and BOSH:
+ *  ------------------------------------------
+ *
+ *  The "cookies" option allows you to pass in cookies to be added to the
+ *  document. These cookies will then be included in the BOSH XMLHttpRequest
+ *  or in the websocket connection.
+ *
+ *  The passed in value must be a map of cookie names and string values or
+ *  cookie attributes.
+ *
+ * For example:
+ * { "myCookie": "1234" }
+ *
+ * or:
+ * { "myCookie": {
+ *      "value": "1234",
+ *      "domain": ".example.org",
+ *      "path": "/",
+ *      "expires": expirationDate
+ *      }
+ *  }
+ *
+ *  Note that cookies can't be set in this way for other domains (i.e. cross-domain).
+ *  Those cookies need to be set under those domains, for example they can be
+ *  set server-side by making a XHR call to that domain to ask it to set any
+ *  necessary cookies.
+ *
  *  WebSocket options:
  *  ------------------
  *
@@ -1595,6 +1622,8 @@ Strophe.Connection = function (service, options)
 
     // Call onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+
+    utils.addCookies(this.options.cookies);
 
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {

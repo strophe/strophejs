@@ -161,6 +161,53 @@ define([
             timeoutStub.restore();
         });
 
+        test("Cookies can be added to the document passing them as options to Strophe.Connection", function () {
+            var stanza = $pres();
+            var conn = new Strophe.Connection(
+                    "localhost",
+                    {   "cookies": {
+                            "_xxx": {
+                                "value": "1234",
+                                "path": "/",
+                            }
+                        }
+                    });
+            notEqual(document.cookie.indexOf('_xxx'), -1);
+            var start = document.cookie.indexOf('_xxx');
+            var end = document.cookie.indexOf(";", start);
+            end = end == -1 ? document.cookie.length : end;
+            equal(document.cookie.substring(start, end), '_xxx=1234');
+
+            // Also test when passing only a string
+            conn = new Strophe.Connection(
+                    "localhost",
+                    {   "cookies": { "_yyy": "4321" },
+                        "withCredentials": true
+                    });
+            notEqual(document.cookie.indexOf('_yyy'), -1);
+            start = document.cookie.indexOf('_yyy');
+            end = document.cookie.indexOf(";", start);
+            end = end == -1 ? document.cookie.length : end;
+            equal(document.cookie.substring(start, end), '_yyy=4321');
+
+            // Stub XMLHttpRequest.protototype.send so that it doesn't
+            // actually try to send out the request.
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            // Stub setTimeout to immediately call functions, otherwise our
+            // assertions fail due to async execution.
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                func.apply(arguments);
+            });
+            conn.send(stanza);
+            // Unfortunately there's no way to test the headers set in the
+            // request (only in the response). They can however be checked with
+            // the browser's developer tools.
+            equal(sendStub.called, true);
+            sendStub.restore();
+            timeoutStub.restore();
+
+        });
+
 		test("send() does not accept strings", function () {
 			var stanza = "<presence/>";
 			var conn = new Strophe.Connection("");
