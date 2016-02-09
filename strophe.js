@@ -554,8 +554,45 @@ return {
                 }
             }
             return out;
-        }
+        },
 
+        addCookies: function (cookies) {
+            /* Parameters:
+             *  (Object) cookies - either a map of cookie names
+             *    to string values or to maps of cookie values.
+             *
+             * For example:
+             * { "myCookie": "1234" }
+             *
+             * or:
+             * { "myCookie": {
+             *      "value": "1234",
+             *      "domain": ".example.org",
+             *      "path": "/",
+             *      "expires": expirationDate
+             *      }
+             *  }
+             *
+             *  These values get passed to Strophe.Connection via
+             *   options.cookies
+             */
+            var cookieName, cookieObj, isObj, cookieValue, expires, domain, path;
+            for (cookieName in (cookies || {})) {
+                expires = '';
+                domain = '';
+                path = '';
+                cookieObj = cookies[cookieName];
+                isObj = typeof cookieObj == "object";
+                cookieValue = escape(unescape(isObj ? cookieObj.value : cookieObj));
+                if (isObj) {
+                    expires = cookieObj.expires ? ";expires="+cookieObj.expires : '';
+                    domain = cookieObj.domain ? ";domain="+cookieObj.domain : '';
+                    path = cookieObj.path ? ";path="+cookieObj.path : '';
+                }
+                document.cookie =
+                    cookieName+'='+cookieValue + expires + domain + path;
+            }
+        }
     };
     return utils;
 }));
@@ -762,7 +799,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "1.2.4",
+    VERSION: "1.2.5",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2146,7 +2183,35 @@ Strophe.TimedHandler.prototype = {
  *
  *  > var conn = new Strophe.Connection("/http-bind/");
  *
+ *  Options common to both Websocket and BOSH:
+ *  ------------------------------------------
+ *
+ *  The "cookies" option allows you to pass in cookies to be added to the
+ *  document. These cookies will then be included in the BOSH XMLHttpRequest
+ *  or in the websocket connection.
+ *
+ *  The passed in value must be a map of cookie names and string values or
+ *  cookie attributes.
+ *
+ * For example:
+ * { "myCookie": "1234" }
+ *
+ * or:
+ * { "myCookie": {
+ *      "value": "1234",
+ *      "domain": ".example.org",
+ *      "path": "/",
+ *      "expires": expirationDate
+ *      }
+ *  }
+ *
+ *  Note that cookies can't be set in this way for other domains (i.e. cross-domain).
+ *  Those cookies need to be set under those domains, for example they can be
+ *  set server-side by making a XHR call to that domain to ask it to set any
+ *  necessary cookies.
+ *
  *  WebSocket options:
+ *  ------------------
  *
  *  If you want to connect to the current host with a WebSocket connection you
  *  can tell Strophe to use WebSockets through a "protocol" attribute in the
@@ -2164,6 +2229,7 @@ Strophe.TimedHandler.prototype = {
  *  variants if the current connection to the site is also secure (https).
  *
  *  BOSH options:
+ *  -------------
  *
  *  By adding "sync" to the options, you can control if requests will
  *  be made synchronously or not. The default behaviour is asynchronous.
@@ -2183,6 +2249,19 @@ Strophe.TimedHandler.prototype = {
  *  "restore" is called it will check whether there are cached tokens with
  *  which it can resume an existing session.
  *
+ *  The "withCredentials" option should receive a Boolean value and is used to
+ *  indicate wether cookies should be included in ajax requests (by default
+ *  they're not).
+ *  Set this value to true if you are connecting to a BOSH service
+ *  and for some reason need to send cookies to it.
+ *  In order for this to work cross-domain, the server must also enable
+ *  credentials by setting the Access-Control-Allow-Credentials response header
+ *  to “true”. For most usecases however this setting should be false (which
+ *  is the default).
+ *  Additionally, when using Access-Control-Allow-Credentials, the
+ *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
+ *  instead must be restricted to actual domains.
+ *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
  *    (Object) options - A hash of configuration options
@@ -2194,7 +2273,6 @@ Strophe.Connection = function (service, options)
 {
     // The service URL
     this.service = service;
-
     // Configuration options
     this.options = options || {};
     var proto = this.options.protocol || "";
@@ -2248,8 +2326,10 @@ Strophe.Connection = function (service, options)
     // Max retries before disconnecting
     this.maxRetries = 5;
 
-    // setup onIdle callback every 1/10th of a second
+    // Call onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+
+    utils.addCookies(this.options.cookies);
 
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
@@ -4202,10 +4282,8 @@ Strophe.Request.prototype = {
         } else if (window.ActiveXObject) {
             xhr = new ActiveXObject("Microsoft.XMLHTTP");
         }
-
         // use Function.bind() to prepend ourselves as an argument
         xhr.onreadystatechange = this.func.bind(null, this);
-
         return xhr;
     }
 };
@@ -4814,6 +4892,9 @@ Strophe.Bosh.prototype = {
             try {
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
                 req.xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+                if (this._conn.options.withCredentials) {
+                    req.xhr.withCredentials = true;
+                }
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
@@ -5409,7 +5490,7 @@ Strophe.Websocket.prototype = {
      */
     _onError: function(error) {
         Strophe.error("Websocket error " + error);
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established was disconnected.");
+        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
         this._disconnect();
     },
 
