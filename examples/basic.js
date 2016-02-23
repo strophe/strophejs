@@ -1,19 +1,37 @@
 var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind';
 var connection = null;
 
-function log(msg) 
-{
-    $('#log').append('<div></div>').append(document.createTextNode(msg));
+function log(msg, data) {
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    th.setAttribute( "style", "text-align: left; vertical-align: top;" );
+    var td;
+
+    th.appendChild( document.createTextNode(msg) );
+    tr.appendChild( th );
+
+    if (data) {
+        td = document.createElement('td');
+        pre = document.createElement('code');
+        pre.setAttribute("style", "white-space: pre-wrap;");
+        td.appendChild(pre);
+        pre.appendChild( document.createTextNode( vkbeautify.xml(data) ) );
+        tr.appendChild(td);
+    } else {
+        th.setAttribute('colspan', '2');
+    }
+
+    $('#log').append(tr);
 }
 
 function rawInput(data)
 {
-    log('RECV: ' + data);
+    log('RECV', data);
 }
 
 function rawOutput(data)
 {
-    log('SENT: ' + data);
+    log('SENT', data);
 }
 
 function onConnect(status)
