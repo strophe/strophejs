@@ -6,6 +6,18 @@
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
+/* global define */
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('strophe-polyfill', [], function () {
+            return factory();
+        });
+    } else {
+        // Browser globals
+        return factory();
+    }
+}(this, function () {
 
 /** PrivateFunction: Function.prototype.bind
  *  Bind a function to an instance.
@@ -88,3 +100,4 @@ if (!Array.prototype.indexOf)
             return -1;
         };
     }
+}));

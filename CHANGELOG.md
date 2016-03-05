@@ -1,5 +1,14 @@
 # Strophe.js Change Log
 
+## Version 1.2.5 - 2016-02-09
+* Add a new Strophe.Connection option to add cookies
+* Add new Strophe.Connection option "withCredentials"
+
+## Version 1.2.4 - 2016-01-28
+* #147 Support for UTF-16 encoded usernames (e.g. Chinese)
+* #162 allow empty expectedFrom according to W3C DOM 3 Specification
+* #171 Improve invalid BOSH URL handling
+
 ## Version 1.2.3 - 2015-09-01
 * Bugfix. Check if JID is null when restoring a session.
 * #127 IE-Fix: error on setting null value with setAttributes
@@ -15,7 +24,7 @@
 * #121 Ensure that the node names of HTML elements copied into XHTML are lower case.
 * #124 Strophe's Builder will swallow elements if given a blank string as a 'text' parameter.
 
-## Version 1.2.1 - 2015-02-22 
+## Version 1.2.1 - 2015-02-22
 * Rerelease of 1.2.0 but with a semver tag and proper formatting of bower.json
   for usage with Bower.io.
 

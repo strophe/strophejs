@@ -118,18 +118,95 @@ define([
 			});
 		});
 		
-		test("send() accepts Builders (#27)", function () {
-			var stanza = $pres();
-			var conn = new Strophe.Connection("");
-			// fake connection callback to avoid errors
-			conn.connect_callback = function () {};
-			
-			ok(conn._data.length === 0, "Output queue is clean");
-			try {
-				conn.send(stanza);
-			} catch (e) {}
-			ok(conn._data.length === 1, "Output queue contains an element");
-		});
+        test("Strophe.Connection.prototype.send() accepts Builders (#27)", function () {
+            var stanza = $pres();
+            var conn = new Strophe.Connection("");
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                // Stub setTimeout to immediately call functions, otherwise our
+                // assertions fail due to async execution.
+                func.apply(arguments);
+            });
+            conn.send(stanza);
+            equal(sendStub.called, true, "XMLHttpRequest.send was called");
+            sendStub.restore();
+            timeoutStub.restore();
+        });
+
+        module("Strophe.Connection options");
+
+        test("withCredentials can be set on the XMLHttpRequest object", function () {
+            var stanza = $pres();
+            // Stub XMLHttpRequest.protototype.send so that it doesn't
+            // actually try to send out the request.
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            // Stub setTimeout to immediately call functions, otherwise our
+            // assertions fail due to async execution.
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                func.apply(arguments);
+            });
+
+            var conn = new Strophe.Connection("example.org");
+            conn.send(stanza);
+            equal(sendStub.called, true);
+            equal(sendStub.getCalls()[0].thisValue.withCredentials, false);
+
+            conn = new Strophe.Connection(
+                    "example.org",
+                    { "withCredentials": true });
+            conn.send(stanza);
+            equal(sendStub.called, true);
+            equal(sendStub.getCalls()[1].thisValue.withCredentials, true);
+            sendStub.restore();
+            timeoutStub.restore();
+        });
+
+        test("Cookies can be added to the document passing them as options to Strophe.Connection", function () {
+            var stanza = $pres();
+            var conn = new Strophe.Connection(
+                    "localhost",
+                    {   "cookies": {
+                            "_xxx": {
+                                "value": "1234",
+                                "path": "/",
+                            }
+                        }
+                    });
+            notEqual(document.cookie.indexOf('_xxx'), -1);
+            var start = document.cookie.indexOf('_xxx');
+            var end = document.cookie.indexOf(";", start);
+            end = end == -1 ? document.cookie.length : end;
+            equal(document.cookie.substring(start, end), '_xxx=1234');
+
+            // Also test when passing only a string
+            conn = new Strophe.Connection(
+                    "localhost",
+                    {   "cookies": { "_yyy": "4321" },
+                        "withCredentials": true
+                    });
+            notEqual(document.cookie.indexOf('_yyy'), -1);
+            start = document.cookie.indexOf('_yyy');
+            end = document.cookie.indexOf(";", start);
+            end = end == -1 ? document.cookie.length : end;
+            equal(document.cookie.substring(start, end), '_yyy=4321');
+
+            // Stub XMLHttpRequest.protototype.send so that it doesn't
+            // actually try to send out the request.
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            // Stub setTimeout to immediately call functions, otherwise our
+            // assertions fail due to async execution.
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                func.apply(arguments);
+            });
+            conn.send(stanza);
+            // Unfortunately there's no way to test the headers set in the
+            // request (only in the response). They can however be checked with
+            // the browser's developer tools.
+            equal(sendStub.called, true);
+            sendStub.restore();
+            timeoutStub.restore();
+
+        });
 
 		test("send() does not accept strings", function () {
 			var stanza = "<presence/>";
@@ -327,6 +404,22 @@ define([
 				"bound function should get all arguments");
 		});
 
+		test("Connfail for invalid XML", function () {
+			var req = new Strophe.Request('', function(){});
+			req.xhr = {
+				responseText: 'text'
+			};
+
+			var conn = new Strophe.Connection("http://fake");
+			conn.connect_callback = function(status, condition) {
+				if(status === Strophe.Status.CONNFAIL) {
+					equal(condition, "bad-format", "connection should fail with condition bad-format");
+				}
+			};
+
+			conn._connect_cb(req);
+		});
+
 		module("XHR error handling");
 
 		// Note that these tests are pretty dependent on the actual code.
@@ -344,9 +437,7 @@ define([
 					abort: true};
 
 			conn._requests = [req];
-
 			var spy = sinon.spy();
-
 			conn._proto._onRequestStateChange(spy, req);
 
 			equal(req.abort, false, "abort flag should be toggled");
@@ -366,11 +457,8 @@ define([
 					}};
 
 			conn._requests = [req];
-
 			var spy = sinon.spy();
-
 			conn._proto._onRequestStateChange(spy, req);
-
 			equal(conn._requests.length, 1, "_requests should be same length");
 			equal(spy.called, false, "callback should not be called");
 		});
@@ -390,22 +478,34 @@ define([
 			saslplain.onSuccess();
 		});
 
-		test("SASL SCRAM-SHA-1 Auth", function () {
-			var conn = {pass: "pencil", authcid: "user",
-						authzid: "user@xmpp.org", _sasl_data: []};
-			ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
-			var saslsha1 = new Strophe.SASLSHA1();
-			saslsha1.onStart(conn);
-			// test taken from example section on:
-			// URL: http://tools.ietf.org/html/rfc5802#section-5
-			var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
-			equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
+        test("SASL SCRAM-SHA-1 Auth", function () {
+            /* This is a simple example of a SCRAM-SHA-1 authentication exchange
+             * when the client doesn't support channel bindings (username 'user' and
+             * password 'pencil' are used):
+             *
+             * C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
+             * S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,
+             * i=4096
+             * C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
+             * p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
+             * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
+             *
+             */
+            var conn = {pass: "pencil", authcid: "user",
+                        authzid: "user@xmpp.org", _sasl_data: []};
+            ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
+            var saslsha1 = new Strophe.SASLSHA1();
+            saslsha1.onStart(conn);
+            // test taken from example section on:
+            // URL: http://tools.ietf.org/html/rfc5802#section-5
+            var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
+            equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
 
-			response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
-			equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
-				"checking second auth challenge");
-			saslsha1.onSuccess();
-		});
+            response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
+            equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
+                "checking second auth challenge");
+            saslsha1.onSuccess();
+        });
 
 		test("SASL DIGEST-MD-5 Auth", function () {
 			var conn = {pass: "secret", authcid: "chris",
@@ -592,9 +692,6 @@ define([
 
          test("nextValidRid is called after successful request", function () {
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 43, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
@@ -608,6 +705,7 @@ define([
             conn._requests = [req];
             conn._proto._onRequestStateChange(function(){}, req);
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(43), true, "The RID was valid");
          });
 
          test("nextValidRid is not called after failed request", function () {
@@ -632,9 +730,6 @@ define([
                return 1;
             });
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 4294967295, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
@@ -648,6 +743,7 @@ define([
             conn._requests = [req];
             conn._proto._onRequestStateChange(function(){}, req);
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(4294967295), true, "The RID was valid");
             Math.random.restore();
          });
 
@@ -656,13 +752,11 @@ define([
                return 1;
             });
             Strophe.Connection.prototype._onIdle = function () {};
-            Strophe.Connection.prototype.nextValidRid = function (rid) {
-               equal(rid, 4294967295, "RID is valid");
-            };
             var conn = new Strophe.Connection("http://fake");
             var spy = sinon.spy(conn, 'nextValidRid');
             conn.reset();
             equal(spy.calledOnce, true, "nextValidRid was called only once");
+            equal(spy.calledWith(4294967295), true, "The RID was valid");
             Math.random.restore();
          });
    };
