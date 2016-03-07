@@ -220,6 +220,7 @@ Strophe = {
      *  Status.DISCONNECTED - The connection has been terminated
      *  Status.DISCONNECTING - The connection is currently being terminated
      *  Status.ATTACHED - The connection has been attached
+     *  Status.CONNTIMEOUT - The connection has timed out
      */
     Status: {
         ERROR: 0,
@@ -231,7 +232,8 @@ Strophe = {
         DISCONNECTED: 6,
         DISCONNECTING: 7,
         ATTACHED: 8,
-        REDIRECT: 9
+        REDIRECT: 9,
+        CONNTIMEOUT: 10
     },
 
     /** Constants: Log Level Constants
@@ -3034,6 +3036,8 @@ Strophe.Connection.prototype = {
     _onDisconnectTimeout: function ()
     {
         Strophe.info("_onDisconnectTimeout was called");
+
+        this._changeConnectStatus(Strophe.Status.CONNTIMEOUT, null);
 
         this._proto._onDisconnectTimeout();
 
