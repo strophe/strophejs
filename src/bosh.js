@@ -768,6 +768,8 @@ Strophe.Bosh.prototype = {
                 // expanding retry window
                 var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
                                        Math.pow(req.sends, 3)) * 1000;
+
+                // XXX: setTimeout should be called only with function expressions (23974bc1)
                 setTimeout(function() {
                     sendFunc();
                 }, backoff);
@@ -889,6 +891,8 @@ Strophe.Bosh.prototype = {
     _send: function () {
         clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
+
+        // XXX: setTimeout should be called only with function expressions (23974bc1)
         this._conn._idleTimeout = setTimeout(function() {
             this._onIdle();
         }.bind(this._conn), 100);

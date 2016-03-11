@@ -1624,11 +1624,12 @@ Strophe.Connection = function (service, options)
     // Max retries before disconnecting
     this.maxRetries = 5;
 
-    // setup onIdle callback every 1/10th of a second
+    // Call onIdle callback every 1/10th of a second
+    // XXX: setTimeout should be called only with function expressions (23974bc1)
     this._idleTimeout = setTimeout(function() {
         this._onIdle();
     }.bind(this), 100);
-    
+
     utils.addCookies(this.options.cookies);
 
     // initialize plugins
@@ -2160,6 +2161,7 @@ Strophe.Connection.prototype = {
 
         this._proto._sendRestart();
 
+        // XXX: setTimeout should be called only with function expressions (23974bc1)
         this._idleTimeout = setTimeout(function() {
             this._onIdle();
         }.bind(this), 100);
@@ -3097,6 +3099,7 @@ Strophe.Connection.prototype = {
 
         // reactivate the timer only if connected
         if (this.connected) {
+            // XXX: setTimeout should be called only with function expressions (23974bc1)
             this._idleTimeout = setTimeout(function() {
                 this._onIdle();
             }.bind(this), 100);
