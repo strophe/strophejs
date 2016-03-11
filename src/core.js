@@ -1556,7 +1556,7 @@ Strophe.TimedHandler.prototype = {
  *  and for some reason need to send cookies to it.
  *  In order for this to work cross-domain, the server must also enable
  *  credentials by setting the Access-Control-Allow-Credentials response header
- *  to “true”. For most usecases however this setting should be false (which
+ *  to "true". For most usecases however this setting should be false (which
  *  is the default).
  *  Additionally, when using Access-Control-Allow-Credentials, the
  *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
@@ -1627,7 +1627,10 @@ Strophe.Connection = function (service, options)
     this.maxRetries = 5;
 
     // Call onIdle callback every 1/10th of a second
-    this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+    // XXX: setTimeout should be called only with function expressions (23974bc1)
+    this._idleTimeout = setTimeout(function() {
+        this._onIdle();
+    }.bind(this), 100);
 
     utils.addCookies(this.options.cookies);
 
@@ -2160,7 +2163,10 @@ Strophe.Connection.prototype = {
 
         this._proto._sendRestart();
 
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        // XXX: setTimeout should be called only with function expressions (23974bc1)
+        this._idleTimeout = setTimeout(function() {
+            this._onIdle();
+        }.bind(this), 100);
     },
 
     /** Function: addTimedHandler
@@ -3097,7 +3103,10 @@ Strophe.Connection.prototype = {
 
         // reactivate the timer only if connected
         if (this.connected) {
-            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+            // XXX: setTimeout should be called only with function expressions (23974bc1)
+            this._idleTimeout = setTimeout(function() {
+                this._onIdle();
+            }.bind(this), 100);
         }
     }
 };
