@@ -1554,7 +1554,7 @@ Strophe.TimedHandler.prototype = {
  *  and for some reason need to send cookies to it.
  *  In order for this to work cross-domain, the server must also enable
  *  credentials by setting the Access-Control-Allow-Credentials response header
- *  to “true”. For most usecases however this setting should be false (which
+ *  to "true". For most usecases however this setting should be false (which
  *  is the default).
  *  Additionally, when using Access-Control-Allow-Credentials, the
  *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
