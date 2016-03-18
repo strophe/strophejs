@@ -198,7 +198,7 @@ Strophe.Bosh.prototype = {
         if (this.sid !== null) {
             bodyWrap.attrs({sid: this.sid});
         }
-        if (this._conn.options.keepalive) {
+        if (this._conn.options.keepalive && this._conn._sessionCachingSupported()) {
             this._cacheSession();
         }
         return bodyWrap;
@@ -214,7 +214,9 @@ Strophe.Bosh.prototype = {
         this.rid = Math.floor(Math.random() * 4294967295);
         this.sid = null;
         this.errors = 0;
-        window.sessionStorage.removeItem('strophe-bosh-session');
+        if (this._conn._sessionCachingSupported()) {
+            window.sessionStorage.removeItem('strophe-bosh-session');
+        }
 
         this._conn.nextValidRid(this.rid);
     },
@@ -421,7 +423,9 @@ Strophe.Bosh.prototype = {
     {
         this.sid = null;
         this.rid = Math.floor(Math.random() * 4294967295);
-        window.sessionStorage.removeItem('strophe-bosh-session');
+        if (this._conn._sessionCachingSupported()) {
+            window.sessionStorage.removeItem('strophe-bosh-session');
+        }
 
         this._conn.nextValidRid(this.rid);
     },
