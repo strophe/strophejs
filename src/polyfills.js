@@ -41,8 +41,7 @@
  *    The bound function.
  */
 if (!Function.prototype.bind) {
-    Function.prototype.bind = function (obj /*, arg1, arg2, ... */)
-    {
+    Function.prototype.bind = function (obj /*, arg1, arg2, ... */) {
         var func = this;
         var _slice = Array.prototype.slice;
         var _concat = Array.prototype.concat;

@@ -86,8 +86,7 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *    A Strophe.Builder with a <stream> element.
      */
-    _buildStream: function ()
-    {
+    _buildStream: function () {
         return $build("open", {
             "xmlns": Strophe.NS.FRAMING,
             "to": this._conn.domain,
@@ -157,8 +156,7 @@ Strophe.Websocket.prototype = {
      *  This function is called by the reset function of the Strophe Connection.
      *  Is not needed by WebSockets.
      */
-    _reset: function ()
-    {
+    _reset: function () {
         return;
     },
 
@@ -280,8 +278,7 @@ Strophe.Websocket.prototype = {
      *  Parameters:
      *    (Request) pres - This stanza will be sent before disconnecting.
      */
-    _disconnect: function (pres)
-    {
+    _disconnect: function (pres) {
         if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
             if (pres) {
                 this._conn.send(pres);
@@ -304,8 +301,7 @@ Strophe.Websocket.prototype = {
      *
      *  Just closes the Socket for WebSockets
      */
-    _doDisconnect: function ()
-    {
+    _doDisconnect: function () {
         Strophe.info("WebSockets _doDisconnect was called");
         this._closeSocket();
     },
@@ -314,8 +310,7 @@ Strophe.Websocket.prototype = {
      *  _Private_ helper function to wrap a stanza in a <stream> tag.
      *  This is used so Strophe can process stanzas from WebSockets like BOSH
      */
-    _streamWrap: function (stanza)
-    {
+    _streamWrap: function (stanza) {
         return "<wrapper>" + stanza + '</wrapper>';
     },
 
@@ -325,8 +320,7 @@ Strophe.Websocket.prototype = {
      *
      *  Closes the socket if it is still open and deletes it
      */
-    _closeSocket: function ()
-    {
+    _closeSocket: function () {
         if (this.socket) { try {
             this.socket.close();
         } catch (e) {} }
@@ -339,8 +333,7 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *    True, because WebSocket messages are send immediately after queueing.
      */
-    _emptyQueue: function ()
-    {
+    _emptyQueue: function () {
         return true;
     },
 
@@ -363,8 +356,7 @@ Strophe.Websocket.prototype = {
      * Called on stream start/restart when no stream:features
      * has been received.
      */
-    _no_auth_received: function (_callback)
-    {
+    _no_auth_received: function (_callback) {
         Strophe.error("Server did not send any auth methods");
         this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
         if (_callback) {
@@ -427,11 +419,22 @@ Strophe.Websocket.prototype = {
     /** PrivateFunction: _onMessage
      * _Private_ function to handle websockets messages.
      *
-     * This function parses each of the messages as if they are full documents. [TODO : We may actually want to use a SAX Push parser].
+     * This function parses each of the messages as if they are full documents.
+     * [TODO : We may actually want to use a SAX Push parser].
      *
-     * Since all XMPP traffic starts with "<stream:stream version='1.0' xml:lang='en' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='3697395463' from='SERVER'>"
-     * The first stanza will always fail to be parsed...
-     * Addtionnaly, the seconds stanza will always be a <stream:features> with the stream NS defined in the previous stanza... so we need to 'force' the inclusion of the NS in this stanza!
+     * Since all XMPP traffic starts with
+     *  <stream:stream version='1.0'
+     *                 xml:lang='en'
+     *                 xmlns='jabber:client'
+     *                 xmlns:stream='http://etherx.jabber.org/streams'
+     *                 id='3697395463'
+     *                 from='SERVER'>
+     *
+     * The first stanza will always fail to be parsed.
+     *
+     * Additionally, the seconds stanza will always be <stream:features> with
+     * the stream NS defined in the previous stanza, so we need to 'force'
+     * the inclusion of the NS in this stanza.
      *
      * Parameters:
      * (string) message - The websocket message.
@@ -450,7 +453,6 @@ Strophe.Websocket.prototype = {
         } else if (message.data.search("<open ") === 0) {
             // This handles stream restarts
             elem = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
-
             if (!this._handleStreamStart(elem)) {
                 return;
             }
@@ -502,8 +504,7 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *    The stanza that was passed.
      */
-    _reqToData: function (stanza)
-    {
+    _reqToData: function (stanza) {
         return stanza;
     },
 
@@ -520,8 +521,7 @@ Strophe.Websocket.prototype = {
      *
      *  Send an xmpp:restart stanza.
      */
-    _sendRestart: function ()
-    {
+    _sendRestart: function () {
         clearTimeout(this._conn._idleTimeout);
         this._conn._onIdle.bind(this._conn)();
     }
