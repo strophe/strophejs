@@ -3160,6 +3160,7 @@ Strophe.SASLMechanism.prototype = {
    *  Strophe.SASLPlain - SASL Plain authentication.
    *  Strophe.SASLMD5 - SASL Digest-MD5 authentication
    *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
+   *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
    */
 
 // Building SASL callbacks
@@ -3373,6 +3374,32 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
+
+/** PrivateConstructor: SASLOAuthBearer
+ *  SASL OAuth Bearer authentication.
+ */
+Strophe.SASLOAuthBearer = function() {};
+
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 80);
+
+Strophe.SASLOAuthBearer.test = function(connection) {
+  return connection.authcid !== null;
+};
+
+Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
+  var auth_str = 'n,a=';
+  auth_str = auth_str + connection.authzid;
+  auth_str = auth_str + ','
+  auth_str = auth_str + "\u0001";
+  auth_str = auth_str + 'auth=Bearer ';
+  auth_str = auth_str + connection.pass;
+  auth_str = auth_str + "\u0001";
+  auth_str = auth_str + "\u0001";
+
+  return utils.utf16to8(auth_str);
+};
+
+Strophe.Connection.prototype.mechanisms[Strophe.SASLOAuthBearer.prototype.name] = Strophe.SASLOAuthBearer;
 
 return {
     Strophe:        Strophe,
