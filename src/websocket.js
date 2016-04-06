@@ -344,7 +344,7 @@ Strophe.Websocket.prototype = {
      */
     _onClose: function() {
         if(this._conn.connected && !this._conn.disconnecting) {
-            Strophe.error("Websocket closed unexcectedly");
+            Strophe.error("Websocket closed unexpectedly");
             this._conn._doDisconnect();
         } else {
             Strophe.info("Websocket closed");
