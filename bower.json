@@ -28,7 +28,7 @@
     "examples",
     "tests"
   ],
-  "dependencies": {
+  "devDependencies": {
     "sinon": "http://sinonjs.org/releases/sinon-1.12.2.js",
     "sinon-qunit": "~2.0.0",
     "qunit": "~1.16.0",
