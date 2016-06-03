@@ -1116,7 +1116,7 @@ Strophe.Builder.prototype = {
     c: function (name, attrs, text) {
         var child = Strophe.xmlElement(name, attrs, text);
         this.node.appendChild(child);
-        if (typeof text !== "string") {
+        if (typeof text !== "string" && typeof text !=="number") {
             this.node = child;
         }
         return this;
