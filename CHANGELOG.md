@@ -1,5 +1,12 @@
 # Strophe.js Change Log
 
+## Version 1.2.6 - 2016-06-06
+* #178 Added new value (CONNTIMEOUT) to Strophe.Status
+* #180 bosh: check sessionStorage support before using it
+* #182 Adding SASL OAuth Bearer authentication
+* #190 Fix .c() to accept both text and numbers as text for the child element
+* #192 User requirejs instead of require for node compat
+
 ## Version 1.2.5 - 2016-02-09
 * Add a new Strophe.Connection option to add cookies
 * Add new Strophe.Connection option "withCredentials"
