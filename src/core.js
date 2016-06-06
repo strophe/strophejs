@@ -3389,7 +3389,7 @@ Strophe.SASLOAuthBearer.test = function(connection) {
 Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
   var auth_str = 'n,a=';
   auth_str = auth_str + connection.authzid;
-  auth_str = auth_str + ','
+  auth_str = auth_str + ',';
   auth_str = auth_str + "\u0001";
   auth_str = auth_str + 'auth=Bearer ';
   auth_str = auth_str + connection.pass;
