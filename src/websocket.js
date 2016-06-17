@@ -18,9 +18,11 @@
         });
     } else {
         // Browser globals
-        return factory(Strophe, $build);
+        return factory(root.Strophe, root.$build, root.polyfills);
     }
-}(this, function (Strophe, $build) {
+}(this, function (Strophe, $build, polyfills) {
+
+var bind = polyfills.bind;
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
@@ -172,10 +174,10 @@ Strophe.Websocket.prototype = {
 
         // Create the new WobSocket
         this.socket = new WebSocket(this._conn.service, "xmpp");
-        this.socket.onopen = this._onOpen.bind(this);
-        this.socket.onerror = this._onError.bind(this);
-        this.socket.onclose = this._onClose.bind(this);
-        this.socket.onmessage = this._connect_cb_wrapper.bind(this);
+        this.socket.onopen = bind(this._onOpen, this);
+        this.socket.onerror = bind(this._onError, this);
+        this.socket.onclose = bind(this._onClose, this);
+        this.socket.onmessage = bind(this._connect_cb_wrapper, this);
     },
 
     /** PrivateFunction: _connect_cb
@@ -265,7 +267,7 @@ Strophe.Websocket.prototype = {
         } else {
             var string = this._streamWrap(message.data);
             var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
-            this.socket.onmessage = this._onMessage.bind(this);
+            this.socket.onmessage = bind(this._onMessage, this);
             this._conn._connect_cb(elem, null, message.data);
         }
     },
@@ -360,7 +362,7 @@ Strophe.Websocket.prototype = {
         Strophe.error("Server did not send any auth methods");
         this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
         if (_callback) {
-            _callback = _callback.bind(this._conn);
+            _callback = bind(_callback, this._conn);
             _callback();
         }
         this._conn._doDisconnect();
@@ -523,7 +525,7 @@ Strophe.Websocket.prototype = {
      */
     _sendRestart: function () {
         clearTimeout(this._conn._idleTimeout);
-        this._conn._onIdle.bind(this._conn)();
+        bind(this._conn._onIdle, this._conn)();
     }
 };
 return Strophe;

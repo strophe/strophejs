@@ -21,23 +21,18 @@
         });
     } else {
         // Browser globals
-        var o = factory(root.SHA1, root.Base64, root.MD5, root.stropheUtils);
-        window.Strophe =        o.Strophe;
-        window.$build =         o.$build;
-        window.$iq =            o.$iq;
-        window.$msg =           o.$msg;
-        window.$pres =          o.$pres;
-        window.SHA1 =           o.SHA1;
-        window.Base64 =         o.Base64;
-        window.MD5 =            o.MD5;
-        window.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
-        window.b64_sha1 =       o.SHA1.b64_sha1;
-        window.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
-        window.str_sha1 =       o.SHA1.str_sha1;
+        var o = factory(root.SHA1, root.Base64, root.MD5, root.stropheUtils, root.polyfills);
+
+        root.Strophe =        o.Strophe;
+        root.$build =         o.$build;
+        root.$iq =            o.$iq;
+        root.$msg =           o.$msg;
+        root.$pres =          o.$pres;
     }
-}(this, function (SHA1, Base64, MD5, utils) {
+}(this, function (SHA1, Base64, MD5, utils, polyfills) {
 
 var Strophe;
+var bind = polyfills.bind;
 
 /** Function: $build
  *  Create a Strophe.Builder.
@@ -93,6 +88,12 @@ function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
  *  provide a namespace for library objects, constants, and functions.
  */
 Strophe = {
+
+    /** Expose internal bind
+     *
+     */
+    bind: bind,
+
     /** Constant: VERSION
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
@@ -1581,11 +1582,8 @@ Strophe.Connection = function (service, options) {
     // Max retries before disconnecting
     this.maxRetries = 5;
 
-    // Call onIdle callback every 1/10th of a second
-    // XXX: setTimeout should be called only with function expressions (23974bc1)
-    this._idleTimeout = setTimeout(function() {
-        this._onIdle();
-    }.bind(this), 100);
+    // setup onIdle callback every 1/10th of a second
+    this._idleTimeout = setTimeout(bind(this._onIdle, this), 100);
 
     utils.addCookies(this.options.cookies);
 
@@ -2103,10 +2101,7 @@ Strophe.Connection.prototype = {
 
         this._proto._sendRestart();
 
-        // XXX: setTimeout should be called only with function expressions (23974bc1)
-        this._idleTimeout = setTimeout(function() {
-            this._onIdle();
-        }.bind(this), 100);
+        this._idleTimeout = setTimeout(bind(this._onIdle, this), 100);
     },
 
     /** Function: addTimedHandler
@@ -2250,7 +2245,7 @@ Strophe.Connection.prototype = {
             }
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
-                3000, this._onDisconnectTimeout.bind(this));
+                3000, bind(this._onDisconnectTimeout, this));
             this._proto._disconnect(pres);
         } else {
             Strophe.info("Disconnect was called before Strophe connected to the server");
@@ -2564,13 +2559,13 @@ Strophe.Connection.prototype = {
         if (!matched[i].test(this)) continue;
 
         this._sasl_success_handler = this._addSysHandler(
-          this._sasl_success_cb.bind(this), null,
+          bind(this._sasl_success_cb, this), null,
           "success", null, null);
         this._sasl_failure_handler = this._addSysHandler(
-          this._sasl_failure_cb.bind(this), null,
+          bind(this._sasl_failure_cb, this), null,
           "failure", null, null);
         this._sasl_challenge_handler = this._addSysHandler(
-          this._sasl_challenge_cb.bind(this), null,
+          bind(this._sasl_challenge_cb, this), null,
           "challenge", null, null);
 
         this._sasl_mechanism = new matched[i]();
@@ -2603,7 +2598,7 @@ Strophe.Connection.prototype = {
         } else {
           // fall back to legacy authentication
           this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
-          this._addSysHandler(this._auth1_cb.bind(this), null, null,
+          this._addSysHandler(bind(this._auth1_cb, this), null, null,
                               null, "_auth_1");
 
           this.send($iq({
@@ -2663,7 +2658,7 @@ Strophe.Connection.prototype = {
         }
         iq.up().c('resource', {}).t(Strophe.getResourceFromJid(this.jid));
 
-        this._addSysHandler(this._auth2_cb.bind(this), null,
+        this._addSysHandler(bind(this._auth2_cb, this), null,
                             null, null, "_auth_2");
 
         this.send(iq.tree());
@@ -2723,15 +2718,15 @@ Strophe.Connection.prototype = {
             while (handlers.length) {
                 this.deleteHandler(handlers.pop());
             }
-            this._sasl_auth1_cb.bind(this)(elem);
+            bind(this._sasl_auth1_cb, this)(elem);
             return false;
         };
-        streamfeature_handlers.push(this._addSysHandler(function(elem) {
-            wrapper.bind(this)(streamfeature_handlers, elem);
-        }.bind(this), null, "stream:features", null, null));
-        streamfeature_handlers.push(this._addSysHandler(function(elem) {
-            wrapper.bind(this)(streamfeature_handlers, elem);
-        }.bind(this), Strophe.NS.STREAM, "features", null, null));
+        streamfeature_handlers.push(this._addSysHandler(bind(function(elem) {
+            bind(wrapper, this)(streamfeature_handlers, elem);
+        }, this), null, "stream:features", null, null));
+        streamfeature_handlers.push(this._addSysHandler(bind(function(elem) {
+            bind(wrapper, this)(streamfeature_handlers, elem);
+        }, this), Strophe.NS.STREAM, "features", null, null));
 
         // we must send an xmpp:restart now
         this._sendRestart();
@@ -2769,7 +2764,7 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
         } else {
-            this._addSysHandler(this._sasl_bind_cb.bind(this), null, null,
+            this._addSysHandler(bind(this._sasl_bind_cb, this), null, null,
                                 null, "_bind_auth_2");
 
             var resource = Strophe.getResourceFromJid(this.jid);
@@ -2816,7 +2811,7 @@ Strophe.Connection.prototype = {
                 this.jid = Strophe.getText(jidNode[0]);
 
                 if (this.do_session) {
-                    this._addSysHandler(this._sasl_session_cb.bind(this),
+                    this._addSysHandler(bind(this._sasl_session_cb, this),
                                         null, null, null, "_session_auth_2");
 
                     this.send($iq({type: "set", id: "_session_auth_2"})
@@ -3022,10 +3017,7 @@ Strophe.Connection.prototype = {
 
         // reactivate the timer only if connected
         if (this.connected) {
-            // XXX: setTimeout should be called only with function expressions (23974bc1)
-            this._idleTimeout = setTimeout(function() {
-                this._onIdle();
-            }.bind(this), 100);
+            this._idleTimeout = setTimeout(bind(this._onIdle, this), 100);
         }
     }
 };
@@ -3222,8 +3214,9 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 
   auth_str = "n,," + auth_str;
 
-  this.onChallenge = function (connection, challenge) {
-    var nonce, salt, iter, Hi, U, U_old, i, k, pass;
+  this.onChallenge = bind(function (connection, challenge)
+  {
+    var nonce, salt, iter, Hi, U, U_old, i, k;
     var clientKey, serverKey, clientSignature;
     var responseText = "c=biws,";
     var authMessage = connection._sasl_data["client-first-message-bare"] + "," +
@@ -3280,7 +3273,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 
     responseText += ",p=" + Base64.encode(SHA1.binb2str(clientKey));
     return responseText;
-  }.bind(this);
+  }, this);
 
   return auth_str;
 };
@@ -3366,9 +3359,10 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
                                               MD5.hexdigest(A2)) + ",";
   responseText += 'qop=auth';
 
-  this.onChallenge = function () {
+  this.onChallenge = bind(function ()
+  {
       return "";
-  }.bind(this);
+  }, this);
 
   return responseText;
 };
@@ -3410,5 +3404,6 @@ return {
     SHA1:           SHA1,
     Base64:         Base64,
     MD5:            MD5,
+    polyfills:      polyfills
 };
 }));

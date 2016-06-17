@@ -190,6 +190,6 @@ return {
     binb2str:       binb2str,
     core_hmac_sha1: core_hmac_sha1,
     str_hmac_sha1:  function (key, data){ return binb2str(core_hmac_sha1(key, data)); },
-    str_sha1:       function (s) { return binb2str(core_sha1(str2binb(s),s.length * 8)); },
+    str_sha1:       function (s) { return binb2str(core_sha1(str2binb(s),s.length * 8)); }
 };
 }));
