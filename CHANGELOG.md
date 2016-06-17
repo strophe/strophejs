@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.7 - 2016-06-17
+* #193 Move phantomjs dependencies to devDependencies
+
 ## Version 1.2.6 - 2016-06-06
 * #178 Added new value (CONNTIMEOUT) to Strophe.Status
 * #180 bosh: check sessionStorage support before using it
