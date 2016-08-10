@@ -1518,6 +1518,10 @@ Strophe.TimedHandler.prototype = {
  *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
  *  instead must be restricted to actual domains.
  *
+ *  The "contentType" option can be set to change the default Content-Type
+ *  of "text/xml; charset=utf-8", which can be useful to reduce the amount of
+ *  CORS preflight requests that are sent to the server.
+ *
  *  Parameters:
  *    (String) service - The BOSH or WebSocket service URL.
  *    (Object) options - A hash of configuration options
