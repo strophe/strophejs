@@ -718,8 +718,9 @@ Strophe.Bosh.prototype = {
                           "." + req.sends + " posting");
 
             try {
+                var contentType = this._conn.options.contentType || "text/xml; charset=utf-8";
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
-                req.xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+                req.xhr.setRequestHeader("Content-Type", contentType);
                 if (this._conn.options.withCredentials) {
                     req.xhr.withCredentials = true;
                 }

@@ -161,6 +161,33 @@ define([
             timeoutStub.restore();
         });
 
+        test("content type can be set on the XMLHttpRequest object", function () {
+            var stanza = $pres();
+            // Stub XMLHttpRequest.protototype.send so that it doesn't
+            // actually try to send out the request.
+            var sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
+            // Stub setTimeout to immediately call functions, otherwise our
+            // assertions fail due to async execution.
+            var timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+                func.apply(arguments);
+            });
+            var setRetRequestHeaderStub = sinon.stub(XMLHttpRequest.prototype, "setRequestHeader");
+            var conn = new Strophe.Connection("example.org");
+            conn.send(stanza);
+            equal(setRetRequestHeaderStub.getCalls()[0].args[0], "Content-Type");
+            equal(setRetRequestHeaderStub.getCalls()[0].args[1], "text/xml; charset=utf-8");
+
+            conn = new Strophe.Connection(
+                    "example.org",
+                    { contentType: "text/plain; charset=utf-8" });
+            conn.send(stanza);
+            equal(setRetRequestHeaderStub.getCalls()[1].args[0], "Content-Type");
+            equal(setRetRequestHeaderStub.getCalls()[1].args[1], "text/plain; charset=utf-8");
+            sendStub.restore();
+            timeoutStub.restore();
+            setRetRequestHeaderStub.restore();
+        });
+
         test("Cookies can be added to the document passing them as options to Strophe.Connection", function () {
             var stanza = $pres();
             var conn = new Strophe.Connection(
