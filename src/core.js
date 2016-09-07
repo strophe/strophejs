@@ -1724,6 +1724,14 @@ Strophe.Connection.prototype = {
      *    (String) route - The optional route value.
      *    (String) authcid - The optional alternative authentication identity
      *      (username) if intending to impersonate another user.
+     *      When using the SASL-EXTERNAL authentication mechanism, for example
+     *      with client certificates, then the authcid value is used to
+     *      determine whether an authorization JID (authzid) should be sent to
+     *      the server. The authzid should not be sent to the server if the
+     *      authzid and authcid are the same. So to prevent it from being sent
+     *      (for example when the JID is already contained in the client
+     *      certificate), set authcid to that same JID. See XEP-178 for more
+     *      details.
      */
     connect: function (jid, pass, callback, wait, hold, route, authcid) {
         this.jid = jid;
@@ -1731,18 +1739,22 @@ Strophe.Connection.prototype = {
          *  Authorization identity.
          */
         this.authzid = Strophe.getBareJidFromJid(this.jid);
+
         /** Variable: authcid
          *  Authentication identity (User name).
          */
         this.authcid = authcid || Strophe.getNodeFromJid(this.jid);
+
         /** Variable: pass
          *  Authentication identity (User password).
          */
         this.pass = pass;
+
         /** Variable: servtype
          *  Digest MD5 compatibility.
          */
         this.servtype = "xmpp";
+
         this.connect_callback = callback;
         this.disconnecting = false;
         this.connected = false;
@@ -2698,8 +2710,9 @@ Strophe.Connection.prototype = {
 
         Strophe.info("SASL authentication succeeded.");
 
-        if(this._sasl_mechanism)
+        if (this._sasl_mechanism) {
           this._sasl_mechanism.onSuccess();
+        }
 
         // remove old handlers
         this.deleteHandler(this._sasl_failure_handler);
@@ -3023,9 +3036,12 @@ Strophe.Connection.prototype = {
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
+ *  EXTERNAL - 60
+ *  OAUTHBEARER - 50
  *  SCRAM-SHA1 - 40
  *  DIGEST-MD5 - 30
- *  Plain - 20
+ *  PLAIN - 20
+ *  ANONYMOUS - 10
  */
 
 /**
@@ -3132,37 +3148,38 @@ Strophe.SASLMechanism.prototype = {
    *  Protocol informs mechanism implementation about SASL success.
    */
   onSuccess: function() {
-        this._connection = null;
+    this._connection = null;
   }
 };
 
   /** Constants: SASL mechanisms
    *  Available authentication mechanisms
    *
-   *  Strophe.SASLAnonymous - SASL Anonymous authentication.
-   *  Strophe.SASLPlain - SASL Plain authentication.
-   *  Strophe.SASLMD5 - SASL Digest-MD5 authentication
+   *  Strophe.SASLAnonymous - SASL ANONYMOUS authentication.
+   *  Strophe.SASLPlain - SASL PLAIN authentication.
+   *  Strophe.SASLMD5 - SASL DIGEST-MD5 authentication
    *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
    *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
+   *  Strophe.SASLExternal - SASL EXTERNAL authentication
    */
 
 // Building SASL callbacks
 
 /** PrivateConstructor: SASLAnonymous
- *  SASL Anonymous authentication.
+ *  SASL ANONYMOUS authentication.
  */
 Strophe.SASLAnonymous = function() {};
 
 Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
 
 Strophe.SASLAnonymous.test = function(connection) {
-  return connection.authcid === null;
+    return connection.authcid === null;
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLAnonymous.prototype.name] = Strophe.SASLAnonymous;
 
 /** PrivateConstructor: SASLPlain
- *  SASL Plain authentication.
+ *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
 
@@ -3350,7 +3367,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 
   this.onChallenge = function () {
       return "";
-  }.bind(this);
+  };
 
   return responseText;
 };
@@ -3362,7 +3379,7 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Stroph
  */
 Strophe.SASLOAuthBearer = function() {};
 
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 80);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 50);
 
 Strophe.SASLOAuthBearer.test = function(connection) {
     return connection.authcid !== null;
@@ -3381,6 +3398,31 @@ Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLOAuthBearer.prototype.name] = Strophe.SASLOAuthBearer;
+
+
+/** PrivateConstructor: SASLExternal
+ *  SASL EXTERNAL authentication.
+ *
+ *  The EXTERNAL mechanism allows a client to request the server to use
+ *  credentials established by means external to the mechanism to
+ *  authenticate the client. The external means may be, for instance,
+ *  TLS services.
+ */
+Strophe.SASLExternal = function() {};
+Strophe.SASLExternal.prototype = new Strophe.SASLMechanism("EXTERNAL", true, 60);
+
+Strophe.SASLExternal.prototype.onChallenge = function(connection) {
+    /** According to XEP-178, an authzid SHOULD NOT be presented when the
+     * authcid contained or implied in the client certificate is the JID (i.e.
+     * authzid) with which the user wants to log in as.
+     *
+     * To NOT send the authzid, the user should therefore set the authcid equal
+     * to the JID when instantiating a new Strophe.Connection object.
+     */
+    return connection.authcid === connection.authzid ? '' : connection.authzid;
+};
+
+Strophe.Connection.prototype.mechanisms[Strophe.SASLExternal.prototype.name] = Strophe.SASLExternal;
 
 return {
     Strophe:        Strophe,

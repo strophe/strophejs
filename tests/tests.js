@@ -492,11 +492,9 @@ define([
 
 		module("SASL Mechanisms");
 
-		test("SASL Plain Auth", function () {
+		test("SASL PLAIN Auth", function () {
 			var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
-
-			ok(Strophe.SASLPlain.test(conn), "plain should pass the test");
-
+			ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
 			var saslplain = new Strophe.SASLPlain();
 			saslplain.onStart(conn);
 			var response = saslplain.onChallenge(conn, null);
@@ -520,7 +518,7 @@ define([
              */
             var conn = {pass: "pencil", authcid: "user",
                         authzid: "user@xmpp.org", _sasl_data: []};
-            ok(Strophe.SASLSHA1.test(conn), "sha-1 should pass the test");
+            ok(Strophe.SASLSHA1.test(conn), "SHA-1 is enabled by default.");
             var saslsha1 = new Strophe.SASLSHA1();
             saslsha1.onStart(conn);
             // test taken from example section on:
@@ -540,7 +538,7 @@ define([
 						domain: "elwood.innosoft.com",
 						_sasl_data: []};
 
-			ok(Strophe.SASLMD5.test(conn), "md-5 should pass the test");
+			ok(Strophe.SASLMD5.test(conn), "DIGEST MD-5 is enabled by default.");
 			var saslmd5 = new Strophe.SASLMD5();
 			saslmd5.onStart(conn);
 			// test taken from example section on:
@@ -551,6 +549,27 @@ define([
 			response = saslmd5.onChallenge(conn, "rspauth=ea40f60335c427b5527b84dbabcdfffd");
 			equal(response, "", "checking second auth challenge");
 			saslmd5.onSuccess();
+		});
+
+		test("SASL EXTERNAL Auth", function () {
+			var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+			var sasl_external = new Strophe.SASLExternal();
+			ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
+			sasl_external.onStart(conn);
+
+			var response = sasl_external.onChallenge(conn, null);
+			equal(response, conn.authzid,
+                 "Response to EXTERNAL auth challenge should be authzid if different authcid was passed in.");
+			sasl_external.onSuccess();
+
+			conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+			sasl_external = new Strophe.SASLExternal();
+			ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
+			sasl_external.onStart(conn);
+			response = sasl_external.onChallenge(conn, null);
+			equal(response, conn.authzid,
+                 "Response to EXTERNAL auth challenge should be empty string if authcid = authzid");
+			sasl_external.onSuccess();
 		});
 
 		module("BOSH Session resumption");
