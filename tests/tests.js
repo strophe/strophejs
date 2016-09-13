@@ -117,7 +117,7 @@ define([
 					"Namespace should be '" + Strophe.NS.CLIENT + "'");
 			});
 		});
-		
+
         test("Strophe.Connection.prototype.send() accepts Builders (#27)", function () {
             var stanza = $pres();
             var conn = new Strophe.Connection("");
@@ -322,7 +322,7 @@ define([
 											.createTextNode('<>&lt;&gt;'));
 			equal(cloned.nodeValue, '<>&lt;&gt;');
 		});
-		
+
 		test("XML serializing", function() {
 			var parser = new DOMParser();
 			// Attributes
@@ -337,7 +337,7 @@ define([
 			var element4 = parser.parseFromString("<foo attr='&lt;a> &apos;b&apos;'>bar</foo>","text/xml").documentElement;
 			equal(Strophe.serialize(element4), "<foo attr='&lt;a&gt; &apos;b&apos;'>bar</foo>", "should be serialized");
 			var element5 = parser.parseFromString("<foo attr=\"&lt;a> &quot;b&quot;\">bar</foo>","text/xml").documentElement;
-			equal(Strophe.serialize(element5), "<foo attr='&lt;a&gt; \"b\"'>bar</foo>", "should be serialized");
+			equal(Strophe.serialize(element5), "<foo attr='&lt;a&gt; &quot;b&quot;'>bar</foo>", "should be serialized");
 			// Empty elements
 			var element6 = parser.parseFromString("<foo><empty></empty></foo>","text/xml").documentElement;
 			equal(Strophe.serialize(element6), "<foo><empty/></foo>", "should be serialized");
@@ -359,7 +359,7 @@ define([
 
 		test("Full JID matching", function () {
 			var elem = $msg({from: 'darcy@pemberley.lit/library'}).tree();
-			
+
 			var hand = new Strophe.Handler(null, null, null, null, null,
 										'darcy@pemberley.lit/library');
 			equal(hand.isMatch(elem), true, "Full JID should match");
@@ -376,7 +376,7 @@ define([
 										'darcy@pemberley.lit/library',
 										{matchBare: true});
 			equal(hand.isMatch(elem), true, "Full JID should match");
-			
+
 			hand = new Strophe.Handler(null, null, null, null, null,
 									'darcy@pemberley.lit',
 									{matchBare: true});
@@ -403,7 +403,7 @@ define([
 			hand = new Strophe.Handler(null, null, 'iq', ['error', 'result']);
 			equal(hand.isMatch(elem), true, "The handler should match if stanza type is in array of types");
 		});
-		
+
 		module("Misc");
 
 		test("Quoting strings", function () {
