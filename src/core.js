@@ -2571,7 +2571,7 @@ Strophe.Connection.prototype = {
       // run each mechanism
       var mechanism_found = false;
       for (i = 0; i < matched.length; ++i) {
-        if (!matched[i].test(this)) continue;
+        if (!matched[i].prototype.test(this)) continue;
 
         this._sasl_success_handler = this._addSysHandler(
           this._sasl_success_cb.bind(this), null,
@@ -3172,7 +3172,7 @@ Strophe.SASLAnonymous = function() {};
 
 Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
 
-Strophe.SASLAnonymous.test = function(connection) {
+Strophe.SASLAnonymous.prototype.test = function(connection) {
     return connection.authcid === null;
 };
 
@@ -3185,7 +3185,7 @@ Strophe.SASLPlain = function() {};
 
 Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 20);
 
-Strophe.SASLPlain.test = function(connection) {
+Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
 };
 
@@ -3207,7 +3207,7 @@ Strophe.SASLSHA1 = function() {};
 
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
-Strophe.SASLSHA1.test = function(connection) {
+Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
 };
 
@@ -3294,7 +3294,7 @@ Strophe.SASLMD5 = function() {};
 
 Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
 
-Strophe.SASLMD5.test = function(connection) {
+Strophe.SASLMD5.prototype.test = function(connection) {
     return connection.authcid !== null;
 };
 
@@ -3381,7 +3381,7 @@ Strophe.SASLOAuthBearer = function() {};
 
 Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 50);
 
-Strophe.SASLOAuthBearer.test = function(connection) {
+Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.authcid !== null;
 };
 

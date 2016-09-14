@@ -494,9 +494,9 @@ define([
 
 		test("SASL PLAIN Auth", function () {
 			var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
-			ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
 			var saslplain = new Strophe.SASLPlain();
 			saslplain.onStart(conn);
+			ok(saslplain.test(conn), "PLAIN is enabled by default.");
 			var response = saslplain.onChallenge(conn, null);
 			equal(response, [conn.authzid, conn.authcid, conn.pass].join("\u0000"),
 				"checking plain auth challenge");
@@ -518,9 +518,9 @@ define([
              */
             var conn = {pass: "pencil", authcid: "user",
                         authzid: "user@xmpp.org", _sasl_data: []};
-            ok(Strophe.SASLSHA1.test(conn), "SHA-1 is enabled by default.");
             var saslsha1 = new Strophe.SASLSHA1();
             saslsha1.onStart(conn);
+            ok(saslsha1.test(conn), "SHA-1 is enabled by default.");
             // test taken from example section on:
             // URL: http://tools.ietf.org/html/rfc5802#section-5
             var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
@@ -538,9 +538,9 @@ define([
 						domain: "elwood.innosoft.com",
 						_sasl_data: []};
 
-			ok(Strophe.SASLMD5.test(conn), "DIGEST MD-5 is enabled by default.");
 			var saslmd5 = new Strophe.SASLMD5();
 			saslmd5.onStart(conn);
+			ok(saslmd5.test(conn), "DIGEST MD-5 is enabled by default.");
 			// test taken from example section on:
 			// URL: http://www.ietf.org/rfc/rfc2831.txt
 			var response = saslmd5.onChallenge(conn, "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8", "OA6MHXh6VqTrRk");
