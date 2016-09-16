@@ -1,5 +1,10 @@
 # Strophe.js Change Log
 
+## Version 1.2.8 - Unreleased
+* Allow custom Content-Type header for requests
+* The files in `./src` are now also included in the NPM distribution.
+* Add support for SASL-EXTERNAL
+
 ## Version 1.2.7 - 2016-06-17
 * #193 Move phantomjs dependencies to devDependencies
 
