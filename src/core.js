@@ -139,7 +139,6 @@ Strophe = {
         XHTML: "http://www.w3.org/1999/xhtml"
     },
 
-
     /** Constants: XHTML_IM Namespace
      *  contains allowed tags, tag attributes, and css properties.
      *  Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
@@ -147,64 +146,63 @@ Strophe = {
      *  allowed tags and their attributes.
      */
     XHTML: {
-                tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
-                attributes: {
-                        'a':          ['href'],
-                        'blockquote': ['style'],
-                        'br':         [],
-                        'cite':       ['style'],
-                        'em':         [],
-                        'img':        ['src', 'alt', 'style', 'height', 'width'],
-                        'li':         ['style'],
-                        'ol':         ['style'],
-                        'p':          ['style'],
-                        'span':       ['style'],
-                        'strong':     [],
-                        'ul':         ['style'],
-                        'body':       []
-                },
-                css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
-                /** Function: XHTML.validTag
-                 *
-                 * Utility method to determine whether a tag is allowed
-                 * in the XHTML_IM namespace.
-                 *
-                 * XHTML tag names are case sensitive and must be lower case.
-                 */
-                validTag: function(tag) {
-                        for (var i = 0; i < Strophe.XHTML.tags.length; i++) {
-                                if (tag == Strophe.XHTML.tags[i]) {
-                                        return true;
-                                }
-                        }
-                        return false;
-                },
-                /** Function: XHTML.validAttribute
-                 *
-                 * Utility method to determine whether an attribute is allowed
-                 * as recommended per XEP-0071
-                 *
-                 * XHTML attribute names are case sensitive and must be lower case.
-                 */
-                validAttribute: function(tag, attribute) {
-                        if(typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
-                                for(var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
-                                        if(attribute == Strophe.XHTML.attributes[tag][i]) {
-                                                return true;
-                                        }
-                                }
-                        }
-                        return false;
-                },
-                validCSS: function(style)
-                {
-                        for(var i = 0; i < Strophe.XHTML.css.length; i++) {
-                                if(style == Strophe.XHTML.css[i]) {
-                                        return true;
-                                }
-                        }
-                        return false;
+        tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
+        attributes: {
+            'a':          ['href'],
+            'blockquote': ['style'],
+            'br':         [],
+            'cite':       ['style'],
+            'em':         [],
+            'img':        ['src', 'alt', 'style', 'height', 'width'],
+            'li':         ['style'],
+            'ol':         ['style'],
+            'p':          ['style'],
+            'span':       ['style'],
+            'strong':     [],
+            'ul':         ['style'],
+            'body':       []
+        },
+        css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
+        /** Function: XHTML.validTag
+         *
+         * Utility method to determine whether a tag is allowed
+         * in the XHTML_IM namespace.
+         *
+         * XHTML tag names are case sensitive and must be lower case.
+         */
+        validTag: function(tag) {
+            for (var i = 0; i < Strophe.XHTML.tags.length; i++) {
+                if (tag == Strophe.XHTML.tags[i]) {
+                    return true;
                 }
+            }
+            return false;
+        },
+        /** Function: XHTML.validAttribute
+         *
+         * Utility method to determine whether an attribute is allowed
+         * as recommended per XEP-0071
+         *
+         * XHTML attribute names are case sensitive and must be lower case.
+         */
+        validAttribute: function(tag, attribute) {
+            if (typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
+                for (var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
+                    if (attribute == Strophe.XHTML.attributes[tag][i]) {
+                        return true;
+                    }
+                }
+            }
+        return false;
+        },
+        validCSS: function(style) {
+            for (var i = 0; i < Strophe.XHTML.css.length; i++) {
+                if (style == Strophe.XHTML.css[i]) {
+                    return true;
+                }
+            }
+            return false;
+        }
     },
 
     /** Constants: Connection Status Constants
@@ -1722,6 +1720,14 @@ Strophe.Connection.prototype = {
      *    (String) route - The optional route value.
      *    (String) authcid - The optional alternative authentication identity
      *      (username) if intending to impersonate another user.
+     *      When using the SASL-EXTERNAL authentication mechanism, for example
+     *      with client certificates, then the authcid value is used to
+     *      determine whether an authorization JID (authzid) should be sent to
+     *      the server. The authzid should not be sent to the server if the
+     *      authzid and authcid are the same. So to prevent it from being sent
+     *      (for example when the JID is already contained in the client
+     *      certificate), set authcid to that same JID. See XEP-178 for more
+     *      details.
      */
     connect: function (jid, pass, callback, wait, hold, route, authcid) {
         this.jid = jid;
@@ -1729,18 +1735,22 @@ Strophe.Connection.prototype = {
          *  Authorization identity.
          */
         this.authzid = Strophe.getBareJidFromJid(this.jid);
+
         /** Variable: authcid
          *  Authentication identity (User name).
          */
         this.authcid = authcid || Strophe.getNodeFromJid(this.jid);
+
         /** Variable: pass
          *  Authentication identity (User password).
          */
         this.pass = pass;
+
         /** Variable: servtype
          *  Digest MD5 compatibility.
          */
         this.servtype = "xmpp";
+
         this.connect_callback = callback;
         this.disconnecting = false;
         this.connected = false;
@@ -2091,7 +2101,6 @@ Strophe.Connection.prototype = {
                 message: "Cannot queue non-DOMElement."
             };
         }
-
         this._data.push(element);
     },
 
@@ -2100,9 +2109,7 @@ Strophe.Connection.prototype = {
      */
     _sendRestart: function () {
         this._data.push("restart");
-
         this._proto._sendRestart();
-
         // XXX: setTimeout should be called only with function expressions (23974bc1)
         this._idleTimeout = setTimeout(function() {
             this._onIdle();
@@ -2496,7 +2503,6 @@ Strophe.Connection.prototype = {
         this._authentication.sasl_plain = false;
         this._authentication.sasl_digest_md5 = false;
         this._authentication.sasl_anonymous = false;
-
         this._authentication.legacy_auth = false;
 
         // Check for the stream:features tag
@@ -2561,7 +2567,7 @@ Strophe.Connection.prototype = {
       // run each mechanism
       var mechanism_found = false;
       for (i = 0; i < matched.length; ++i) {
-        if (!matched[i].test(this)) continue;
+        if (!matched[i].prototype.test(this)) continue;
 
         this._sasl_success_handler = this._addSysHandler(
           this._sasl_success_cb.bind(this), null,
@@ -2585,9 +2591,7 @@ Strophe.Connection.prototype = {
           var response = this._sasl_mechanism.onChallenge(this, null);
           request_auth_exchange.t(Base64.encode(response));
         }
-
         this.send(request_auth_exchange.tree());
-
         mechanism_found = true;
         break;
       }
@@ -2605,23 +2609,20 @@ Strophe.Connection.prototype = {
           this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
           this._addSysHandler(this._auth1_cb.bind(this), null, null,
                               null, "_auth_1");
-
           this.send($iq({
-            type: "get",
-            to: this.domain,
-            id: "_auth_1"
+                type: "get",
+                to: this.domain,
+                id: "_auth_1"
           }).c("query", {
-            xmlns: Strophe.NS.AUTH
+                xmlns: Strophe.NS.AUTH
           }).c("username", {}).t(Strophe.getNodeFromJid(this.jid)).tree());
         }
       }
-
     },
 
     _sasl_challenge_cb: function(elem) {
       var challenge = Base64.decode(Strophe.getText(elem));
       var response = this._sasl_mechanism.onChallenge(this, challenge);
-
       var stanza = $build('response', {
           xmlns: Strophe.NS.SASL
       });
@@ -2665,9 +2666,7 @@ Strophe.Connection.prototype = {
 
         this._addSysHandler(this._auth2_cb.bind(this), null,
                             null, null, "_auth_2");
-
         this.send(iq.tree());
-
         return false;
     },
     /* jshint unused:true */
@@ -2707,8 +2706,9 @@ Strophe.Connection.prototype = {
 
         Strophe.info("SASL authentication succeeded.");
 
-        if(this._sasl_mechanism)
+        if (this._sasl_mechanism) {
           this._sasl_mechanism.onSuccess();
+        }
 
         // remove old handlers
         this.deleteHandler(this._sasl_failure_handler);
@@ -2751,9 +2751,7 @@ Strophe.Connection.prototype = {
     _sasl_auth1_cb: function (elem) {
         // save stream:features for future usage
         this.features = elem;
-
         var i, child;
-
         for (i = 0; i < elem.childNodes.length; i++) {
             child = elem.childNodes[i];
             if (child.nodeName == 'bind') {
@@ -2958,17 +2956,12 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _onDisconnectTimeout: function ()
-    {
+    _onDisconnectTimeout: function () {
         Strophe.info("_onDisconnectTimeout was called");
-
         this._changeConnectStatus(Strophe.Status.CONNTIMEOUT, null);
-
         this._proto._onDisconnectTimeout();
-
         // actually disconnect
         this._doDisconnect();
-
         return false;
     },
 
@@ -2978,8 +2971,7 @@ Strophe.Connection.prototype = {
      *  This handler is called every 100ms to fire timed handlers that
      *  are ready and keep poll requests going.
      */
-    _onIdle: function ()
-    {
+    _onIdle: function () {
         var i, thand, since, newList;
 
         // add timed handlers scheduled for addition
@@ -3040,9 +3032,12 @@ Strophe.Connection.prototype = {
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
+ *  EXTERNAL - 60
+ *  OAUTHBEARER - 50
  *  SCRAM-SHA1 - 40
  *  DIGEST-MD5 - 30
- *  Plain - 20
+ *  PLAIN - 20
+ *  ANONYMOUS - 10
  */
 
 /**
@@ -3156,46 +3151,47 @@ Strophe.SASLMechanism.prototype = {
   /** Constants: SASL mechanisms
    *  Available authentication mechanisms
    *
-   *  Strophe.SASLAnonymous - SASL Anonymous authentication.
-   *  Strophe.SASLPlain - SASL Plain authentication.
-   *  Strophe.SASLMD5 - SASL Digest-MD5 authentication
+   *  Strophe.SASLAnonymous - SASL ANONYMOUS authentication.
+   *  Strophe.SASLPlain - SASL PLAIN authentication.
+   *  Strophe.SASLMD5 - SASL DIGEST-MD5 authentication
    *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
    *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
+   *  Strophe.SASLExternal - SASL EXTERNAL authentication
    */
 
 // Building SASL callbacks
 
 /** PrivateConstructor: SASLAnonymous
- *  SASL Anonymous authentication.
+ *  SASL ANONYMOUS authentication.
  */
 Strophe.SASLAnonymous = function() {};
 
 Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
 
-Strophe.SASLAnonymous.test = function(connection) {
-  return connection.authcid === null;
+Strophe.SASLAnonymous.prototype.test = function(connection) {
+    return connection.authcid === null;
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLAnonymous.prototype.name] = Strophe.SASLAnonymous;
 
 /** PrivateConstructor: SASLPlain
- *  SASL Plain authentication.
+ *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
 
 Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 20);
 
-Strophe.SASLPlain.test = function(connection) {
-  return connection.authcid !== null;
+Strophe.SASLPlain.prototype.test = function(connection) {
+    return connection.authcid !== null;
 };
 
 Strophe.SASLPlain.prototype.onChallenge = function(connection) {
-  var auth_str = connection.authzid;
-  auth_str = auth_str + "\u0000";
-  auth_str = auth_str + connection.authcid;
-  auth_str = auth_str + "\u0000";
-  auth_str = auth_str + connection.pass;
-  return utils.utf16to8(auth_str);
+    var auth_str = connection.authzid;
+    auth_str = auth_str + "\u0000";
+    auth_str = auth_str + connection.authcid;
+    auth_str = auth_str + "\u0000";
+    auth_str = auth_str + connection.pass;
+    return utils.utf16to8(auth_str);
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
@@ -3207,7 +3203,7 @@ Strophe.SASLSHA1 = function() {};
 
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
-Strophe.SASLSHA1.test = function(connection) {
+Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
 };
 
@@ -3294,8 +3290,8 @@ Strophe.SASLMD5 = function() {};
 
 Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
 
-Strophe.SASLMD5.test = function(connection) {
-  return connection.authcid !== null;
+Strophe.SASLMD5.prototype.test = function(connection) {
+    return connection.authcid !== null;
 };
 
 /** PrivateFunction: _quote
@@ -3307,11 +3303,10 @@ Strophe.SASLMD5.test = function(connection) {
  *  Returns:
  *    quoted string
  */
-Strophe.SASLMD5.prototype._quote = function (str)
-  {
+Strophe.SASLMD5.prototype._quote = function (str) {
     return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
     //" end string workaround for emacs
-  };
+};
 
 
 Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cnonce) {
@@ -3368,7 +3363,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
 
   this.onChallenge = function () {
       return "";
-  }.bind(this);
+  };
 
   return responseText;
 };
@@ -3380,26 +3375,50 @@ Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Stroph
  */
 Strophe.SASLOAuthBearer = function() {};
 
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 80);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 50);
 
-Strophe.SASLOAuthBearer.test = function(connection) {
-  return connection.authcid !== null;
+Strophe.SASLOAuthBearer.prototype.test = function(connection) {
+    return connection.authcid !== null;
 };
 
 Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
-  var auth_str = 'n,a=';
-  auth_str = auth_str + connection.authzid;
-  auth_str = auth_str + ',';
-  auth_str = auth_str + "\u0001";
-  auth_str = auth_str + 'auth=Bearer ';
-  auth_str = auth_str + connection.pass;
-  auth_str = auth_str + "\u0001";
-  auth_str = auth_str + "\u0001";
-
-  return utils.utf16to8(auth_str);
+    var auth_str = 'n,a=';
+    auth_str = auth_str + connection.authzid;
+    auth_str = auth_str + ',';
+    auth_str = auth_str + "\u0001";
+    auth_str = auth_str + 'auth=Bearer ';
+    auth_str = auth_str + connection.pass;
+    auth_str = auth_str + "\u0001";
+    auth_str = auth_str + "\u0001";
+    return utils.utf16to8(auth_str);
 };
 
 Strophe.Connection.prototype.mechanisms[Strophe.SASLOAuthBearer.prototype.name] = Strophe.SASLOAuthBearer;
+
+
+/** PrivateConstructor: SASLExternal
+ *  SASL EXTERNAL authentication.
+ *
+ *  The EXTERNAL mechanism allows a client to request the server to use
+ *  credentials established by means external to the mechanism to
+ *  authenticate the client. The external means may be, for instance,
+ *  TLS services.
+ */
+Strophe.SASLExternal = function() {};
+Strophe.SASLExternal.prototype = new Strophe.SASLMechanism("EXTERNAL", true, 60);
+
+Strophe.SASLExternal.prototype.onChallenge = function(connection) {
+    /** According to XEP-178, an authzid SHOULD NOT be presented when the
+     * authcid contained or implied in the client certificate is the JID (i.e.
+     * authzid) with which the user wants to log in as.
+     *
+     * To NOT send the authzid, the user should therefore set the authcid equal
+     * to the JID when instantiating a new Strophe.Connection object.
+     */
+    return connection.authcid === connection.authzid ? '' : connection.authzid;
+};
+
+Strophe.Connection.prototype.mechanisms[Strophe.SASLExternal.prototype.name] = Strophe.SASLExternal;
 
 return {
     Strophe:        Strophe,
