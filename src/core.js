@@ -314,7 +314,6 @@ Strophe = {
      */
     forEachChild: function (elem, elemName, func) {
         var i, childNode;
-
         for (i = 0; i < elem.childNodes.length; i++) {
             childNode = elem.childNodes[i];
             if (childNode.nodeType == Strophe.ElementType.NORMAL &&
@@ -413,7 +412,6 @@ Strophe = {
                 break;
             }
         }
-
         return doc;
     },
 
@@ -439,7 +437,6 @@ Strophe = {
         if (!name) { return null; }
 
         var node = Strophe.xmlGenerator().createElement(name);
-
         // FIXME: this should throw errors if args are the wrong type or
         // there are more than two optional args
         var a, i, k;
@@ -484,8 +481,7 @@ Strophe = {
      *  Returns:
      *      Escaped text.
      */
-    xmlescape: function(text)
-    {
+    xmlescape: function(text) {
         text = text.replace(/\&/g, "&amp;");
         text = text.replace(/</g,  "&lt;");
         text = text.replace(/>/g,  "&gt;");
@@ -503,8 +499,7 @@ Strophe = {
     *  Returns:
     *      Unescaped text.
     */
-    xmlunescape: function(text)
-    {
+    xmlunescape: function(text) {
         text = text.replace(/\&amp;/g, "&");
         text = text.replace(/&lt;/g,  "<");
         text = text.replace(/&gt;/g,  ">");
@@ -606,7 +601,6 @@ Strophe = {
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
             el = Strophe.xmlGenerator().createTextNode(elem.nodeValue);
         }
-
         return el;
     },
 
@@ -682,7 +676,6 @@ Strophe = {
         } else if (elem.nodeType == Strophe.ElementType.TEXT) {
             el = Strophe.xmlTextNode(elem.nodeValue);
         }
-
         return el;
     },
 
@@ -1441,6 +1434,9 @@ Strophe.TimedHandler.prototype = {
  *  Options common to both Websocket and BOSH:
  *  ------------------------------------------
  *
+ *  cookies
+ *  ~~~~~~~
+ *
  *  The "cookies" option allows you to pass in cookies to be added to the
  *  document. These cookies will then be included in the BOSH XMLHttpRequest
  *  or in the websocket connection.
@@ -1459,6 +1455,27 @@ Strophe.TimedHandler.prototype = {
  *  Those cookies need to be set under those domains, for example they can be
  *  set server-side by making a XHR call to that domain to ask it to set any
  *  necessary cookies.
+ *
+ *  mechanisms
+ *  ~~~~~~~~~~
+ *
+ *  The "mechanisms" option allows you to specify the SASL mechanisms that this
+ *  instance of Strophe.Connection (and therefore your XMPP client) will
+ *  support.
+ *
+ *  The value must be an array of objects with Strophe.SASLMechanism
+ *  prototypes.
+ *
+ *  If nothing is specified, then the following mechanisms (and their
+ *  priorities) are registered:
+ *
+ *      EXTERNAL - 60
+ *      OAUTHBEARER - 50
+ *      SCRAM-SHA1 - 40
+ *      DIGEST-MD5 - 30
+ *      PLAIN - 20
+ *      ANONYMOUS - 10
+ *
  *
  *  WebSocket options:
  *  ------------------
@@ -1585,6 +1602,7 @@ Strophe.Connection = function (service, options) {
     }.bind(this), 100);
 
     utils.addCookies(this.options.cookies);
+    this.registerSASLMechanisms(this.options.mechanisms);
 
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
@@ -2222,6 +2240,40 @@ Strophe.Connection.prototype = {
         if (i >= 0) {
             this.addHandlers.splice(i, 1);
         }
+    },
+
+    /** Function: registerSASLMechanisms
+     *
+     * Register the SASL mechanisms which will be supported by this instance of
+     * Strophe.Connection (i.e. which this XMPP client will support).
+     *
+     *  Parameters:
+     *    (Array) mechanisms - Array of objects with Strophe.SASLMechanism prototypes
+     *
+     */
+    registerSASLMechanisms: function (mechanisms) {
+        this.mechanisms = {};
+        mechanisms = mechanisms || [
+            Strophe.SASLAnonymous,
+            Strophe.SASLExternal,
+            Strophe.SASLMD5,
+            Strophe.SASLOAuthBearer,
+            Strophe.SASLPlain,
+            Strophe.SASLSHA1
+        ];
+        mechanisms.forEach(this.registerSASLMechanism.bind(this));
+    },
+
+    /** Function: registerSASLMechanism
+     *
+     * Register a single SASL mechanism, to be supported by this client.
+     *
+     *  Parameters:
+     *    (Object) mechanism - Object with a Strophe.SASLMechanism prototype
+     *
+     */
+    registerSASLMechanism: function (mechanism) {
+        this.mechanisms[mechanism.prototype.name] = mechanism; 
     },
 
     /** Function: disconnect
@@ -3031,6 +3083,8 @@ Strophe.Connection.prototype = {
  *  DIGEST-MD5 - 30
  *  PLAIN - 20
  *  ANONYMOUS - 10
+ *
+ *  See: Strophe.Connection.addSupportedSASLMechanisms
  */
 
 /**
@@ -3158,20 +3212,17 @@ Strophe.SASLMechanism.prototype = {
  *  SASL ANONYMOUS authentication.
  */
 Strophe.SASLAnonymous = function() {};
-
 Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
 
 Strophe.SASLAnonymous.prototype.test = function(connection) {
     return connection.authcid === null;
 };
 
-Strophe.Connection.prototype.mechanisms[Strophe.SASLAnonymous.prototype.name] = Strophe.SASLAnonymous;
 
 /** PrivateConstructor: SASLPlain
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-
 Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 20);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
@@ -3187,13 +3238,11 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
     return utils.utf16to8(auth_str);
 };
 
-Strophe.Connection.prototype.mechanisms[Strophe.SASLPlain.prototype.name] = Strophe.SASLPlain;
 
 /** PrivateConstructor: SASLSHA1
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-
 Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
@@ -3205,7 +3254,6 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
   var auth_str = "n=" + utils.utf16to8(connection.authcid);
   auth_str += ",r=";
   auth_str += cnonce;
-
   connection._sasl_data.cnonce = cnonce;
   connection._sasl_data["client-first-message-bare"] = auth_str;
 
@@ -3274,13 +3322,11 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
   return auth_str;
 };
 
-Strophe.Connection.prototype.mechanisms[Strophe.SASLSHA1.prototype.name] = Strophe.SASLSHA1;
 
 /** PrivateConstructor: SASLMD5
  *  SASL DIGEST MD5 authentication.
  */
 Strophe.SASLMD5 = function() {};
-
 Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
 
 Strophe.SASLMD5.prototype.test = function(connection) {
@@ -3300,7 +3346,6 @@ Strophe.SASLMD5.prototype._quote = function (str) {
     return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
     //" end string workaround for emacs
 };
-
 
 Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cnonce) {
   var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
@@ -3357,17 +3402,14 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
   this.onChallenge = function () {
       return "";
   };
-
   return responseText;
 };
 
-Strophe.Connection.prototype.mechanisms[Strophe.SASLMD5.prototype.name] = Strophe.SASLMD5;
 
 /** PrivateConstructor: SASLOAuthBearer
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-
 Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 50);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
@@ -3385,8 +3427,6 @@ Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
     auth_str = auth_str + "\u0001";
     return utils.utf16to8(auth_str);
 };
-
-Strophe.Connection.prototype.mechanisms[Strophe.SASLOAuthBearer.prototype.name] = Strophe.SASLOAuthBearer;
 
 
 /** PrivateConstructor: SASLExternal
@@ -3410,8 +3450,6 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
      */
     return connection.authcid === connection.authzid ? '' : connection.authzid;
 };
-
-Strophe.Connection.prototype.mechanisms[Strophe.SASLExternal.prototype.name] = Strophe.SASLExternal;
 
 return {
     Strophe:        Strophe,
