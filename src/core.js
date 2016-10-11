@@ -1558,7 +1558,6 @@ Strophe.Connection = function (service, options) {
     this.addTimeds = [];
     this.addHandlers = [];
 
-    this._authentication = {};
     this._idleTimeout = null;
     this._disconnectTimeout = null;
 
@@ -1621,7 +1620,6 @@ Strophe.Connection.prototype = {
         this.removeHandlers = [];
         this.addTimeds = [];
         this.addHandlers = [];
-        this._authentication = {};
 
         this.authenticated = false;
         this.connected = false;
@@ -2444,7 +2442,7 @@ Strophe.Connection.prototype = {
 
 
     /** Attribute: mechanisms
-     *  SASL Mechanisms available for Conncection.
+     *  SASL Mechanisms available for Connection.
      */
     mechanisms: {},
 
@@ -2466,7 +2464,6 @@ Strophe.Connection.prototype = {
      */
     _connect_cb: function (req, _callback, raw) {
         Strophe.info("_connect_cb was called");
-
         this.connected = true;
 
         var bodyWrap;
@@ -2499,49 +2496,45 @@ Strophe.Connection.prototype = {
             return;
         }
 
-        this._authentication.sasl_scram_sha1 = false;
-        this._authentication.sasl_plain = false;
-        this._authentication.sasl_digest_md5 = false;
-        this._authentication.sasl_anonymous = false;
-        this._authentication.legacy_auth = false;
-
         // Check for the stream:features tag
         var hasFeatures;
         if (bodyWrap.getElementsByTagNameNS) {
             hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
         } else {
-            hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0 || bodyWrap.getElementsByTagName("features").length > 0;
+            hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0 ||
+                            bodyWrap.getElementsByTagName("features").length > 0;
         }
-        var mechanisms = bodyWrap.getElementsByTagName("mechanism");
-        var matched = [];
-        var i, mech, found_authentication = false;
         if (!hasFeatures) {
             this._proto._no_auth_received(_callback);
             return;
         }
+
+        var matched = [], i, mech;
+        var mechanisms = bodyWrap.getElementsByTagName("mechanism");
         if (mechanisms.length > 0) {
             for (i = 0; i < mechanisms.length; i++) {
                 mech = Strophe.getText(mechanisms[i]);
                 if (this.mechanisms[mech]) matched.push(this.mechanisms[mech]);
             }
         }
-        this._authentication.legacy_auth =
-            bodyWrap.getElementsByTagName("auth").length > 0;
-        found_authentication = this._authentication.legacy_auth ||
-            matched.length > 0;
-        if (!found_authentication) {
-            this._proto._no_auth_received(_callback);
-            return;
+        if (matched.length === 0) {
+            if (bodyWrap.getElementsByTagName("auth").length === 0) {
+                // There are no matching SASL mechanisms and also no legacy
+                // auth available.
+                this._proto._no_auth_received(_callback);
+                return;
+            }
         }
-        if (this.do_authentication !== false)
+        if (this.do_authentication !== false) {
             this.authenticate(matched);
+        }
     },
 
     /** Function: authenticate
      * Set up authentication
      *
      *  Contiunues the initial connection request by setting up authentication
-     *  handlers and start the authentication process.
+     *  handlers and starting the authentication process.
      *
      *  SASL authentication will be attempted if available, otherwise
      *  the code will fall back to legacy authentication.
