@@ -490,7 +490,60 @@ define([
 			equal(spy.called, false, "callback should not be called");
 		});
 
-		module("SASL Mechanisms");
+        module("SASL Mechanisms");
+
+        test("Default mechanisms will be registered if none are provided", function () {
+            var conn = new Strophe.Connection('localhost');
+            equal(Object.keys(conn.mechanisms).length, 6, 'Six by default registered SASL mechanisms');
+            equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
+            equal('DIGEST-MD5' in conn.mechanisms, true, 'DIGEST-MD is registered');
+            equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
+            equal('OAUTHBEARER' in conn.mechanisms, true, 'OAUTHBEARER is registered');
+            equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
+            equal('SCRAM-SHA-1' in conn.mechanisms, true, 'SCRAM-SHA-1 is registered');
+        });
+
+        test("Custom mechanisms be specified when instantiating Strophe.Connection", function () {
+            var SASLFoo = function() {};
+            SASLFoo.prototype = new Strophe.SASLMechanism("FOO", false, 10);
+            var conn = new Strophe.Connection('localhost', {'mechanisms': [SASLFoo]});
+            equal(Object.keys(conn.mechanisms).length, 1, 'Only one registered SASL mechanism');
+            equal('FOO' in conn.mechanisms, true, 'FOO is registered');
+            notEqual('PLAIN' in conn.mechanisms, true, 'PLAIN is not registered');
+
+            conn = new Strophe.Connection('localhost',
+                { 'mechanisms': [
+                        SASLFoo,
+                        Strophe.SASLPlain
+                ]});
+            equal(Object.keys(conn.mechanisms).length, 2, 'Only two registered SASL mechanisms');
+            equal('FOO' in conn.mechanisms, true, 'FOO is registered');
+            equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
+        });
+
+        test("The supported mechanism with the highest priority will be used", function () {
+            Strophe.SASLExternal.prototype.priority = 10;
+            Strophe.SASLSHA1.prototype.priority = 20;
+            conn = new Strophe.Connection('localhost',
+                { 'mechanisms': [
+                        Strophe.SASLSHA1,
+                        Strophe.SASLExternal
+                ]});
+            var authSpy = sinon.spy(conn, '_attemptSASLAuth');
+			equal(authSpy.called, false);
+            conn.connect('dummy@localhost', 'secret');
+            conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
+			equal(authSpy.called, true);
+			equal(authSpy.returnValues.length, 1);
+			equal(authSpy.returnValues[0], true);
+            equal(conn._sasl_mechanism.name, 'SCRAM-SHA-1');
+
+            Strophe.SASLExternal.prototype.priority = 30;
+            Strophe.SASLSHA1.prototype.priority = 20;
+            conn.connect('dummy@localhost', 'secret');
+            conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
+            equal(conn._sasl_mechanism.name, 'EXTERNAL');
+        });
 
 		test("SASL PLAIN Auth", function () {
 			var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};

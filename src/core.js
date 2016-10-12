@@ -295,7 +295,7 @@ Strophe = {
      *    (String) value - The actual namespace.
      */
     addNamespace: function (name, value) {
-      Strophe.NS[name] = value;
+        Strophe.NS[name] = value;
     },
 
     /** Function: forEachChild
@@ -352,7 +352,6 @@ Strophe = {
      */
     _makeGenerator: function () {
         var doc;
-
         // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
         // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
                 // less than 10 in the case of IE9 and below.
@@ -364,7 +363,6 @@ Strophe = {
             doc = document.implementation
                 .createDocument('jabber:client', 'strophe', null);
         }
-
         return doc;
     },
 
@@ -2582,94 +2580,141 @@ Strophe.Connection.prototype = {
         }
     },
 
+    /** Function: sortMechanismsByPriority
+     * 
+     *  Sorts an array of objects with prototype SASLMechanism according to
+     *  their priorities.
+     *
+     *  Parameters:
+     *    (Array) mechanisms - Array of SASL mechanisms.
+     *
+     */
+    sortMechanismsByPriority: function (mechanisms) {
+        // Sorting mechanisms according to priority.
+        var i, j, higher, swap;
+        for (i = 0; i < mechanisms.length - 1; ++i) {
+            higher = i;
+            for (j = i + 1; j < mechanisms.length; ++j) {
+                if (mechanisms[j].prototype.priority > mechanisms[higher].prototype.priority) {
+                    higher = j;
+                }
+            }
+            if (higher != i) {
+                swap = mechanisms[i];
+                mechanisms[i] = mechanisms[higher];
+                mechanisms[higher] = swap;
+            }
+        }
+        return mechanisms;
+    },
+
+    /** PrivateFunction: _attemptSASLAuth
+     * 
+     *  Iterate through an array of SASL mechanisms and attempt authentication
+     *  with the highest priority (enabled) mechanism.
+     *
+     *  Parameters:
+     *    (Array) mechanisms - Array of SASL mechanisms.
+     *
+     *  Returns:
+     *    (Boolean) mechanism_found - true or false, depending on whether a
+     *          valid SASL mechanism was found with which authentication could be
+     *          started.
+     */
+    _attemptSASLAuth: function (mechanisms) {
+        mechanisms = this.sortMechanismsByPriority(mechanisms || []);
+        var i = 0, mechanism_found = false;
+        for (i = 0; i < mechanisms.length; ++i) {
+            if (!mechanisms[i].prototype.test(this)) {
+                continue;
+            }
+            this._sasl_success_handler = this._addSysHandler(
+                this._sasl_success_cb.bind(this), null,
+                "success", null, null);
+            this._sasl_failure_handler = this._addSysHandler(
+                this._sasl_failure_cb.bind(this), null,
+                "failure", null, null);
+            this._sasl_challenge_handler = this._addSysHandler(
+                this._sasl_challenge_cb.bind(this), null,
+                "challenge", null, null);
+
+            this._sasl_mechanism = new mechanisms[i]();
+            this._sasl_mechanism.onStart(this);
+
+            var request_auth_exchange = $build("auth", {
+                xmlns: Strophe.NS.SASL,
+                mechanism: this._sasl_mechanism.name
+            });
+            if (this._sasl_mechanism.isClientFirst) {
+                var response = this._sasl_mechanism.onChallenge(this, null);
+                request_auth_exchange.t(Base64.encode(response));
+            }
+            this.send(request_auth_exchange.tree());
+            mechanism_found = true;
+            break;
+        }
+        return mechanism_found;
+    },
+
+    /** PrivateFunction: _attemptLegacyAuth
+     * 
+     *  Attempt legacy (i.e. non-SASL) authentication.
+     *
+     */
+    _attemptLegacyAuth: function () {
+        if (Strophe.getNodeFromJid(this.jid) === null) {
+            // we don't have a node, which is required for non-anonymous
+            // client connections
+            this._changeConnectStatus(
+                Strophe.Status.CONNFAIL,
+                'x-strophe-bad-non-anon-jid'
+            );
+            this.disconnect('x-strophe-bad-non-anon-jid');
+        } else {
+            // Fall back to legacy authentication
+            this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
+            this._addSysHandler(
+                this._auth1_cb.bind(this),
+                null, null, null, "_auth_1"
+            );
+            this.send($iq({
+                    'type': "get",
+                    'to': this.domain,
+                    'id': "_auth_1"
+                }).c("query", {xmlns: Strophe.NS.AUTH})
+                .c("username", {}).t(Strophe.getNodeFromJid(this.jid))
+                .tree());
+        }
+    },
+
     /** Function: authenticate
      * Set up authentication
      *
-     *  Contiunues the initial connection request by setting up authentication
+     *  Continues the initial connection request by setting up authentication
      *  handlers and starting the authentication process.
      *
      *  SASL authentication will be attempted if available, otherwise
      *  the code will fall back to legacy authentication.
      *
+     *  Parameters:
+     *    (Array) matched - Array of SASL mechanisms supported.
+     *
      */
     authenticate: function (matched) {
-      var i;
-      // Sorting matched mechanisms according to priority.
-      for (i = 0; i < matched.length - 1; ++i) {
-        var higher = i;
-        for (var j = i + 1; j < matched.length; ++j) {
-          if (matched[j].prototype.priority > matched[higher].prototype.priority) {
-            higher = j;
-          }
+        if (!this._attemptSASLAuth(matched)) {
+            this._attemptLegacyAuth();
         }
-        if (higher != i) {
-          var swap = matched[i];
-          matched[i] = matched[higher];
-          matched[higher] = swap;
-        }
-      }
-
-      // run each mechanism
-      var mechanism_found = false;
-      for (i = 0; i < matched.length; ++i) {
-        if (!matched[i].prototype.test(this)) continue;
-
-        this._sasl_success_handler = this._addSysHandler(
-          this._sasl_success_cb.bind(this), null,
-          "success", null, null);
-        this._sasl_failure_handler = this._addSysHandler(
-          this._sasl_failure_cb.bind(this), null,
-          "failure", null, null);
-        this._sasl_challenge_handler = this._addSysHandler(
-          this._sasl_challenge_cb.bind(this), null,
-          "challenge", null, null);
-
-        this._sasl_mechanism = new matched[i]();
-        this._sasl_mechanism.onStart(this);
-
-        var request_auth_exchange = $build("auth", {
-          xmlns: Strophe.NS.SASL,
-          mechanism: this._sasl_mechanism.name
-        });
-
-        if (this._sasl_mechanism.isClientFirst) {
-          var response = this._sasl_mechanism.onChallenge(this, null);
-          request_auth_exchange.t(Base64.encode(response));
-        }
-        this.send(request_auth_exchange.tree());
-        mechanism_found = true;
-        break;
-      }
-
-      if (!mechanism_found) {
-        // if none of the mechanism worked
-        if (Strophe.getNodeFromJid(this.jid) === null) {
-            // we don't have a node, which is required for non-anonymous
-            // client connections
-            this._changeConnectStatus(Strophe.Status.CONNFAIL,
-                                      'x-strophe-bad-non-anon-jid');
-            this.disconnect('x-strophe-bad-non-anon-jid');
-        } else {
-          // fall back to legacy authentication
-          this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
-          this._addSysHandler(this._auth1_cb.bind(this), null, null,
-                              null, "_auth_1");
-          this.send($iq({
-                type: "get",
-                to: this.domain,
-                id: "_auth_1"
-          }).c("query", {
-                xmlns: Strophe.NS.AUTH
-          }).c("username", {}).t(Strophe.getNodeFromJid(this.jid)).tree());
-        }
-      }
     },
 
+    /** PrivateFunction: _sasl_challenge_cb
+     *  _Private_ handler for the SASL challenge
+     *
+     */
     _sasl_challenge_cb: function(elem) {
       var challenge = Base64.decode(Strophe.getText(elem));
       var response = this._sasl_mechanism.onChallenge(this, challenge);
       var stanza = $build('response', {
-          xmlns: Strophe.NS.SASL
+          'xmlns': Strophe.NS.SASL
       });
       if (response !== "") {
         stanza.t(Base64.encode(response));
@@ -2748,7 +2793,6 @@ Strophe.Connection.prototype = {
               return this._sasl_failure_cb(null);
             }
         }
-
         Strophe.info("SASL authentication succeeded.");
 
         if (this._sasl_mechanism) {

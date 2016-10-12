@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.2.9 - Unreleased
+* Allow SASL mechanisms to be supported to be passed in as option to
+  `Strophe.Connection` constructor.
+
 ## Version 1.2.8 - 2016-09-16
 * #200 Fix for webpack
 * #203 Allow custom Content-Type header for requests
