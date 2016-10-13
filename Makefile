@@ -42,10 +42,11 @@ $(STROPHE_MIN)::
 doc:
 	@@echo "Building Strophe documentation..."
 	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
+	@@cp docs.css $(NDPROJ_DIR);
 	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
 	@@if [ ! -d $(DOC_TEMP) ]; then mkdir $(DOC_TEMP); fi
 	@@cp $(STROPHE) $(DOC_TEMP)
-	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -o html $(DOC_DIR) -p $(NDPROJ_DIR)
+	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -o html $(DOC_DIR) -p $(NDPROJ_DIR) -s docs
 	@@echo "Documentation built."
 	@@echo
 
