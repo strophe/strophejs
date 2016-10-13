@@ -828,8 +828,7 @@ Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    debug: function(msg)
-    {
+    debug: function(msg) {
         this.log(this.LogLevel.DEBUG, msg);
     },
 
@@ -967,6 +966,7 @@ Strophe = {
  *  >     .c('query', {xmlns: 'strophe:example'})
  *  >     .c('example')
  *  >     .toString()
+ *
  *  The above generates this XML fragment
  *  > <iq to='you' from='me' type='get' id='1'>
  *  >   <query xmlns='strophe:example'>
@@ -1218,24 +1218,68 @@ Strophe.Handler = function (handler, ns, name, type, id, from, options) {
     this.name = name;
     this.type = type;
     this.id = id;
-    this.options = options || {matchBare: false};
-
-    // default matchBare to false if undefined
-    if (!this.options.matchBare) {
-        this.options.matchBare = false;
+    this.options = options || {'matchBareFromJid': false, 'ignoreNamespaceFragment': false};
+    // BBB: Maintain backward compatibility with old `matchBare` option
+    if (this.options.matchBare) {
+        Strophe.warn('The "matchBare" option is deprecated, use "matchBareFromJid" instead.');
+        this.options.matchBareFromJid = this.options.matchBare;
+        delete this.options.matchBare;
     }
 
-    if (this.options.matchBare) {
+    if (this.options.matchBareFromJid) {
         this.from = from ? Strophe.getBareJidFromJid(from) : null;
     } else {
         this.from = from;
     }
-
     // whether the handler is a user handler or a system handler
     this.user = true;
 };
 
 Strophe.Handler.prototype = {
+    /** PrivateFunction: getNamespace
+     *  Returns the XML namespace attribute on an element.
+     *  If `ignoreNamespaceFragment` was passed in for this handler, then the
+     *  URL fragment will be stripped.
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The XML element with the namespace.
+     *
+     *  Returns:
+     *    The namespace, with optionally the fragment stripped.
+     */
+    getNamespace: function (elem) {
+        var elNamespace = elem.getAttribute("xmlns");
+        if (elNamespace && this.options.ignoreNamespaceFragment) {
+            elNamespace = elNamespace.split('#')[0];
+        }
+        return elNamespace;
+    },
+
+    /** PrivateFunction: namespaceMatch
+     *  Tests if a stanza matches the namespace set for this Strophe.Handler.
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The XML element to test.
+     *
+     *  Returns:
+     *    true if the stanza matches and false otherwise.
+     */
+    namespaceMatch: function (elem) {
+        var nsMatch = false;
+        if (!this.ns) {
+            return true;
+        } else {
+            var that = this;
+            Strophe.forEachChild(elem, null, function (elem) {
+                if (that.getNamespace(elem) === that.ns) {
+                    nsMatch = true;
+                }
+            });
+            nsMatch = nsMatch || this.getNamespace(elem) === this.ns;
+        }
+        return nsMatch;
+    },
+
     /** PrivateFunction: isMatch
      *  Tests if a stanza matches the Strophe.Handler.
      *
@@ -1246,38 +1290,18 @@ Strophe.Handler.prototype = {
      *    true if the stanza matches and false otherwise.
      */
     isMatch: function (elem) {
-        var nsMatch;
-        var from = null;
-
-        if (this.options.matchBare) {
-            from = Strophe.getBareJidFromJid(elem.getAttribute('from'));
-        } else {
-            from = elem.getAttribute('from');
+        var from = elem.getAttribute('from');
+        if (this.options.matchBareFromJid) {
+            from = Strophe.getBareJidFromJid(from);
         }
-
-        nsMatch = false;
-        if (!this.ns) {
-            nsMatch = true;
-        } else {
-            var that = this;
-            Strophe.forEachChild(elem, null, function (elem) {
-                if (elem.getAttribute("xmlns") == that.ns) {
-                    nsMatch = true;
-                }
-            });
-
-            nsMatch = nsMatch || elem.getAttribute("xmlns") == this.ns;
-        }
-
         var elem_type = elem.getAttribute("type");
-        if (nsMatch &&
+        if (this.namespaceMatch(elem) &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
             (!this.type || (Array.isArray(this.type) ? this.type.indexOf(elem_type) != -1 : elem_type == this.type)) &&
             (!this.id || elem.getAttribute("id") == this.id) &&
             (!this.from || from == this.from)) {
                 return true;
         }
-
         return false;
     },
 
@@ -1311,10 +1335,8 @@ Strophe.Handler.prototype = {
             } else {
                 Strophe.fatal("error: " + e.message + "\n" + e.stack);
             }
-
             throw e;
         }
-
         return result;
     },
 
@@ -1358,7 +1380,6 @@ Strophe.Handler.prototype = {
 Strophe.TimedHandler = function (period, handler) {
     this.period = period;
     this.handler = handler;
-
     this.lastCalled = new Date().getTime();
     this.user = true;
 };
@@ -1441,13 +1462,13 @@ Strophe.TimedHandler.prototype = {
  *
  *  The passed in value must be a map of cookie names and string values:
  *
- * { "myCookie": {
- *      "value": "1234",
- *      "domain": ".example.org",
- *      "path": "/",
- *      "expires": expirationDate
- *      }
- *  }
+ *  > { "myCookie": {
+ *  >     "value": "1234",
+ *  >     "domain": ".example.org",
+ *  >     "path": "/",
+ *  >     "expires": expirationDate
+ *  >     }
+ *  > }
  *
  *  Note that cookies can't be set in this way for other domains (i.e. cross-domain).
  *  Those cookies need to be set under those domains, for example they can be
@@ -1473,7 +1494,6 @@ Strophe.TimedHandler.prototype = {
  *      DIGEST-MD5 - 30
  *      PLAIN - 20
  *      ANONYMOUS - 10
- *
  *
  *  WebSocket options:
  *  ------------------
@@ -2190,13 +2210,39 @@ Strophe.Connection.prototype = {
      *  and also any of its immediate children.  This is primarily to make
      *  matching /iq/query elements easy.
      *
-     *  The options argument contains handler matching flags that affect how
-     *  matches are determined. Currently the only flag is matchBare (a
-     *  boolean). When matchBare is true, the from parameter and the from
-     *  attribute on the stanza will be matched as bare JIDs instead of
-     *  full JIDs. To use this, pass {matchBare: true} as the value of
-     *  options. The default value for matchBare is false.
+     *  Options
+     *  ~~~~~~~
+     *  With the options argument, you can specify boolean flags that affect how
+     *  matches are being done.
      *
+     *  Currently two flags exist:
+     *
+     *  - matchBareFromJid:
+     *      When set to true, the from parameter and the
+     *      from attribute on the stanza will be matched as bare JIDs instead
+     *      of full JIDs. To use this, pass {matchBareFromJid: true} as the
+     *      value of options. The default value for matchBareFromJid is false.
+     *
+     *  - ignoreNamespaceFragment:
+     *      When set to true, a fragment specified on the stanza's namespace
+     *      URL will be ignored when it's matched with the one configured for
+     *      the handler.
+     *
+     *      This means that if you register like this:
+     *      >   connection.addHandler(
+     *      >       handler,
+     *      >       'http://jabber.org/protocol/muc',
+     *      >       null, null, null, null,
+     *      >       {'ignoreNamespaceFragment': true}
+     *      >   );
+     *
+     *      Then a stanza with XML namespace of
+     *      'http://jabber.org/protocol/muc#user' will also be matched. If
+     *      'ignoreNamespaceFragment' is false, then only stanzas with
+     *      'http://jabber.org/protocol/muc' will be matched.
+     *
+     *  Deleting the handler
+     *  ~~~~~~~~~~~~~~~~~~~~
      *  The return value should be saved if you wish to remove the handler
      *  with deleteHandler().
      *
@@ -2271,7 +2317,7 @@ Strophe.Connection.prototype = {
      *
      */
     registerSASLMechanism: function (mechanism) {
-        this.mechanisms[mechanism.prototype.name] = mechanism; 
+        this.mechanisms[mechanism.prototype.name] = mechanism;
     },
 
     /** Function: disconnect
@@ -2581,7 +2627,7 @@ Strophe.Connection.prototype = {
     },
 
     /** Function: sortMechanismsByPriority
-     * 
+     *
      *  Sorts an array of objects with prototype SASLMechanism according to
      *  their priorities.
      *
@@ -2609,7 +2655,7 @@ Strophe.Connection.prototype = {
     },
 
     /** PrivateFunction: _attemptSASLAuth
-     * 
+     *
      *  Iterate through an array of SASL mechanisms and attempt authentication
      *  with the highest priority (enabled) mechanism.
      *
@@ -2657,7 +2703,7 @@ Strophe.Connection.prototype = {
     },
 
     /** PrivateFunction: _attemptLegacyAuth
-     * 
+     *
      *  Attempt legacy (i.e. non-SASL) authentication.
      *
      */
@@ -3028,8 +3074,7 @@ Strophe.Connection.prototype = {
      *    (String) type - The stanza type attribute to match.
      *    (String) id - The stanza id attribute to match.
      */
-    _addSysHandler: function (handler, ns, name, type, id)
-    {
+    _addSysHandler: function (handler, ns, name, type, id) {
         var hand = new Strophe.Handler(handler, ns, name, type, id);
         hand.user = false;
         this.addHandlers.push(hand);

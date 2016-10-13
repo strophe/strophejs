@@ -374,14 +374,33 @@ define([
 
 			var hand = new Strophe.Handler(null, null, null, null, null,
 										'darcy@pemberley.lit/library',
-										{matchBare: true});
+										{matchBareFromJid: true});
 			equal(hand.isMatch(elem), true, "Full JID should match");
 
 			hand = new Strophe.Handler(null, null, null, null, null,
 									'darcy@pemberley.lit',
-									{matchBare: true});
+									{matchBareFromJid: true});
 			equal(hand.isMatch(elem), true, "Bare JID should match");
 		});
+
+        test("Namespace matching", function () {
+			var elemNoFrag = $msg({xmlns: 'http://jabber.org/protocol/muc'}).tree();
+			var elemWithFrag = $msg({xmlns: 'http://jabber.org/protocol/muc#user'}).tree();
+            var hand = new Strophe.Handler(
+                null, 'http://jabber.org/protocol/muc',
+                null, null, null, null
+            );
+            equal(hand.isMatch(elemNoFrag), true, "The handler should match on stanza namespace");
+            equal(hand.isMatch(elemWithFrag), false, "The handler should not match on stanza namespace with fragment");
+
+            hand = new Strophe.Handler(
+                null, 'http://jabber.org/protocol/muc',
+                null, null, null, null,
+                {'ignoreNamespaceFragment': true}
+            );
+            equal(hand.isMatch(elemNoFrag), true, "The handler should match on stanza namespace");
+            equal(hand.isMatch(elemWithFrag), true, "The handler should match on stanza namespace, even with fragment");
+        });
 
 		test("Stanza name matching", function () {
 			var elem = $iq().tree();
