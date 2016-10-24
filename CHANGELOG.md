@@ -6,7 +6,8 @@
 * The `matchBare` matching option for `Strophe.Handler` has been renamed to
   `matchBareFromJid`. The old name will still work in this release but is
   deprecated and will be removed in a future release.
-* Add an error handler for HTTP calls.
+* #114 Add an error handler for HTTP calls
+* #213 "XHR open failed." in BOSH in IE9
 
 ## Version 1.2.8 - 2016-09-16
 * #200 Fix for webpack

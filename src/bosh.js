@@ -706,8 +706,7 @@ Strophe.Bosh.prototype = {
         if (primaryTimeout || secondaryTimeout ||
             requestCompletedWithServerError) {
             if (secondaryTimeout) {
-                Strophe.error("Request " +
-                              this._requests[i].id +
+                Strophe.error("Request " + this._requests[i].id +
                               " timed out (secondary), restarting");
             }
             req.abort = true;
@@ -722,13 +721,15 @@ Strophe.Bosh.prototype = {
         }
 
         if (req.xhr.readyState === 0) {
-            Strophe.debug("request id " + req.id +
-                          "." + req.sends + " posting");
+            Strophe.debug("request id "+req.id+"."+req.sends+" posting");
 
             try {
                 var contentType = this._conn.options.contentType || "text/xml; charset=utf-8";
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
-                req.xhr.setRequestHeader("Content-Type", contentType);
+                if (typeof req.xhr.setRequestHeader !== 'undefined') {
+                    // IE9 doesn't have setRequestHeader
+                    req.xhr.setRequestHeader("Content-Type", contentType);
+                }
                 if (this._conn.options.withCredentials) {
                     req.xhr.withCredentials = true;
                 }
