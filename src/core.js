@@ -1592,8 +1592,10 @@ Strophe.Connection = function (service, options) {
     this.removeHandlers = [];
     this.addTimeds = [];
     this.addHandlers = [];
-    //HttpError handlers
-    this.httpErrorHandlers = {};
+    this.protocolErrorHandlers = {
+        'HTTP': {},
+        'websocket': {}
+    };
 
     this._idleTimeout = null;
     this._disconnectTimeout = null;
@@ -1726,31 +1728,30 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /** Function: addHTTPErrorHandler
-     *  Add callback to HTTP error
+    /** Function: addProtocolErrorHandler
+     *  Register a handler function for when a protocol (websocker or HTTP)
+     *  error occurs.
      *
-     *  The ability to create a callback function for HTTP errors.
-     *
-     *  These handlers will fire only in the case of BOSH and the http-bind service.
+     *  NOTE: Currently only HTTP errors for BOSH requests are handled.
+     *  Patches that handle websocket errors would be very welcome.
      *
      *  Parameters:
-     *    (Integer) status_code - Http status code (e.g 500, 400, 404 and others)
+     *    (String) protocol - 'HTTP' or 'websocket' 
+     *    (Integer) status_code - Error status code (e.g 500, 400 or 404)
      *    (Function) callback - Function that will fire on Http error
      *
      *  Example:
-     *  function Error500(err_code){
-     *    //do staff
+     *  function onError(err_code){
+     *    //do stuff
      *  }
      *
-     *  $(document).ready(function(){
-     *    var conn = Strophe.connect(http://example.com/http-bind);
-     *    conn.addHttpErrHndl(500, Error500);
-     *    conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect); <= this will triger 
-     *    HTTP 500 error and call Error500() function
-     *  });  
+     *  var conn = Strophe.connect('http://example.com/http-bind');
+     *  conn.addProtocolErrorHandler('HTTP', 500, onError);
+     *  // Triggers HTTP 500 error and onError handler will be called
+     *  conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect);
      */
-    addHTTPErrorHandler: function(status_code, callback){
-        this.httpErrorHandlers[status_code] = callback;
+    addProtocolErrorHandler: function(protocol, status_code, callback){
+        this.protocolErrorHandlers[protocol][status_code] = callback;
     },
 
 

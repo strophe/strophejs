@@ -6,6 +6,7 @@
 * The `matchBare` matching option for `Strophe.Handler` has been renamed to
   `matchBareFromJid`. The old name will still work in this release but is
   deprecated and will be removed in a future release.
+* Add an error handler for HTTP calls.
 
 ## Version 1.2.8 - 2016-09-16
 * #200 Fix for webpack

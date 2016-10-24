@@ -38,8 +38,7 @@
  *    (Function) func - The function that will be called when the
  *      XMLHttpRequest readyState changes.
  *    (Integer) rid - The BOSH rid attribute associated with this request.
- *    (Integer) sends - The number of times this same request has been
- *      sent.
+ *    (Integer) sends - The number of times this same request has been sent.
  */
 Strophe.Request = function (elem, func, rid, sends) {
     this.id = ++Strophe._requestId;
@@ -428,6 +427,21 @@ Strophe.Bosh.prototype = {
         return this._requests.length === 0;
     },
 
+    /** PrivateFunction: _callProtocolErrorHandlers
+     *  _Private_ function to call error handlers registered for HTTP errors.
+     *
+     *  Parameters:
+     *    (Strophe.Request) req - The request that is changing readyState.
+     */
+    _callProtocolErrorHandlers: function (req) {
+        var reqStatus = this._getRequestStatus(req),
+            err_callback;
+        err_callback = this._conn.protocolErrorHandlers.HTTP[reqStatus];
+        if (err_callback) {
+            err_callback.call(this, reqStatus);
+        }
+    },
+
     /** PrivateFunction: _hitError
      *  _Private_ function to handle the error count.
      *
@@ -444,11 +458,6 @@ Strophe.Bosh.prototype = {
                      ", number of errors: " + this.errors);
         if (this.errors > 4) {
             this._conn._onDisconnectTimeout();
-        } else {
-            var err_callback = this._conn.httpErrorHandlers[reqStatus];
-            if (err_callback) {
-                err_callback.apply(this, [reqStatus,]);
-            }
         }
     },
 
@@ -560,6 +569,27 @@ Strophe.Bosh.prototype = {
         }
     },
 
+    /** PrivateFunction: _getRequestStatus
+     *
+     *  Returns the HTTP status code from a Strophe.Request
+     *
+     *  Parameters:
+     *    (Strophe.Request) req - The Strophe.Request instance.
+     */
+    _getRequestStatus: function (req) {
+        var reqStatus = 0;
+        try {
+            reqStatus = req.xhr.status;
+        } catch (e) {
+            // ignore errors from undefined status attribute.  works
+            // around a browser bug
+        }
+        if (typeof(reqStatus) == "undefined") {
+            reqStatus = 0;
+        }
+        return reqStatus;
+    },
+
     /** PrivateFunction: _onRequestStateChange
      *  _Private_ handler for Strophe.Request state changes.
      *
@@ -573,88 +603,62 @@ Strophe.Bosh.prototype = {
      *    (Strophe.Request) req - The request that is changing readyState.
      */
     _onRequestStateChange: function (func, req) {
-        Strophe.debug("request id " + req.id +
-                      "." + req.sends + " state changed to " +
-                      req.xhr.readyState);
-
+        Strophe.debug("request id "+req.id+"."+req.sends+
+                      " state changed to "+req.xhr.readyState);
         if (req.abort) {
             req.abort = false;
             return;
         }
+        if (req.xhr.readyState !== 4) {
+            // The request is not yet complete
+            return;
+        }
+        var reqStatus = this._getRequestStatus(req);
+        if (this.disconnecting && reqStatus >= 400) {
+            this._hitError(reqStatus);
+            this._callProtocolErrorHandlers(req);
+            return;
+        }
 
-        // request complete
-        var reqStatus;
-        if (req.xhr.readyState == 4) {
-            reqStatus = 0;
-            try {
-                reqStatus = req.xhr.status;
-            } catch (e) {
-                // ignore errors from undefined status attribute.  works
-                // around a browser bug
-            }
+        if ((reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+            // remove from internal queue
+            this._removeRequest(req);
+            Strophe.debug("request id "+req.id+" should now be removed");
+        }
 
-            if (typeof(reqStatus) == "undefined") {
-                reqStatus = 0;
-            }
-
-            if (this.disconnecting) {
-                if (reqStatus >= 400) {
-                    this._hitError(reqStatus);
-                    return;
-                }
-            }
-
+        if (reqStatus == 200) {
+            // request succeeded
             var reqIs0 = (this._requests[0] == req);
             var reqIs1 = (this._requests[1] == req);
-
-            if ((reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
-                // remove from internal queue
-                this._removeRequest(req);
-                Strophe.debug("request id " +
-                              req.id +
-                              " should now be removed");
+            // if request 1 finished, or request 0 finished and request
+            // 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
+            // restart the other - both will be in the first spot, as the
+            // completed request has been removed from the queue already
+            if (reqIs1 ||
+                (reqIs0 && this._requests.length > 0 &&
+                    this._requests[0].age() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait))) {
+                this._restartRequest(0);
             }
-
-            // request succeeded
-            if (reqStatus == 200) {
-                // if request 1 finished, or request 0 finished and request
-                // 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
-                // restart the other - both will be in the first spot, as the
-                // completed request has been removed from the queue already
-                if (reqIs1 ||
-                    (reqIs0 && this._requests.length > 0 &&
-                     this._requests[0].age() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait))) {
-                    this._restartRequest(0);
-                }
-
-                this._conn.nextValidRid(Number(req.rid) + 1);
-
-                // call handler
-                Strophe.debug("request id " +
-                              req.id + "." +
-                              req.sends + " got 200");
-                func(req);
-                this.errors = 0;
-            } else {
-                Strophe.error("request id " +
-                              req.id + "." +
-                              req.sends + " error " + reqStatus +
-                              " happened");
-                if (reqStatus === 0 ||
-                    (reqStatus >= 400 && reqStatus < 600) ||
-                    reqStatus >= 12000) {
-                    this._hitError(reqStatus);
-                    if (reqStatus >= 400 && reqStatus < 500) {
-                        this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING, null);
-                        this._conn._doDisconnect();
-                    }
-                }
+            this._conn.nextValidRid(Number(req.rid) + 1);
+            Strophe.debug("request id "+req.id+"."+req.sends+" got 200");
+            func(req); // call handler
+            this.errors = 0;
+        } else if (reqStatus === 0 ||
+                   (reqStatus >= 400 && reqStatus < 600) ||
+                   reqStatus >= 12000) {
+            // request failed
+            Strophe.error("request id "+req.id+"."+req.sends+" error "+reqStatus+" happened");
+            this._hitError(reqStatus);
+            this._callProtocolErrorHandlers(req);
+            if (reqStatus >= 400 && reqStatus < 500) {
+                this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING, null);
+                this._conn._doDisconnect();
             }
-
-            if (!((reqStatus > 0 && reqStatus < 500) ||
-                  req.sends > 5)) {
-                this._throttledRequestHandler();
-            }
+        } else {
+            Strophe.error("request id "+req.id+"."+req.sends+" error "+reqStatus+" happened");
+        }
+        if (!(reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+            this._throttledRequestHandler();
         }
     },
 
@@ -797,17 +801,14 @@ Strophe.Bosh.prototype = {
      */
     _removeRequest: function (req) {
         Strophe.debug("removing request");
-
         var i;
         for (i = this._requests.length - 1; i >= 0; i--) {
             if (req == this._requests[i]) {
                 this._requests.splice(i, 1);
             }
         }
-
         // IE6 fails on setting to null, so set to empty function
         req.xhr.onreadystatechange = function () {};
-
         this._throttledRequestHandler();
     },
 
@@ -857,16 +858,15 @@ Strophe.Bosh.prototype = {
     _sendTerminate: function (pres) {
         Strophe.info("_sendTerminate was called");
         var body = this._buildBody().attrs({type: "terminate"});
-
         if (pres) {
             body.cnode(pres.tree());
         }
-
-        var req = new Strophe.Request(body.tree(),
-                                      this._onRequestStateChange.bind(
-                                          this, this._conn._dataRecv.bind(this._conn)),
-                                      body.tree().getAttribute("rid"));
-
+        var req = new Strophe.Request(
+            body.tree(),
+            this._onRequestStateChange.bind(
+            this, this._conn._dataRecv.bind(this._conn)),
+            body.tree().getAttribute("rid")
+        );
         this._requests.push(req);
         this._throttledRequestHandler();
     },

@@ -355,7 +355,38 @@ define([
 			equal(Strophe.serialize(element11), "<foo>&lt;foo&gt;<![CDATA[<foo>]]></foo>", "should be serialized");
 		});
 
-		module("Handler");
+        module("Handler");
+
+        test("HTTP errors", function () {
+            var spy500 = sinon.spy();
+            var spy401 = sinon.spy();
+            var conn = new Strophe.Connection("http://fake");
+            conn.addProtocolErrorHandler('HTTP', 500, spy500);
+            conn.addProtocolErrorHandler('HTTP', 401, spy401);
+			var req = new Strophe.Request('', function(){});
+            req.xhr = {
+                'status': 200,
+                'readyState': 4
+            };
+            conn._proto._onRequestStateChange(function () {}, req);
+            equal(spy500.called, false, "Error handler does not get called when no HTTP error");
+            equal(spy401.called, false, "Error handler does not get called when no HTTP error");
+
+            req.xhr = {
+                'status': 401,
+                'readyState': 4
+            };
+            conn._proto._onRequestStateChange(function () {}, req);
+            equal(spy500.called, false, "Error handler does not get called when no HTTP 500 error");
+            equal(spy401.called, true, "Error handler does get called when HTTP 401 error");
+
+            req.xhr = {
+                'status': 500,
+                'readyState': 4
+            };
+            conn._proto._onRequestStateChange(function () {}, req);
+            equal(spy500.called, true, "Error handler gets called on HTTP 500 error");
+        });
 
 		test("Full JID matching", function () {
 			var elem = $msg({from: 'darcy@pemberley.lit/library'}).tree();
