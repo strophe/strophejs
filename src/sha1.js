@@ -7,7 +7,7 @@
  * See http://pajhome.org.uk/crypt/md5 for details.
  */
 
-/* jshint undef: true, unused: true:, noarg: true, latedef: true */
+/* jshint undef: true, unused: true:, noarg: true, latedef: false */
 /* global define */
 
 /* Some functions and variables have been stripped for use with Strophe */

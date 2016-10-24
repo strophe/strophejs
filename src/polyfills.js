@@ -96,7 +96,7 @@ if (!Array.prototype.indexOf) {
 
 
 /** Function: Array.prototype.forEach
- *  
+ *
  *  This function is not available in IE < 9
  *  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
  */
@@ -114,7 +114,7 @@ if (!Array.prototype.forEach) {
         // method of O with the argument "length".
         // 3. Let len be toUint32(lenValue).
         var len = O.length >>> 0;
-        // 4. If isCallable(callback) is false, throw a TypeError exception. 
+        // 4. If isCallable(callback) is false, throw a TypeError exception.
         // See: http://es5.github.com/#x9.11
         if (typeof callback !== "function") {
             throw new TypeError(callback + ' is not a function');

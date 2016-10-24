@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.2.9 - Unreleased
+## Version 1.2.9 - 2016-10-24
 * Allow SASL mechanisms to be supported to be passed in as option to `Strophe.Connection` constructor.
 * Add new matching option to `Strophe.Handler`, namely `ignoreNamespaceFragment`.
 * The `matchBare` matching option for `Strophe.Handler` has been renamed to

@@ -1,7 +1,7 @@
 {
   "name": "strophe.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "homepage": "http://strophe.im/strophejs",
   "repository": {
     "type": "git",
@@ -34,9 +34,7 @@
     "Brendon Crawford (brendoncrawford)",
     "JC Brand (jcbrand)"
   ],
-  "licenses": [
-    "MIT"
-  ],
+  "license": "MIT",
   "main": "strophe.js",
   "browser": "strophe.js",
   "scripts": {

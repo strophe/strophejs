@@ -58,6 +58,7 @@ release:
 
 .PHONY: check
 check::
+	@@$(GRUNT) jshint
 	make stamp-bower
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 

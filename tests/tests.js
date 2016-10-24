@@ -75,7 +75,7 @@ define([
             };
             equal(conn._proto._getRequestStatus(req, -1), -1,
                     "Returns the default if the request doesn't have a status");
-            
+
             equal(conn._proto._getRequestStatus(req, 0), 0,
                     "Returns the default if the request doesn't have a status");
         });
