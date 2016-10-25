@@ -587,7 +587,7 @@ Strophe.Bosh.prototype = {
                 // ignore errors from undefined status attribute. Works
                 // around a browser bug
                 Strophe.error(
-                    "caught an error while retrieving a request's status, " +
+                    "Caught an error while retrieving a request's status, " +
                     "reqStatus: " + reqStatus);
             }
         }
@@ -729,8 +729,8 @@ Strophe.Bosh.prototype = {
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this._conn.connected) {
-                    this._conn._changeConnectStatus(Strophe.Status.CONNFAIL,
-                                              "bad-service");
+                    this._conn._changeConnectStatus(
+                            Strophe.Status.CONNFAIL, "bad-service");
                 }
                 this._conn.disconnect();
                 return;
