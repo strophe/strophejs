@@ -8,6 +8,7 @@
   deprecated and will be removed in a future release.
 * #114 Add an error handler for HTTP calls
 * #213 "XHR open failed." in BOSH in IE9
+* #214 Add function to move Strophe.Builder pointer back to the root node
 
 ## Version 1.2.8 - 2016-09-16
 * #200 Fix for webpack

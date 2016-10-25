@@ -1076,6 +1076,21 @@ Strophe.Builder.prototype = {
         return this;
     },
 
+    /** Function: root
+     *  Make the root element the new current element.
+     *
+     *  When at a deeply nested element in the tree, this function can be used
+     *  to jump back to the root of the tree, instead of having to repeatedly
+     *  call up().
+     *
+     *  Returns:
+     *    The Stophe.Builder object.
+     */
+    root: function () {
+        this.node = this.nodeTree;
+        return this;
+    },
+
     /** Function: attrs
      *  Add or modify attributes of the current element.
      *

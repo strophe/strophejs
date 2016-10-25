@@ -140,6 +140,12 @@ define([
 
 		module("Builder");
 
+        test("The root() method", function () {
+            var builder = new Strophe.Builder('root');
+            var el = builder.c('child').c('grandchild').c('greatgrandchild').root();
+            equal(el.node.nodeName, 'root', 'root() jump back to the root of the tree');
+        });
+
 		test("Correct namespace (#32)", function () {
 			var stanzas = [new Strophe.Builder("message", {foo: "asdf"}).tree(),
 						$build("iq", {}).tree(),
