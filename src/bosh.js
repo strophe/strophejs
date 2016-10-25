@@ -575,17 +575,24 @@ Strophe.Bosh.prototype = {
      *
      *  Parameters:
      *    (Strophe.Request) req - The Strophe.Request instance.
+     *    (Integer) def - The default value that should be returned if no
+     *          status value was found.
      */
-    _getRequestStatus: function (req) {
-        var reqStatus = 0;
-        try {
-            reqStatus = req.xhr.status;
-        } catch (e) {
-            // ignore errors from undefined status attribute.  works
-            // around a browser bug
+    _getRequestStatus: function (req, def) {
+        var reqStatus;
+        if (req.xhr.readyState == 4) {
+            try {
+                reqStatus = req.xhr.status;
+            } catch (e) {
+                // ignore errors from undefined status attribute. Works
+                // around a browser bug
+                Strophe.error(
+                    "caught an error while retrieving a request's status, " +
+                    "reqStatus: " + reqStatus);
+            }
         }
         if (typeof(reqStatus) == "undefined") {
-            reqStatus = 0;
+            reqStatus = typeof def === 'number' ? def : 0;
         }
         return reqStatus;
     },
@@ -674,20 +681,7 @@ Strophe.Bosh.prototype = {
     _processRequest: function (i) {
         var self = this;
         var req = this._requests[i];
-        var reqStatus = -1;
-
-        try {
-            if (req.xhr.readyState == 4) {
-                reqStatus = req.xhr.status;
-            }
-        } catch (e) {
-            Strophe.error("caught an error in _requests[" + i +
-                          "], reqStatus: " + reqStatus);
-        }
-
-        if (typeof(reqStatus) == "undefined") {
-            reqStatus = -1;
-        }
+        var reqStatus = this._getRequestStatus(req, -1);
 
         // make sure we limit the number of retries
         if (req.sends > this._conn.maxRetries) {
@@ -701,8 +695,7 @@ Strophe.Bosh.prototype = {
         var secondaryTimeout = (req.dead !== null &&
                                 req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
         var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
-                                               (reqStatus < 1 ||
-                                                reqStatus >= 500));
+                                               (reqStatus < 1 || reqStatus >= 500));
         if (primaryTimeout || secondaryTimeout ||
             requestCompletedWithServerError) {
             if (secondaryTimeout) {
@@ -765,9 +758,8 @@ Strophe.Bosh.prototype = {
                 // expanding retry window
                 var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
                                        Math.pow(req.sends, 3)) * 1000;
-
-                // XXX: setTimeout should be called only with function expressions (23974bc1)
                 setTimeout(function() {
+                    // XXX: setTimeout should be called only with function expressions (23974bc1)
                     sendFunc();
                 }, backoff);
             } else {

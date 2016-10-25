@@ -48,6 +48,38 @@ define([
             equal(Strophe.XHTML.validTag('article'), false);
         });
 
+        test("_getRequestStatus", function () {
+            var conn = new Strophe.Connection("http://example.org");
+			var req = new Strophe.Request('', function(){});
+            req.xhr = {
+                'status': 200,
+                'readyState': 4
+            };
+            equal(conn._proto._getRequestStatus(req), 200, "Returns the status");
+            req.xhr = {
+                'status': 500,
+                'readyState': 4
+            };
+            equal(conn._proto._getRequestStatus(req), 500,
+                    "Returns the default if the request is not finished yet");
+
+            req.xhr = {
+                'status': 200,
+                'readyState': 3
+            };
+            equal(conn._proto._getRequestStatus(req), 0,
+                    "Returns the default if the request is not finished yet");
+
+            req.xhr = {
+                'readyState': 4
+            };
+            equal(conn._proto._getRequestStatus(req, -1), -1,
+                    "Returns the default if the request doesn't have a status");
+            
+            equal(conn._proto._getRequestStatus(req, 0), 0,
+                    "Returns the default if the request doesn't have a status");
+        });
+
         module("JIDs");
 
         test("Normal JID", function () {
