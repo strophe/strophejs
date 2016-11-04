@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.10 - Unreleased
+* #216 Get inactivity attribute from session creation response
+
 ## Version 1.2.9 - 2016-10-24
 * Allow SASL mechanisms to be supported to be passed in as option to `Strophe.Connection` constructor.
 * Add new matching option to `Strophe.Handler`, namely `ignoreNamespaceFragment`.
