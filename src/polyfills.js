@@ -24,9 +24,8 @@
  *
  *  This Function object extension method creates a bound method similar
  *  to those in Python.  This means that the 'this' object will point
- *  to the instance you want.  See
- *  <a href='https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind'>MDC's bind() documentation</a> and
- *  <a href='http://benjamin.smedbergs.us/blog/2007-01-03/bound-functions-and-function-imports-in-javascript/'>Bound Functions and Function Imports in JavaScript</a>
+ *  to the instance you want.  See <MDC's bind() documentation at https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind>
+ *  and <Bound Functions and Function Imports in JavaScript at http://benjamin.smedbergs.us/blog/2007-01-03/bound-functions-and-function-imports-in-javascript/>
  *  for a complete explanation.
  *
  *  This extension already exists in some browsers (namely, Firefox 3), but
@@ -98,7 +97,8 @@ if (!Array.prototype.indexOf) {
 /** Function: Array.prototype.forEach
  *
  *  This function is not available in IE < 9
- *  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
+ *
+ *  See <forEach on developer.mozilla.org at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach>
  */
 if (!Array.prototype.forEach) {
     Array.prototype.forEach = function(callback, thisArg) {

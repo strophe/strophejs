@@ -1472,14 +1472,13 @@ Strophe.TimedHandler.prototype = {
  *  Options common to both Websocket and BOSH:
  *  ------------------------------------------
  *
- *  cookies
- *  ~~~~~~~
+ *  cookies:
  *
- *  The "cookies" option allows you to pass in cookies to be added to the
+ *  The *cookies* option allows you to pass in cookies to be added to the
  *  document. These cookies will then be included in the BOSH XMLHttpRequest
  *  or in the websocket connection.
  *
- *  The passed in value must be a map of cookie names and string values:
+ *  The passed in value must be a map of cookie names and string values.
  *
  *  > { "myCookie": {
  *  >     "value": "1234",
@@ -1494,10 +1493,9 @@ Strophe.TimedHandler.prototype = {
  *  set server-side by making a XHR call to that domain to ask it to set any
  *  necessary cookies.
  *
- *  mechanisms
- *  ~~~~~~~~~~
+ *  mechanisms:
  *
- *  The "mechanisms" option allows you to specify the SASL mechanisms that this
+ *  The *mechanisms* option allows you to specify the SASL mechanisms that this
  *  instance of Strophe.Connection (and therefore your XMPP client) will
  *  support.
  *
@@ -1537,23 +1535,23 @@ Strophe.TimedHandler.prototype = {
  *
  *  By adding "sync" to the options, you can control if requests will
  *  be made synchronously or not. The default behaviour is asynchronous.
- *  If you want to make requests synchronous, make "sync" evaluate to true:
+ *  If you want to make requests synchronous, make "sync" evaluate to true.
  *  > var conn = new Strophe.Connection("/http-bind/", {sync: true});
  *
- *  You can also toggle this on an already established connection:
+ *  You can also toggle this on an already established connection.
  *  > conn.options.sync = true;
  *
- *  The "customHeaders" option can be used to provide custom HTTP headers to be
+ *  The *customHeaders* option can be used to provide custom HTTP headers to be
  *  included in the XMLHttpRequests made.
  *
- *  The "keepalive" option can be used to instruct Strophe to maintain the
+ *  The *keepalive* option can be used to instruct Strophe to maintain the
  *  current BOSH session across interruptions such as webpage reloads.
  *
  *  It will do this by caching the sessions tokens in sessionStorage, and when
  *  "restore" is called it will check whether there are cached tokens with
  *  which it can resume an existing session.
  *
- *  The "withCredentials" option should receive a Boolean value and is used to
+ *  The *withCredentials* option should receive a Boolean value and is used to
  *  indicate wether cookies should be included in ajax requests (by default
  *  they're not).
  *  Set this value to true if you are connecting to a BOSH service
@@ -1566,7 +1564,7 @@ Strophe.TimedHandler.prototype = {
  *  Access-Control-Allow-Origin header can't be set to the wildcard "*", but
  *  instead must be restricted to actual domains.
  *
- *  The "contentType" option can be set to change the default Content-Type
+ *  The *contentType* option can be set to change the default Content-Type
  *  of "text/xml; charset=utf-8", which can be useful to reduce the amount of
  *  CORS preflight requests that are sent to the server.
  *

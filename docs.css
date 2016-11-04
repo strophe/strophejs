@@ -54,7 +54,7 @@ img { border: 0;  }
     paragraphs, no indent) instead of print-style paragraphs (no blank line,
     indented.)
 */
-p { margin: 0 }
+p { margin: 1em 0; }
 
 
 /*  Opera doesn't break with just wbr, but will if you add this.  */
@@ -487,7 +487,6 @@ blockquote {
     .SDescription a {
         color: #E37222;
         font-size: 115%;
-        font-weight: bold;
     }
     .SDescription a:active { color: #A00000 }
 
