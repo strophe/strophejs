@@ -2,6 +2,7 @@
 
 ## Version 1.2.10 - Unreleased
 * #216 Get inactivity attribute from session creation response
+* Enable session restoration for anonymous logins
 
 ## Version 1.2.9 - 2016-10-24
 * Allow SASL mechanisms to be supported to be passed in as option to `Strophe.Connection` constructor.
