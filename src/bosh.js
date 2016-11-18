@@ -327,8 +327,8 @@ Strophe.Bosh.prototype = {
                         jid === null ||
                         Strophe.getBareJidFromJid(session.jid) == Strophe.getBareJidFromJid(jid) ||
                         // If authcid is null, then it's an anonymous login, so
-                        // we compare only the domains.
-                        ((Strophe.getDomainFromJid(jid) === null) && (Strophe.getDomainFromJid(session.jid) == jid))
+                        // we compare only the domains:
+                        ((Strophe.getNodeFromJid(jid) === null) && (Strophe.getDomainFromJid(session.jid) == jid))
                     )
         ) {
             this._conn.restored = true;
