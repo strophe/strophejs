@@ -1,6 +1,7 @@
 # Strophe.js Change Log
 
-## Version 1.2.10 - Unreleased
+## Version 1.2.10 - 2016-11-30
+* #172 and #215: Strophe shouldn't require `from` attribute in iq response
 * #216 Get inactivity attribute from session creation response
 * Enable session restoration for anonymous logins
 
