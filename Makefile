@@ -12,7 +12,7 @@ STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 STROPHE_LIGHT = strophe.light.js
 
-all: $(STROPHE_MIN)
+all: doc $(STROPHE_MIN)
 
 stamp-npm: package.json
 	npm install
@@ -47,6 +47,7 @@ doc:
 	@@if [ ! -d $(DOC_TEMP) ]; then mkdir $(DOC_TEMP); fi
 	@@cp $(STROPHE) $(DOC_TEMP)
 	@@naturaldocs -r -ro -q -i $(DOC_TEMP) -o html $(DOC_DIR) -p $(NDPROJ_DIR) -s docs
+	@@rm -r $(DOC_TEMP)
 	@@echo "Documentation built."
 	@@echo
 
