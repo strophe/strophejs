@@ -2442,6 +2442,7 @@ Strophe.Connection.prototype = {
         } else {
             Strophe.info("Disconnect was called before Strophe connected to the server");
             this._proto._abortAllRequests();
+            this._doDisconnect();
         }
     },
 

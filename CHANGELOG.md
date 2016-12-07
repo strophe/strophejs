@@ -1,5 +1,11 @@
 # Strophe.js Change Log
 
+## Version 1.2.11 - Unreleased
+* 189 Strophe never reaches DISCONNECTED status after .connect(..) and
+  .disconnect(..) calls while offline.
+* Add `sendPresence` method, similar to `sendIQ`, i.e. for cases where you expect a
+  responding presence (e.g. when leaving a MUC room).
+
 ## Version 1.2.10 - 2016-11-30
 * #172 and #215: Strophe shouldn't require `from` attribute in iq response
 * #216 Get inactivity attribute from session creation response
