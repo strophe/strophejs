@@ -52,7 +52,7 @@ doc:
 	@@echo
 
 .PHONY: release
-release:
+release:: stamp-bower
 	@@$(GRUNT) release
 	@@echo "Release created."
 	@@echo
