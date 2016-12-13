@@ -1,7 +1,7 @@
 {
   "name": "strophe.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "homepage": "http://strophe.im/strophejs",
   "repository": {
     "type": "git",
@@ -67,7 +67,7 @@
     "grunt-natural-docs": "~1.0.1",
     "grunt-shell": "~2.1.0",
     "http-server": "^0.9.0",
-    "phantomjs": "^2.1.7",
+    "phantomjs": "~1.9.7-1",
     "qunit-phantomjs-runner": "^2.1.0",
     "requirejs": "~2.3.2"
   }

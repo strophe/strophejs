@@ -846,7 +846,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "1.2.10",
+    VERSION: "1.2.11",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2830,6 +2830,67 @@ Strophe.Connection.prototype = {
         this._onIdle();
     },
 
+    /** Function: sendPresence
+     *  Helper function to send presence stanzas. The main benefit is for
+     *  sending presence stanzas for which you expect a responding presence
+     *  stanza with the same id (for example when leaving a chat room).
+     *
+     *  Parameters:
+     *    (XMLElement) elem - The stanza to send.
+     *    (Function) callback - The callback function for a successful request.
+     *    (Function) errback - The callback function for a failed or timed
+     *      out request.  On timeout, the stanza will be null.
+     *    (Integer) timeout - The time specified in milliseconds for a
+     *      timeout to occur.
+     *
+     *  Returns:
+     *    The id used to send the presence.
+     */
+    sendPresence: function(elem, callback, errback, timeout) {
+        var timeoutHandler = null;
+        var that = this;
+        if (typeof(elem.tree) === "function") {
+            elem = elem.tree();
+        }
+        var id = elem.getAttribute('id');
+        if (!id) { // inject id if not found
+            id = this.getUniqueId("sendPresence");
+            elem.setAttribute("id", id);
+        }
+
+        if (typeof callback === "function" || typeof errback === "function") {
+            var handler = this.addHandler(function (stanza) {
+                // remove timeout handler if there is one
+                if (timeoutHandler) {
+                    that.deleteTimedHandler(timeoutHandler);
+                }
+                var type = stanza.getAttribute('type');
+                if (type == 'error') {
+                    if (errback) {
+                        errback(stanza);
+                    }
+                } else if (callback) {
+                    callback(stanza);
+                }
+            }, null, 'presence', null, id);
+
+            // if timeout specified, set up a timeout handler.
+            if (timeout) {
+                timeoutHandler = this.addTimedHandler(timeout, function () {
+                    // get rid of normal handler
+                    that.deleteHandler(handler);
+                    // call errback on timeout with null stanza
+                    if (errback) {
+                        errback(null);
+                    }
+                    return false;
+                });
+            }
+        }
+        this.send(elem);
+        return id;
+    },
+
     /** Function: sendIQ
      *  Helper function to send IQ stanzas.
      *
@@ -2847,7 +2908,6 @@ Strophe.Connection.prototype = {
     sendIQ: function(elem, callback, errback, timeout) {
         var timeoutHandler = null;
         var that = this;
-
         if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
@@ -2857,39 +2917,41 @@ Strophe.Connection.prototype = {
             elem.setAttribute("id", id);
         }
 
-        var handler = this.addHandler(function (stanza) {
-            // remove timeout handler if there is one
-            if (timeoutHandler) {
-                that.deleteTimedHandler(timeoutHandler);
-            }
-            var iqtype = stanza.getAttribute('type');
-            if (iqtype == 'result') {
-                if (callback) {
-                    callback(stanza);
+        if (typeof callback === "function" || typeof errback === "function") {
+            var handler = this.addHandler(function (stanza) {
+                // remove timeout handler if there is one
+                if (timeoutHandler) {
+                    that.deleteTimedHandler(timeoutHandler);
                 }
-            } else if (iqtype == 'error') {
-                if (errback) {
-                    errback(stanza);
+                var iqtype = stanza.getAttribute('type');
+                if (iqtype == 'result') {
+                    if (callback) {
+                        callback(stanza);
+                    }
+                } else if (iqtype == 'error') {
+                    if (errback) {
+                        errback(stanza);
+                    }
+                } else {
+                    throw {
+                        name: "StropheError",
+                        message: "Got bad IQ type of " + iqtype
+                    };
                 }
-            } else {
-                throw {
-                    name: "StropheError",
-                    message: "Got bad IQ type of " + iqtype
-                };
-            }
-        }, null, 'iq', ['error', 'result'], id);
+            }, null, 'iq', ['error', 'result'], id);
 
-        // if timeout specified, set up a timeout handler.
-        if (timeout) {
-            timeoutHandler = this.addTimedHandler(timeout, function () {
-                // get rid of normal handler
-                that.deleteHandler(handler);
-                // call errback on timeout with null stanza
-                if (errback) {
-                    errback(null);
-                }
-                return false;
-            });
+            // if timeout specified, set up a timeout handler.
+            if (timeout) {
+                timeoutHandler = this.addTimedHandler(timeout, function () {
+                    // get rid of normal handler
+                    that.deleteHandler(handler);
+                    // call errback on timeout with null stanza
+                    if (errback) {
+                        errback(null);
+                    }
+                    return false;
+                });
+            }
         }
         this.send(elem);
         return id;
@@ -3129,6 +3191,7 @@ Strophe.Connection.prototype = {
         } else {
             Strophe.info("Disconnect was called before Strophe connected to the server");
             this._proto._abortAllRequests();
+            this._doDisconnect();
         }
     },
 

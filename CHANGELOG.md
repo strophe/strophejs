@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.2.11 - Unreleased
+## Version 1.2.11 - 2016-12-13
 * 189 Strophe never reaches DISCONNECTED status after .connect(..) and
   .disconnect(..) calls while offline.
 * Add `sendPresence` method, similar to `sendIQ`, i.e. for cases where you expect a
