@@ -1505,12 +1505,12 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      EXTERNAL - 60
- *      OAUTHBEARER - 50
- *      SCRAM-SHA1 - 40
- *      DIGEST-MD5 - 30
- *      PLAIN - 20
- *      ANONYMOUS - 10
+ *      OAUTHBEARER - 60
+ *      SCRAM-SHA1 - 50
+ *      DIGEST-MD5 - 40
+ *      PLAIN - 30
+ *      ANONYMOUS - 20
+ *      EXTERNAL - 10
  *
  *  WebSocket options:
  *  ------------------
@@ -3389,7 +3389,7 @@ Strophe.SASLMechanism.prototype = {
  *  SASL ANONYMOUS authentication.
  */
 Strophe.SASLAnonymous = function() {};
-Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 10);
+Strophe.SASLAnonymous.prototype = new Strophe.SASLMechanism("ANONYMOUS", false, 20);
 
 Strophe.SASLAnonymous.prototype.test = function(connection) {
     return connection.authcid === null;
@@ -3400,7 +3400,7 @@ Strophe.SASLAnonymous.prototype.test = function(connection) {
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 20);
+Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 30);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3420,7 +3420,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 50);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3504,7 +3504,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
  *  SASL DIGEST MD5 authentication.
  */
 Strophe.SASLMD5 = function() {};
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 30);
+Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 40);
 
 Strophe.SASLMD5.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3587,7 +3587,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 50);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3615,7 +3615,7 @@ Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
  *  TLS services.
  */
 Strophe.SASLExternal = function() {};
-Strophe.SASLExternal.prototype = new Strophe.SASLMechanism("EXTERNAL", true, 60);
+Strophe.SASLExternal.prototype = new Strophe.SASLMechanism("EXTERNAL", true, 10);
 
 Strophe.SASLExternal.prototype.onChallenge = function(connection) {
     /** According to XEP-178, an authzid SHOULD NOT be presented when the

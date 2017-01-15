@@ -1,5 +1,12 @@
 # Strophe.js Change Log
 
+## Version 1.2.12 - 2017-01-15
+
+* Reduce the priority of the SASL-EXTERNAL auth mechanism. OpenFire 4.1.1
+  advertises support for SASL-EXTERNAL and the vast majority of Strophe.js
+  installs are not set up to support SASL-EXTERNAl, causing them to fail
+  logging users in.
+
 ## Version 1.2.11 - 2016-12-13
 * 189 Strophe never reaches DISCONNECTED status after .connect(..) and
   .disconnect(..) calls while offline.
