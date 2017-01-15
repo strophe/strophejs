@@ -10,6 +10,6 @@
 - Push repo and tags (git push && git push --tags)
 - Publish on NPM: "npm publish"
 - Add documentation to strophe.im repo
-- Update links in index.html in Strophe.im
+- Update links in index.markdown in Strophe.im
 - Update link to documentation in README
 - Tell the world
