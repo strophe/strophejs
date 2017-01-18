@@ -139,7 +139,7 @@ Strophe.Websocket.prototype = {
         }
 
         if (text) {
-            errorString += " - " + condition;
+            errorString += " - " + text;
         }
 
         Strophe.error(errorString);
