@@ -3254,12 +3254,12 @@ Strophe.Connection.prototype = {
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
- *  EXTERNAL - 60
- *  OAUTHBEARER - 50
- *  SCRAM-SHA1 - 40
- *  DIGEST-MD5 - 30
- *  PLAIN - 20
- *  ANONYMOUS - 10
+ *      OAUTHBEARER - 60
+ *      SCRAM-SHA1 - 50
+ *      DIGEST-MD5 - 40
+ *      PLAIN - 30
+ *      ANONYMOUS - 20
+ *      EXTERNAL - 10
  *
  *  See: Strophe.Connection.addSupportedSASLMechanisms
  */
