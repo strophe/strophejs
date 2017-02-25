@@ -4,7 +4,7 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-base64', function () {
+        define([], function () {
             return factory();
         });
     } else {

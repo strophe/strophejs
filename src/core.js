@@ -10,7 +10,7 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-core', [
+        define([
             'strophe-sha1',
             'strophe-base64',
             'strophe-md5',

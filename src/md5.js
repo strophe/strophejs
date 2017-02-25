@@ -13,7 +13,7 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-md5', function () {
+        define([], function () {
             return factory();
         });
     } else {

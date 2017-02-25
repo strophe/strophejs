@@ -1,6 +1,6 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-utils', function () {
+        define([], function () {
             return factory();
         });
     } else {

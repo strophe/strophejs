@@ -10,7 +10,7 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-websocket', ['strophe-core'], function (core) {
+        define(['strophe-core'], function (core) {
             return factory(
                 core.Strophe,
                 core.$build

@@ -10,7 +10,7 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define('strophe-polyfill', [], function () {
+        define([], function () {
             return factory();
         });
     } else {

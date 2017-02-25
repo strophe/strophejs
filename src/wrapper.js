@@ -1,6 +1,6 @@
 (function(root){
     if(typeof define === 'function' && define.amd){
-        define("strophe", [
+        define([
             "strophe-core",
             "strophe-bosh",
             "strophe-websocket"
