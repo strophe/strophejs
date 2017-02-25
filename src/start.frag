@@ -26,12 +26,18 @@
         define([], factory);
     } else {
         //Browser globals case.
-        var strophe = factory();
-        window.Strophe = strophe.Strophe;
-        window.$build = strophe.build;
-        window.$msg = strophe.msg;
-        window.$iq = strophe.iq;
-        window.$pres = strophe.pres;
+        var wrapper = factory();
+        root.Strophe        = wrapper.Strophe;
+        root.$build         = wrapper.$build;
+        root.$iq            = wrapper.$iq;
+        root.$msg           = wrapper.$msg;
+        root.$pres          = wrapper.$pres;
+        root.SHA1           = wrapper.SHA1;
+        root.MD5            = wrapper.MD5;
+        root.b64_hmac_sha1  = wrapper.b64_hmac_sha1;
+        root.b64_sha1       = wrapper.b64_sha1;
+        root.str_hmac_sha1  = wrapper.str_hmac_sha1;
+        root.str_sha1       = wrapper.str_sha1;
     }
 }(this, function () {
     //almond, and your modules will be inlined here

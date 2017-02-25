@@ -13,8 +13,7 @@
         define([
             'strophe-sha1',
             'strophe-md5',
-            'strophe-utils',
-            "strophe-polyfill"
+            'strophe-utils'
         ], function () {
             return factory.apply(this, arguments);
         });
@@ -3624,12 +3623,16 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
 };
 
 return {
-    Strophe:        Strophe,
-    $build:         $build,
-    $msg:           $msg,
-    $iq:            $iq,
-    $pres:          $pres,
-    SHA1:           SHA1,
-    MD5:            MD5,
+    'Strophe':         Strophe,
+    '$build':          $build,
+    '$iq':             $iq,
+    '$msg':            $msg,
+    '$pres':           $pres,
+    'SHA1':            SHA1,
+    'MD5':             MD5,
+    'b64_hmac_sha1':   SHA1.b64_hmac_sha1,
+    'b64_sha1':        SHA1.b64_sha1,
+    'str_hmac_sha1':   SHA1.str_hmac_sha1,
+    'str_sha1':        SHA1.str_sha1
 };
 }));

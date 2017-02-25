@@ -19,7 +19,7 @@ module.exports = function(grunt){
             "doc": ["<%= natural_docs.docs.output %>"],
             "prepare-release": ["strophejs-<%= pkg.version %>"],
             "release": ["strophejs-<%= pkg.version %>.zip", "strophejs-<%= pkg.version %>.tar.gz"],
-            "js": ["<%= concat.dist.dest %>", "strophe.min.js", "strophe.light.js"]
+            "js": ["<%= concat.dist.dest %>", "strophe.min.js", "strophe-no-polyfills.js"]
         },
 
         connect: {
@@ -38,10 +38,10 @@ module.exports = function(grunt){
             },
             light: {
                 // This rule is meant to build a lighter version without Base64 nor Polyfills,
-                // by explicitly running `make strophe.light.js` -- The generated file will
+                // by explicitly running `make strophe-no-polyfills.js` -- The generated file will
                 // work in all major browsers, including MSIE starting with version 10
                 src: ['src/wrap_header.js', 'src/sha1.js', 'src/md5.js', 'src/utils.js', 'src/core.js', 'src/bosh.js', 'src/websocket.js', 'src/wrapper.js', 'src/wrap_footer.js'],
-                dest: 'strophe.light.js',
+                dest: 'strophe-no-polyfills.js',
                 options: {
                     process: function(src){
                         return src.replace('@VERSION@', pkg.version)

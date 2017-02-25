@@ -9,9 +9,9 @@ DOC_DIR = doc
 DOC_TEMP = doc-temp
 NDPROJ_DIR = ndproj
 
-STROPHE 	= strophe.js
-STROPHE_MIN = strophe.min.js
-STROPHE_LIGHT = strophe.light.js
+STROPHE			= strophe.js
+STROPHE_MIN		= strophe.min.js
+STROPHE_LIGHT	= strophe-no-polyfill.js
 
 .PHONY: help
 help:
@@ -31,11 +31,6 @@ stamp-bower: stamp-npm bower.json
 	$(BOWER) install
 	touch stamp-bower
 
-$(STROPHE_LIGHT):
-	@@echo "Building" $(STROPHE_LIGHT) "..."
-	$(GRUNT) concat:light
-	@@echo
-
 .PHONY: doc
 doc:
 	@@echo "Building Strophe documentation..."
@@ -50,15 +45,19 @@ doc:
 	@@echo
 
 .PHONY: release
-release: $(STROPHE) $(STROPHE_MIN)
+release: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
 
-strophe.min.js: src node_modules
-	$(RJS) -o build.js
+$(STROPHE_MIN): src node_modules Makefile
+	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=strophe.min.js
+	sed -i s/@VERSION@/$(VERSION)/ strophe.min.js
+
+$(STROPHE): src node_modules Makefile
+	$(RJS) -o build.js optimize=none insertRequire=strophe-polyfill include=strophe-polyfill out=strophe.js
 	sed -i s/@VERSION@/$(VERSION)/ strophe.js
 
-strophe.js: src node_modules
-	$(RJS) -o build.js optimize=none out=strophe.js
-	sed -i s/@VERSION@/$(VERSION)/ strophe.js
+$(STROPHE_LIGHT): src node_modules Makefile
+	$(RJS) -o build.js optimize=none out=strophe-no-polyfills.js
+	sed -i s/@VERSION@/$(VERSION)/ strophe-no-polyfills.js
 
 .PHONY: check
 check::
