@@ -13,6 +13,8 @@ STROPHE			= strophe.js
 STROPHE_MIN		= strophe.min.js
 STROPHE_LIGHT	= strophe-no-polyfill.js
 
+all: doc $(STROPHE) $(STROPHE_MIN)
+
 .PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of the following:"
@@ -20,8 +22,6 @@ help:
 	@echo " release       Prepare a new release of strophe.js. E.g. `make release VERSION=1.2.13`"
 	@echo " serve         Serve this directory via a webserver on port 8000."
 	@echo " stamp-npm     Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
-
-all: doc $(STROPHE_MIN)
 
 stamp-npm: package.json
 	npm install
@@ -45,19 +45,26 @@ doc:
 	@@echo
 
 .PHONY: release
-release: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
+release:
+	sed -i 's/\"version\":\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\":\ \"$(VERSION)\"/' package.json
+	sed -i "s/Unreleased/`date +%Y-%m-%d`/" CHANGELOG.md
+	make dist
+	make doc
+
+.PHONE: dist
+dist: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
 
 $(STROPHE_MIN): src node_modules Makefile
-	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=strophe.min.js
-	sed -i s/@VERSION@/$(VERSION)/ strophe.min.js
+	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE_MIN)
+	sed -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
 
 $(STROPHE): src node_modules Makefile
-	$(RJS) -o build.js optimize=none insertRequire=strophe-polyfill include=strophe-polyfill out=strophe.js
-	sed -i s/@VERSION@/$(VERSION)/ strophe.js
+	$(RJS) -o build.js optimize=none insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE)
+	sed -i s/@VERSION@/$(VERSION)/ $(STROPHE)
 
 $(STROPHE_LIGHT): src node_modules Makefile
-	$(RJS) -o build.js optimize=none out=strophe.light.js
-	sed -i s/@VERSION@/$(VERSION)/ strophe.light.js
+	$(RJS) -o build.js optimize=none out=$(STROPHE_LIGHT)
+	sed -i s/@VERSION@/$(VERSION)/ $(STROPHE_LIGHT)
 
 .PHONY: jshint
 jshint: stamp-bower
