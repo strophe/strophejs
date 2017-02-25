@@ -6,13 +6,12 @@
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
-/*global define, document, window, setTimeout, clearTimeout, ActiveXObject, DOMParser */
+/*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         define([
             'strophe-sha1',
-            'strophe-base64',
             'strophe-md5',
             'strophe-utils',
             "strophe-polyfill"
@@ -21,21 +20,20 @@
         });
     } else {
         // Browser globals
-        var o = factory(root.SHA1, root.Base64, root.MD5, root.stropheUtils);
-        window.Strophe =        o.Strophe;
-        window.$build =         o.$build;
-        window.$iq =            o.$iq;
-        window.$msg =           o.$msg;
-        window.$pres =          o.$pres;
-        window.SHA1 =           o.SHA1;
-        window.Base64 =         o.Base64;
-        window.MD5 =            o.MD5;
-        window.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
-        window.b64_sha1 =       o.SHA1.b64_sha1;
-        window.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
-        window.str_sha1 =       o.SHA1.str_sha1;
+        var o = factory(root.SHA1, root.MD5, root.stropheUtils);
+        root.Strophe =        o.Strophe;
+        root.$build =         o.$build;
+        root.$iq =            o.$iq;
+        root.$msg =           o.$msg;
+        root.$pres =          o.$pres;
+        root.SHA1 =           o.SHA1;
+        root.MD5 =            o.MD5;
+        root.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
+        root.b64_sha1 =       o.SHA1.b64_sha1;
+        root.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
+        root.str_sha1 =       o.SHA1.str_sha1;
     }
-}(this, function (SHA1, Base64, MD5, utils) {
+}(this, function (SHA1, MD5, utils) {
 
 var Strophe;
 
@@ -530,7 +528,7 @@ Strophe = {
     xmlHtmlNode: function (html) {
         var node;
         //ensure text is escaped
-        if (window.DOMParser) {
+        if (DOMParser) {
             var parser = new DOMParser();
             node = parser.parseFromString(html, "text/xml");
         } else {
@@ -1925,8 +1923,8 @@ Strophe.Connection.prototype = {
         if (this._proto instanceof Strophe.Bosh) {
             if (!JSON) { return false; }
             try {
-                window.sessionStorage.setItem('_strophe_', '_strophe_');
-                window.sessionStorage.removeItem('_strophe_');
+                sessionStorage.setItem('_strophe_', '_strophe_');
+                sessionStorage.removeItem('_strophe_');
             } catch (e) {
                 return false;
             }
@@ -2778,7 +2776,7 @@ Strophe.Connection.prototype = {
             });
             if (this._sasl_mechanism.isClientFirst) {
                 var response = this._sasl_mechanism.onChallenge(this, null);
-                request_auth_exchange.t(Base64.encode(response));
+                request_auth_exchange.t(btoa(response));
             }
             this.send(request_auth_exchange.tree());
             mechanism_found = true;
@@ -2842,13 +2840,13 @@ Strophe.Connection.prototype = {
      *
      */
     _sasl_challenge_cb: function(elem) {
-      var challenge = Base64.decode(Strophe.getText(elem));
+      var challenge = atob(Strophe.getText(elem));
       var response = this._sasl_mechanism.onChallenge(this, challenge);
       var stanza = $build('response', {
           'xmlns': Strophe.NS.SASL
       });
       if (response !== "") {
-        stanza.t(Base64.encode(response));
+        stanza.t(btoa(response));
       }
       this.send(stanza.tree());
       return true;
@@ -2904,7 +2902,7 @@ Strophe.Connection.prototype = {
     _sasl_success_cb: function (elem) {
         if (this._sasl_data["server-signature"]) {
             var serverSignature;
-            var success = Base64.decode(Strophe.getText(elem));
+            var success = atob(Strophe.getText(elem));
             var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
             var matches = success.match(attribMatch);
             if (matches[1] == "v") {
@@ -3466,7 +3464,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
     responseText += "r=" + nonce;
     authMessage += responseText;
 
-    salt = Base64.decode(salt);
+    salt = atob(salt);
     salt += "\x00\x00\x00\x01";
 
     pass = utils.utf16to8(connection.pass);
@@ -3489,7 +3487,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
       clientKey[k] ^= clientSignature[k];
     }
 
-    responseText += ",p=" + Base64.encode(SHA1.binb2str(clientKey));
+    responseText += ",p=" + btoa(SHA1.binb2str(clientKey));
     return responseText;
   }.bind(this);
 
@@ -3632,7 +3630,6 @@ return {
     $iq:            $iq,
     $pres:          $pres,
     SHA1:           SHA1,
-    Base64:         Base64,
     MD5:            MD5,
 };
 }));
