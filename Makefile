@@ -65,7 +65,7 @@ jshint: stamp-bower
 
 .PHONY: check
 check:: stamp-bower jshint
-	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
+	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/index.html
 
 .PHONY: serve
 serve:

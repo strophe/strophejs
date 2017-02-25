@@ -7,7 +7,7 @@ config.shim = {
     'sinon-qunit':    { deps: ['sinon']}
 };
 require.config(config);
-require(["tests"], function(tests) {
+require(["tests", "strophe-polyfill"], function(tests) {
     tests.run();
     QUnit.start();
 });
