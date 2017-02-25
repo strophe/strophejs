@@ -29,9 +29,9 @@ require.config({
         "basic":            "examples/basic",
 
         // Tests
-		"jquery":		    "bower_components/jquery/dist/jquery",
-		"sinon":		    "bower_components/sinon/index",
-		"sinon-qunit":      "bower_components/sinon-qunit/lib/sinon-qunit",
+		"jquery":		    "node_modules/jquery/dist/jquery",
+		"sinon":		    "node_modules/sinon/lib/sinon",
+		"sinon-qunit":      "node_modules/sinon-qunit/lib/sinon-qunit",
 		"tests":		    "tests/tests"
     }
 });

@@ -49,11 +49,15 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
-    "jshint": "^2.9.4",
-    "bower": "latest",
+    "almond": "~0.3.0",
     "http-server": "^0.9.0",
+    "jquery": "2.2.4",
+    "jshint": "^2.9.4",
     "phantomjs": "~1.9.7-1",
+    "qunitjs": "~1.16.0",
     "qunit-phantomjs-runner": "^2.1.0",
-    "requirejs": "~2.3.2"
+    "requirejs": "~2.3.2",
+    "sinon": "1.17.3",
+    "sinon-qunit": "~2.0.0"
   }
 }

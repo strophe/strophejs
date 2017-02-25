@@ -1,6 +1,6 @@
 ({
     baseUrl: ".",
-    name: "bower_components/almond/almond.js",
+    name: "node_modules/almond/almond.js",
     mainConfigFile: "main.js",
     include: ["strophe"],
     wrap: {

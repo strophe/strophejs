@@ -27,10 +27,6 @@ stamp-npm: package.json
 	npm install
 	touch stamp-npm
 
-stamp-bower: stamp-npm bower.json
-	$(BOWER) install
-	touch stamp-bower
-
 .PHONY: doc
 doc:
 	@@echo "Building Strophe documentation..."
@@ -67,11 +63,11 @@ $(STROPHE_LIGHT): src node_modules Makefile
 	sed -i s/@VERSION@/$(VERSION)/ $(STROPHE_LIGHT)
 
 .PHONY: jshint
-jshint: stamp-bower
+jshint: stamp-npm
 	$(JSHINT) --config jshintrc src/*.js
 
 .PHONY: check
-check:: stamp-bower jshint
+check:: stamp-npm jshint
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/index.html
 
 .PHONY: serve
@@ -80,8 +76,8 @@ serve:
 
 .PHONY: clean
 clean:
-	@@rm -f stamp-npm stamp-bower
-	@@rm -rf node_modules bower_components
+	@@rm -f stamp-npm
+	@@rm -rf node_modules
 	@@rm -f $(STROPHE)
 	@@rm -f $(STROPHE_MIN)
 	@@rm -f $(STROPHE_LIGHT)
