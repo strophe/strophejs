@@ -85,7 +85,7 @@ Strophe.Request.prototype = {
         var node = null;
         if (this.xhr.responseXML && this.xhr.responseXML.documentElement) {
             node = this.xhr.responseXML.documentElement;
-            if (node.tagName == "parsererror") {
+            if (node.tagName === "parsererror") {
                 Strophe.error("invalid response received");
                 Strophe.error("responseText: " + this.xhr.responseText);
                 Strophe.error("responseXML: " +
@@ -325,10 +325,10 @@ Strophe.Bosh.prototype = {
                    session.jid &&
                    (    typeof jid === "undefined" ||
                         jid === null ||
-                        Strophe.getBareJidFromJid(session.jid) == Strophe.getBareJidFromJid(jid) ||
+                        Strophe.getBareJidFromJid(session.jid) === Strophe.getBareJidFromJid(jid) ||
                         // If authcid is null, then it's an anonymous login, so
                         // we compare only the domains:
-                        ((Strophe.getNodeFromJid(jid) === null) && (Strophe.getDomainFromJid(session.jid) == jid))
+                        ((Strophe.getNodeFromJid(jid) === null) && (Strophe.getDomainFromJid(session.jid) === jid))
                     )
         ) {
             this._conn.restored = true;
@@ -369,13 +369,13 @@ Strophe.Bosh.prototype = {
     _connect_cb: function (bodyWrap) {
         var typ = bodyWrap.getAttribute("type");
         var cond, conflict;
-        if (typ !== null && typ == "terminate") {
+        if (typ !== null && typ === "terminate") {
             // an error occurred
             cond = bodyWrap.getAttribute("condition");
             Strophe.error("BOSH-Connection failed: " + cond);
             conflict = bodyWrap.getElementsByTagName("conflict");
             if (cond !== null) {
-                if (cond == "remote-stream-error" && conflict.length > 0) {
+                if (cond === "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
                 this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
@@ -589,7 +589,7 @@ Strophe.Bosh.prototype = {
      */
     _getRequestStatus: function (req, def) {
         var reqStatus;
-        if (req.xhr.readyState == 4) {
+        if (req.xhr.readyState === 4) {
             try {
                 reqStatus = req.xhr.status;
             } catch (e) {
@@ -600,7 +600,7 @@ Strophe.Bosh.prototype = {
                     "reqStatus: " + reqStatus);
             }
         }
-        if (typeof(reqStatus) == "undefined") {
+        if (typeof(reqStatus) === "undefined") {
             reqStatus = typeof def === 'number' ? def : 0;
         }
         return reqStatus;
@@ -642,10 +642,10 @@ Strophe.Bosh.prototype = {
             Strophe.debug("request id "+req.id+" should now be removed");
         }
 
-        if (reqStatus == 200) {
+        if (reqStatus === 200) {
             // request succeeded
-            var reqIs0 = (this._requests[0] == req);
-            var reqIs1 = (this._requests[1] == req);
+            var reqIs0 = (this._requests[0] === req);
+            var reqIs1 = (this._requests[1] === req);
             // if request 1 finished, or request 0 finished and request
             // 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
             // restart the other - both will be in the first spot, as the
@@ -703,7 +703,7 @@ Strophe.Bosh.prototype = {
                               time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
         var secondaryTimeout = (req.dead !== null &&
                                 req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
-        var requestCompletedWithServerError = (req.xhr.readyState == 4 &&
+        var requestCompletedWithServerError = (req.xhr.readyState === 4 &&
                                                (reqStatus < 1 || reqStatus >= 500));
         if (primaryTimeout || secondaryTimeout ||
             requestCompletedWithServerError) {
@@ -761,7 +761,7 @@ Strophe.Bosh.prototype = {
             };
 
             // Implement progressive backoff for reconnects --
-            // First retry (send == 1) should also be instantaneous
+            // First retry (send === 1) should also be instantaneous
             if (req.sends > 1) {
                 // Using a cube of the retry number creates a nicely
                 // expanding retry window
@@ -805,7 +805,7 @@ Strophe.Bosh.prototype = {
         Strophe.debug("removing request");
         var i;
         for (i = this._requests.length - 1; i >= 0; i--) {
-            if (req == this._requests[i]) {
+            if (req === this._requests[i]) {
                 this._requests.splice(i, 1);
             }
         }
@@ -845,7 +845,7 @@ Strophe.Bosh.prototype = {
         try {
             return req.getResponse();
         } catch (e) {
-            if (e != "parsererror") { throw e; }
+            if (e !== "parsererror") { throw e; }
             this._conn.disconnect("strophe-parsererror");
         }
     },

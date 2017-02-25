@@ -166,7 +166,7 @@ Strophe = {
          */
         validTag: function(tag) {
             for (var i = 0; i < Strophe.XHTML.tags.length; i++) {
-                if (tag == Strophe.XHTML.tags[i]) {
+                if (tag === Strophe.XHTML.tags[i]) {
                     return true;
                 }
             }
@@ -182,7 +182,7 @@ Strophe = {
         validAttribute: function(tag, attribute) {
             if (typeof Strophe.XHTML.attributes[tag] !== 'undefined' && Strophe.XHTML.attributes[tag].length > 0) {
                 for (var i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
-                    if (attribute == Strophe.XHTML.attributes[tag][i]) {
+                    if (attribute === Strophe.XHTML.attributes[tag][i]) {
                         return true;
                     }
                 }
@@ -191,7 +191,7 @@ Strophe = {
         },
         validCSS: function(style) {
             for (var i = 0; i < Strophe.XHTML.css.length; i++) {
-                if (style == Strophe.XHTML.css[i]) {
+                if (style === Strophe.XHTML.css[i]) {
                     return true;
                 }
             }
@@ -310,7 +310,7 @@ Strophe = {
         var i, childNode;
         for (i = 0; i < elem.childNodes.length; i++) {
             childNode = elem.childNodes[i];
-            if (childNode.nodeType == Strophe.ElementType.NORMAL &&
+            if (childNode.nodeType === Strophe.ElementType.NORMAL &&
                 (!elemName || this.isTagEqual(childNode, elemName))) {
                 func(childNode);
             }
@@ -331,7 +331,7 @@ Strophe = {
      *    otherwise.
      */
     isTagEqual: function (el, name) {
-        return el.tagName == name;
+        return el.tagName === name;
     },
 
     /** PrivateVariable: _xmlGenerator
@@ -435,21 +435,21 @@ Strophe = {
         for (a = 1; a < arguments.length; a++) {
             var arg = arguments[a];
             if (!arg) { continue; }
-            if (typeof(arg) == "string" ||
-                typeof(arg) == "number") {
+            if (typeof(arg) === "string" ||
+                typeof(arg) === "number") {
                 node.appendChild(Strophe.xmlTextNode(arg));
-            } else if (typeof(arg) == "object" &&
-                       typeof(arg.sort) == "function") {
+            } else if (typeof(arg) === "object" &&
+                       typeof(arg.sort) === "function") {
                 for (i = 0; i < arg.length; i++) {
                     var attr = arg[i];
-                    if (typeof(attr) == "object" &&
-                        typeof(attr.sort) == "function" &&
+                    if (typeof(attr) === "object" &&
+                        typeof(attr.sort) === "function" &&
                         attr[1] !== undefined &&
                         attr[1] !== null) {
                         node.setAttribute(attr[0], attr[1]);
                     }
                 }
-            } else if (typeof(arg) == "object") {
+            } else if (typeof(arg) === "object") {
                 for (k in arg) {
                     if (arg.hasOwnProperty(k)) {
                         if (arg[k] !== undefined &&
@@ -551,13 +551,12 @@ Strophe = {
         if (!elem) { return null; }
 
         var str = "";
-        if (elem.childNodes.length === 0 && elem.nodeType ==
-            Strophe.ElementType.TEXT) {
+        if (elem.childNodes.length === 0 && elem.nodeType === Strophe.ElementType.TEXT) {
             str += elem.nodeValue;
         }
 
         for (var i = 0; i < elem.childNodes.length; i++) {
-            if (elem.childNodes[i].nodeType == Strophe.ElementType.TEXT) {
+            if (elem.childNodes[i].nodeType === Strophe.ElementType.TEXT) {
                 str += elem.childNodes[i].nodeValue;
             }
         }
@@ -579,7 +578,7 @@ Strophe = {
      */
     copyElement: function (elem) {
         var i, el;
-        if (elem.nodeType == Strophe.ElementType.NORMAL) {
+        if (elem.nodeType === Strophe.ElementType.NORMAL) {
             el = Strophe.xmlElement(elem.tagName);
 
             for (i = 0; i < elem.attributes.length; i++) {
@@ -590,7 +589,7 @@ Strophe = {
             for (i = 0; i < elem.childNodes.length; i++) {
                 el.appendChild(Strophe.copyElement(elem.childNodes[i]));
             }
-        } else if (elem.nodeType == Strophe.ElementType.TEXT) {
+        } else if (elem.nodeType === Strophe.ElementType.TEXT) {
             el = Strophe.xmlGenerator().createTextNode(elem.nodeValue);
         }
         return el;
@@ -611,7 +610,7 @@ Strophe = {
      */
     createHtml: function (elem) {
         var i, el, j, tag, attribute, value, css, cssAttrs, attr, cssName, cssValue;
-        if (elem.nodeType == Strophe.ElementType.NORMAL) {
+        if (elem.nodeType === Strophe.ElementType.NORMAL) {
             tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
             if(Strophe.XHTML.validTag(tag)) {
                 try {
@@ -619,16 +618,16 @@ Strophe = {
                     for(i = 0; i < Strophe.XHTML.attributes[tag].length; i++) {
                         attribute = Strophe.XHTML.attributes[tag][i];
                         value = elem.getAttribute(attribute);
-                        if(typeof value == 'undefined' || value === null || value === '' || value === false || value === 0) {
+                        if(typeof value === 'undefined' || value === null || value === '' || value === false || value === 0) {
                             continue;
                         }
-                        if(attribute == 'style' && typeof value == 'object') {
-                            if(typeof value.cssText != 'undefined') {
+                        if(attribute === 'style' && typeof value === 'object') {
+                            if(typeof value.cssText !== 'undefined') {
                                 value = value.cssText; // we're dealing with IE, need to get CSS out
                             }
                         }
                         // filter out invalid css styles
-                        if(attribute == 'style') {
+                        if(attribute === 'style') {
                             css = [];
                             cssAttrs = value.split(';');
                             for(j = 0; j < cssAttrs.length; j++) {
@@ -660,12 +659,12 @@ Strophe = {
                     el.appendChild(Strophe.createHtml(elem.childNodes[i]));
                 }
             }
-        } else if (elem.nodeType == Strophe.ElementType.FRAGMENT) {
+        } else if (elem.nodeType === Strophe.ElementType.FRAGMENT) {
             el = Strophe.xmlGenerator().createDocumentFragment();
             for (i = 0; i < elem.childNodes.length; i++) {
                 el.appendChild(Strophe.createHtml(elem.childNodes[i]));
             }
-        } else if (elem.nodeType == Strophe.ElementType.TEXT) {
+        } else if (elem.nodeType === Strophe.ElementType.TEXT) {
             el = Strophe.xmlTextNode(elem.nodeValue);
         }
         return el;
@@ -912,7 +911,7 @@ Strophe = {
 
         result = "<" + nodeName;
         for (i = 0; i < elem.attributes.length; i++) {
-             if(elem.attributes[i].nodeName != "_realname") {
+             if(elem.attributes[i].nodeName !== "_realname") {
                result += " " + elem.attributes[i].nodeName +
                    "='" + Strophe.xmlescape(elem.attributes[i].value) + "'";
              }
@@ -1012,7 +1011,7 @@ Strophe = {
  */
 Strophe.Builder = function (name, attrs) {
     // Set correct namespace for jabber:client elements
-    if (name == "presence" || name == "message" || name == "iq") {
+    if (name === "presence" || name === "message" || name === "iq") {
         if (attrs && !attrs.xmlns) {
             attrs.xmlns = Strophe.NS.CLIENT;
         } else if (!attrs) {
@@ -1324,9 +1323,9 @@ Strophe.Handler.prototype = {
         var elem_type = elem.getAttribute("type");
         if (this.namespaceMatch(elem) &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-            (!this.type || (Array.isArray(this.type) ? this.type.indexOf(elem_type) != -1 : elem_type == this.type)) &&
-            (!this.id || elem.getAttribute("id") == this.id) &&
-            (!this.from || from == this.from)) {
+            (!this.type || (Array.isArray(this.type) ? this.type.indexOf(elem_type) !== -1 : elem_type === this.type)) &&
+            (!this.id || elem.getAttribute("id") === this.id) &&
+            (!this.from || from === this.from)) {
                 return true;
         }
         return false;
@@ -1729,10 +1728,10 @@ Strophe.Connection.prototype = {
     getUniqueId: function(suffix) {
         var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : r & 0x3 | 0x8;
+                v = c === 'x' ? r : r & 0x3 | 0x8;
             return v.toString(16);
         });
-        if (typeof(suffix) == "string" || typeof(suffix) == "number") {
+        if (typeof(suffix) === "string" || typeof(suffix) === "number") {
             return uuid + ":" + suffix;
         } else {
             return uuid + "";
@@ -2110,7 +2109,7 @@ Strophe.Connection.prototype = {
                     that.deleteTimedHandler(timeoutHandler);
                 }
                 var type = stanza.getAttribute('type');
-                if (type == 'error') {
+                if (type === 'error') {
                     if (errback) {
                         errback(stanza);
                     }
@@ -2169,11 +2168,11 @@ Strophe.Connection.prototype = {
                     that.deleteTimedHandler(timeoutHandler);
                 }
                 var iqtype = stanza.getAttribute('type');
-                if (iqtype == 'result') {
+                if (iqtype === 'result') {
                     if (callback) {
                         callback(stanza);
                     }
-                } else if (iqtype == 'error') {
+                } else if (iqtype === 'error') {
                     if (errback) {
                         errback(stanza);
                     }
@@ -2484,7 +2483,7 @@ Strophe.Connection.prototype = {
      *  connection and alerts the user's connection callback.
      */
     _doDisconnect: function (condition) {
-        if (typeof this._idleTimeout == "number") {
+        if (typeof this._idleTimeout === "number") {
             clearTimeout(this._idleTimeout);
         }
 
@@ -2569,7 +2568,7 @@ Strophe.Connection.prototype = {
 
         var type = elem.getAttribute("type");
         var cond, conflict;
-        if (type !== null && type == "terminate") {
+        if (type !== null && type === "terminate") {
             // Don't process stanzas that come in after disconnect
             if (this.disconnecting) {
                 return;
@@ -2579,7 +2578,7 @@ Strophe.Connection.prototype = {
             cond = elem.getAttribute("condition");
             conflict = elem.getElementsByTagName("conflict");
             if (cond !== null) {
-                if (cond == "remote-stream-error" && conflict.length > 0) {
+                if (cond === "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
@@ -2648,7 +2647,7 @@ Strophe.Connection.prototype = {
         try {
             bodyWrap = this._proto._reqToData(req);
         } catch (e) {
-            if (e != "badformat") { throw e; }
+            if (e !== "badformat") { throw e; }
             this._changeConnectStatus(Strophe.Status.CONNFAIL, 'bad-format');
             this._doDisconnect('bad-format');
         }
@@ -2727,7 +2726,7 @@ Strophe.Connection.prototype = {
                     higher = j;
                 }
             }
-            if (higher != i) {
+            if (higher !== i) {
                 swap = mechanisms[i];
                 mechanisms[i] = mechanisms[higher];
                 mechanisms[higher] = swap;
@@ -2904,11 +2903,11 @@ Strophe.Connection.prototype = {
             var success = atob(Strophe.getText(elem));
             var attribMatch = /([a-z]+)=([^,]+)(,|$)/;
             var matches = success.match(attribMatch);
-            if (matches[1] == "v") {
+            if (matches[1] === "v") {
                 serverSignature = matches[2];
             }
 
-            if (serverSignature != this._sasl_data["server-signature"]) {
+            if (serverSignature !== this._sasl_data["server-signature"]) {
               // remove old handlers
               this.deleteHandler(this._sasl_failure_handler);
               this._sasl_failure_handler = null;
@@ -2971,11 +2970,11 @@ Strophe.Connection.prototype = {
         var i, child;
         for (i = 0; i < elem.childNodes.length; i++) {
             child = elem.childNodes[i];
-            if (child.nodeName == 'bind') {
+            if (child.nodeName === 'bind') {
                 this.do_bind = true;
             }
 
-            if (child.nodeName == 'session') {
+            if (child.nodeName === 'session') {
                 this.do_session = true;
             }
         }
@@ -3011,7 +3010,7 @@ Strophe.Connection.prototype = {
      *    false to remove the handler.
      */
     _sasl_bind_cb: function (elem) {
-        if (elem.getAttribute("type") == "error") {
+        if (elem.getAttribute("type") === "error") {
             Strophe.info("SASL binding failed.");
             var conflict = elem.getElementsByTagName("conflict"), condition;
             if (conflict.length > 0) {
@@ -3062,10 +3061,10 @@ Strophe.Connection.prototype = {
      *    false to remove the handler.
      */
     _sasl_session_cb: function (elem) {
-        if (elem.getAttribute("type") == "result") {
+        if (elem.getAttribute("type") === "result") {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
-        } else if (elem.getAttribute("type") == "error") {
+        } else if (elem.getAttribute("type") === "error") {
             Strophe.info("Session creation failed.");
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
@@ -3114,10 +3113,10 @@ Strophe.Connection.prototype = {
      *    false to remove the handler.
      */
     _auth2_cb: function (elem) {
-        if (elem.getAttribute("type") == "result") {
+        if (elem.getAttribute("type") === "result") {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
-        } else if (elem.getAttribute("type") == "error") {
+        } else if (elem.getAttribute("type") === "error") {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             this.disconnect('authentication failed');
         }
@@ -3336,7 +3335,7 @@ Strophe.SASLMechanism.prototype = {
 
   /** PrivateFunction: onChallenge
    *  Called by protocol implementation on incoming challenge. If client is
-   *  first (isClientFirst == true) challenge will be null on the first call.
+   *  first (isClientFirst === true) challenge will be null on the first call.
    *
    *  Parameters:
    *    (Strophe.Connection) connection - Target Connection.

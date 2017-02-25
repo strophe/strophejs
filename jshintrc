@@ -1,0 +1,21 @@
+{
+    "browser": true,
+    "devel": true,
+    "eqeqeq": true,
+    "indent": 4,
+    "jquery": false,
+    "smarttabs": true,
+    "trailing": true,
+    "undef": true,
+    "unused": "vars",
+    "white": false,
+    "predef": [
+        "define",
+        "escape",
+        "expect",
+        "global",
+        "module",
+        "require",
+        "unescape"
+    ]
+}

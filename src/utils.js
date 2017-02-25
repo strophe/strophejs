@@ -57,7 +57,7 @@
                 domain = '';
                 path = '';
                 cookieObj = cookies[cookieName];
-                isObj = typeof cookieObj == "object";
+                isObj = typeof cookieObj === "object";
                 cookieValue = escape(unescape(isObj ? cookieObj.value : cookieObj));
                 if (isObj) {
                     expires = cookieObj.expires ? ";expires="+cookieObj.expires : '';

@@ -1,13 +1,13 @@
 BOWER		?= node_modules/.bin/bower
-GRUNT		?= ./node_modules/.bin/grunt
 HTTPSERVE	?= ./node_modules/.bin/http-server
+JSHINT		?= ./node_modules/.bin/jshint
 PHANTOMJS	?= ./node_modules/.bin/phantomjs
-RJS         ?= ./node_modules/.bin/r.js
+RJS			?= ./node_modules/.bin/r.js
 SHELL		?= /usr/env/bin/bash
-SRC_DIR = src
-DOC_DIR = doc
-DOC_TEMP = doc-temp
-NDPROJ_DIR = ndproj
+SRC_DIR		= src
+DOC_DIR		= doc
+DOC_TEMP	= doc-temp
+NDPROJ_DIR 	= ndproj
 
 STROPHE			= strophe.js
 STROPHE_MIN		= strophe.min.js
@@ -56,13 +56,15 @@ $(STROPHE): src node_modules Makefile
 	sed -i s/@VERSION@/$(VERSION)/ strophe.js
 
 $(STROPHE_LIGHT): src node_modules Makefile
-	$(RJS) -o build.js optimize=none out=strophe-no-polyfills.js
-	sed -i s/@VERSION@/$(VERSION)/ strophe-no-polyfills.js
+	$(RJS) -o build.js optimize=none out=strophe.light.js
+	sed -i s/@VERSION@/$(VERSION)/ strophe.light.js
+
+.PHONY: jshint
+jshint: stamp-bower
+	$(JSHINT) --config jshintrc src/*.js
 
 .PHONY: check
-check::
-	make stamp-bower
-	@@$(GRUNT) jshint
+check:: stamp-bower jshint
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/strophe.html
 
 .PHONY: serve

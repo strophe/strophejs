@@ -51,6 +51,7 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
+    "jshint": "^2.9.4",
     "bower": "latest",
     "grunt": "~1.0.1",
     "grunt-cli": "~1.2.0",
