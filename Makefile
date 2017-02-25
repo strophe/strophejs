@@ -1,8 +1,9 @@
-SHELL		?= /usr/env/bin/bash
 BOWER		?= node_modules/.bin/bower
 GRUNT		?= ./node_modules/.bin/grunt
 HTTPSERVE	?= ./node_modules/.bin/http-server
 PHANTOMJS	?= ./node_modules/.bin/phantomjs
+RJS         ?= ./node_modules/.bin/r.js
+SHELL		?= /usr/env/bin/bash
 SRC_DIR = src
 DOC_DIR = doc
 DOC_TEMP = doc-temp
@@ -11,6 +12,14 @@ NDPROJ_DIR = ndproj
 STROPHE 	= strophe.js
 STROPHE_MIN = strophe.min.js
 STROPHE_LIGHT = strophe.light.js
+
+.PHONY: help
+help:
+	@echo "Please use \`make <target>' where <target> is one of the following:"
+	@echo ""
+	@echo " release       Prepare a new release of strophe.js. E.g. `make release VERSION=1.2.13`"
+	@echo " serve         Serve this directory via a webserver on port 8000."
+	@echo " stamp-npm     Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
 
 all: doc $(STROPHE_MIN)
 
@@ -22,21 +31,10 @@ stamp-bower: stamp-npm bower.json
 	$(BOWER) install
 	touch stamp-bower
 
-$(STROPHE)::
-	make stamp-bower
-	@@echo "Building" $(STROPHE) "..."
-	$(GRUNT) concat:dist
-	@@echo
-
-$(STROPHE_LIGHT)::
+$(STROPHE_LIGHT):
 	@@echo "Building" $(STROPHE_LIGHT) "..."
 	$(GRUNT) concat:light
 	@@echo
-
-$(STROPHE_MIN)::
-	make $(STROPHE)
-	@@echo "Building" $(STROPHE_MIN) "..."
-	$(GRUNT) min
 
 .PHONY: doc
 doc:
@@ -52,10 +50,15 @@ doc:
 	@@echo
 
 .PHONY: release
-release:: stamp-bower
-	@@$(GRUNT) release
-	@@echo "Release created."
-	@@echo
+release: $(STROPHE) $(STROPHE_MIN)
+
+strophe.min.js: src node_modules
+	$(RJS) -o build.js
+	sed -i s/@VERSION@/$(VERSION)/ strophe.js
+
+strophe.js: src node_modules
+	$(RJS) -o build.js optimize=none out=strophe.js
+	sed -i s/@VERSION@/$(VERSION)/ strophe.js
 
 .PHONY: check
 check::
