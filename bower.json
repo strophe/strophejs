@@ -23,7 +23,6 @@
     ".*",
     "release_checklist.txt",
     "Makefile",
-    "Gruntfile.js",
     "contrib",
     "examples",
     "tests"

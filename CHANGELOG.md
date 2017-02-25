@@ -1,5 +1,11 @@
 # Strophe.js Change Log
 
+## Version 1.2.13 - Unreleased
+
+* Use almond to create the build. This means that the build itself is an AMD
+  module and can be loaded via `require`.
+* Remove Grunt as a build tool.
+
 ## Version 1.2.12 - 2017-01-15
 
 * Reduce the priority of the SASL-EXTERNAL auth mechanism. OpenFire 4.1.1
