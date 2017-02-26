@@ -1782,8 +1782,9 @@ Strophe.Connection.prototype = {
      *
      *  Parameters:
      *    (String) jid - The user's JID.  This may be a bare JID,
-     *      or a full JID.  If a node is not supplied, SASL ANONYMOUS
-     *      authentication will be attempted.
+     *      or a full JID.  If a node is not supplied, SASL OAUTHBEARER or
+     *      SASL ANONYMOUS authentication will be attempted (OAUTHBEARER will
+     *      process the provided password value as an access token).
      *    (String) pass - The user's password.
      *    (Function) callback - The connect callback function.
      *    (Integer) wait - The optional HTTPBIND wait value.  This is the
@@ -3583,18 +3584,21 @@ Strophe.SASLOAuthBearer = function() {};
 Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
-    return connection.authcid !== null;
+    return connection.pass !== null;
 };
 
 Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
-    var auth_str = 'n,a=';
-    auth_str = auth_str + connection.authzid;
+    var auth_str = 'n,';
+    if (connection.authcid !== null) {
+      auth_str = auth_str + 'a=' + connection.authzid;
+    }
     auth_str = auth_str + ',';
     auth_str = auth_str + "\u0001";
     auth_str = auth_str + 'auth=Bearer ';
     auth_str = auth_str + connection.pass;
     auth_str = auth_str + "\u0001";
     auth_str = auth_str + "\u0001";
+
     return utils.utf16to8(auth_str);
 };
 
