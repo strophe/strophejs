@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.2.14 - (tbd)
+* SASL OAuth Bearer authentication should not require a JID node, when a user identifer
+  can be retreived from the bearer token.
+
 ## Version 1.2.13 - 2017-02-25
 
 * Use almond to create the build. This means that the build itself is an AMD
