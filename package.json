@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "almond": "~0.3.0",
-    "http-server": "^0.9.0",
+    "http-server": "^0.10.0",
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
     "phantomjs": "~1.9.7-1",
