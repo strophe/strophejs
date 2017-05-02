@@ -53,11 +53,11 @@
     "http-server": "^0.10.0",
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
-    "phantomjs": "~1.9.7-1",
-    "qunitjs": "~1.16.0",
+    "phantomjs": "~2.1.7",
+    "qunitjs": "~2.3.2",
     "qunit-phantomjs-runner": "^2.1.0",
     "requirejs": "~2.3.2",
-    "sinon": "1.17.7",
+    "sinon": "2.2.0",
     "sinon-qunit": "~2.0.0"
   }
 }
