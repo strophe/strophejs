@@ -1,5 +1,7 @@
 # Strophe.js
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/strophe/strophejs.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://travis-ci.org/strophe/strophejs.png?branch=master)](https://travis-ci.org/strophe/strophejs)
 
 Strophe.js is a JavaScript library for speaking XMPP via BOSH
