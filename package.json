@@ -54,7 +54,7 @@
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
     "phantomjs": "~1.9.7-1",
-    "qunitjs": "~1.16.0",
+    "qunitjs": "~2.3.2",
     "qunit-phantomjs-runner": "^2.1.0",
     "requirejs": "~2.3.2",
     "sinon": "1.17.7",
