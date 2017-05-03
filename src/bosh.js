@@ -736,7 +736,7 @@ Strophe.Bosh.prototype = {
                     req.xhr.withCredentials = true;
                 }
             } catch (e2) {
-                Strophe.error("XHR open failed.");
+                Strophe.error("XHR open failed: " + e2.toString());
                 if (!this._conn.connected) {
                     this._conn._changeConnectStatus(
                             Strophe.Status.CONNFAIL, "bad-service");
