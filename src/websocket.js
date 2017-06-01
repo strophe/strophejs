@@ -342,9 +342,15 @@ Strophe.Websocket.prototype = {
      *
      * Nothing to do here for WebSockets
      */
-    _onClose: function() {
+    _onClose: function(e) {
         if(this._conn.connected && !this._conn.disconnecting) {
             Strophe.error("Websocket closed unexpectedly");
+            this._conn._doDisconnect();
+        } else if (e && e.code === 1006 && !this._conn.connected && this.socket) {
+            // in case the onError callback was not called (Safari 10 does not call onerror when the initial connection fails)
+            // we need to dispatch a CONNFAIL status update to be consistent with the behavior on other browsers
+            Strophe.error("Websocket closed unexcectedly");
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
             this._conn._doDisconnect();
         } else {
             Strophe.info("Websocket closed");
