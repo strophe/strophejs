@@ -673,8 +673,11 @@ Strophe.Bosh.prototype = {
         } else {
             Strophe.error("request id "+req.id+"."+req.sends+" error "+reqStatus+" happened");
         }
-        if (!(reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+
+        if (!((reqStatus > 0 && reqStatus < 500) || req.sends > this._conn.maxRetries)) {
             this._throttledRequestHandler();
+        } else if (req.sends > this._conn.maxRetries && !this._conn.connected) {
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "giving-up");
         }
     },
 
