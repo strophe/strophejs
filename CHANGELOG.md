@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.2.14 - Unreleased
+## Version 1.2.14 - 2017-06-15
 * #231 SASL OAuth Bearer authentication should not require a JID node, when a user identifer
   can be retreived from the bearer token.
 * #250 Show XHR error message

@@ -477,7 +477,7 @@ var requirejs, require, define;
     };
 }());
 
-define("bower_components/almond/almond.js", function(){});
+define("node_modules/almond/almond.js", function(){});
 
 /*
     This program is distributed under the terms of the MIT license.
@@ -1277,7 +1277,7 @@ function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
  */
 Strophe = {
     /** Constant: VERSION */
-    VERSION: "1.2.13",
+    VERSION: "1.2.14",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -1398,6 +1398,7 @@ Strophe = {
      *  Status.DISCONNECTED - The connection has been terminated
      *  Status.DISCONNECTING - The connection is currently being terminated
      *  Status.ATTACHED - The connection has been attached
+     *  Status.REDIRECT - The connection has been redirected
      *  Status.CONNTIMEOUT - The connection has timed out
      */
     Status: {
@@ -2932,7 +2933,7 @@ Strophe.Connection.prototype = {
      *  Patches that handle websocket errors would be very welcome.
      *
      *  Parameters:
-     *    (String) protocol - 'HTTP' or 'websocket' 
+     *    (String) protocol - 'HTTP' or 'websocket'
      *    (Integer) status_code - Error status code (e.g 500, 400 or 404)
      *    (Function) callback - Function that will fire on Http error
      *
@@ -2968,8 +2969,9 @@ Strophe.Connection.prototype = {
      *
      *  Parameters:
      *    (String) jid - The user's JID.  This may be a bare JID,
-     *      or a full JID.  If a node is not supplied, SASL ANONYMOUS
-     *      authentication will be attempted.
+     *      or a full JID.  If a node is not supplied, SASL OAUTHBEARER or
+     *      SASL ANONYMOUS authentication will be attempted (OAUTHBEARER will
+     *      process the provided password value as an access token).
      *    (String) pass - The user's password.
      *    (Function) callback - The connect callback function.
      *    (Integer) wait - The optional HTTPBIND wait value.  This is the
@@ -4769,18 +4771,21 @@ Strophe.SASLOAuthBearer = function() {};
 Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
-    return connection.authcid !== null;
+    return connection.pass !== null;
 };
 
 Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
-    var auth_str = 'n,a=';
-    auth_str = auth_str + connection.authzid;
+    var auth_str = 'n,';
+    if (connection.authcid !== null) {
+      auth_str = auth_str + 'a=' + connection.authzid;
+    }
     auth_str = auth_str + ',';
     auth_str = auth_str + "\u0001";
     auth_str = auth_str + 'auth=Bearer ';
     auth_str = auth_str + connection.pass;
     auth_str = auth_str + "\u0001";
     auth_str = auth_str + "\u0001";
+
     return utils.utf16to8(auth_str);
 };
 
@@ -5460,7 +5465,9 @@ Strophe.Bosh.prototype = {
             return;
         }
 
-        if ((reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+        var valid_request = reqStatus > 0 && reqStatus < 500;
+        var too_many_retries = req.sends > this._conn.maxRetries;
+        if (valid_request || too_many_retries) {
             // remove from internal queue
             this._removeRequest(req);
             Strophe.debug("request id "+req.id+" should now be removed");
@@ -5497,8 +5504,11 @@ Strophe.Bosh.prototype = {
         } else {
             Strophe.error("request id "+req.id+"."+req.sends+" error "+reqStatus+" happened");
         }
-        if (!(reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+
+        if (!valid_request && !too_many_retries) {
             this._throttledRequestHandler();
+        } else if (too_many_retries && !this._conn.connected) {
+            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "giving-up");
         }
     },
 
@@ -5560,7 +5570,7 @@ Strophe.Bosh.prototype = {
                     req.xhr.withCredentials = true;
                 }
             } catch (e2) {
-                Strophe.error("XHR open failed.");
+                Strophe.error("XHR open failed: " + e2.toString());
                 if (!this._conn.connected) {
                     this._conn._changeConnectStatus(
                             Strophe.Status.CONNFAIL, "bad-service");
@@ -6006,17 +6016,23 @@ Strophe.Websocket.prototype = {
                 //_connect_cb will check for stream:error and disconnect on error
                 this._connect_cb(streamStart);
             }
-        } else if (message.data.indexOf("<close ") === 0) { //'<close xmlns="urn:ietf:params:xml:ns:xmpp-framing />') {
+        } else if (message.data.indexOf("<close ") === 0) { // <close xmlns="urn:ietf:params:xml:ns:xmpp-framing />
             this._conn.rawInput(message.data);
             this._conn.xmlInput(message);
             var see_uri = message.getAttribute("see-other-uri");
             if (see_uri) {
-                this._conn._changeConnectStatus(Strophe.Status.REDIRECT, "Received see-other-uri, resetting connection");
+                this._conn._changeConnectStatus(
+                    Strophe.Status.REDIRECT,
+                    "Received see-other-uri, resetting connection"
+                );
                 this._conn.reset();
                 this._conn.service = see_uri;
                 this._connect();
             } else {
-                this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Received closing stream");
+                this._conn._changeConnectStatus(
+                    Strophe.Status.CONNFAIL,
+                    "Received closing stream"
+                );
                 this._conn._doDisconnect();
             }
         } else {
@@ -6099,9 +6115,20 @@ Strophe.Websocket.prototype = {
      *
      * Nothing to do here for WebSockets
      */
-    _onClose: function() {
+    _onClose: function(e) {
         if(this._conn.connected && !this._conn.disconnecting) {
             Strophe.error("Websocket closed unexpectedly");
+            this._conn._doDisconnect();
+        } else if (e && e.code === 1006 && !this._conn.connected && this.socket) {
+            // in case the onError callback was not called (Safari 10 does not
+            // call onerror when the initial connection fails) we need to
+            // dispatch a CONNFAIL status update to be consistent with the
+            // behavior on other browsers.
+            Strophe.error("Websocket closed unexcectedly");
+            this._conn._changeConnectStatus(
+                Strophe.Status.CONNFAIL,
+                "The WebSocket connection could not be established or was disconnected."
+            );
             this._conn._doDisconnect();
         } else {
             Strophe.info("Websocket closed");
@@ -6115,7 +6142,10 @@ Strophe.Websocket.prototype = {
      */
     _no_auth_received: function (_callback) {
         Strophe.error("Server did not send any auth methods");
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
+        this._conn._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            "Server did not send any auth methods"
+        );
         if (_callback) {
             _callback = _callback.bind(this._conn);
             _callback();
@@ -6143,7 +6173,10 @@ Strophe.Websocket.prototype = {
      */
     _onError: function(error) {
         Strophe.error("Websocket error " + error);
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
+        this._conn._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            "The WebSocket connection could not be established or was disconnected."
+        );
         this._disconnect();
     },
 

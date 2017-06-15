@@ -1747,7 +1747,7 @@ Strophe.Connection.prototype = {
      *  Patches that handle websocket errors would be very welcome.
      *
      *  Parameters:
-     *    (String) protocol - 'HTTP' or 'websocket' 
+     *    (String) protocol - 'HTTP' or 'websocket'
      *    (Integer) status_code - Error status code (e.g 500, 400 or 404)
      *    (Function) callback - Function that will fire on Http error
      *

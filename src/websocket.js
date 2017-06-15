@@ -249,17 +249,23 @@ Strophe.Websocket.prototype = {
                 //_connect_cb will check for stream:error and disconnect on error
                 this._connect_cb(streamStart);
             }
-        } else if (message.data.indexOf("<close ") === 0) { //'<close xmlns="urn:ietf:params:xml:ns:xmpp-framing />') {
+        } else if (message.data.indexOf("<close ") === 0) { // <close xmlns="urn:ietf:params:xml:ns:xmpp-framing />
             this._conn.rawInput(message.data);
             this._conn.xmlInput(message);
             var see_uri = message.getAttribute("see-other-uri");
             if (see_uri) {
-                this._conn._changeConnectStatus(Strophe.Status.REDIRECT, "Received see-other-uri, resetting connection");
+                this._conn._changeConnectStatus(
+                    Strophe.Status.REDIRECT,
+                    "Received see-other-uri, resetting connection"
+                );
                 this._conn.reset();
                 this._conn.service = see_uri;
                 this._connect();
             } else {
-                this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Received closing stream");
+                this._conn._changeConnectStatus(
+                    Strophe.Status.CONNFAIL,
+                    "Received closing stream"
+                );
                 this._conn._doDisconnect();
             }
         } else {
@@ -347,10 +353,15 @@ Strophe.Websocket.prototype = {
             Strophe.error("Websocket closed unexpectedly");
             this._conn._doDisconnect();
         } else if (e && e.code === 1006 && !this._conn.connected && this.socket) {
-            // in case the onError callback was not called (Safari 10 does not call onerror when the initial connection fails)
-            // we need to dispatch a CONNFAIL status update to be consistent with the behavior on other browsers
+            // in case the onError callback was not called (Safari 10 does not
+            // call onerror when the initial connection fails) we need to
+            // dispatch a CONNFAIL status update to be consistent with the
+            // behavior on other browsers.
             Strophe.error("Websocket closed unexcectedly");
-            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
+            this._conn._changeConnectStatus(
+                Strophe.Status.CONNFAIL,
+                "The WebSocket connection could not be established or was disconnected."
+            );
             this._conn._doDisconnect();
         } else {
             Strophe.info("Websocket closed");
@@ -364,7 +375,10 @@ Strophe.Websocket.prototype = {
      */
     _no_auth_received: function (_callback) {
         Strophe.error("Server did not send any auth methods");
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Server did not send any auth methods");
+        this._conn._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            "Server did not send any auth methods"
+        );
         if (_callback) {
             _callback = _callback.bind(this._conn);
             _callback();
@@ -392,7 +406,10 @@ Strophe.Websocket.prototype = {
      */
     _onError: function(error) {
         Strophe.error("Websocket error " + error);
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
+        this._conn._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            "The WebSocket connection could not be established or was disconnected."
+        );
         this._disconnect();
     },
 
