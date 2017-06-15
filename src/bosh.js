@@ -636,7 +636,9 @@ Strophe.Bosh.prototype = {
             return;
         }
 
-        if ((reqStatus > 0 && reqStatus < 500) || req.sends > 5) {
+        var valid_request = reqStatus > 0 && reqStatus < 500;
+        var too_many_retries = req.sends > this._conn.maxRetries;
+        if (valid_request || too_many_retries) {
             // remove from internal queue
             this._removeRequest(req);
             Strophe.debug("request id "+req.id+" should now be removed");
@@ -674,9 +676,9 @@ Strophe.Bosh.prototype = {
             Strophe.error("request id "+req.id+"."+req.sends+" error "+reqStatus+" happened");
         }
 
-        if (!((reqStatus > 0 && reqStatus < 500) || req.sends > this._conn.maxRetries)) {
+        if (!valid_request && !too_many_retries) {
             this._throttledRequestHandler();
-        } else if (req.sends > this._conn.maxRetries && !this._conn.connected) {
+        } else if (too_many_retries && !this._conn.connected) {
             this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "giving-up");
         }
     },

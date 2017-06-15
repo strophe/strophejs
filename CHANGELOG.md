@@ -1,8 +1,9 @@
 # Strophe.js Change Log
 
-## Version 1.2.14 - (tbd)
+## Version 1.2.14 - Unreleased
 * SASL OAuth Bearer authentication should not require a JID node, when a user identifer
   can be retreived from the bearer token.
+* Set connection status to CONNFAIL after max retries
 
 ## Version 1.2.13 - 2017-02-25
 
