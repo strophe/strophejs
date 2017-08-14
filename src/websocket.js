@@ -290,7 +290,7 @@ Strophe.Websocket.prototype = {
                 this._conn.send(pres);
             }
             var close = $build("close", { "xmlns": Strophe.NS.FRAMING });
-            this._conn.xmlOutput(close);
+            this._conn.xmlOutput(close.tree());
             var closeString = Strophe.serialize(close);
             this._conn.rawOutput(closeString);
             try {

@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.15 - (Unreleased)
+* #259 XML element should be sent to xmlOutput
+
 ## Version 1.2.14 - 2017-06-15
 * #231 SASL OAuth Bearer authentication should not require a JID node, when a user identifer
   can be retreived from the bearer token.
