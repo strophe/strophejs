@@ -368,24 +368,6 @@ Strophe.Websocket.prototype = {
         }
     },
 
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received.
-     */
-    _no_auth_received: function (_callback) {
-        Strophe.error("Server did not send any auth methods");
-        this._conn._changeConnectStatus(
-            Strophe.Status.CONNFAIL,
-            "Server did not send any auth methods"
-        );
-        if (_callback) {
-            _callback = _callback.bind(this._conn);
-            _callback();
-        }
-        this._conn._doDisconnect();
-    },
-
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
      *
