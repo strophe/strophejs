@@ -12,3 +12,4 @@ doc
 *~
 .*.sw?
 doc-tmp
+.idea
