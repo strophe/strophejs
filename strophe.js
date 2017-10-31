@@ -1415,6 +1415,14 @@ Strophe = {
         CONNTIMEOUT: 10
     },
 
+    ErrorCondition: {
+        BAD_FORMAT: "bad-format",
+        CONFLICT: "conflict",
+        MISSING_JID_NODE: "x-strophe-bad-non-anon-jid",
+        NO_AUTH_MECH: "no-auth-mech",
+        UNKNOWN_REASON: "unknown",
+    },
+
     /** Constants: Log Level Constants
      *  Logging level indicators.
      *
@@ -3771,7 +3779,10 @@ Strophe.Connection.prototype = {
                 }
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+                this._changeConnectStatus(
+                    Strophe.Status.CONNFAIL,
+                    Strophe.ErrorCondition.UNKOWN_REASON
+                );
             }
             this._doDisconnect(cond);
             return;
@@ -3811,6 +3822,26 @@ Strophe.Connection.prototype = {
      */
     mechanisms: {},
 
+    /** PrivateFunction: _no_auth_received
+     *
+     * Called on stream start/restart when no stream:features
+     * has been received or when no viable authentication mechanism is offered.
+     *
+     * Sends a blank poll request.
+     */
+    _no_auth_received: function (_callback) {
+        var error_msg =  "Server did not offer a supported authentication mechanism";
+        Strophe.error(error_msg);
+        this._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            Strophe.ErrorCondition.NO_AUTH_MECH
+        );
+        if (_callback) {
+            _callback.call(this);
+        }
+        this._doDisconnect();
+    },
+
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -3824,7 +3855,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (Strophe.Request) req - The current request.
      *    (Function) _callback - low level (xmpp) connect callback function.
-     *      Useful for plugins with their own xmpp connect callback (when their)
+     *      Useful for plugins with their own xmpp connect callback (when they
      *      want to do something special).
      */
     _connect_cb: function (req, _callback, raw) {
@@ -3836,8 +3867,11 @@ Strophe.Connection.prototype = {
             bodyWrap = this._proto._reqToData(req);
         } catch (e) {
             if (e !== "badformat") { throw e; }
-            this._changeConnectStatus(Strophe.Status.CONNFAIL, 'bad-format');
-            this._doDisconnect('bad-format');
+            this._changeConnectStatus(
+                Strophe.Status.CONNFAIL,
+                Strophe.ErrorCondition.BAD_FORMAT
+            );
+            this._doDisconnect(Strophe.ErrorCondition.BAD_FORMAT);
         }
         if (!bodyWrap) { return; }
 
@@ -3870,7 +3904,7 @@ Strophe.Connection.prototype = {
                             bodyWrap.getElementsByTagName("features").length > 0;
         }
         if (!hasFeatures) {
-            this._proto._no_auth_received(_callback);
+            this._no_auth_received(_callback);
             return;
         }
 
@@ -3886,7 +3920,7 @@ Strophe.Connection.prototype = {
             if (bodyWrap.getElementsByTagName("auth").length === 0) {
                 // There are no matching SASL mechanisms and also no legacy
                 // auth available.
-                this._proto._no_auth_received(_callback);
+                this._no_auth_received(_callback);
                 return;
             }
         }
@@ -3982,9 +4016,9 @@ Strophe.Connection.prototype = {
             // client connections
             this._changeConnectStatus(
                 Strophe.Status.CONNFAIL,
-                'x-strophe-bad-non-anon-jid'
+                Strophe.ErrorCondition.MISSING_JID_NODE
             );
-            this.disconnect('x-strophe-bad-non-anon-jid');
+            this.disconnect(Strophe.ErrorCondition.MISSING_JID_NODE);
         } else {
             // Fall back to legacy authentication
             this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
@@ -4202,7 +4236,7 @@ Strophe.Connection.prototype = {
             Strophe.info("SASL binding failed.");
             var conflict = elem.getElementsByTagName("conflict"), condition;
             if (conflict.length > 0) {
-                condition = 'conflict';
+                condition = Strophe.ErrorCondition.CONFLICT;
             }
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition);
             return false;
@@ -5299,26 +5333,6 @@ Strophe.Bosh.prototype = {
         }
     },
 
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received and sends a blank poll request.
-     */
-    _no_auth_received: function (_callback) {
-        if (_callback) {
-            _callback = _callback.bind(this._conn);
-        } else {
-            _callback = this._conn._connect_cb.bind(this._conn);
-        }
-        var body = this._buildBody();
-        this._requests.push(
-                new Strophe.Request(body.tree(),
-                    this._onRequestStateChange.bind(
-                        this, _callback.bind(this._conn)),
-                    body.tree().getAttribute("rid")));
-        this._throttledRequestHandler();
-    },
-
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
      *
@@ -6057,7 +6071,7 @@ Strophe.Websocket.prototype = {
                 this._conn.send(pres);
             }
             var close = $build("close", { "xmlns": Strophe.NS.FRAMING });
-            this._conn.xmlOutput(close);
+            this._conn.xmlOutput(close.tree());
             var closeString = Strophe.serialize(close);
             this._conn.rawOutput(closeString);
             try {
@@ -6133,24 +6147,6 @@ Strophe.Websocket.prototype = {
         } else {
             Strophe.info("Websocket closed");
         }
-    },
-
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received.
-     */
-    _no_auth_received: function (_callback) {
-        Strophe.error("Server did not send any auth methods");
-        this._conn._changeConnectStatus(
-            Strophe.Status.CONNFAIL,
-            "Server did not send any auth methods"
-        );
-        if (_callback) {
-            _callback = _callback.bind(this._conn);
-            _callback();
-        }
-        this._conn._doDisconnect();
     },
 
     /** PrivateFunction: _onDisconnectTimeout
