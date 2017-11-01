@@ -57,7 +57,7 @@ release:
 	make dist
 	make doc
 
-.PHONEY: dist
+.PHONY: dist
 dist: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
 
 $(STROPHE_MIN): src node_modules Makefile
