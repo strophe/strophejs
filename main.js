@@ -15,7 +15,6 @@ require.config({
     baseUrl: '.',
     paths: {
         // Strophe.js src files
-		"strophe-base64":       "src/base64",
 		"strophe-bosh":         "src/bosh",
 		"strophe-core":         "src/core",
 		"strophe-utils":        "src/utils",
