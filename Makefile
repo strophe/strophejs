@@ -76,7 +76,7 @@ jshint: stamp-npm
 	$(JSHINT) --config jshintrc src/*.js
 
 .PHONY: check
-check: stamp-npm jshint
+check:: stamp-npm jshint
 	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/index.html
 
 .PHONY: serve
