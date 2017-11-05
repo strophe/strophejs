@@ -1,4 +1,11 @@
 /*
+ This program is distributed under the terms of the MIT license.
+ Please see the LICENSE file for details.
+
+ Copyright 2006-2008, OGG, LLC
+ */
+
+/*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
  * Version 2.1 Copyright (C) Paul Johnston 1999 - 2002.
@@ -6,20 +13,12 @@
  * Distributed under the BSD License
  * See http://pajhome.org.uk/crypt/md5 for more info.
  */
+
 /*
  * Everything that isn't used by Strophe has been stripped here!
  */
 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define([], function () {
-            return factory();
-        });
-    } else {
-        // Browser globals
-        root.MD5 = factory();
-    }
-}(this, function () {
+(function () {
     /*
      * Add integers, wrapping at 2^32. This uses 16-bit operations internally
      * to work around bugs in some JS interpreters.
@@ -195,7 +194,7 @@
         return [a, b, c, d];
     };
 
-    var obj = {
+    module.exports = {
         /*
          * These are the functions you'll usually want to call.
          * They take string arguments and return either hex or base-64 encoded
@@ -209,5 +208,4 @@
             return binl2str(core_md5(str2binl(s), s.length * 8));
         }
     };
-    return obj;
-}));
+})();

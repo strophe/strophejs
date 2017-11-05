@@ -1,16 +1,14 @@
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define([], function () {
-            return factory();
-        });
-    } else {
-        // Browser globals
-        root.stropheUtils = factory();
-    }
-}(this, function () {
+/*
+ This program is distributed under the terms of the MIT license.
+ Please see the LICENSE file for details.
 
-    var utils = {
+ Copyright 2006-2008, OGG, LLC
+ */
 
+(function () {
+    "use strict";
+
+    module.exports = {
         utf16to8: function (str) {
             var i, c;
             var out = "";
@@ -21,11 +19,11 @@
                     out += str.charAt(i);
                 } else if (c > 0x07FF) {
                     out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
-                    out += String.fromCharCode(0x80 | ((c >>  6) & 0x3F));
-                    out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+                    out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
+                    out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
                 } else {
-                    out += String.fromCharCode(0xC0 | ((c >>  6) & 0x1F));
-                    out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+                    out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
+                    out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
                 }
             }
             return out;
@@ -60,14 +58,13 @@
                 isObj = typeof cookieObj === "object";
                 cookieValue = escape(unescape(isObj ? cookieObj.value : cookieObj));
                 if (isObj) {
-                    expires = cookieObj.expires ? ";expires="+cookieObj.expires : '';
-                    domain = cookieObj.domain ? ";domain="+cookieObj.domain : '';
-                    path = cookieObj.path ? ";path="+cookieObj.path : '';
+                    expires = cookieObj.expires ? ";expires=" + cookieObj.expires : '';
+                    domain = cookieObj.domain ? ";domain=" + cookieObj.domain : '';
+                    path = cookieObj.path ? ";path=" + cookieObj.path : '';
                 }
                 document.cookie =
-                    cookieName+'='+cookieValue + expires + domain + path;
+                    cookieName + '=' + cookieValue + expires + domain + path;
             }
         }
     };
-    return utils;
-}));
+})();
