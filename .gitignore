@@ -1,14 +1,6 @@
 stamp-npm
-stamp-bower
 version.txt
 node_modules
-bower_components
-strophejs-*/
 ndproj
 doc
-.taperc
-*.tar.gz
-*.zip
-*~
-.*.sw?
-doc-tmp
+tests/main.js

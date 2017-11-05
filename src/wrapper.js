@@ -1,11 +1,3 @@
-(function(root){
-    if(typeof define === 'function' && define.amd){
-        define([
-            "strophe-core",
-            "strophe-bosh",
-            "strophe-websocket"
-        ], function (wrapper) {
-            return wrapper;
-        });
-    }
-})(this);
+module.exports = require('./core');
+require('./bosh');
+require('./websocket');

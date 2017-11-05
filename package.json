@@ -1,5 +1,5 @@
 {
-  "name": "strophe.js",
+  "name": "strophe.browseryfy.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
   "version": "1.2.14",
   "homepage": "http://strophe.im/strophejs",
@@ -32,11 +32,27 @@
     "Lee Boynton (lboynton)",
     "Theo Cushion (theozaurus)",
     "Brendon Crawford (brendoncrawford)",
-    "JC Brand (jcbrand)"
+    "JC Brand (jcbrand)",
+    "Saeed Seyfi (saeedseyfi)"
   ],
   "license": "MIT",
-  "main": "strophe.js",
-  "browser": "strophe.js",
+  "main": "strophe.browserify.js",
+  "browser": {
+    "sinon": "./node_modules/sinon/lib/sinon.js",
+    "sinon-qunit": "./node_modules/sinon-qunit/lib/sinon-qunit.js"
+  },
+  "browserify-shim": {
+    "sinon-qunit": {
+      "depends": [
+        "sinon:sinon"
+      ]
+    }
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
   "scripts": {
     "lint": "make jshint",
     "clean": "make clean",
@@ -49,15 +65,16 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
-    "almond": "~0.3.0",
+    "browserify": "^14.5.0",
+    "browserify-shim": "^3.8.14",
     "http-server": "^0.10.0",
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
     "phantomjs": "~1.9.7-1",
-    "qunitjs": "~1.16.0",
     "qunit-phantomjs-runner": "^2.1.0",
-    "requirejs": "~2.3.2",
+    "qunitjs": "~1.16.0",
     "sinon": "1.17.7",
-    "sinon-qunit": "~2.0.0"
+    "sinon-qunit": "~2.0.0",
+    "uglify-js": "^3.1.6"
   }
 }
