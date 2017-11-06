@@ -17,6 +17,8 @@
         define('strophe-sha1', function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.SHA1 = factory();

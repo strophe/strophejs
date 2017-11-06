@@ -15,6 +15,8 @@
         define([], function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.MD5 = factory();
