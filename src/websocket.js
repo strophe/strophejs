@@ -17,9 +17,9 @@
             );
         });
     } else if (typeof exports === 'object') {
-        var wrapper = require('./core');
+        var core = require('./core');
 
-        module.exports = factory(wrapper.Strophe, wrapper.$build);
+        module.exports = factory(core.Strophe, core.$build);
     } else {
         // Browser globals
         return factory(Strophe, $build);
