@@ -23,7 +23,6 @@ help:
 	@echo " all         Update docs + build $(STROPHE) and $(STROPHE_MIN)"
 	@echo " doc         Update docs"
 	@echo " dist        Build $(STROPHE), $(STROPHE_MIN) and $(STROPHE_LIGHT)"
-	@echo " jshint      Check the code quality"
 	@echo " check       Build and run the tests"
 	@echo " jshint      Check code quality"
 	@echo " release     Prepare a new release of $(STROPHE). E.g. \`make release VERSION=1.2.14\`"
