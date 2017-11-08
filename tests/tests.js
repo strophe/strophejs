@@ -612,7 +612,7 @@ define([
         test("The supported mechanism with the highest priority will be used", function () {
             Strophe.SASLExternal.prototype.priority = 10;
             Strophe.SASLSHA1.prototype.priority = 20;
-            conn = new Strophe.Connection('localhost',
+            var conn = new Strophe.Connection('localhost',
                 { 'mechanisms': [
                         Strophe.SASLSHA1,
                         Strophe.SASLExternal

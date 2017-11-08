@@ -20,9 +20,16 @@ all: doc $(STROPHE) $(STROPHE_MIN)
 help:
 	@echo "Please use \`make <target>' where <target> is one of the following:"
 	@echo ""
-	@echo " release       Prepare a new release of strophe.js. E.g. `make release VERSION=1.2.14`"
-	@echo " serve         Serve this directory via a webserver on port 8000."
-	@echo " stamp-npm     Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
+	@echo " all         Update docs + build $(STROPHE) and $(STROPHE_MIN)"
+	@echo " doc         Update docs"
+	@echo " dist        Build $(STROPHE), $(STROPHE_MIN) and $(STROPHE_LIGHT)"
+	@echo " check       Build and run the tests"
+	@echo " jshint      Check code quality"
+	@echo " release     Prepare a new release of $(STROPHE). E.g. \`make release VERSION=1.2.14\`"
+	@echo " serve       Serve this directory via a webserver on port 8000."
+	@echo " stamp-npm   Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
+	@echo ""
+	@echo "If you are a Mac user:\n  1. Install \`gnu-sed\` (brew install gnu-sed) \n  2. Set \`SED\` to \`gsed\` in all commands. E.g. \`make release SED=gsed VERSION=1.2.14\`"
 
 stamp-npm: package.json
 	npm install
@@ -48,7 +55,7 @@ release:
 	make dist
 	make doc
 
-.PHONE: dist
+.PHONY: dist
 dist: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
 
 $(STROPHE_MIN): src node_modules Makefile

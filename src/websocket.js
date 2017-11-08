@@ -16,6 +16,10 @@
                 core.$build
             );
         });
+    } else if (typeof exports === 'object') {
+        var core = require('./core');
+
+        module.exports = factory(core.Strophe, core.$build);
     } else {
         // Browser globals
         return factory(Strophe, $build);

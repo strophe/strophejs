@@ -17,6 +17,12 @@
         ], function () {
             return factory.apply(this, arguments);
         });
+    }  else if (typeof exports === 'object') {
+        module.exports = factory(
+            require('./sha1'),
+            require('./md5'),
+            require('./utils')
+        );
     } else {
         // Browser globals
         var o = factory(root.SHA1, root.MD5, root.stropheUtils);

@@ -3,6 +3,8 @@
         define([], function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.stropheUtils = factory();
