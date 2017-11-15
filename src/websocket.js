@@ -332,6 +332,7 @@ Strophe.Websocket.prototype = {
      */
     _closeSocket: function () {
         if (this.socket) { try {
+            this.socket.onerror = null;
             this.socket.close();
         } catch (e) {} }
         this.socket = null;
