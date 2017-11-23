@@ -42,9 +42,6 @@
     "clean": "make clean",
     "doc": "make doc"
   },
-  "engines": {
-    "browser": "*"
-  },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
