@@ -582,13 +582,14 @@ define([
 
         test("Default mechanisms will be registered if none are provided", function () {
             var conn = new Strophe.Connection('localhost');
-            equal(Object.keys(conn.mechanisms).length, 6, 'Six by default registered SASL mechanisms');
+            equal(Object.keys(conn.mechanisms).length, 7, 'Seven by default registered SASL mechanisms');
             equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
             equal('DIGEST-MD5' in conn.mechanisms, true, 'DIGEST-MD is registered');
             equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
             equal('OAUTHBEARER' in conn.mechanisms, true, 'OAUTHBEARER is registered');
             equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
             equal('SCRAM-SHA-1' in conn.mechanisms, true, 'SCRAM-SHA-1 is registered');
+            equal('X-OAUTH2' in conn.mechanisms, true, 'X-OAUTH2 is registered');
         });
 
         test("Custom mechanisms be specified when instantiating Strophe.Connection", function () {

@@ -2397,6 +2397,7 @@ Strophe.Connection.prototype = {
             Strophe.SASLExternal,
             Strophe.SASLMD5,
             Strophe.SASLOAuthBearer,
+            Strophe.SASLXOAuth2,
             Strophe.SASLPlain,
             Strophe.SASLSHA1
         ];
@@ -3416,6 +3417,7 @@ Strophe.SASLMechanism.prototype = {
    *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
    *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
    *  Strophe.SASLExternal - SASL EXTERNAL authentication
+   *  Strophe.SASLXOAuth2 - SASL X-OAuth2 authentication
    */
 
 // Building SASL callbacks
@@ -3665,6 +3667,29 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
      */
     return connection.authcid === connection.authzid ? '' : connection.authzid;
 };
+
+
+/** PrivateConstructor: SASLXOAuth2
+ *  SASL X-OAuth2 authentication.
+ */
+Strophe.SASLXOAuth2 = function () { };
+Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 70);
+
+Strophe.SASLXOAuth2.prototype.test = function (connection) {
+    return connection.pass !== null;
+};
+
+Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
+    var auth_str = '\u0000';
+    if (connection.authcid !== null) {
+        auth_str = auth_str + connection.authzid;
+    }
+    auth_str = auth_str + "\u0000";
+    auth_str = auth_str + connection.pass;
+
+    return utils.utf16to8(auth_str);
+};
+
 
 return {
     'Strophe':         Strophe,
