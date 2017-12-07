@@ -167,6 +167,8 @@ Strophe.Bosh = function(connection) {
     this.errors = 0;
     this.inactivity = null;
 
+    this.lastResponseHeaders = null;
+
     this._requests = [];
 };
 
@@ -614,6 +616,7 @@ Strophe.Bosh.prototype = {
             return;
         }
         var reqStatus = this._getRequestStatus(req);
+        this.lastResponseHeaders = req.xhr.getAllResponseHeaders();
         if (this.disconnecting && reqStatus >= 400) {
             this._hitError(reqStatus);
             this._callProtocolErrorHandlers(req);
