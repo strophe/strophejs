@@ -5,7 +5,22 @@ define([
 	'strophe'
 	], function($, sinon, sinon_qunit, wrapper) {
 
-	var run = function () {
+    /**
+	 * Mock xhr, provides getAllResponseHeaders function.
+     * @param status
+     * @param readyState
+     * @param responseText
+     */
+    xhr = function (status, readyState, responseText) {
+		this.status = status;
+		this.readyState = readyState;
+		this.responseText = responseText;
+		this.getAllResponseHeaders = function () {
+			return null;
+		};
+	};
+
+    var run = function () {
         var $build = wrapper.$build;
         var $iq  = wrapper.$iq;
         var $msg = wrapper.$msg;
@@ -51,28 +66,17 @@ define([
         test("_getRequestStatus", function () {
             var conn = new Strophe.Connection("http://example.org");
 			var req = new Strophe.Request('', function(){});
-            req.xhr = {
-                'status': 200,
-                'readyState': 4
-            };
+            req.xhr = new xhr(200, 4);
             equal(conn._proto._getRequestStatus(req), 200, "Returns the status");
-            req.xhr = {
-                'status': 500,
-                'readyState': 4
-            };
+            req.xhr = new xhr(500, 4);
             equal(conn._proto._getRequestStatus(req), 500,
                     "Returns the default if the request is not finished yet");
 
-            req.xhr = {
-                'status': 200,
-                'readyState': 3
-            };
+            req.xhr = new xhr(200, 3);
             equal(conn._proto._getRequestStatus(req), 0,
                     "Returns the default if the request is not finished yet");
 
-            req.xhr = {
-                'readyState': 4
-            };
+            req.xhr = new xhr(undefined, 4);
             equal(conn._proto._getRequestStatus(req, -1), -1,
                     "Returns the default if the request doesn't have a status");
 
@@ -402,26 +406,17 @@ define([
             conn.addProtocolErrorHandler('HTTP', 500, spy500);
             conn.addProtocolErrorHandler('HTTP', 401, spy401);
 			var req = new Strophe.Request('', function(){});
-            req.xhr = {
-                'status': 200,
-                'readyState': 4
-            };
+            req.xhr = new xhr(200, 4);
             conn._proto._onRequestStateChange(function () {}, req);
             equal(spy500.called, false, "Error handler does not get called when no HTTP error");
             equal(spy401.called, false, "Error handler does not get called when no HTTP error");
 
-            req.xhr = {
-                'status': 401,
-                'readyState': 4
-            };
+            req.xhr = new xhr(401, 4);
             conn._proto._onRequestStateChange(function () {}, req);
             equal(spy500.called, false, "Error handler does not get called when no HTTP 500 error");
             equal(spy401.called, true, "Error handler does get called when HTTP 401 error");
 
-            req.xhr = {
-                'status': 500,
-                'readyState': 4
-            };
+            req.xhr = new xhr(500, 4);
             conn._proto._onRequestStateChange(function () {}, req);
             equal(spy500.called, true, "Error handler gets called on HTTP 500 error");
         });
@@ -521,9 +516,7 @@ define([
 
 		test("Connfail for invalid XML", function () {
 			var req = new Strophe.Request('', function(){});
-			req.xhr = {
-				responseText: 'text'
-			};
+			req.xhr = new xhr(undefined, undefined, 'text')
 
 			var conn = new Strophe.Connection("http://fake");
 			conn.connect_callback = function(status, condition) {
@@ -546,9 +539,7 @@ define([
 			// simulate a finished but aborted request
 			var req = {id: 43,
 					sends: 1,
-					xhr: {
-						readyState: 4
-					},
+					xhr: new xhr(undefined, 4),
 					abort: true};
 
 			conn._requests = [req];
@@ -567,9 +558,8 @@ define([
 			// simulate a finished but aborted request
 			var req = {id: 44,
 					sends: 1,
-					xhr: {
-						readyState: 3
-					}};
+					xhr: new xhr(undefined, 3)
+			};
 
 			conn._requests = [req];
 			var spy = sinon.spy();
@@ -884,10 +874,7 @@ define([
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
                   sends: 1,
-                  xhr: {
-                     readyState: 4,
-                     status: 200
-                  },
+                  xhr: new xhr(200, 4),
                   rid: 42
             };
             conn._requests = [req];
@@ -902,10 +889,7 @@ define([
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
                   sends: 1,
-                  xhr: {
-                     readyState: 4,
-                     status: 0
-                  },
+                  xhr: new xhr(0, 4),
                   rid: 42
             };
             conn._requests = [req];
@@ -922,10 +906,7 @@ define([
             var spy = sinon.spy(conn, 'nextValidRid');
             var req = {id: 43,
                   sends: 1,
-                  xhr: {
-                     readyState: 4,
-                     status: 404
-                  },
+                  xhr: new xhr(404, 4),
                   rid: 42
             };
             conn._requests = [req];
