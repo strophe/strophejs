@@ -2464,8 +2464,9 @@ Strophe.Connection.prototype = {
      *    (Integer) status - the new connection status, one of the values
      *      in Strophe.Status
      *    (String) condition - the error condition or null
+     *    (XMLElement) elem - The triggering stanza.
      */
-    _changeConnectStatus: function (status, condition) {
+    _changeConnectStatus: function (status, condition, elem) {
         // notify all plugins listening for status changes
         for (var k in Strophe._connectionPlugins) {
             if (Strophe._connectionPlugins.hasOwnProperty(k)) {
@@ -2484,7 +2485,7 @@ Strophe.Connection.prototype = {
         // notify the user's callback
         if (this.connect_callback) {
             try {
-                this.connect_callback(status, condition);
+                this.connect_callback(status, condition, elem);
             } catch (e) {
                 Strophe._handleError(e);
                 Strophe.error(
@@ -3059,7 +3060,7 @@ Strophe.Connection.prototype = {
             if (conflict.length > 0) {
                 condition = Strophe.ErrorCondition.CONFLICT;
             }
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition, elem);
             return false;
         }
 
@@ -3086,7 +3087,7 @@ Strophe.Connection.prototype = {
             }
         } else {
             Strophe.info("SASL binding failed.");
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
     },
@@ -3109,7 +3110,7 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
             Strophe.info("Session creation failed.");
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
         return false;
@@ -3138,7 +3139,7 @@ Strophe.Connection.prototype = {
 
         if(this._sasl_mechanism)
           this._sasl_mechanism.onFailure();
-        this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+        this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
         return false;
     },
     /* jshint unused:true */
@@ -3160,7 +3161,7 @@ Strophe.Connection.prototype = {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             this.disconnect('authentication failed');
         }
         return false;
