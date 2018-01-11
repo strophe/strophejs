@@ -93,9 +93,15 @@ Strophe.Request.prototype = {
                 throw "parsererror";
             }
         } else if (this.xhr.responseText) {
-            Strophe.error("invalid response received");
-            Strophe.error("responseText: " + this.xhr.responseText);
-            throw "badformat";
+            // In React Native, we may get responseText but no responseXML.  We can try to parse it manually.
+            Strophe.debug("Got responseText but no responseXML; attempting to parse it with DOMParser...");
+            try {
+                node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
+            } catch (e) {
+                Strophe.error("invalid response received: " + e);
+                Strophe.error("responseText: " + this.xhr.responseText);
+                throw "badformat";
+            }
         }
 
         return node;
