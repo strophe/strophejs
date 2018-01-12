@@ -97,6 +97,9 @@ Strophe.Request.prototype = {
             Strophe.debug("Got responseText but no responseXML; attempting to parse it with DOMParser...");
             try {
                 node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
+                if (!node) {
+                    throw new Error('Parsing produced null node');
+                }
             } catch (e) {
                 Strophe.error("invalid response received: " + e);
                 Strophe.error("responseText: " + this.xhr.responseText);
