@@ -1513,6 +1513,7 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
+ *      X-OAUTH2 - 70
  *      OAUTHBEARER - 60
  *      SCRAM-SHA1 - 50
  *      DIGEST-MD5 - 40
