@@ -819,7 +819,7 @@ Strophe = {
      *
      *  This function is called whenever the Strophe library calls any
      *  of the logging functions.  The default implementation of this
-     *  function does nothing.  If client code wishes to handle the logging
+     *  function logs only fatal errors.  If client code wishes to handle the logging
      *  messages, it should override this with
      *  > Strophe.log = function (level, msg) {
      *  >   (user code here)
@@ -843,11 +843,13 @@ Strophe = {
      *      be one of the values in Strophe.LogLevel.
      *    (String) msg - The log message.
      */
-    /* jshint ignore:start */
     log: function (level, msg) {
-        return;
+        if (level === this.LogLevel.FATAL &&
+            typeof window.console === 'object' &&
+            typeof window.console.error === 'function') {
+            window.console.error(msg);
+        }
     },
-    /* jshint ignore:end */
 
     /** Function: debug
      *  Log a message at the Strophe.LogLevel.DEBUG level.
