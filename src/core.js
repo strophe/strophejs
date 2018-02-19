@@ -1515,11 +1515,11 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      X-OAUTH2 - 70
- *      OAUTHBEARER - 60
- *      SCRAM-SHA1 - 50
- *      DIGEST-MD5 - 40
- *      PLAIN - 30
+ *      SCRAM-SHA1 - 70
+ *      DIGEST-MD5 - 60
+ *      PLAIN - 50
+ *      OAUTH-BEARER - 40
+ *      OAUTH-2 - 30
  *      ANONYMOUS - 20
  *      EXTERNAL - 10
  *
@@ -3441,7 +3441,7 @@ Strophe.SASLAnonymous.prototype.test = function(connection) {
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 30);
+Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 50);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3461,7 +3461,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 50);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 70);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3545,7 +3545,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
  *  SASL DIGEST MD5 authentication.
  */
 Strophe.SASLMD5 = function() {};
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 40);
+Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 60);
 
 Strophe.SASLMD5.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3628,7 +3628,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 40);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.pass !== null;
@@ -3677,7 +3677,7 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
  *  SASL X-OAuth2 authentication.
  */
 Strophe.SASLXOAuth2 = function () { };
-Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 70);
+Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 30);
 
 Strophe.SASLXOAuth2.prototype.test = function (connection) {
     return connection.pass !== null;
