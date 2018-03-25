@@ -1,14 +1,15 @@
-BOWER		?= node_modules/.bin/bower
-HTTPSERVE	?= ./node_modules/.bin/http-server
-JSHINT		?= ./node_modules/.bin/jshint
-PHANTOMJS	?= ./node_modules/.bin/phantomjs
-RJS			?= ./node_modules/.bin/r.js
-SHELL		?= /usr/env/bin/bash
-SRC_DIR		= src
-DOC_DIR		= doc
-DOC_TEMP	= doc-temp
-NDPROJ_DIR 	= ndproj
-SED			?= sed
+BOWER			?= node_modules/.bin/bower
+CHROMIUM		?= ./node_modules/.bin/run-headless-chromium
+DOC_DIR			= doc
+DOC_TEMP		= doc-temp
+HTTPSERVE		?= ./node_modules/.bin/http-server
+HTTPSERVE_PORT  ?= 8080
+JSHINT			?= ./node_modules/.bin/jshint
+NDPROJ_DIR 		= ndproj
+RJS				?= ./node_modules/.bin/r.js
+SED				?= sed
+SHELL			?= /usr/env/bin/bash
+SRC_DIR			= src
 
 STROPHE			= strophe.js
 STROPHE_MIN		= strophe.min.js
@@ -76,11 +77,15 @@ jshint: stamp-npm
 
 .PHONY: check
 check:: stamp-npm jshint
-	$(PHANTOMJS) node_modules/qunit-phantomjs-runner/runner-list.js tests/index.html
+	LOG_CR_VERBOSITY=INFO $(CHROMIUM) --no-sandbox http://localhost:$(HTTPSERVE_PORT)/tests/
 
 .PHONY: serve
-serve:
-	$(HTTPSERVE) -p 8080
+serve: stamp-npm
+	$(HTTPSERVE) -p $(HTTPSERVE_PORT)
+
+.PHONY: serve_bg
+serve_bg: stamp-npm
+	$(HTTPSERVE) -p $(HTTPSERVE_PORT) -c-1 -s &
 
 .PHONY: clean
 clean:

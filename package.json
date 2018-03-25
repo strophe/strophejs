@@ -51,9 +51,8 @@
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
     "qunitjs": "~1.16.0",
-    "phantomjs-prebuilt": "2.1.1",
-    "qunit-phantomjs-runner": "^2.3.1",
     "requirejs": "~2.3.2",
+    "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0"
   }
