@@ -719,6 +719,8 @@ if (!root.atob) {
         define('strophe-sha1', [],function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.SHA1 = factory();
@@ -913,6 +915,8 @@ return {
         define('strophe-md5',[], function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.MD5 = factory();
@@ -1115,6 +1119,8 @@ return {
         define('strophe-utils',[], function () {
             return factory();
         });
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
     } else {
         // Browser globals
         root.stropheUtils = factory();
@@ -1203,6 +1209,12 @@ return {
         ], function () {
             return factory.apply(this, arguments);
         });
+    }  else if (typeof exports === 'object') {
+        module.exports = factory(
+            require('./sha1'),
+            require('./md5'),
+            require('./utils')
+        );
     } else {
         // Browser globals
         var o = factory(root.SHA1, root.MD5, root.stropheUtils);
@@ -1277,7 +1289,7 @@ function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
  */
 Strophe = {
     /** Constant: VERSION */
-    VERSION: "1.2.14",
+    VERSION: "1.2.15",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -1413,6 +1425,14 @@ Strophe = {
         ATTACHED: 8,
         REDIRECT: 9,
         CONNTIMEOUT: 10
+    },
+
+    ErrorCondition: {
+        BAD_FORMAT: "bad-format",
+        CONFLICT: "conflict",
+        MISSING_JID_NODE: "x-strophe-bad-non-anon-jid",
+        NO_AUTH_MECH: "no-auth-mech",
+        UNKNOWN_REASON: "unknown",
     },
 
     /** Constants: Log Level Constants
@@ -1991,7 +2011,7 @@ Strophe = {
      *
      *  This function is called whenever the Strophe library calls any
      *  of the logging functions.  The default implementation of this
-     *  function does nothing.  If client code wishes to handle the logging
+     *  function logs only fatal errors.  If client code wishes to handle the logging
      *  messages, it should override this with
      *  > Strophe.log = function (level, msg) {
      *  >   (user code here)
@@ -2015,11 +2035,13 @@ Strophe = {
      *      be one of the values in Strophe.LogLevel.
      *    (String) msg - The log message.
      */
-    /* jshint ignore:start */
     log: function (level, msg) {
-        return;
+        if (level === this.LogLevel.FATAL &&
+            typeof window.console === 'object' &&
+            typeof window.console.error === 'function') {
+            window.console.error(msg);
+        }
     },
-    /* jshint ignore:end */
 
     /** Function: debug
      *  Log a message at the Strophe.LogLevel.DEBUG level.
@@ -2685,10 +2707,11 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      OAUTHBEARER - 60
- *      SCRAM-SHA1 - 50
- *      DIGEST-MD5 - 40
- *      PLAIN - 30
+ *      SCRAM-SHA1 - 70
+ *      DIGEST-MD5 - 60
+ *      PLAIN - 50
+ *      OAUTH-BEARER - 40
+ *      OAUTH-2 - 30
  *      ANONYMOUS - 20
  *      EXTERNAL - 10
  *
@@ -3569,6 +3592,7 @@ Strophe.Connection.prototype = {
             Strophe.SASLExternal,
             Strophe.SASLMD5,
             Strophe.SASLOAuthBearer,
+            Strophe.SASLXOAuth2,
             Strophe.SASLPlain,
             Strophe.SASLSHA1
         ];
@@ -3635,8 +3659,9 @@ Strophe.Connection.prototype = {
      *    (Integer) status - the new connection status, one of the values
      *      in Strophe.Status
      *    (String) condition - the error condition or null
+     *    (XMLElement) elem - The triggering stanza.
      */
-    _changeConnectStatus: function (status, condition) {
+    _changeConnectStatus: function (status, condition, elem) {
         // notify all plugins listening for status changes
         for (var k in Strophe._connectionPlugins) {
             if (Strophe._connectionPlugins.hasOwnProperty(k)) {
@@ -3655,7 +3680,7 @@ Strophe.Connection.prototype = {
         // notify the user's callback
         if (this.connect_callback) {
             try {
-                this.connect_callback(status, condition);
+                this.connect_callback(status, condition, elem);
             } catch (e) {
                 Strophe._handleError(e);
                 Strophe.error(
@@ -3771,7 +3796,10 @@ Strophe.Connection.prototype = {
                 }
                 this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+                this._changeConnectStatus(
+                    Strophe.Status.CONNFAIL,
+                    Strophe.ErrorCondition.UNKOWN_REASON
+                );
             }
             this._doDisconnect(cond);
             return;
@@ -3811,6 +3839,26 @@ Strophe.Connection.prototype = {
      */
     mechanisms: {},
 
+    /** PrivateFunction: _no_auth_received
+     *
+     * Called on stream start/restart when no stream:features
+     * has been received or when no viable authentication mechanism is offered.
+     *
+     * Sends a blank poll request.
+     */
+    _no_auth_received: function (_callback) {
+        var error_msg =  "Server did not offer a supported authentication mechanism";
+        Strophe.error(error_msg);
+        this._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            Strophe.ErrorCondition.NO_AUTH_MECH
+        );
+        if (_callback) {
+            _callback.call(this);
+        }
+        this._doDisconnect();
+    },
+
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -3824,7 +3872,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (Strophe.Request) req - The current request.
      *    (Function) _callback - low level (xmpp) connect callback function.
-     *      Useful for plugins with their own xmpp connect callback (when their)
+     *      Useful for plugins with their own xmpp connect callback (when they
      *      want to do something special).
      */
     _connect_cb: function (req, _callback, raw) {
@@ -3836,8 +3884,11 @@ Strophe.Connection.prototype = {
             bodyWrap = this._proto._reqToData(req);
         } catch (e) {
             if (e !== "badformat") { throw e; }
-            this._changeConnectStatus(Strophe.Status.CONNFAIL, 'bad-format');
-            this._doDisconnect('bad-format');
+            this._changeConnectStatus(
+                Strophe.Status.CONNFAIL,
+                Strophe.ErrorCondition.BAD_FORMAT
+            );
+            this._doDisconnect(Strophe.ErrorCondition.BAD_FORMAT);
         }
         if (!bodyWrap) { return; }
 
@@ -3870,7 +3921,7 @@ Strophe.Connection.prototype = {
                             bodyWrap.getElementsByTagName("features").length > 0;
         }
         if (!hasFeatures) {
-            this._proto._no_auth_received(_callback);
+            this._no_auth_received(_callback);
             return;
         }
 
@@ -3886,7 +3937,7 @@ Strophe.Connection.prototype = {
             if (bodyWrap.getElementsByTagName("auth").length === 0) {
                 // There are no matching SASL mechanisms and also no legacy
                 // auth available.
-                this._proto._no_auth_received(_callback);
+                this._no_auth_received(_callback);
                 return;
             }
         }
@@ -3982,9 +4033,9 @@ Strophe.Connection.prototype = {
             // client connections
             this._changeConnectStatus(
                 Strophe.Status.CONNFAIL,
-                'x-strophe-bad-non-anon-jid'
+                Strophe.ErrorCondition.MISSING_JID_NODE
             );
-            this.disconnect('x-strophe-bad-non-anon-jid');
+            this.disconnect(Strophe.ErrorCondition.MISSING_JID_NODE);
         } else {
             // Fall back to legacy authentication
             this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
@@ -4202,9 +4253,9 @@ Strophe.Connection.prototype = {
             Strophe.info("SASL binding failed.");
             var conflict = elem.getElementsByTagName("conflict"), condition;
             if (conflict.length > 0) {
-                condition = 'conflict';
+                condition = Strophe.ErrorCondition.CONFLICT;
             }
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition, elem);
             return false;
         }
 
@@ -4231,7 +4282,7 @@ Strophe.Connection.prototype = {
             }
         } else {
             Strophe.info("SASL binding failed.");
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
     },
@@ -4254,7 +4305,7 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
             Strophe.info("Session creation failed.");
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
         return false;
@@ -4283,7 +4334,7 @@ Strophe.Connection.prototype = {
 
         if(this._sasl_mechanism)
           this._sasl_mechanism.onFailure();
-        this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+        this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
         return false;
     },
     /* jshint unused:true */
@@ -4305,7 +4356,7 @@ Strophe.Connection.prototype = {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
-            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
+            this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             this.disconnect('authentication failed');
         }
         return false;
@@ -4562,6 +4613,7 @@ Strophe.SASLMechanism.prototype = {
    *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
    *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
    *  Strophe.SASLExternal - SASL EXTERNAL authentication
+   *  Strophe.SASLXOAuth2 - SASL X-OAuth2 authentication
    */
 
 // Building SASL callbacks
@@ -4581,7 +4633,7 @@ Strophe.SASLAnonymous.prototype.test = function(connection) {
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 30);
+Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 50);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -4601,7 +4653,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 50);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 70);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -4685,7 +4737,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
  *  SASL DIGEST MD5 authentication.
  */
 Strophe.SASLMD5 = function() {};
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 40);
+Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 60);
 
 Strophe.SASLMD5.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -4768,7 +4820,7 @@ Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cno
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 40);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.pass !== null;
@@ -4812,6 +4864,29 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
     return connection.authcid === connection.authzid ? '' : connection.authzid;
 };
 
+
+/** PrivateConstructor: SASLXOAuth2
+ *  SASL X-OAuth2 authentication.
+ */
+Strophe.SASLXOAuth2 = function () { };
+Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 30);
+
+Strophe.SASLXOAuth2.prototype.test = function (connection) {
+    return connection.pass !== null;
+};
+
+Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
+    var auth_str = '\u0000';
+    if (connection.authcid !== null) {
+        auth_str = auth_str + connection.authzid;
+    }
+    auth_str = auth_str + "\u0000";
+    auth_str = auth_str + connection.pass;
+
+    return utils.utf16to8(auth_str);
+};
+
+
 return {
     'Strophe':         Strophe,
     '$build':          $build,
@@ -4845,6 +4920,10 @@ return {
                 core.$build
             );
         });
+    } else if (typeof exports === 'object') {
+        var core = require('./core');
+
+        module.exports = factory(core.Strophe, core.$build);
     } else {
         // Browser globals
         return factory(Strophe, $build);
@@ -4922,11 +5001,17 @@ Strophe.Request.prototype = {
                 throw "parsererror";
             }
         } else if (this.xhr.responseText) {
-            Strophe.error("invalid response received");
-            Strophe.error("responseText: " + this.xhr.responseText);
-            throw "badformat";
+            // In React Native, we may get responseText but no responseXML.  We can try to parse it manually.
+            Strophe.debug("Got responseText but no responseXML; attempting to parse it with DOMParser...");
+            node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
+            if (!node) {
+                throw new Error('Parsing produced null node');
+            } else if (node.querySelector('parsererror')) {
+                Strophe.error("invalid response received: " + node.querySelector('parsererror').textContent);
+                Strophe.error("responseText: " + this.xhr.responseText);
+                throw "badformat";
+            }
         }
-
         return node;
     },
 
@@ -4991,6 +5076,8 @@ Strophe.Bosh = function(connection) {
     this.window = 5;
     this.errors = 0;
     this.inactivity = null;
+
+    this.lastResponseHeaders = null;
 
     this._requests = [];
 };
@@ -5299,26 +5386,6 @@ Strophe.Bosh.prototype = {
         }
     },
 
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received and sends a blank poll request.
-     */
-    _no_auth_received: function (_callback) {
-        if (_callback) {
-            _callback = _callback.bind(this._conn);
-        } else {
-            _callback = this._conn._connect_cb.bind(this._conn);
-        }
-        var body = this._buildBody();
-        this._requests.push(
-                new Strophe.Request(body.tree(),
-                    this._onRequestStateChange.bind(
-                        this, _callback.bind(this._conn)),
-                    body.tree().getAttribute("rid")));
-        this._throttledRequestHandler();
-    },
-
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
      *
@@ -5459,6 +5526,7 @@ Strophe.Bosh.prototype = {
             return;
         }
         var reqStatus = this._getRequestStatus(req);
+        this.lastResponseHeaders = req.xhr.getAllResponseHeaders();
         if (this.disconnecting && reqStatus >= 400) {
             this._hitError(reqStatus);
             this._callProtocolErrorHandlers(req);
@@ -5783,6 +5851,10 @@ return Strophe;
                 core.$build
             );
         });
+    } else if (typeof exports === 'object') {
+        var core = require('./core');
+
+        module.exports = factory(core.Strophe, core.$build);
     } else {
         // Browser globals
         return factory(Strophe, $build);
@@ -6057,7 +6129,7 @@ Strophe.Websocket.prototype = {
                 this._conn.send(pres);
             }
             var close = $build("close", { "xmlns": Strophe.NS.FRAMING });
-            this._conn.xmlOutput(close);
+            this._conn.xmlOutput(close.tree());
             var closeString = Strophe.serialize(close);
             this._conn.rawOutput(closeString);
             try {
@@ -6095,6 +6167,7 @@ Strophe.Websocket.prototype = {
      */
     _closeSocket: function () {
         if (this.socket) { try {
+            this.socket.onerror = null;
             this.socket.close();
         } catch (e) {} }
         this.socket = null;
@@ -6133,24 +6206,6 @@ Strophe.Websocket.prototype = {
         } else {
             Strophe.info("Websocket closed");
         }
-    },
-
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received.
-     */
-    _no_auth_received: function (_callback) {
-        Strophe.error("Server did not send any auth methods");
-        this._conn._changeConnectStatus(
-            Strophe.Status.CONNFAIL,
-            "Server did not send any auth methods"
-        );
-        if (_callback) {
-            _callback = _callback.bind(this._conn);
-            _callback();
-        }
-        this._conn._doDisconnect();
     },
 
     /** PrivateFunction: _onDisconnectTimeout
@@ -6328,6 +6383,11 @@ return Strophe;
         ], function (wrapper) {
             return wrapper;
         });
+    } else if (typeof exports === 'object') {
+        var core = require('./core');
+        require('./bosh');
+        require('./websocket');
+        module.exports = core;
     }
 })(this);
 
