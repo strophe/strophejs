@@ -240,10 +240,10 @@ Strophe.Websocket.prototype = {
      */
     _connect_cb_wrapper: function(message) {
         // Strip the XML Declaration, if there is one
-        const data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
+        var data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
         if (data === '') return;
         // Parse the raw string to an XML element
-        const parsedMessage = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
+        var parsedMessage = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
         // Report this input to the raw and xml handlers
         this._conn.xmlInput(parsedMessage);
         this._conn.rawInput(message.data);
@@ -255,7 +255,7 @@ Strophe.Websocket.prototype = {
                 this._connect_cb(parsedMessage);
             }
         } else if (message.data.indexOf("<close ") === 0) { // <close xmlns="urn:ietf:params:xml:ns:xmpp-framing />
-            const see_uri = parsedMessage.getAttribute("see-other-uri");
+            var see_uri = parsedMessage.getAttribute("see-other-uri");
             if (see_uri) {
                 this._conn._changeConnectStatus(
                     Strophe.Status.REDIRECT,
@@ -272,8 +272,8 @@ Strophe.Websocket.prototype = {
                 this._conn._doDisconnect();
             }
         } else {
-            const streamWrappedData = this._streamWrap(message.data);
-            const elem = new DOMParser().parseFromString(streamWrappedData, "text/xml").documentElement;
+            var streamWrappedData = this._streamWrap(message.data);
+            var elem = new DOMParser().parseFromString(streamWrappedData, "text/xml").documentElement;
             this.socket.onmessage = this._onMessage.bind(this);
             this._conn._connect_cb(elem, null, message.data);
         }
