@@ -255,13 +255,13 @@ Strophe.Websocket.prototype = {
             }
         } else if (message.data.indexOf("<close ") === 0) { // <close xmlns="urn:ietf:params:xml:ns:xmpp-framing />
             // Parse the raw string to an XML element
-            const parsedMessage = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
+            var parsedMessage = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
             // Report this input to the raw and xml handlers
             this._conn.xmlInput(parsedMessage);
             this._conn.rawInput(message.data);
             var see_uri = parsedMessage.getAttribute("see-other-uri");
             if (see_uri) {
-                var service = connection.service;
+                var service = this._conn.service;
                 // Valid scenarios: WSS->WSS, WS->ANY
                 var isSecureRedirect = (service.indexOf("wss:") >= 0 && see_uri.indexOf("wss:") >= 0) || (service.indexOf("ws:") >= 0);
                 if(isSecureRedirect) {
