@@ -239,23 +239,24 @@ Strophe.Websocket.prototype = {
      * message handler. On receiving a stream error the connection is terminated.
      */
     _connect_cb_wrapper: function(message) {
-        // Strip the XML Declaration, if there is one
-        const data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
-        if (data === '') return;
-        // Parse the raw string to an XML element
-        const parsedMessage = new DOMParser().parseFromString(message.data, "text/xml").documentElement;
-        // Report this input to the raw and xml handlers
-        this._conn.xmlInput(parsedMessage);
-        this._conn.rawInput(message.data);
-        // Begin handling tags
         if (message.data.indexOf("<open ") === 0 || message.data.indexOf("<?xml") === 0) {
+            // Strip the XML Declaration, if there is one
+            var data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
+            if (data === '') return;
+
+            var streamStart = new DOMParser().parseFromString(data, "text/xml").documentElement;
+            this._conn.xmlInput(streamStart);
+            this._conn.rawInput(message.data);
+
             //_handleStreamSteart will check for XML errors and disconnect on error
-            if (this._handleStreamStart(parsedMessage)) {
+            if (this._handleStreamStart(streamStart)) {
                 //_connect_cb will check for stream:error and disconnect on error
-                this._connect_cb(parsedMessage);
+                this._connect_cb(streamStart);
             }
         } else if (message.data.indexOf("<close ") === 0) { // <close xmlns="urn:ietf:params:xml:ns:xmpp-framing />
-            const see_uri = parsedMessage.getAttribute("see-other-uri");
+            this._conn.rawInput(message.data);
+            this._conn.xmlInput(message);
+            var see_uri = message.getAttribute("see-other-uri");
             if (see_uri) {
                 this._conn._changeConnectStatus(
                     Strophe.Status.REDIRECT,
@@ -272,8 +273,8 @@ Strophe.Websocket.prototype = {
                 this._conn._doDisconnect();
             }
         } else {
-            const streamWrappedData = this._streamWrap(message.data);
-            const elem = new DOMParser().parseFromString(streamWrappedData, "text/xml").documentElement;
+            var string = this._streamWrap(message.data);
+            var elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
             this.socket.onmessage = this._onMessage.bind(this);
             this._conn._connect_cb(elem, null, message.data);
         }
