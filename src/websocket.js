@@ -261,13 +261,18 @@ Strophe.Websocket.prototype = {
             this._conn.rawInput(message.data);
             var see_uri = parsedMessage.getAttribute("see-other-uri");
             if (see_uri) {
-                this._conn._changeConnectStatus(
-                    Strophe.Status.REDIRECT,
-                    "Received see-other-uri, resetting connection"
-                );
-                this._conn.reset();
-                this._conn.service = see_uri;
-                this._connect();
+                var service = connection.service;
+                // Valid scenarios: WSS->WSS, WS->ANY
+                var isSecureRedirect = (service.indexOf("wss:") >= 0 && see_uri.indexOf("wss:") >= 0) || (service.indexOf("ws:") >= 0);
+                if(isSecureRedirect) {
+                    this._conn._changeConnectStatus(
+                        Strophe.Status.REDIRECT,
+                        "Received see-other-uri, resetting connection"
+                    );
+                    this._conn.reset();
+                    this._conn.service = see_uri;
+                    this._connect();
+                }
             } else {
                 this._conn._changeConnectStatus(
                     Strophe.Status.CONNFAIL,
