@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.2.16 - (Unreleased)
+* Fix websocket close handler exception and reporting
+
 ## Version 1.2.15 - (2018-05-21)
 * #259 XML element should be sent to xmlOutput
 * #266 Support Browserify/CommonJS. `require('strophe.js/src/wrapper')`
