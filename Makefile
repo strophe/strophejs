@@ -52,7 +52,6 @@ doc:
 .PHONY: release
 release:
 	$(SED) -i 's/\"version\":\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\":\ \"$(VERSION)\"/' package.json
-	$(SED) -i 's/\"version\":\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\":\ \"$(VERSION)\"/' package-lock.json
 	$(SED)  -i "s/Unreleased/`date +%Y-%m-%d`/" CHANGELOG.md
 	make dist
 	make doc
