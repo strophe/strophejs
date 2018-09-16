@@ -56,6 +56,10 @@ release:
 	make dist
 	make doc
 
+.PHONY: watchjs
+watchjs: dev
+	./node_modules/.bin/npx  webpack --mode=development  --watch
+
 .PHONY: dist
 dist: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
 
@@ -63,8 +67,8 @@ $(STROPHE_MIN): src node_modules Makefile
 	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE_MIN)
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
 
-$(STROPHE): src node_modules Makefile
-	$(RJS) -o build.js optimize=none insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE)
+dist/$(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
+	./node_modules/.bin/npx  webpack --mode=development
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE)
 
 $(STROPHE_LIGHT): src node_modules Makefile

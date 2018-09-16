@@ -46,14 +46,23 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
+    "@babel/cli": "^7.0.0-beta.48",
+    "@babel/core": "^7.0.0-beta.48",
+    "@babel/preset-env": "^7.0.0-beta.48",
+    "@babel/preset-es2015": "^7.0.0-beta.49",
+    "babel-loader": "^8.0.0-beta.3",
     "almond": "~0.3.0",
+    "es6-promise": "^4.1.0",
     "http-server": "^0.10.0",
     "jquery": "3.2.1",
     "jshint": "^2.9.4",
+    "npm": "^5.7.1",
     "qunitjs": "~1.16.0",
     "requirejs": "~2.3.2",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
-    "sinon-qunit": "~2.0.0"
+    "sinon-qunit": "~2.0.0",
+    "webpack": "^4.0.1",
+    "webpack-cli": "^2.1.4"
   }
 }
