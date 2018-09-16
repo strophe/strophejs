@@ -381,6 +381,23 @@ Strophe.Websocket.prototype = {
         }
     },
 
+    /** PrivateFunction: _no_auth_received
+     *
+     * Called on stream start/restart when no stream:features
+     * has been received.
+     */
+    _no_auth_received: function (callback) {
+        Strophe.error("Server did not offer a supported authentication mechanism");
+        this._changeConnectStatus(
+            Strophe.Status.CONNFAIL,
+            Strophe.ErrorCondition.NO_AUTH_MECH
+        );
+        if (callback) {
+            callback.call(this._conn);
+        }
+        this._conn._doDisconnect();
+    },
+
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
      *

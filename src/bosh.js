@@ -482,6 +482,30 @@ Strophe.Bosh.prototype = {
         }
     },
 
+    /** PrivateFunction: _no_auth_received
+     *
+     * Called on stream start/restart when no stream:features
+     * has been received and sends a blank poll request.
+     */
+    _no_auth_received: function (callback) {
+        Strophe.warn("Server did not yet offer a supported authentication "+
+                     "mechanism. Sending a blank poll request.");
+        if (callback) {
+            callback = callback.bind(this._conn);
+        } else {
+            callback = this._conn._connect_cb.bind(this._conn);
+        }
+        var body = this._buildBody();
+        this._requests.push(
+            new Strophe.Request(
+                body.tree(),
+                this._onRequestStateChange.bind(this, callback),
+                body.tree().getAttribute("rid")
+            )
+        );
+        this._throttledRequestHandler();
+    },
+
     /** PrivateFunction: _onDisconnectTimeout
      *  _Private_ timeout handler for handling non-graceful disconnection.
      *

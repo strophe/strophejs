@@ -2647,26 +2647,6 @@ Strophe.Connection.prototype = {
      */
     mechanisms: {},
 
-    /** PrivateFunction: _no_auth_received
-     *
-     * Called on stream start/restart when no stream:features
-     * has been received or when no viable authentication mechanism is offered.
-     *
-     * Sends a blank poll request.
-     */
-    _no_auth_received: function (_callback) {
-        var error_msg =  "Server did not offer a supported authentication mechanism";
-        Strophe.error(error_msg);
-        this._changeConnectStatus(
-            Strophe.Status.CONNFAIL,
-            Strophe.ErrorCondition.NO_AUTH_MECH
-        );
-        if (_callback) {
-            _callback.call(this);
-        }
-        this._doDisconnect();
-    },
-
     /** PrivateFunction: _connect_cb
      *  _Private_ handler for initial connection request.
      *
@@ -2729,7 +2709,7 @@ Strophe.Connection.prototype = {
                             bodyWrap.getElementsByTagName("features").length > 0;
         }
         if (!hasFeatures) {
-            this._no_auth_received(_callback);
+            this._proto._no_auth_received(_callback);
             return;
         }
 
@@ -2745,7 +2725,7 @@ Strophe.Connection.prototype = {
             if (bodyWrap.getElementsByTagName("auth").length === 0) {
                 // There are no matching SASL mechanisms and also no legacy
                 // auth available.
-                this._no_auth_received(_callback);
+                this._proto._no_auth_received(_callback);
                 return;
             }
         }
