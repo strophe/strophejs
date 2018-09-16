@@ -6,7 +6,7 @@
 */
 
 /* jshint undef: true, unused: true:, noarg: true, latedef: true */
-/* global define, window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject, Strophe, $build */
+/* global define, window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject, Strophe, $build, module */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -17,8 +17,7 @@
             );
         });
     } else if (typeof exports === 'object') {
-        var core = require('./core');
-
+        const core = require('./core');
         module.exports = factory(core.Strophe, core.$build);
     } else {
         // Browser globals
@@ -60,12 +59,12 @@ Strophe.Request = function (elem, func, rid, sends) {
 
     this.age = function () {
         if (!this.date) { return 0; }
-        var now = new Date();
+        const now = new Date();
         return (now - this.date) / 1000;
     };
     this.timeDead = function () {
         if (!this.dead) { return 0; }
-        var now = new Date();
+        const now = new Date();
         return (now - this.dead) / 1000;
     };
     this.xhr = this._newXHR();
@@ -86,7 +85,7 @@ Strophe.Request.prototype = {
      *    The DOM element tree of the response.
      */
     getResponse: function () {
-        var node = null;
+        let node = null;
         if (this.xhr.responseXML && this.xhr.responseXML.documentElement) {
             node = this.xhr.responseXML.documentElement;
             if (node.tagName === "parsererror") {
@@ -94,7 +93,7 @@ Strophe.Request.prototype = {
                 Strophe.error("responseText: " + this.xhr.responseText);
                 Strophe.error("responseXML: " +
                               Strophe.serialize(this.xhr.responseXML));
-                throw "parsererror";
+                throw new Error("parsererror");
             }
         } else if (this.xhr.responseText) {
             // In React Native, we may get responseText but no responseXML.  We can try to parse it manually.
@@ -105,7 +104,7 @@ Strophe.Request.prototype = {
             } else if (node.querySelector('parsererror')) {
                 Strophe.error("invalid response received: " + node.querySelector('parsererror').textContent);
                 Strophe.error("responseText: " + this.xhr.responseText);
-                throw "badformat";
+                throw new Error("badformat");
             }
         }
         return node;
@@ -120,7 +119,7 @@ Strophe.Request.prototype = {
      *    A new XMLHttpRequest.
      */
     _newXHR: function () {
-        var xhr = null;
+        let xhr = null;
         if (window.XMLHttpRequest) {
             xhr = new XMLHttpRequest();
             if (xhr.overrideMimeType) {
@@ -174,7 +173,6 @@ Strophe.Bosh = function(connection) {
     this.inactivity = null;
 
     this.lastResponseHeaders = null;
-
     this._requests = [];
 };
 
@@ -199,12 +197,12 @@ Strophe.Bosh.prototype = {
      *    A Strophe.Builder with a <body/> element.
      */
     _buildBody: function () {
-        var bodyWrap = $build('body', {
-            rid: this.rid++,
-            xmlns: Strophe.NS.HTTPBIND
+        const bodyWrap = $build('body', {
+            'rid': this.rid++,
+            'xmlns': Strophe.NS.HTTPBIND
         });
         if (this.sid !== null) {
-            bodyWrap.attrs({sid: this.sid});
+            bodyWrap.attrs({'sid': this.sid});
         }
         if (this._conn.options.keepalive && this._conn._sessionCachingSupported()) {
             this._cacheSession();
@@ -238,31 +236,28 @@ Strophe.Bosh.prototype = {
         this.hold = hold || this.hold;
         this.errors = 0;
 
-        // build the body tag
-        var body = this._buildBody().attrs({
-            to: this._conn.domain,
+        const body = this._buildBody().attrs({
+            "to": this._conn.domain,
             "xml:lang": "en",
-            wait: this.wait,
-            hold: this.hold,
-            content: "text/xml; charset=utf-8",
-            ver: "1.6",
+            "wait": this.wait,
+            "hold": this.hold,
+            "content": "text/xml; charset=utf-8",
+            "ver": "1.6",
             "xmpp:version": "1.0",
             "xmlns:xmpp": Strophe.NS.BOSH
         });
-
-        if(route){
-            body.attrs({
-                route: route
-            });
+        if (route){
+            body.attrs({'route': route});
         }
 
-        var _connect_cb = this._conn._connect_cb;
-
+        const _connect_cb = this._conn._connect_cb;
         this._requests.push(
-            new Strophe.Request(body.tree(),
-                                this._onRequestStateChange.bind(
-                                    this, _connect_cb.bind(this._conn)),
-                                body.tree().getAttribute("rid")));
+            new Strophe.Request(
+                body.tree(),
+                this._onRequestStateChange.bind(this, _connect_cb.bind(this._conn)),
+                body.tree().getAttribute("rid")
+            )
+        );
         this._throttledRequestHandler();
     },
 
@@ -296,9 +291,7 @@ Strophe.Bosh.prototype = {
         this.rid = rid;
 
         this._conn.connect_callback = callback;
-
         this._conn.domain = Strophe.getDomainFromJid(this._conn.jid);
-
         this._conn.authenticated = true;
         this._conn.connected = true;
 
@@ -329,7 +322,7 @@ Strophe.Bosh.prototype = {
      *      allowed range of request ids that are valid.  The default is 5.
      */
     _restore: function (jid, callback, wait, hold, wind) {
-        var session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
+        const session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
         if (typeof session !== "undefined" &&
                    session !== null &&
                    session.rid &&
@@ -346,7 +339,9 @@ Strophe.Bosh.prototype = {
             this._conn.restored = true;
             this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
         } else {
-            throw { name: "StropheSessionError", message: "_restore: no restoreable session." };
+            const error = new Error("_restore: no restoreable session.");
+            error.name = "StropheSessionError";
+            throw error;
         }
     },
 
@@ -379,13 +374,12 @@ Strophe.Bosh.prototype = {
      *    (Strophe.Request) bodyWrap - The received stanza.
      */
     _connect_cb: function (bodyWrap) {
-        var typ = bodyWrap.getAttribute("type");
-        var cond, conflict;
+        const typ = bodyWrap.getAttribute("type");
         if (typ !== null && typ === "terminate") {
             // an error occurred
-            cond = bodyWrap.getAttribute("condition");
+            let cond = bodyWrap.getAttribute("condition");
             Strophe.error("BOSH-Connection failed: " + cond);
-            conflict = bodyWrap.getElementsByTagName("conflict");
+            const conflict = bodyWrap.getElementsByTagName("conflict");
             if (cond !== null) {
                 if (cond === "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
@@ -403,13 +397,13 @@ Strophe.Bosh.prototype = {
         if (!this.sid) {
             this.sid = bodyWrap.getAttribute("sid");
         }
-        var wind = bodyWrap.getAttribute('requests');
+        const wind = bodyWrap.getAttribute('requests');
         if (wind) { this.window = parseInt(wind, 10); }
-        var hold = bodyWrap.getAttribute('hold');
+        const hold = bodyWrap.getAttribute('hold');
         if (hold) { this.hold = parseInt(hold, 10); }
-        var wait = bodyWrap.getAttribute('wait');
+        const wait = bodyWrap.getAttribute('wait');
         if (wait) { this.wait = parseInt(wait, 10); }
-        var inactivity = bodyWrap.getAttribute('inactivity');
+        const inactivity = bodyWrap.getAttribute('inactivity');
         if (inactivity) { this.inactivity = parseInt(inactivity, 10); }
     },
 
@@ -455,9 +449,8 @@ Strophe.Bosh.prototype = {
      *    (Strophe.Request) req - The request that is changing readyState.
      */
     _callProtocolErrorHandlers: function (req) {
-        var reqStatus = this._getRequestStatus(req),
-            err_callback;
-        err_callback = this._conn.protocolErrorHandlers.HTTP[reqStatus];
+        const reqStatus = this._getRequestStatus(req);
+        const err_callback = this._conn.protocolErrorHandlers.HTTP[reqStatus];
         if (err_callback) {
             err_callback.call(this, reqStatus);
         }
@@ -495,7 +488,7 @@ Strophe.Bosh.prototype = {
         } else {
             callback = this._conn._connect_cb.bind(this._conn);
         }
-        var body = this._buildBody();
+        const body = this._buildBody();
         this._requests.push(
             new Strophe.Request(
                 body.tree(),
@@ -519,9 +512,8 @@ Strophe.Bosh.prototype = {
      *  _Private_ helper function that makes sure all pending requests are aborted.
      */
     _abortAllRequests: function _abortAllRequests() {
-        var req;
         while (this._requests.length > 0) {
-            req = this._requests.pop();
+            const req = this._requests.pop();
             req.abort = true;
             req.xhr.abort();
             // jslint complains, but this is fine. setting to empty func
@@ -536,7 +528,7 @@ Strophe.Bosh.prototype = {
      *  Sends all queued Requests or polls with empty Request if there are none.
      */
     _onIdle: function () {
-        var data = this._conn._data;
+        const data = this._conn._data;
         // if no requests are in progress, poll
         if (this._conn.authenticated && this._requests.length === 0 &&
             data.length === 0 && !this._conn.disconnecting) {
@@ -550,12 +542,12 @@ Strophe.Bosh.prototype = {
         }
 
         if (this._requests.length < 2 && data.length > 0) {
-            var body = this._buildBody();
-            for (var i = 0; i < data.length; i++) {
+            const body = this._buildBody();
+            for (let i=0; i<data.length; i++) {
                 if (data[i] !== null) {
                     if (data[i] === "restart") {
                         body.attrs({
-                            to: this._conn.domain,
+                            "to": this._conn.domain,
                             "xml:lang": "en",
                             "xmpp:restart": "true",
                             "xmlns:xmpp": Strophe.NS.BOSH
@@ -568,22 +560,23 @@ Strophe.Bosh.prototype = {
             delete this._conn._data;
             this._conn._data = [];
             this._requests.push(
-                new Strophe.Request(body.tree(),
-                                    this._onRequestStateChange.bind(
-                                        this, this._conn._dataRecv.bind(this._conn)),
-                                    body.tree().getAttribute("rid")));
+                new Strophe.Request(
+                    body.tree(),
+                    this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
+                    body.tree().getAttribute("rid")
+                )
+            );
             this._throttledRequestHandler();
         }
 
         if (this._requests.length > 0) {
-            var time_elapsed = this._requests[0].age();
+            const time_elapsed = this._requests[0].age();
             if (this._requests[0].dead !== null) {
                 if (this._requests[0].timeDead() >
                     Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
                     this._throttledRequestHandler();
                 }
             }
-
             if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
                 Strophe.warn("Request " +
                              this._requests[0].id +
@@ -604,7 +597,7 @@ Strophe.Bosh.prototype = {
      *          status value was found.
      */
     _getRequestStatus: function (req, def) {
-        var reqStatus;
+        let reqStatus;
         if (req.xhr.readyState === 4) {
             try {
                 reqStatus = req.xhr.status;
@@ -645,7 +638,7 @@ Strophe.Bosh.prototype = {
             // The request is not yet complete
             return;
         }
-        var reqStatus = this._getRequestStatus(req);
+        const reqStatus = this._getRequestStatus(req);
         this.lastResponseHeaders = req.xhr.getAllResponseHeaders();
         if (this.disconnecting && reqStatus >= 400) {
             this._hitError(reqStatus);
@@ -653,8 +646,8 @@ Strophe.Bosh.prototype = {
             return;
         }
 
-        var valid_request = reqStatus > 0 && reqStatus < 500;
-        var too_many_retries = req.sends > this._conn.maxRetries;
+        const valid_request = reqStatus > 0 && reqStatus < 500;
+        const too_many_retries = req.sends > this._conn.maxRetries;
         if (valid_request || too_many_retries) {
             // remove from internal queue
             this._removeRequest(req);
@@ -663,8 +656,8 @@ Strophe.Bosh.prototype = {
 
         if (reqStatus === 200) {
             // request succeeded
-            var reqIs0 = (this._requests[0] === req);
-            var reqIs1 = (this._requests[1] === req);
+            const reqIs0 = (this._requests[0] === req);
+            const reqIs1 = (this._requests[1] === req);
             // if request 1 finished, or request 0 finished and request
             // 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
             // restart the other - both will be in the first spot, as the
@@ -710,37 +703,28 @@ Strophe.Bosh.prototype = {
      *    (Integer) i - The index of the request in the queue.
      */
     _processRequest: function (i) {
-        var self = this;
-        var req = this._requests[i];
-        var reqStatus = this._getRequestStatus(req, -1);
+        let req = this._requests[i];
+        const reqStatus = this._getRequestStatus(req, -1);
 
         // make sure we limit the number of retries
         if (req.sends > this._conn.maxRetries) {
             this._conn._onDisconnectTimeout();
             return;
         }
+        const time_elapsed = req.age();
+        const primary_timeout = (!isNaN(time_elapsed) && time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
+        const secondary_timeout = (req.dead !== null && req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
+        const server_error = (req.xhr.readyState === 4 && (reqStatus < 1 || reqStatus >= 500));
 
-        var time_elapsed = req.age();
-        var primaryTimeout = (!isNaN(time_elapsed) &&
-                              time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait));
-        var secondaryTimeout = (req.dead !== null &&
-                                req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait));
-        var requestCompletedWithServerError = (req.xhr.readyState === 4 &&
-                                               (reqStatus < 1 || reqStatus >= 500));
-        if (primaryTimeout || secondaryTimeout ||
-            requestCompletedWithServerError) {
-            if (secondaryTimeout) {
-                Strophe.error("Request " + this._requests[i].id +
-                              " timed out (secondary), restarting");
+        if (primary_timeout || secondary_timeout || server_error) {
+            if (secondary_timeout) {
+                Strophe.error(`Request ${this._requests[i].id} timed out (secondary), restarting`);
             }
             req.abort = true;
             req.xhr.abort();
             // setting to null fails on IE6, so set to empty function
             req.xhr.onreadystatechange = function () {};
-            this._requests[i] = new Strophe.Request(req.xmlData,
-                                                    req.origFunc,
-                                                    req.rid,
-                                                    req.sends);
+            this._requests[i] = new Strophe.Request(req.xmlData, req.origFunc, req.rid, req.sends);
             req = this._requests[i];
         }
 
@@ -748,11 +732,11 @@ Strophe.Bosh.prototype = {
             Strophe.debug("request id "+req.id+"."+req.sends+" posting");
 
             try {
-                var contentType = this._conn.options.contentType || "text/xml; charset=utf-8";
+                const content_type = this._conn.options.contentType || "text/xml; charset=utf-8";
                 req.xhr.open("POST", this._conn.service, this._conn.options.sync ? false : true);
                 if (typeof req.xhr.setRequestHeader !== 'undefined') {
                     // IE9 doesn't have setRequestHeader
-                    req.xhr.setRequestHeader("Content-Type", contentType);
+                    req.xhr.setRequestHeader("Content-Type", content_type);
                 }
                 if (this._conn.options.withCredentials) {
                     req.xhr.withCredentials = true;
@@ -760,8 +744,7 @@ Strophe.Bosh.prototype = {
             } catch (e2) {
                 Strophe.error("XHR open failed: " + e2.toString());
                 if (!this._conn.connected) {
-                    this._conn._changeConnectStatus(
-                            Strophe.Status.CONNFAIL, "bad-service");
+                    this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "bad-service");
                 }
                 this._conn.disconnect();
                 return;
@@ -769,12 +752,12 @@ Strophe.Bosh.prototype = {
 
             // Fires the XHR request -- may be invoked immediately
             // or on a gradually expanding retry window for reconnects
-            var sendFunc = function () {
+            const sendFunc = () => {
                 req.date = new Date();
                 if (self._conn.options.customHeaders){
-                    var headers = self._conn.options.customHeaders;
-                    for (var header in headers) {
-                        if (headers.hasOwnProperty(header)) {
+                    const headers = self._conn.options.customHeaders;
+                    for (const header in headers) {
+                        if (Object.prototype.hasOwnProperty.call(headers, header)) {
                             req.xhr.setRequestHeader(header, headers[header]);
                         }
                     }
@@ -787,7 +770,7 @@ Strophe.Bosh.prototype = {
             if (req.sends > 1) {
                 // Using a cube of the retry number creates a nicely
                 // expanding retry window
-                var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
+                const backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait),
                                        Math.pow(req.sends, 3)) * 1000;
                 setTimeout(function() {
                     // XXX: setTimeout should be called only with function expressions (23974bc1)
@@ -825,8 +808,7 @@ Strophe.Bosh.prototype = {
      */
     _removeRequest: function (req) {
         Strophe.debug("removing request");
-        var i;
-        for (i = this._requests.length - 1; i >= 0; i--) {
+        for (let i=this._requests.length - 1; i>=0; i--) {
             if (req === this._requests[i]) {
                 this._requests.splice(i, 1);
             }
@@ -843,11 +825,10 @@ Strophe.Bosh.prototype = {
      *    (Integer) i - The index of the request in the queue.
      */
     _restartRequest: function (i) {
-        var req = this._requests[i];
+        const req = this._requests[i];
         if (req.dead === null) {
             req.dead = new Date();
         }
-
         this._processRequest(i);
     },
 
@@ -867,7 +848,7 @@ Strophe.Bosh.prototype = {
         try {
             return req.getResponse();
         } catch (e) {
-            if (e !== "parsererror") { throw e; }
+            if (e.message !== "parsererror") { throw e; }
             this._conn.disconnect("strophe-parsererror");
         }
     },
@@ -881,14 +862,13 @@ Strophe.Bosh.prototype = {
      */
     _sendTerminate: function (pres) {
         Strophe.info("_sendTerminate was called");
-        var body = this._buildBody().attrs({type: "terminate"});
+        const body = this._buildBody().attrs({type: "terminate"});
         if (pres) {
             body.cnode(pres.tree());
         }
-        var req = new Strophe.Request(
+        const req = new Strophe.Request(
             body.tree(),
-            this._onRequestStateChange.bind(
-            this, this._conn._dataRecv.bind(this._conn)),
+            this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
             body.tree().getAttribute("rid")
         );
         this._requests.push(req);
@@ -903,11 +883,7 @@ Strophe.Bosh.prototype = {
     _send: function () {
         clearTimeout(this._conn._idleTimeout);
         this._throttledRequestHandler();
-
-        // XXX: setTimeout should be called only with function expressions (23974bc1)
-        this._conn._idleTimeout = setTimeout(function() {
-            this._onIdle();
-        }.bind(this._conn), 100);
+        this._conn._idleTimeout = setTimeout(() => this._conn._onIdle(), 100);
     },
 
     /** PrivateFunction: _sendRestart
