@@ -6,37 +6,9 @@
 */
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define([
-            'strophe-sha1',
-            'strophe-md5',
-            'strophe-utils'
-        ], function () {
-            return factory.apply(this, arguments);
-        });
-    }  else if (typeof exports === 'object') {
-        module.exports = factory(
-            require('./sha1'),
-            require('./md5'),
-            require('./utils')
-        );
-    } else {
-        // Browser globals
-        const o = factory(root.SHA1, root.MD5, root.stropheUtils);
-        root.Strophe =        o.Strophe;
-        root.$build =         o.$build;
-        root.$iq =            o.$iq;
-        root.$msg =           o.$msg;
-        root.$pres =          o.$pres;
-        root.SHA1 =           o.SHA1;
-        root.MD5 =            o.MD5;
-        root.b64_hmac_sha1 =  o.SHA1.b64_hmac_sha1;
-        root.b64_sha1 =       o.SHA1.b64_sha1;
-        root.str_hmac_sha1 =  o.SHA1.str_hmac_sha1;
-        root.str_sha1 =       o.SHA1.str_sha1;
-    }
-}(this, function (SHA1, MD5, utils) {
+import MD5 from 'md5';
+import SHA1 from 'sha1';
+import utils from 'utils';
 
 /** Function: $build
  *  Create a Strophe.Builder.
@@ -49,7 +21,9 @@
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
+export function $build(name, attrs) {
+    return new Strophe.Builder(name, attrs);
+}
 
 /** Function: $msg
  *  Create a Strophe.Builder with a <message/> element as the root.
@@ -60,7 +34,9 @@ function $build(name, attrs) { return new Strophe.Builder(name, attrs); }
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $msg(attrs) { return new Strophe.Builder("message", attrs); }
+export function $msg(attrs) {
+    return new Strophe.Builder("message", attrs);
+}
 
 /** Function: $iq
  *  Create a Strophe.Builder with an <iq/> element as the root.
@@ -71,7 +47,9 @@ function $msg(attrs) { return new Strophe.Builder("message", attrs); }
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $iq(attrs) { return new Strophe.Builder("iq", attrs); }
+export function $iq(attrs) {
+    return new Strophe.Builder("iq", attrs);
+}
 
 /** Function: $pres
  *  Create a Strophe.Builder with a <presence/> element as the root.
@@ -82,7 +60,9 @@ function $iq(attrs) { return new Strophe.Builder("iq", attrs); }
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
+export function $pres(attrs) {
+    return new Strophe.Builder("presence", attrs);
+}
 
 /** Class: Strophe
  *  An object container for all Strophe library functions.
@@ -91,7 +71,7 @@ function $pres(attrs) { return new Strophe.Builder("presence", attrs); }
  *  used in the library.  It is not meant to be instantiated, but to
  *  provide a namespace for library objects, constants, and functions.
  */
-const Strophe = {
+export const Strophe = {
     /** Constant: VERSION */
     VERSION: "@VERSION@",
 
@@ -358,9 +338,9 @@ const Strophe = {
         let doc;
         // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
         // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
-                // less than 10 in the case of IE9 and below.
+        // less than 10 in the case of IE9 and below.
         if (document.implementation.createDocument === undefined ||
-                        document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
+                    document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
             doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
@@ -1883,7 +1863,7 @@ Strophe.Connection.prototype = {
         if (this._sessionCachingSupported()) {
             this._proto._restore(jid, callback, wait, hold, wind);
         } else {
-            const error = new Error('The "attach" method can only be used with a BOSH connection.');
+            const error = new Error('The "restore" method can only be used with a BOSH connection.');
             error.name = 'StropheSessionError';
             throw error;
         }
@@ -2151,6 +2131,7 @@ Strophe.Connection.prototype = {
                 } else {
                     const error = new Error(`Got bad IQ type of ${iqtype}`);
                     error.name = "StropheError";
+                    throw(error);
                 }
             }, null, 'iq', ['error', 'result'], id);
 
@@ -2181,6 +2162,7 @@ Strophe.Connection.prototype = {
                 !element.childNodes) {
             const error = new Error("Cannot queue non-DOMElement.");
             error.name = "StropheError";
+            throw(error);
         }
         this._data.push(element);
     },
@@ -2608,7 +2590,7 @@ Strophe.Connection.prototype = {
         try {
             bodyWrap = this._proto._reqToData(req);
         } catch (e) {
-            if (e !== "badformat") { throw e; }
+            if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) { throw e; }
             this._changeConnectStatus(
                 Strophe.Status.CONNFAIL,
                 Strophe.ErrorCondition.BAD_FORMAT
@@ -3583,17 +3565,7 @@ Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
     return utils.utf16to8(auth_str);
 };
 
-return {
-    'Strophe':         Strophe,
-    '$build':          $build,
-    '$iq':             $iq,
-    '$msg':            $msg,
-    '$pres':           $pres,
-    'SHA1':            SHA1,
-    'MD5':             MD5,
-    'b64_hmac_sha1':   SHA1.b64_hmac_sha1,
-    'b64_sha1':        SHA1.b64_sha1,
-    'str_hmac_sha1':   SHA1.str_hmac_sha1,
-    'str_sha1':        SHA1.str_sha1
+export const helpers = {
+    'SHA1': SHA1,
+    'MD5':  MD5
 };
-}));

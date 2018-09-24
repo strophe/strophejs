@@ -1,12 +1,14 @@
 {
     "parserOptions": {
-        "ecmaVersion": 2017
+        "ecmaVersion": 2017,
+        "sourceType": "module"
     },
     "env": {
         "browser": true,
         "jasmine": true
     },
     "extends": ["eslint:recommended"],
+
     "globals": {
         "Uint8Array": true,
         "Promise": true,

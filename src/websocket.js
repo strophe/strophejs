@@ -5,25 +5,9 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global define, window, clearTimeout, WebSocket, DOMParser, Strophe, $build, module */
+/* global window, clearTimeout, WebSocket, DOMParser */
 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['strophe-core'], function (core) {
-            return factory(
-                core.Strophe,
-                core.$build
-            );
-        });
-    } else if (typeof exports === 'object') {
-        const core = require('./core');
-
-        module.exports = factory(core.Strophe, core.$build);
-    } else {
-        // Browser globals
-        return factory(Strophe, $build);
-    }
-}(this, function (Strophe, $build) {
+import { $build, Strophe } from 'core';
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
@@ -557,5 +541,3 @@ Strophe.Websocket.prototype = {
         this._conn._onIdle.bind(this._conn)();
     }
 };
-return Strophe;
-}));

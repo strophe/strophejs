@@ -11,9 +11,9 @@ SED				?= sed
 SHELL			?= /usr/env/bin/bash
 SRC_DIR			= src
 
-STROPHE			= strophe.js
-STROPHE_MIN		= strophe.min.js
-STROPHE_LIGHT	= strophe-no-polyfill.js
+STROPHE			= dist/strophe.js
+STROPHE_MIN		= dist/strophe.min.js
+STROPHE_LIGHT	= dist/strophe-no-polyfill.js
 
 all: doc $(STROPHE) $(STROPHE_MIN)
 
@@ -67,7 +67,7 @@ $(STROPHE_MIN): src node_modules Makefile
 	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE_MIN)
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
 
-dist/$(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
+$(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
 	./node_modules/.bin/npx  webpack --mode=development
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE)
 

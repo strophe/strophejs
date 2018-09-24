@@ -5,25 +5,9 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* jshint undef: true, unused: true:, noarg: true, latedef: true */
-/* global define, window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject, Strophe, $build, module */
+/* global window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject */
 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['strophe-core'], function (core) {
-            return factory(
-                core.Strophe,
-                core.$build
-            );
-        });
-    } else if (typeof exports === 'object') {
-        const core = require('./core');
-        module.exports = factory(core.Strophe, core.$build);
-    } else {
-        // Browser globals
-        return factory(Strophe, $build);
-    }
-}(this, function (Strophe, $build) {
+import { $build, Strophe } from 'core';
 
 /** PrivateClass: Strophe.Request
  *  _Private_ helper class that provides a cross implementation abstraction
@@ -79,7 +63,7 @@ Strophe.Request.prototype = {
      *
      *  Throws:
      *    "parsererror" - A parser error occured.
-     *    "badformat" - The entity has sent XML that cannot be processed.
+     *    "bad-format" - The entity has sent XML that cannot be processed.
      *
      *  Returns:
      *    The DOM element tree of the response.
@@ -104,7 +88,9 @@ Strophe.Request.prototype = {
             } else if (node.querySelector('parsererror')) {
                 Strophe.error("invalid response received: " + node.querySelector('parsererror').textContent);
                 Strophe.error("responseText: " + this.xhr.responseText);
-                throw new Error("badformat");
+                const error = new Error();
+                error.name = Strophe.ErrorCondition.BAD_FORMAT;
+                throw error;
             }
         }
         return node;
@@ -754,8 +740,8 @@ Strophe.Bosh.prototype = {
             // or on a gradually expanding retry window for reconnects
             const sendFunc = () => {
                 req.date = new Date();
-                if (self._conn.options.customHeaders){
-                    const headers = self._conn.options.customHeaders;
+                if (this._conn.options.customHeaders){
+                    const headers = this._conn.options.customHeaders;
                     for (const header in headers) {
                         if (Object.prototype.hasOwnProperty.call(headers, header)) {
                             req.xhr.setRequestHeader(header, headers[header]);
@@ -926,5 +912,3 @@ Strophe.Bosh.prototype = {
         }
     }
 };
-return Strophe;
-}));
