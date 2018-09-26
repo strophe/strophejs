@@ -2,6 +2,9 @@
 
 ## Version 2.0.0 - (Unreleased)
 
+* Use ES2015 modules
+* Drop support for Internet Explorer < 11
+
 ## Version 1.2.16 - (2018-09-16)
 * #299 'no-auth-mech' error. Server did not offer a supported authentication mechanism
 * #306 Fix websocket close handler exception and reporting

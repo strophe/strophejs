@@ -6,14 +6,11 @@ HTTPSERVE		?= ./node_modules/.bin/http-server
 HTTPSERVE_PORT  ?= 8080
 JSHINT			?= ./node_modules/.bin/jshint
 NDPROJ_DIR 		= ndproj
-RJS				?= ./node_modules/.bin/r.js
 SED				?= sed
 SHELL			?= /usr/env/bin/bash
 SRC_DIR			= src
-
 STROPHE			= dist/strophe.js
 STROPHE_MIN		= dist/strophe.min.js
-STROPHE_LIGHT	= dist/strophe-no-polyfill.js
 
 all: doc $(STROPHE) $(STROPHE_MIN)
 
@@ -23,7 +20,7 @@ help:
 	@echo ""
 	@echo " all         Update docs + build $(STROPHE) and $(STROPHE_MIN)"
 	@echo " doc         Update docs"
-	@echo " dist        Build $(STROPHE), $(STROPHE_MIN) and $(STROPHE_LIGHT)"
+	@echo " dist        Build $(STROPHE) and $(STROPHE_MIN)"
 	@echo " check       Build and run the tests"
 	@echo " jshint      Check code quality"
 	@echo " release     Prepare a new release of $(STROPHE). E.g. \`make release VERSION=1.2.14\`"
@@ -61,19 +58,15 @@ watchjs: dev
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
 .PHONY: dist
-dist: $(STROPHE) $(STROPHE_MIN) $(STROPHE_LIGHT)
+dist: $(STROPHE) $(STROPHE_MIN)
 
-$(STROPHE_MIN): src node_modules Makefile
-	$(RJS) -o build.js insertRequire=strophe-polyfill include=strophe-polyfill out=$(STROPHE_MIN)
+$(STROPHE_MIN): src webpack.config.js node_modules Makefile stamp-npm
+	./node_modules/.bin/npx  webpack
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
 
 $(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
 	./node_modules/.bin/npx  webpack --mode=development
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE)
-
-$(STROPHE_LIGHT): src node_modules Makefile
-	$(RJS) -o build.js optimize=none out=$(STROPHE_LIGHT)
-	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_LIGHT)
 
 .PHONY: jshint
 jshint: stamp-npm
@@ -97,7 +90,6 @@ clean:
 	@@rm -rf node_modules
 	@@rm -f $(STROPHE)
 	@@rm -f $(STROPHE_MIN)
-	@@rm -f $(STROPHE_LIGHT)
 	@@rm -f $(PLUGIN_FILES_MIN)
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Done."
