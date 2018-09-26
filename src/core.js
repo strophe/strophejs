@@ -21,7 +21,7 @@ import utils from 'utils';
  *  Returns:
  *    A new Strophe.Builder object.
  */
-export function $build(name, attrs) {
+function $build(name, attrs) {
     return new Strophe.Builder(name, attrs);
 }
 
@@ -34,7 +34,7 @@ export function $build(name, attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-export function $msg(attrs) {
+function $msg(attrs) {
     return new Strophe.Builder("message", attrs);
 }
 
@@ -47,7 +47,7 @@ export function $msg(attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-export function $iq(attrs) {
+function $iq(attrs) {
     return new Strophe.Builder("iq", attrs);
 }
 
@@ -60,7 +60,7 @@ export function $iq(attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-export function $pres(attrs) {
+function $pres(attrs) {
     return new Strophe.Builder("presence", attrs);
 }
 
@@ -71,7 +71,7 @@ export function $pres(attrs) {
  *  used in the library.  It is not meant to be instantiated, but to
  *  provide a namespace for library objects, constants, and functions.
  */
-export const Strophe = {
+const Strophe = {
     /** Constant: VERSION */
     VERSION: "@VERSION@",
 
@@ -3565,7 +3565,16 @@ Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
     return utils.utf16to8(auth_str);
 };
 
-export const helpers = {
-    'SHA1': SHA1,
-    'MD5':  MD5
+export default {
+    'Strophe':         Strophe,
+    '$build':          $build,
+    '$iq':             $iq,
+    '$msg':            $msg,
+    '$pres':           $pres,
+    'SHA1':            SHA1,
+    'MD5':             MD5,
+    'b64_hmac_sha1':   SHA1.b64_hmac_sha1,
+    'b64_sha1':        SHA1.b64_sha1,
+    'str_hmac_sha1':   SHA1.str_hmac_sha1,
+    'str_sha1':        SHA1.str_sha1
 };

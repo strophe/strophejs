@@ -7,7 +7,11 @@
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
-import { $build, Strophe } from 'core';
+import core from 'core';
+
+const Strophe = core.Strophe;
+const $build = core.$build;
+
 
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections

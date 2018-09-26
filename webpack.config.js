@@ -8,7 +8,11 @@ const config = {
         "window": "window"
     }],
     output: {
-        filename: 'strophe.js'
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'strophe.js',
+        library: 'Strophe',
+        libraryExport: 'default',
+        libraryTarget: 'umd'
     },
     devtool: 'source-map',
     module: {

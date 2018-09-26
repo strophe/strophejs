@@ -7,7 +7,11 @@
 
 /* global window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject */
 
-import { $build, Strophe } from 'core';
+import core from 'core';
+
+const Strophe = core.Strophe;
+const $build = core.$build;
+
 
 /** PrivateClass: Strophe.Request
  *  _Private_ helper class that provides a cross implementation abstraction

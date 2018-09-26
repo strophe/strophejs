@@ -15,7 +15,7 @@
     "browser"
   ],
   "files": [
-    "strophe.js",
+    "dist/strophe.js",
     "CHANGELOG.txt",
     "LICENSE.txt",
     "README.txt",
@@ -35,7 +35,7 @@
     "JC Brand (jcbrand)"
   ],
   "license": "MIT",
-  "main": "strophe.js",
+  "main": "dist/strophe.js",
   "browser": "strophe.js",
   "scripts": {
     "lint": "make jshint",
@@ -60,6 +60,7 @@
     "qunitjs": "~1.16.0",
     "requirejs": "~2.3.2",
     "run-headless-chromium": "^0.1.1",
+    "requirejs": "2.3.5",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0",
     "webpack": "^4.0.1",
