@@ -61,7 +61,7 @@ watchjs: dev
 dist: $(STROPHE) $(STROPHE_MIN)
 
 $(STROPHE_MIN): src webpack.config.js node_modules Makefile stamp-npm
-	./node_modules/.bin/npx  webpack
+	./node_modules/.bin/npx  webpack --mode=production
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
 
 $(STROPHE): src webpack.config.js node_modules Makefile stamp-npm

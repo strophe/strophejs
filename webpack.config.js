@@ -1,5 +1,6 @@
 /*global path, __dirname, module, process */
 'use strict'
+const minimist = require('minimist');
 const path = require('path');
 
 const config = {
@@ -50,5 +51,15 @@ const config = {
         }
     }
 }
+
+function parameterize () {
+    const mode = minimist(process.argv.slice(2)).mode;
+    if (mode === 'production') {
+        console.log("Making a production build");
+        const fn = config.output.filename;
+        config.output.filename = `${fn.replace(/\.js$/, '')}.min.js`;
+    }
+}
+parameterize();
 
 module.exports = config;
