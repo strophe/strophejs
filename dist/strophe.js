@@ -1,4 +1,14 @@
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["Strophe"] = factory();
+	else
+		root["Strophe"] = factory();
+})(window, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -105,6 +115,8 @@ __webpack_require__.r(__webpack_exports__);
 
 /* global window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject */
 
+var Strophe = core__WEBPACK_IMPORTED_MODULE_0__["default"].Strophe;
+var $build = core__WEBPACK_IMPORTED_MODULE_0__["default"].$build;
 /** PrivateClass: Strophe.Request
  *  _Private_ helper class that provides a cross implementation abstraction
  *  for a BOSH related XMLHttpRequest.
@@ -124,10 +136,10 @@ __webpack_require__.r(__webpack_exports__);
  *    (Integer) sends - The number of times this same request has been sent.
  */
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request = function (elem, func, rid, sends) {
-  this.id = ++core__WEBPACK_IMPORTED_MODULE_0__["Strophe"]._requestId;
+Strophe.Request = function (elem, func, rid, sends) {
+  this.id = ++Strophe._requestId;
   this.xmlData = elem;
-  this.data = core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(elem); // save original function in case we need to make a new request
+  this.data = Strophe.serialize(elem); // save original function in case we need to make a new request
   // from this one.
 
   this.origFunc = func;
@@ -159,7 +171,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request = function (elem, func, rid
   this.xhr = this._newXHR();
 };
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request.prototype = {
+Strophe.Request.prototype = {
   /** PrivateFunction: getResponse
    *  Get a response from the underlying XMLHttpRequest.
    *
@@ -168,7 +180,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request.prototype = {
    *
    *  Throws:
    *    "parsererror" - A parser error occured.
-   *    "badformat" - The entity has sent XML that cannot be processed.
+   *    "bad-format" - The entity has sent XML that cannot be processed.
    *
    *  Returns:
    *    The DOM element tree of the response.
@@ -180,22 +192,24 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request.prototype = {
       node = this.xhr.responseXML.documentElement;
 
       if (node.tagName === "parsererror") {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("invalid response received");
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("responseText: " + this.xhr.responseText);
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("responseXML: " + core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(this.xhr.responseXML));
+        Strophe.error("invalid response received");
+        Strophe.error("responseText: " + this.xhr.responseText);
+        Strophe.error("responseXML: " + Strophe.serialize(this.xhr.responseXML));
         throw new Error("parsererror");
       }
     } else if (this.xhr.responseText) {
       // In React Native, we may get responseText but no responseXML.  We can try to parse it manually.
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("Got responseText but no responseXML; attempting to parse it with DOMParser...");
+      Strophe.debug("Got responseText but no responseXML; attempting to parse it with DOMParser...");
       node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
 
       if (!node) {
         throw new Error('Parsing produced null node');
       } else if (node.querySelector('parsererror')) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("invalid response received: " + node.querySelector('parsererror').textContent);
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("responseText: " + this.xhr.responseText);
-        throw new Error("badformat");
+        Strophe.error("invalid response received: " + node.querySelector('parsererror').textContent);
+        Strophe.error("responseText: " + this.xhr.responseText);
+        var error = new Error();
+        error.name = Strophe.ErrorCondition.BAD_FORMAT;
+        throw error;
       }
     }
 
@@ -253,7 +267,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request.prototype = {
  *    A new Strophe.Bosh object.
  */
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh = function (connection) {
+Strophe.Bosh = function (connection) {
   this._conn = connection;
   /* request id for body tags */
 
@@ -271,7 +285,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh = function (connection) {
   this._requests = [];
 };
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
+Strophe.Bosh.prototype = {
   /** Variable: strip
    *
    *  BOSH-Connections will have all stanzas wrapped in a <body> tag when
@@ -292,9 +306,9 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    *    A Strophe.Builder with a <body/> element.
    */
   _buildBody: function _buildBody() {
-    var bodyWrap = Object(core__WEBPACK_IMPORTED_MODULE_0__["$build"])('body', {
+    var bodyWrap = $build('body', {
       'rid': this.rid++,
-      'xmlns': core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.HTTPBIND
+      'xmlns': Strophe.NS.HTTPBIND
     });
 
     if (this.sid !== null) {
@@ -345,7 +359,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       "content": "text/xml; charset=utf-8",
       "ver": "1.6",
       "xmpp:version": "1.0",
-      "xmlns:xmpp": core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.BOSH
+      "xmlns:xmpp": Strophe.NS.BOSH
     });
 
     if (route) {
@@ -356,7 +370,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
 
     var _connect_cb = this._conn._connect_cb;
 
-    this._requests.push(new core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request(body.tree(), this._onRequestStateChange.bind(this, _connect_cb.bind(this._conn)), body.tree().getAttribute("rid")));
+    this._requests.push(new Strophe.Request(body.tree(), this._onRequestStateChange.bind(this, _connect_cb.bind(this._conn)), body.tree().getAttribute("rid")));
 
     this._throttledRequestHandler();
   },
@@ -390,14 +404,14 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
     this.sid = sid;
     this.rid = rid;
     this._conn.connect_callback = callback;
-    this._conn.domain = core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].getDomainFromJid(this._conn.jid);
+    this._conn.domain = Strophe.getDomainFromJid(this._conn.jid);
     this._conn.authenticated = true;
     this._conn.connected = true;
     this.wait = wait || this.wait;
     this.hold = hold || this.hold;
     this.window = wind || this.window;
 
-    this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.ATTACHED, null);
+    this._conn._changeConnectStatus(Strophe.Status.ATTACHED, null);
   },
 
   /** PrivateFunction: _restore
@@ -422,9 +436,9 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
   _restore: function _restore(jid, callback, wait, hold, wind) {
     var session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
 
-    if (typeof session !== "undefined" && session !== null && session.rid && session.sid && session.jid && (typeof jid === "undefined" || jid === null || core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].getBareJidFromJid(session.jid) === core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].getBareJidFromJid(jid) || // If authcid is null, then it's an anonymous login, so
+    if (typeof session !== "undefined" && session !== null && session.rid && session.sid && session.jid && (typeof jid === "undefined" || jid === null || Strophe.getBareJidFromJid(session.jid) === Strophe.getBareJidFromJid(jid) || // If authcid is null, then it's an anonymous login, so
     // we compare only the domains:
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].getNodeFromJid(jid) === null && core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].getDomainFromJid(session.jid) === jid)) {
+    Strophe.getNodeFromJid(jid) === null && Strophe.getDomainFromJid(session.jid) === jid)) {
       this._conn.restored = true;
 
       this._attach(session.jid, session.sid, session.rid, callback, wait, hold, wind);
@@ -469,7 +483,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
     if (typ !== null && typ === "terminate") {
       // an error occurred
       var cond = bodyWrap.getAttribute("condition");
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("BOSH-Connection failed: " + cond);
+      Strophe.error("BOSH-Connection failed: " + cond);
       var conflict = bodyWrap.getElementsByTagName("conflict");
 
       if (cond !== null) {
@@ -477,14 +491,14 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
           cond = "conflict";
         }
 
-        this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, cond);
+        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
       } else {
-        this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "unknown");
+        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
       }
 
       this._conn._doDisconnect(cond);
 
-      return core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL;
+      return Strophe.Status.CONNFAIL;
     } // check to make sure we don't overwrite these if _connect_cb is
     // called multiple times in the case of missing stream:features
 
@@ -582,7 +596,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    */
   _hitError: function _hitError(reqStatus) {
     this.errors++;
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].warn("request errored, status: " + reqStatus + ", number of errors: " + this.errors);
+    Strophe.warn("request errored, status: " + reqStatus + ", number of errors: " + this.errors);
 
     if (this.errors > 4) {
       this._conn._onDisconnectTimeout();
@@ -595,7 +609,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    * has been received and sends a blank poll request.
    */
   _no_auth_received: function _no_auth_received(callback) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].warn("Server did not yet offer a supported authentication " + "mechanism. Sending a blank poll request.");
+    Strophe.warn("Server did not yet offer a supported authentication " + "mechanism. Sending a blank poll request.");
 
     if (callback) {
       callback = callback.bind(this._conn);
@@ -605,7 +619,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
 
     var body = this._buildBody();
 
-    this._requests.push(new core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request(body.tree(), this._onRequestStateChange.bind(this, callback), body.tree().getAttribute("rid")));
+    this._requests.push(new Strophe.Request(body.tree(), this._onRequestStateChange.bind(this, callback), body.tree().getAttribute("rid")));
 
     this._throttledRequestHandler();
   },
@@ -644,7 +658,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
     var data = this._conn._data; // if no requests are in progress, poll
 
     if (this._conn.authenticated && this._requests.length === 0 && data.length === 0 && !this._conn.disconnecting) {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("no requests during idle cycle, sending " + "blank request");
+      Strophe.info("no requests during idle cycle, sending " + "blank request");
       data.push(null);
     }
 
@@ -662,7 +676,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
               "to": this._conn.domain,
               "xml:lang": "en",
               "xmpp:restart": "true",
-              "xmlns:xmpp": core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.BOSH
+              "xmlns:xmpp": Strophe.NS.BOSH
             });
           } else {
             body.cnode(data[i]).up();
@@ -673,7 +687,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       delete this._conn._data;
       this._conn._data = [];
 
-      this._requests.push(new core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request(body.tree(), this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)), body.tree().getAttribute("rid")));
+      this._requests.push(new Strophe.Request(body.tree(), this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)), body.tree().getAttribute("rid")));
 
       this._throttledRequestHandler();
     }
@@ -682,13 +696,13 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       var time_elapsed = this._requests[0].age();
 
       if (this._requests[0].dead !== null) {
-        if (this._requests[0].timeDead() > Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].SECONDARY_TIMEOUT * this.wait)) {
+        if (this._requests[0].timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
           this._throttledRequestHandler();
         }
       }
 
-      if (time_elapsed > Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].TIMEOUT * this.wait)) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].warn("Request " + this._requests[0].id + " timed out, over " + Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].TIMEOUT * this.wait) + " seconds since last activity");
+      if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
+        Strophe.warn("Request " + this._requests[0].id + " timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) + " seconds since last activity");
 
         this._throttledRequestHandler();
       }
@@ -713,7 +727,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       } catch (e) {
         // ignore errors from undefined status attribute. Works
         // around a browser bug
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Caught an error while retrieving a request's status, " + "reqStatus: " + reqStatus);
+        Strophe.error("Caught an error while retrieving a request's status, " + "reqStatus: " + reqStatus);
       }
     }
 
@@ -737,7 +751,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    *    (Strophe.Request) req - The request that is changing readyState.
    */
   _onRequestStateChange: function _onRequestStateChange(func, req) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("request id " + req.id + "." + req.sends + " state changed to " + req.xhr.readyState);
+    Strophe.debug("request id " + req.id + "." + req.sends + " state changed to " + req.xhr.readyState);
 
     if (req.abort) {
       req.abort = false;
@@ -768,7 +782,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       // remove from internal queue
       this._removeRequest(req);
 
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("request id " + req.id + " should now be removed");
+      Strophe.debug("request id " + req.id + " should now be removed");
     }
 
     if (reqStatus === 200) {
@@ -779,37 +793,37 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       // restart the other - both will be in the first spot, as the
       // completed request has been removed from the queue already
 
-      if (reqIs1 || reqIs0 && this._requests.length > 0 && this._requests[0].age() > Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].SECONDARY_TIMEOUT * this.wait)) {
+      if (reqIs1 || reqIs0 && this._requests.length > 0 && this._requests[0].age() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
         this._restartRequest(0);
       }
 
       this._conn.nextValidRid(Number(req.rid) + 1);
 
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("request id " + req.id + "." + req.sends + " got 200");
+      Strophe.debug("request id " + req.id + "." + req.sends + " got 200");
       func(req); // call handler
 
       this.errors = 0;
     } else if (reqStatus === 0 || reqStatus >= 400 && reqStatus < 600 || reqStatus >= 12000) {
       // request failed
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("request id " + req.id + "." + req.sends + " error " + reqStatus + " happened");
+      Strophe.error("request id " + req.id + "." + req.sends + " error " + reqStatus + " happened");
 
       this._hitError(reqStatus);
 
       this._callProtocolErrorHandlers(req);
 
       if (reqStatus >= 400 && reqStatus < 500) {
-        this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.DISCONNECTING, null);
+        this._conn._changeConnectStatus(Strophe.Status.DISCONNECTING, null);
 
         this._conn._doDisconnect();
       }
     } else {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("request id " + req.id + "." + req.sends + " error " + reqStatus + " happened");
+      Strophe.error("request id " + req.id + "." + req.sends + " error " + reqStatus + " happened");
     }
 
     if (!valid_request && !too_many_retries) {
       this._throttledRequestHandler();
     } else if (too_many_retries && !this._conn.connected) {
-      this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "giving-up");
+      this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "giving-up");
     }
   },
 
@@ -823,6 +837,8 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    *    (Integer) i - The index of the request in the queue.
    */
   _processRequest: function _processRequest(i) {
+    var _this = this;
+
     var req = this._requests[i];
 
     var reqStatus = this._getRequestStatus(req, -1); // make sure we limit the number of retries
@@ -835,13 +851,13 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
     }
 
     var time_elapsed = req.age();
-    var primary_timeout = !isNaN(time_elapsed) && time_elapsed > Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].TIMEOUT * this.wait);
-    var secondary_timeout = req.dead !== null && req.timeDead() > Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].SECONDARY_TIMEOUT * this.wait);
+    var primary_timeout = !isNaN(time_elapsed) && time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait);
+    var secondary_timeout = req.dead !== null && req.timeDead() > Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait);
     var server_error = req.xhr.readyState === 4 && (reqStatus < 1 || reqStatus >= 500);
 
     if (primary_timeout || secondary_timeout || server_error) {
       if (secondary_timeout) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Request ".concat(this._requests[i].id, " timed out (secondary), restarting"));
+        Strophe.error("Request ".concat(this._requests[i].id, " timed out (secondary), restarting"));
       }
 
       req.abort = true;
@@ -849,12 +865,12 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
 
       req.xhr.onreadystatechange = function () {};
 
-      this._requests[i] = new core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request(req.xmlData, req.origFunc, req.rid, req.sends);
+      this._requests[i] = new Strophe.Request(req.xmlData, req.origFunc, req.rid, req.sends);
       req = this._requests[i];
     }
 
     if (req.xhr.readyState === 0) {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("request id " + req.id + "." + req.sends + " posting");
+      Strophe.debug("request id " + req.id + "." + req.sends + " posting");
 
       try {
         var content_type = this._conn.options.contentType || "text/xml; charset=utf-8";
@@ -869,10 +885,10 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
           req.xhr.withCredentials = true;
         }
       } catch (e2) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("XHR open failed: " + e2.toString());
+        Strophe.error("XHR open failed: " + e2.toString());
 
         if (!this._conn.connected) {
-          this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "bad-service");
+          this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "bad-service");
         }
 
         this._conn.disconnect();
@@ -885,8 +901,8 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       var sendFunc = function sendFunc() {
         req.date = new Date();
 
-        if (self._conn.options.customHeaders) {
-          var headers = self._conn.options.customHeaders;
+        if (_this._conn.options.customHeaders) {
+          var headers = _this._conn.options.customHeaders;
 
           for (var header in headers) {
             if (Object.prototype.hasOwnProperty.call(headers, header)) {
@@ -903,7 +919,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       if (req.sends > 1) {
         // Using a cube of the retry number creates a nicely
         // expanding retry window
-        var backoff = Math.min(Math.floor(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].TIMEOUT * this.wait), Math.pow(req.sends, 3)) * 1000;
+        var backoff = Math.min(Math.floor(Strophe.TIMEOUT * this.wait), Math.pow(req.sends, 3)) * 1000;
         setTimeout(function () {
           // XXX: setTimeout should be called only with function expressions (23974bc1)
           sendFunc();
@@ -914,7 +930,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
 
       req.sends++;
 
-      if (this._conn.xmlOutput !== core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Connection.prototype.xmlOutput) {
+      if (this._conn.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
         if (req.xmlData.nodeName === this.strip && req.xmlData.childNodes.length) {
           this._conn.xmlOutput(req.xmlData.childNodes[0]);
         } else {
@@ -922,11 +938,11 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
         }
       }
 
-      if (this._conn.rawOutput !== core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Connection.prototype.rawOutput) {
+      if (this._conn.rawOutput !== Strophe.Connection.prototype.rawOutput) {
         this._conn.rawOutput(req.data);
       }
     } else {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("_processRequest: " + (i === 0 ? "first" : "second") + " request has readyState of " + req.xhr.readyState);
+      Strophe.debug("_processRequest: " + (i === 0 ? "first" : "second") + " request has readyState of " + req.xhr.readyState);
     }
   },
 
@@ -937,7 +953,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    *    (Strophe.Request) req - The request to remove.
    */
   _removeRequest: function _removeRequest(req) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("removing request");
+    Strophe.debug("removing request");
 
     for (var i = this._requests.length - 1; i >= 0; i--) {
       if (req === this._requests[i]) {
@@ -999,7 +1015,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    *  presence if authentication has completed.
    */
   _sendTerminate: function _sendTerminate(pres) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("_sendTerminate was called");
+    Strophe.info("_sendTerminate was called");
 
     var body = this._buildBody().attrs({
       type: "terminate"
@@ -1009,7 +1025,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
       body.cnode(pres.tree());
     }
 
-    var req = new core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Request(body.tree(), this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)), body.tree().getAttribute("rid"));
+    var req = new Strophe.Request(body.tree(), this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)), body.tree().getAttribute("rid"));
 
     this._requests.push(req);
 
@@ -1022,14 +1038,14 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    * Just triggers the RequestHandler to send the messages that are in the queue
    */
   _send: function _send() {
-    var _this = this;
+    var _this2 = this;
 
     clearTimeout(this._conn._idleTimeout);
 
     this._throttledRequestHandler();
 
     this._conn._idleTimeout = setTimeout(function () {
-      return _this._conn._onIdle();
+      return _this2._conn._onIdle();
     }, 100);
   },
 
@@ -1052,9 +1068,9 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
    */
   _throttledRequestHandler: function _throttledRequestHandler() {
     if (!this._requests) {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("_throttledRequestHandler called with " + "undefined requests");
+      Strophe.debug("_throttledRequestHandler called with " + "undefined requests");
     } else {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug("_throttledRequestHandler called with " + this._requests.length + " requests");
+      Strophe.debug("_throttledRequestHandler called with " + this._requests.length + " requests");
     }
 
     if (!this._requests || this._requests.length === 0) {
@@ -1077,17 +1093,11 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Bosh.prototype = {
 /*!*********************!*\
   !*** ./src/core.js ***!
   \*********************/
-/*! exports provided: $build, $msg, $iq, $pres, Strophe, helpers */
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "$build", function() { return $build; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "$msg", function() { return $msg; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "$iq", function() { return $iq; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "$pres", function() { return $pres; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Strophe", function() { return Strophe; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "helpers", function() { return helpers; });
 /* harmony import */ var md5__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! md5 */ "./src/md5.js");
 /* harmony import */ var sha1__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! sha1 */ "./src/sha1.js");
 /* harmony import */ var utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! utils */ "./src/utils.js");
@@ -1129,6 +1139,7 @@ function $build(name, attrs) {
  *    A new Strophe.Builder object.
  */
 
+
 function $msg(attrs) {
   return new Strophe.Builder("message", attrs);
 }
@@ -1141,6 +1152,7 @@ function $msg(attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
+
 
 function $iq(attrs) {
   return new Strophe.Builder("iq", attrs);
@@ -1155,6 +1167,7 @@ function $iq(attrs) {
  *    A new Strophe.Builder object.
  */
 
+
 function $pres(attrs) {
   return new Strophe.Builder("presence", attrs);
 }
@@ -1166,9 +1179,10 @@ function $pres(attrs) {
  *  provide a namespace for library objects, constants, and functions.
  */
 
+
 var Strophe = {
   /** Constant: VERSION */
-  VERSION: "",
+  VERSION: "@VERSION@",
 
   /** Constants: XMPP Namespace Constants
    *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2993,7 +3007,7 @@ Strophe.Connection.prototype = {
     if (this._sessionCachingSupported()) {
       this._proto._restore(jid, callback, wait, hold, wind);
     } else {
-      var error = new Error('The "attach" method can only be used with a BOSH connection.');
+      var error = new Error('The "restore" method can only be used with a BOSH connection.');
       error.name = 'StropheSessionError';
       throw error;
     }
@@ -3298,6 +3312,7 @@ Strophe.Connection.prototype = {
         } else {
           var error = new Error("Got bad IQ type of ".concat(iqtype));
           error.name = "StropheError";
+          throw error;
         }
       }, null, 'iq', ['error', 'result'], id); // if timeout specified, set up a timeout handler.
 
@@ -3328,6 +3343,7 @@ Strophe.Connection.prototype = {
     if (element === null || !element.tagName || !element.childNodes) {
       var error = new Error("Cannot queue non-DOMElement.");
       error.name = "StropheError";
+      throw error;
     }
 
     this._data.push(element);
@@ -3775,7 +3791,7 @@ Strophe.Connection.prototype = {
     try {
       bodyWrap = this._proto._reqToData(req);
     } catch (e) {
-      if (e !== "badformat") {
+      if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) {
         throw e;
       }
 
@@ -4858,10 +4874,19 @@ Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
   return utils__WEBPACK_IMPORTED_MODULE_2__["default"].utf16to8(auth_str);
 };
 
-var helpers = {
+/* harmony default export */ __webpack_exports__["default"] = ({
+  'Strophe': Strophe,
+  '$build': $build,
+  '$iq': $iq,
+  '$msg': $msg,
+  '$pres': $pres,
   'SHA1': sha1__WEBPACK_IMPORTED_MODULE_1__["default"],
-  'MD5': md5__WEBPACK_IMPORTED_MODULE_0__["default"]
-};
+  'MD5': md5__WEBPACK_IMPORTED_MODULE_0__["default"],
+  'b64_hmac_sha1': sha1__WEBPACK_IMPORTED_MODULE_1__["default"].b64_hmac_sha1,
+  'b64_sha1': sha1__WEBPACK_IMPORTED_MODULE_1__["default"].b64_sha1,
+  'str_hmac_sha1': sha1__WEBPACK_IMPORTED_MODULE_1__["default"].str_hmac_sha1,
+  'str_sha1': sha1__WEBPACK_IMPORTED_MODULE_1__["default"].str_sha1
+});
 
 /***/ }),
 
@@ -5310,15 +5335,15 @@ var SHA1 = {
 /*!************************!*\
   !*** ./src/strophe.js ***!
   \************************/
-/*! exports provided: Strophe */
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core */ "./src/core.js");
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "Strophe", function() { return core__WEBPACK_IMPORTED_MODULE_0__; });
-/* harmony import */ var bosh__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! bosh */ "./src/bosh.js");
-/* harmony import */ var websocket__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! websocket */ "./src/websocket.js");
+/* harmony import */ var bosh__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! bosh */ "./src/bosh.js");
+/* harmony import */ var websocket__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! websocket */ "./src/websocket.js");
+/* harmony import */ var core__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core */ "./src/core.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "default", function() { return core__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
 
 
@@ -5426,6 +5451,8 @@ __webpack_require__.r(__webpack_exports__);
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
+var Strophe = core__WEBPACK_IMPORTED_MODULE_0__["default"].Strophe;
+var $build = core__WEBPACK_IMPORTED_MODULE_0__["default"].$build;
 /** Class: Strophe.WebSocket
  *  _Private_ helper class that handles WebSocket Connections
  *
@@ -5456,7 +5483,7 @@ __webpack_require__.r(__webpack_exports__);
  *    A new Strophe.WebSocket object.
  */
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket = function (connection) {
+Strophe.Websocket = function (connection) {
   this._conn = connection;
   this.strip = "wrapper";
   var service = connection.service;
@@ -5484,7 +5511,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket = function (connection) {
   }
 };
 
-core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
+Strophe.Websocket.prototype = {
   /** PrivateFunction: _buildStream
    *  _Private_ helper function to generate the <stream> start tag for WebSockets
    *
@@ -5492,8 +5519,8 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    *    A Strophe.Builder with a <stream> element.
    */
   _buildStream: function _buildStream() {
-    return Object(core__WEBPACK_IMPORTED_MODULE_0__["$build"])("open", {
-      "xmlns": core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.FRAMING,
+    return $build("open", {
+      "xmlns": Strophe.NS.FRAMING,
       "to": this._conn.domain,
       "version": '1.0'
     });
@@ -5512,7 +5539,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
     var errors;
 
     if (bodyWrap.getElementsByTagNameNS) {
-      errors = bodyWrap.getElementsByTagNameNS(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.STREAM, "error");
+      errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "error");
     } else {
       errors = bodyWrap.getElementsByTagName("stream:error");
     }
@@ -5552,7 +5579,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
       errorString += " - " + text;
     }
 
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error(errorString); // close the connection on stream_error
+    Strophe.error(errorString); // close the connection on stream_error
 
     this._conn._changeConnectStatus(connectstatus, condition);
 
@@ -5598,10 +5625,10 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    *    (Strophe.Request) bodyWrap - The received stanza.
    */
   _connect_cb: function _connect_cb(bodyWrap) {
-    var error = this._check_streamerror(bodyWrap, core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL);
+    var error = this._check_streamerror(bodyWrap, Strophe.Status.CONNFAIL);
 
     if (error) {
-      return core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL;
+      return Strophe.Status.CONNFAIL;
     }
   },
 
@@ -5620,7 +5647,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
 
     if (typeof ns !== "string") {
       error = "Missing xmlns in <open />";
-    } else if (ns !== core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.FRAMING) {
+    } else if (ns !== Strophe.NS.FRAMING) {
       error = "Wrong xmlns in <open />: " + ns;
     }
 
@@ -5633,7 +5660,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
     }
 
     if (error) {
-      this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, error);
+      this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, error);
 
       this._conn._doDisconnect();
 
@@ -5682,7 +5709,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
         var isSecureRedirect = service.indexOf("wss:") >= 0 && see_uri.indexOf("wss:") >= 0 || service.indexOf("ws:") >= 0;
 
         if (isSecureRedirect) {
-          this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.REDIRECT, "Received see-other-uri, resetting connection");
+          this._conn._changeConnectStatus(Strophe.Status.REDIRECT, "Received see-other-uri, resetting connection");
 
           this._conn.reset();
 
@@ -5691,7 +5718,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
           this._connect();
         }
       } else {
-        this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "Received closing stream");
+        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "Received closing stream");
 
         this._conn._doDisconnect();
       }
@@ -5719,20 +5746,20 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
         this._conn.send(pres);
       }
 
-      var close = Object(core__WEBPACK_IMPORTED_MODULE_0__["$build"])("close", {
-        "xmlns": core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].NS.FRAMING
+      var close = $build("close", {
+        "xmlns": Strophe.NS.FRAMING
       });
 
       this._conn.xmlOutput(close.tree());
 
-      var closeString = core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(close);
+      var closeString = Strophe.serialize(close);
 
       this._conn.rawOutput(closeString);
 
       try {
         this.socket.send(closeString);
       } catch (e) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("Couldn't send <close /> tag.");
+        Strophe.info("Couldn't send <close /> tag.");
       }
     }
 
@@ -5745,7 +5772,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    *  Just closes the Socket for WebSockets
    */
   _doDisconnect: function _doDisconnect() {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("WebSockets _doDisconnect was called");
+    Strophe.info("WebSockets _doDisconnect was called");
 
     this._closeSocket();
   },
@@ -5769,7 +5796,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
         this.socket.onerror = null;
         this.socket.close();
       } catch (e) {
-        core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].debug(e.message);
+        Strophe.debug(e.message);
       }
     }
 
@@ -5793,7 +5820,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    */
   _onClose: function _onClose(e) {
     if (this._conn.connected && !this._conn.disconnecting) {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Websocket closed unexpectedly");
+      Strophe.error("Websocket closed unexpectedly");
 
       this._conn._doDisconnect();
     } else if (e && e.code === 1006 && !this._conn.connected && this.socket) {
@@ -5801,13 +5828,13 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
       // call onerror when the initial connection fails) we need to
       // dispatch a CONNFAIL status update to be consistent with the
       // behavior on other browsers.
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Websocket closed unexcectedly");
+      Strophe.error("Websocket closed unexcectedly");
 
-      this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
+      this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
 
       this._conn._doDisconnect();
     } else {
-      core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("Websocket closed");
+      Strophe.info("Websocket closed");
     }
   },
 
@@ -5817,9 +5844,9 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    * has been received.
    */
   _no_auth_received: function _no_auth_received(callback) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Server did not offer a supported authentication mechanism");
+    Strophe.error("Server did not offer a supported authentication mechanism");
 
-    this._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].ErrorCondition.NO_AUTH_MECH);
+    this._changeConnectStatus(Strophe.Status.CONNFAIL, Strophe.ErrorCondition.NO_AUTH_MECH);
 
     if (callback) {
       callback.call(this._conn);
@@ -5847,9 +5874,9 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    * (Object) error - The websocket error.
    */
   _onError: function _onError(error) {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].error("Websocket error " + error);
+    Strophe.error("Websocket error " + error);
 
-    this._conn._changeConnectStatus(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
+    this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, "The WebSocket connection could not be established or was disconnected.");
 
     this._disconnect();
   },
@@ -5873,7 +5900,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
             stanza = data[i];
           }
 
-          var rawStanza = core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(stanza);
+          var rawStanza = Strophe.serialize(stanza);
 
           this._conn.xmlOutput(stanza);
 
@@ -5938,7 +5965,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
       elem = new DOMParser().parseFromString(data, "text/xml").documentElement;
     }
 
-    if (this._check_streamerror(elem, core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Status.ERROR)) {
+    if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
       return;
     } //handle unavailable presence stanza before disconnecting
 
@@ -5946,7 +5973,7 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
     if (this._conn.disconnecting && elem.firstChild.nodeName === "presence" && elem.firstChild.getAttribute("type") === "unavailable") {
       this._conn.xmlInput(elem);
 
-      this._conn.rawInput(core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(elem)); // if we are already disconnecting we will ignore the unavailable stanza and
+      this._conn.rawInput(Strophe.serialize(elem)); // if we are already disconnecting we will ignore the unavailable stanza and
       // wait for the </stream:stream> tag before we close the connection
 
 
@@ -5962,13 +5989,13 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
    * The opening stream tag is sent here.
    */
   _onOpen: function _onOpen() {
-    core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].info("Websocket open");
+    Strophe.info("Websocket open");
 
     var start = this._buildStream();
 
     this._conn.xmlOutput(start.tree());
 
-    var startString = core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].serialize(start);
+    var startString = Strophe.serialize(start);
 
     this._conn.rawOutput(startString);
 
@@ -6012,5 +6039,6 @@ core__WEBPACK_IMPORTED_MODULE_0__["Strophe"].Websocket.prototype = {
 
 /***/ })
 
-/******/ });
+/******/ })["default"];
+});
 //# sourceMappingURL=strophe.js.map
