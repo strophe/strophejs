@@ -1,10 +1,9 @@
-BOWER			?= node_modules/.bin/bower
 CHROMIUM		?= ./node_modules/.bin/run-headless-chromium
 DOC_DIR			= doc
 DOC_TEMP		= doc-temp
 HTTPSERVE		?= ./node_modules/.bin/http-server
 HTTPSERVE_PORT  ?= 8080
-JSHINT			?= ./node_modules/.bin/jshint
+ESLINT		  	?= ./node_modules/.bin/eslint
 NDPROJ_DIR 		= ndproj
 SED				?= sed
 SHELL			?= /usr/env/bin/bash
@@ -22,7 +21,7 @@ help:
 	@echo " doc         Update docs"
 	@echo " dist        Build $(STROPHE) and $(STROPHE_MIN)"
 	@echo " check       Build and run the tests"
-	@echo " jshint      Check code quality"
+	@echo " eslint      Check code quality"
 	@echo " release     Prepare a new release of $(STROPHE). E.g. \`make release VERSION=1.2.14\`"
 	@echo " serve       Serve this directory via a webserver on port 8000."
 	@echo " stamp-npm   Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
@@ -54,7 +53,7 @@ release:
 	make doc
 
 .PHONY: watchjs
-watchjs: dev
+watchjs: stamp-npm
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
 .PHONY: dist
@@ -68,12 +67,12 @@ $(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
 	./node_modules/.bin/npx  webpack --mode=development
 	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE)
 
-.PHONY: jshint
-jshint: stamp-npm
-	$(JSHINT) --config jshintrc src/*.js
+.PHONY: eslint
+eslint: stamp-npm
+	$(ESLINT) src/
 
 .PHONY: check
-check:: stamp-npm jshint
+check:: stamp-npm eslint
 	LOG_CR_VERBOSITY=INFO $(CHROMIUM) --no-sandbox http://localhost:$(HTTPSERVE_PORT)/tests/
 
 .PHONY: serve
