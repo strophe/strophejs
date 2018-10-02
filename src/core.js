@@ -880,34 +880,32 @@ const Strophe = {
         if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
-        const nodeName = elem.getAttribute("_realname") ? elem.getAttribute("_realname") : elem.nodeName;
-        let result = "<" + nodeName;
-        for (let i=0; i < elem.attributes.length; i++) {
-             if (elem.attributes[i].nodeName !== "_realname") {
-               result += " " + elem.attributes[i].nodeName +
-                   "='" + Strophe.xmlescape(elem.attributes[i].value) + "'";
-             }
-        }
+        const names = [...Array(elem.attributes.length).keys()].map(i => elem.attributes[i].nodeName);
+        names.sort();
+        let result = names.reduce(
+            (a, n) => `${a} ${n}="${Strophe.xmlescape(elem.attributes.getNamedItem(n).value)}"`,
+            `<${elem.nodeName}`
+        );
 
         if (elem.childNodes.length > 0) {
             result += ">";
             for (let i=0; i < elem.childNodes.length; i++) {
                 const child = elem.childNodes[i];
                 switch (child.nodeType) {
-                  case Strophe.ElementType.NORMAL:
-                    // normal element, so recurse
-                    result += Strophe.serialize(child);
-                    break;
-                  case Strophe.ElementType.TEXT:
-                    // text element to escape values
-                    result += Strophe.xmlescape(child.nodeValue);
-                    break;
-                  case Strophe.ElementType.CDATA:
-                    // cdata section so don't escape values
-                    result += "<![CDATA["+child.nodeValue+"]]>";
+                    case Strophe.ElementType.NORMAL:
+                        // normal element, so recurse
+                        result += Strophe.serialize(child);
+                        break;
+                    case Strophe.ElementType.TEXT:
+                        // text element to escape values
+                        result += Strophe.xmlescape(child.nodeValue);
+                        break;
+                    case Strophe.ElementType.CDATA:
+                        // cdata section so don't escape values
+                        result += "<![CDATA["+child.nodeValue+"]]>";
                 }
             }
-            result += "</" + nodeName + ">";
+            result += "</" + elem.nodeName + ">";
         } else {
             result += "/>";
         }

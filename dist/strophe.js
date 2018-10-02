@@ -1101,6 +1101,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var md5__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! md5 */ "./src/md5.js");
 /* harmony import */ var sha1__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! sha1 */ "./src/sha1.js");
 /* harmony import */ var utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! utils */ "./src/utils.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /*
@@ -2004,20 +2012,20 @@ var Strophe = {
       elem = elem.tree();
     }
 
-    var nodeName = elem.getAttribute("_realname") ? elem.getAttribute("_realname") : elem.nodeName;
-    var result = "<" + nodeName;
+    var names = _toConsumableArray(Array(elem.attributes.length).keys()).map(function (i) {
+      return elem.attributes[i].nodeName;
+    });
 
-    for (var i = 0; i < elem.attributes.length; i++) {
-      if (elem.attributes[i].nodeName !== "_realname") {
-        result += " " + elem.attributes[i].nodeName + "='" + Strophe.xmlescape(elem.attributes[i].value) + "'";
-      }
-    }
+    names.sort();
+    var result = names.reduce(function (a, n) {
+      return "".concat(a, " ").concat(n, "=\"").concat(Strophe.xmlescape(elem.attributes.getNamedItem(n).value), "\"");
+    }, "<".concat(elem.nodeName));
 
     if (elem.childNodes.length > 0) {
       result += ">";
 
-      for (var _i5 = 0; _i5 < elem.childNodes.length; _i5++) {
-        var child = elem.childNodes[_i5];
+      for (var i = 0; i < elem.childNodes.length; i++) {
+        var child = elem.childNodes[i];
 
         switch (child.nodeType) {
           case Strophe.ElementType.NORMAL:
@@ -2036,7 +2044,7 @@ var Strophe = {
         }
       }
 
-      result += "</" + nodeName + ">";
+      result += "</" + elem.nodeName + ">";
     } else {
       result += "/>";
     }
@@ -3742,8 +3750,8 @@ Strophe.Connection.prototype = {
       var newList = _this6.handlers;
       _this6.handlers = [];
 
-      for (var _i6 = 0; _i6 < newList.length; _i6++) {
-        var _hand = newList[_i6]; // encapsulate 'handler.run' not to lose the whole handler list if
+      for (var _i5 = 0; _i5 < newList.length; _i5++) {
+        var _hand = newList[_i5]; // encapsulate 'handler.run' not to lose the whole handler list if
         // one of the handlers throws an exception
 
         try {
@@ -4418,8 +4426,8 @@ Strophe.Connection.prototype = {
     var now = new Date().getTime();
     var newList = [];
 
-    for (var _i7 = 0; _i7 < this.timedHandlers.length; _i7++) {
-      var _thand = this.timedHandlers[_i7];
+    for (var _i6 = 0; _i6 < this.timedHandlers.length; _i6++) {
+      var _thand = this.timedHandlers[_i6];
 
       if (this.authenticated || !_thand.user) {
         var since = _thand.lastCalled + _thand.period;
