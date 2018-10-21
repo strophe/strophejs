@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 2.0.0 - (Unreleased)
+## Version 1.3.0 - (2018-10-21)
 
 * Use ES2015 modules
 * Drop support for Internet Explorer < 11

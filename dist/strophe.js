@@ -1190,7 +1190,7 @@ function $pres(attrs) {
 
 var Strophe = {
   /** Constant: VERSION */
-  VERSION: "@VERSION@",
+  VERSION: "1.3.0",
 
   /** Constants: XMPP Namespace Constants
    *  Common namespace constants from the XMPP RFCs and XEPs.

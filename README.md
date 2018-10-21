@@ -16,14 +16,16 @@ covers Strophe in detail in the context of web applications.
 ## Quick Links
 
 * [Homepage](http://strophe.im/strophejs)
-* [Documentation](http://strophe.im/strophejs/doc/1.2.16/files/strophe-js.html)
+* [Documentation](http://strophe.im/strophejs/doc/1.3.0/files/strophe-js.html)
 * [Mailing list](http://groups.google.com/group/strophe)
 * [Community Plugins](http://github.com/strophe/strophejs-plugins)
 
 ## Browser support
 
-It has been tested on Firefox, Firefox for Android, IE, Safari, Mobile Safari,
-Chrome, Chrome for Android, Opera and the mobile Opera browser.
+Versions <= 1.2.16 have been tested on Firefox, Firefox for Android, IE, Safari,
+Mobile Safari, Chrome, Chrome for Android, Opera and the mobile Opera browser.
+
+Since version 1.3.0, support for IE < 11 has been dropped.
 
 ## Running tests
 
