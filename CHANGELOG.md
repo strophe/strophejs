@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.3.1 - (Unreleased)
+
+* #311 Expose `Strophe`, `$build`, `$msg` and `$iq` as globals
+
 ## Version 1.3.0 - (2018-10-21)
 
 * Use ES2015 modules

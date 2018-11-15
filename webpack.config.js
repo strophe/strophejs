@@ -2,6 +2,7 @@
 'use strict'
 const minimist = require('minimist');
 const path = require('path');
+const webpack = require('webpack');
 
 const config = {
     entry: path.resolve(__dirname, 'src/strophe.js'),
@@ -11,7 +12,7 @@ const config = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'strophe.js',
-        library: 'Strophe',
+        library: 'strophe',
         libraryExport: 'default',
         libraryTarget: 'umd'
     },
