@@ -3349,7 +3349,7 @@ Strophe.SASLSHA1.prototype.test = function(connection) {
 };
 
 Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cnonce) {
-    const cnonce = test_cnonce || MD5.hexdigest(Math.random() * 1234567890);
+    const cnonce = test_cnonce || MD5.hexdigest("" + (Math.random() * 1234567890));
     let auth_str = "n=" + utils.utf16to8(connection.authcid);
     auth_str += ",r=";
     auth_str += cnonce;
