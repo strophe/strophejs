@@ -14,28 +14,28 @@
  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
  * to work around bugs in some JS interpreters.
  */
-var safe_add = function (x, y) {
-    var lsw = (x & 0xFFFF) + (y & 0xFFFF);
-    var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+const safe_add = function (x, y) {
+    const lsw = (x & 0xFFFF) + (y & 0xFFFF);
+    const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
     return (msw << 16) | (lsw & 0xFFFF);
 };
 
 /*
  * Bitwise rotate a 32-bit number to the left.
  */
-var bit_rol = function (num, cnt) {
+const bit_rol = function (num, cnt) {
     return (num << cnt) | (num >>> (32 - cnt));
 };
 
 /*
  * Convert a string to an array of little-endian words
  */
-var str2binl = function (str) {
+const str2binl = function (str) {
     if (typeof str !== "string") {
         throw new Error("str2binl was passed a non-string");
     }
-    var bin = [];
-    for(var i = 0; i < str.length * 8; i += 8)
+    const bin = [];
+    for(let i = 0; i < str.length * 8; i += 8)
     {
         bin[i>>5] |= (str.charCodeAt(i / 8) & 255) << (i%32);
     }
@@ -45,9 +45,9 @@ var str2binl = function (str) {
 /*
  * Convert an array of little-endian words to a string
  */
-var binl2str = function (bin) {
-    var str = "";
-    for(var i = 0; i < bin.length * 32; i += 8)
+const binl2str = function (bin) {
+    let str = "";
+    for(let i = 0; i < bin.length * 32; i += 8)
     {
         str += String.fromCharCode((bin[i>>5] >>> (i % 32)) & 255);
     }
@@ -57,10 +57,10 @@ var binl2str = function (bin) {
 /*
  * Convert an array of little-endian words to a hex string.
  */
-var binl2hex = function (binarray) {
-    var hex_tab = "0123456789abcdef";
-    var str = "";
-    for(var i = 0; i < binarray.length * 4; i++)
+const binl2hex = function (binarray) {
+    const hex_tab = "0123456789abcdef";
+    let str = "";
+    for(let i = 0; i < binarray.length * 4; i++)
     {
         str += hex_tab.charAt((binarray[i>>2] >> ((i%4)*8+4)) & 0xF) +
             hex_tab.charAt((binarray[i>>2] >> ((i%4)*8  )) & 0xF);
@@ -71,41 +71,41 @@ var binl2hex = function (binarray) {
 /*
  * These functions implement the four basic operations the algorithm uses.
  */
-var md5_cmn = function (q, a, b, x, s, t) {
+const md5_cmn = function (q, a, b, x, s, t) {
     return safe_add(bit_rol(safe_add(safe_add(a, q),safe_add(x, t)), s),b);
 };
 
-var md5_ff = function (a, b, c, d, x, s, t) {
+const md5_ff = function (a, b, c, d, x, s, t) {
     return md5_cmn((b & c) | ((~b) & d), a, b, x, s, t);
 };
 
-var md5_gg = function (a, b, c, d, x, s, t) {
+const md5_gg = function (a, b, c, d, x, s, t) {
     return md5_cmn((b & d) | (c & (~d)), a, b, x, s, t);
 };
 
-var md5_hh = function (a, b, c, d, x, s, t) {
+const md5_hh = function (a, b, c, d, x, s, t) {
     return md5_cmn(b ^ c ^ d, a, b, x, s, t);
 };
 
-var md5_ii = function (a, b, c, d, x, s, t) {
+const md5_ii = function (a, b, c, d, x, s, t) {
     return md5_cmn(c ^ (b | (~d)), a, b, x, s, t);
 };
 
 /*
  * Calculate the MD5 of an array of little-endian words, and a bit length
  */
-var core_md5 = function (x, len) {
+const core_md5 = function (x, len) {
     /* append padding */
     x[len >> 5] |= 0x80 << ((len) % 32);
     x[(((len + 64) >>> 9) << 4) + 14] = len;
 
-    var a =  1732584193;
-    var b = -271733879;
-    var c = -1732584194;
-    var d =  271733878;
+    let a =  1732584193;
+    let b = -271733879;
+    let c = -1732584194;
+    let d =  271733878;
 
-    var olda, oldb, oldc, oldd;
-    for (var i = 0; i < x.length; i += 16)
+    let olda, oldb, oldc, oldd;
+    for (let i = 0; i < x.length; i += 16)
     {
         olda = a;
         oldb = b;
