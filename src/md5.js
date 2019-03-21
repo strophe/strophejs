@@ -31,6 +31,9 @@ var bit_rol = function (num, cnt) {
  * Convert a string to an array of little-endian words
  */
 var str2binl = function (str) {
+    if (typeof str !== "string") {
+        throw new Error("str2binl was passed a non-string");
+    }
     var bin = [];
     for(var i = 0; i < str.length * 8; i += 8)
     {

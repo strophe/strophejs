@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.3.2 - (Unreleased)
+
+* #320 Fix error on SCRAM-SHA-1 client nonce generation
+
 ## Version 1.3.1 - (2018-11-15)
 
 * #311 Expose `Strophe`, `$build`, `$msg` and `$iq` as globals
