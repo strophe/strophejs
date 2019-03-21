@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.3.2 - (Unreleased)
+## Version 1.3.2 - (2019-03-21)
 
 * #320 Fix error on SCRAM-SHA-1 client nonce generation
 

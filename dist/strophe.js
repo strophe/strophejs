@@ -1230,7 +1230,7 @@ function $pres(attrs) {
 
 var Strophe = {
   /** Constant: VERSION */
-  VERSION: "1.3.1",
+  VERSION: "1.3.2",
 
   /** Constants: XMPP Namespace Constants
    *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4688,7 +4688,7 @@ Strophe.SASLSHA1.prototype.test = function (connection) {
 };
 
 Strophe.SASLSHA1.prototype.onChallenge = function (connection, challenge, test_cnonce) {
-  var cnonce = test_cnonce || md5__WEBPACK_IMPORTED_MODULE_0__["default"].hexdigest(Math.random() * 1234567890);
+  var cnonce = test_cnonce || md5__WEBPACK_IMPORTED_MODULE_0__["default"].hexdigest("" + Math.random() * 1234567890);
   var auth_str = "n=" + utils__WEBPACK_IMPORTED_MODULE_2__["default"].utf16to8(connection.authcid);
   auth_str += ",r=";
   auth_str += cnonce;
@@ -4985,6 +4985,10 @@ var bit_rol = function bit_rol(num, cnt) {
 
 
 var str2binl = function str2binl(str) {
+  if (typeof str !== "string") {
+    throw new Error("str2binl was passed a non-string");
+  }
+
   var bin = [];
 
   for (var i = 0; i < str.length * 8; i += 8) {
