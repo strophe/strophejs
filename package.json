@@ -66,5 +66,8 @@
     "webpack": "^4.0.1",
     "webpack-cli": "^2.1.4",
     "yarpm": "^0.2.1"
+  },
+  "dependencies": {
+    "isomorphic-ws": "^4.0.1"
   }
 }

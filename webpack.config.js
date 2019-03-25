@@ -7,7 +7,8 @@ const webpack = require('webpack');
 const config = {
     entry: path.resolve(__dirname, 'src/strophe.js'),
     externals: [{
-        "window": "window"
+        "window": "window",
+        "ws": "ws"
     }],
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -39,6 +40,10 @@ const config = {
     },
     resolve: {
         extensions: ['.js'],
+        // TODO: this only takes isomorphic-ws node entrypoint
+        // and not the browser one. Find a way to make webpack
+        // bundle both.
+        mainFields: ['main'],
         modules: [
             'node_modules',
             path.resolve(__dirname, "src")

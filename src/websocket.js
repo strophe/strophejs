@@ -7,6 +7,7 @@
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
+import WebSocket from 'isomorphic-ws';
 import core from 'core';
 
 const Strophe = core.Strophe;
