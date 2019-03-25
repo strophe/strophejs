@@ -14,7 +14,8 @@ const config = {
         filename: 'strophe.js',
         library: 'strophe',
         libraryExport: 'default',
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        globalObject: "(typeof self !== 'undefined' ? self : this)"
     },
     devtool: 'source-map',
     module: {
@@ -27,7 +28,8 @@ const config = {
                     presets: [
                         ["@babel/preset-env", {
                             "targets": {
-                                "browsers": [">1%"]
+                                node: "8",
+                                browsers: ">1%"
                             }
                         }]
                     ]

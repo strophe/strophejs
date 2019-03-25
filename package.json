@@ -12,7 +12,8 @@
     "message",
     "bosh",
     "websocket",
-    "browser"
+    "browser",
+    "node"
   ],
   "files": [
     "dist/",
