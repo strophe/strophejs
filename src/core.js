@@ -521,10 +521,13 @@ const Strophe = {
         if (DOMParser) {
             const parser = new DOMParser();
             node = parser.parseFromString(html, "text/xml");
-        } else {
+        } else if (ActiveXObject) {
             node = new ActiveXObject("Microsoft.XMLDOM");
             node.async="false";
             node.loadXML(html);
+        } else {
+            const parser = require('xmldom').DOMParser;
+            node = parser.parseFromString(html, "text/xml");
         }
         return node;
     },
