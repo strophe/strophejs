@@ -10,6 +10,7 @@
 import WebSocket from 'isomorphic-ws';
 import core from 'core';
 
+const DOMParser = typeof DOMParser === 'undefined' ? require('xmldom').DOMParser : DOMParser
 const Strophe = core.Strophe;
 const $build = core.$build;
 

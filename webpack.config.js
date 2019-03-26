@@ -7,6 +7,7 @@ const webpack = require('webpack');
 const config = {
     entry: path.resolve(__dirname, 'src/strophe.js'),
     externals: [{
+        "xmldom": "xmldom",
         "window": "window",
         "ws": "ws"
     }],

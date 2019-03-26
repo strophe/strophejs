@@ -69,5 +69,8 @@
   },
   "dependencies": {
     "isomorphic-ws": "^4.0.1"
+  },
+  "optionalDependencies": {
+    "xmldom": "^0.1.27"
   }
 }

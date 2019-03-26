@@ -336,11 +336,16 @@ const Strophe = {
      */
     _makeGenerator: function () {
         let doc;
-        // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
-        // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
-        // less than 10 in the case of IE9 and below.
-        if (document.implementation.createDocument === undefined ||
-                    document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
+        if (typeof document === 'undefined') {
+            const xmldom = require('xmldom')
+            doc = new xmldom.DOMImplementation().createDocument('jabber:client', 'strophe', null)
+        } else if (
+            document.implementation.createDocument === undefined ||
+            document.implementation.createDocument && document.documentMode && document.documentMode < 10
+        ) {
+            // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
+            // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
+            // less than 10 in the case of IE9 and below.
             doc = this._getIEXmlDom();
             doc.appendChild(doc.createElement('strophe'));
         } else {
@@ -1159,7 +1164,7 @@ Strophe.Builder.prototype = {
      *    The Strophe.Builder object.
      */
     h: function (html) {
-        const fragment = document.createElement('body');
+        const fragment = Strophe.xmlGenerator().createElement('body');
         // force the browser to try and fix any invalid HTML tags
         fragment.innerHTML = html;
         // copy cleaned html into an xml dom
