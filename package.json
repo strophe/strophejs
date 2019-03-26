@@ -68,6 +68,7 @@
     "yarpm": "^0.2.1"
   },
   "dependencies": {
+    "abab": "^2.0.0",
     "isomorphic-ws": "^4.0.1"
   },
   "optionalDependencies": {

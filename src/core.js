@@ -6,6 +6,7 @@
 */
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
 
+import { atob, btoa } from 'abab';
 import MD5 from 'md5';
 import SHA1 from 'sha1';
 import utils from 'utils';
