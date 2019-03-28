@@ -34,9 +34,9 @@
     "JC Brand (jcbrand)"
   ],
   "license": "MIT",
-  "main": "dist/strophe.js",
+  "main": "dist/strophe.min.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --mode production",
     "lint": "make jshint",
     "clean": "make clean",
     "doc": "make doc",
