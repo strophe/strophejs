@@ -7,10 +7,10 @@
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
-import WebSocket from 'isomorphic-ws';
 import core from 'core';
 
-const DOMParser = typeof DOMParser === 'undefined' ? require('xmldom').DOMParser : DOMParser
+const WebSocket = typeof WebSocket === 'undefined' ? require('ws') : WebSocket;
+const DOMParser = typeof DOMParser === 'undefined' ? require('xmldom').DOMParser : DOMParser;
 const Strophe = core.Strophe;
 const $build = core.$build;
 
@@ -157,7 +157,7 @@ Strophe.Websocket.prototype = {
         // Ensure that there is no open WebSocket from a previous Connection.
         this._closeSocket();
 
-        // Create the new WobSocket
+        // Create the new WebSocket
         this.socket = new WebSocket(this._conn.service, "xmpp");
         this.socket.onopen = this._onOpen.bind(this);
         this.socket.onerror = this._onError.bind(this);

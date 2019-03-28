@@ -41,10 +41,6 @@ const config = {
     },
     resolve: {
         extensions: ['.js'],
-        // TODO: this only takes isomorphic-ws node entrypoint
-        // and not the browser one. Find a way to make webpack
-        // bundle both.
-        mainFields: ['main'],
         modules: [
             'node_modules',
             path.resolve(__dirname, "src")

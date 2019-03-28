@@ -68,10 +68,10 @@
     "yarpm": "^0.2.1"
   },
   "dependencies": {
-    "abab": "^2.0.0",
-    "isomorphic-ws": "^4.0.1"
+    "abab": "^2.0.0"
   },
   "optionalDependencies": {
+    "ws": "^6.2.1",
     "xmldom": "^0.1.27"
   }
 }
