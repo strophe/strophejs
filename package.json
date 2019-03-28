@@ -40,7 +40,7 @@
     "lint": "make jshint",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "npm run build"
+    "prepare": "yarpm run build"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
@@ -49,8 +49,8 @@
     "@babel/cli": "^7.1.0",
     "@babel/core": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
-    "babel-loader": "^8.0.0",
     "almond": "~0.3.0",
+    "babel-loader": "^8.0.0",
     "es6-promise": "^4.1.0",
     "eslint": "4.19.1",
     "http-server": "^0.10.0",
@@ -58,11 +58,12 @@
     "minimist": "^1.2.0",
     "npm": "^5.7.1",
     "qunitjs": "~1.16.0",
-    "run-headless-chromium": "^0.1.1",
     "requirejs": "2.3.5",
+    "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0",
     "webpack": "^4.0.1",
-    "webpack-cli": "^2.1.4"
+    "webpack-cli": "^2.1.4",
+    "yarpm": "^0.2.1"
   }
 }
