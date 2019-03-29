@@ -6,6 +6,10 @@ require.config({
         // Examples
         "basic":            "examples/basic",
 
+        // Not really used, only to make requirejs not complain in tests
+        "xmldom":           "node_modules/xmldom/dom-parser",
+        "ws":               "node_modules/ws/index",
+
         // Tests
         "jquery":           "node_modules/jquery/dist/jquery",
         "sinon":            "node_modules/sinon/pkg/sinon",
