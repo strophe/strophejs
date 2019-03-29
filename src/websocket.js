@@ -9,8 +9,22 @@
 
 import core from 'core';
 
-const WebSocket = typeof WebSocket === 'undefined' ? require('ws') : WebSocket;
-const DOMParser = typeof DOMParser === 'undefined' ? require('xmldom').DOMParser : DOMParser;
+let nodeDOMParser;
+let nodeWebSocket;
+// If running in a non-browser environment, like nodejs, load
+// optional modules providing alternatives to browser globals
+if (typeof WebSocket === 'undefined') {
+    try {
+        nodeWebSocket = require('ws');
+        nodeDOMParser = require('xmldom').DOMParser;
+    } catch (err) {
+        core.Strophe.error('You must install "ws" to use Websockets on nodejs');
+        core.Strophe.error('You must install "xmldom" to use Websockets on nodejs');
+    }
+}
+
+const DOMParser = typeof DOMParser === 'undefined' ? nodeDOMParser: DOMParser;
+const WebSocket = typeof WebSocket === 'undefined' ? nodeWebSocket : WebSocket;
 const Strophe = core.Strophe;
 const $build = core.$build;
 

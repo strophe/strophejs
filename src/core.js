@@ -11,6 +11,15 @@ import MD5 from 'md5';
 import SHA1 from 'sha1';
 import utils from 'utils';
 
+let xmldom;
+if (typeof document === 'undefined') {
+    try {
+        xmldom = require('xmldom');
+    } catch (err) {
+        Strophe.error('xmldom is a required dependency on nodejs.');
+    }
+}
+
 /** Function: $build
  *  Create a Strophe.Builder.
  *  This is an alias for 'new Strophe.Builder(name, attrs)'.
@@ -338,7 +347,6 @@ const Strophe = {
     _makeGenerator: function () {
         let doc;
         if (typeof document === 'undefined') {
-            const xmldom = require('xmldom')
             doc = new xmldom.DOMImplementation().createDocument('jabber:client', 'strophe', null)
         } else if (
             document.implementation.createDocument === undefined ||
@@ -526,7 +534,7 @@ const Strophe = {
             node.async="false";
             node.loadXML(html);
         } else {
-            const parser = require('xmldom').DOMParser;
+            const parser = xmldom.DOMParser;
             node = parser.parseFromString(html, "text/xml");
         }
         return node;
