@@ -11,6 +11,16 @@ import core from 'core';
 
 const Strophe = core.Strophe;
 const $build = core.$build;
+let nodeXHR;
+// If running in a non-browser environment, like nodejs, load
+// optional modules providing alternatives to browser globals
+if (typeof window === 'undefined') {
+    try {
+        nodeXHR = require('xhr2');
+    } catch (err) {
+        core.Strophe.error('You must install "xhr2" to use BOSH on nodejs');
+    }
+}
 
 
 /** PrivateClass: Strophe.Request
@@ -110,13 +120,15 @@ Strophe.Request.prototype = {
      */
     _newXHR: function () {
         let xhr = null;
-        if (window.XMLHttpRequest) {
+        if (typeof window === 'undefined') {
+            xhr = nodeXHR;
+        } else if (window.XMLHttpRequest) {
             xhr = new XMLHttpRequest();
-            if (xhr.overrideMimeType) {
-                xhr.overrideMimeType("text/xml; charset=utf-8");
-            }
         } else if (window.ActiveXObject) {
             xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        if (xhr.overrideMimeType) {
+            xhr.overrideMimeType("text/xml; charset=utf-8");
         }
         // use Function.bind() to prepend ourselves as an argument
         xhr.onreadystatechange = this.func.bind(null, this);

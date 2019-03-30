@@ -59,7 +59,7 @@
     "minimist": "^1.2.0",
     "npm": "^5.7.1",
     "qunitjs": "~1.16.0",
-    "requirejs": "2.3.5",
+    "requirejs": "^2.3.5",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0",
@@ -72,6 +72,7 @@
   },
   "optionalDependencies": {
     "ws": "^6.2.1",
+    "xhr2": "^0.1.4",
     "xmldom": "^0.1.27"
   }
 }

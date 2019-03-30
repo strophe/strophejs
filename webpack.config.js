@@ -9,7 +9,8 @@ const config = {
     externals: [{
         "xmldom": "xmldom",
         "window": "window",
-        "ws": "ws"
+        "ws": "ws",
+        "xhr2": "xhr2"
     }],
     output: {
         path: path.resolve(__dirname, 'dist'),
