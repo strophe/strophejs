@@ -741,6 +741,7 @@ const Strophe = {
      *    A String containing the resource.
      */
     getResourceFromJid: function (jid) {
+        if (!jid) { return null; }
         const s = jid.split("/");
         if (s.length < 2) { return null; }
         s.splice(0, 1);
