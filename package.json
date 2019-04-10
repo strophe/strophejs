@@ -15,6 +15,7 @@
     "browser"
   ],
   "files": [
+    "src/",
     "dist/",
     "CHANGELOG.txt",
     "LICENSE.txt",
