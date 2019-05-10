@@ -2364,7 +2364,7 @@ Strophe.Connection.prototype = {
      */
     disconnect: function (reason) {
         this._changeConnectStatus(Strophe.Status.DISCONNECTING, reason);
-        Strophe.info("Disconnect was called because: " + reason);
+        Strophe.warn("Disconnect was called because: " + reason);
         if (this.connected) {
             let pres = false;
             this.disconnecting = true;
@@ -2379,7 +2379,7 @@ Strophe.Connection.prototype = {
                 3000, this._onDisconnectTimeout.bind(this));
             this._proto._disconnect(pres);
         } else {
-            Strophe.info("Disconnect was called before Strophe connected to the server");
+            Strophe.warn("Disconnect was called before Strophe connected to the server");
             this._proto._abortAllRequests();
             this._doDisconnect();
         }
@@ -2437,7 +2437,7 @@ Strophe.Connection.prototype = {
             this._disconnectTimeout = null;
         }
 
-        Strophe.info("_doDisconnect was called");
+        Strophe.debug("_doDisconnect was called");
         this._proto._doDisconnect();
 
         this.authenticated = false;
@@ -2470,7 +2470,7 @@ Strophe.Connection.prototype = {
      *    (string) req - The stanza a raw string (optiona).
      */
     _dataRecv: function (req, raw) {
-        Strophe.info("_dataRecv called");
+        Strophe.debug("_dataRecv called");
         const elem = this._proto._reqToData(req);
         if (elem === null) { return; }
 
@@ -2582,7 +2582,7 @@ Strophe.Connection.prototype = {
      *      want to do something special).
      */
     _connect_cb: function (req, _callback, raw) {
-        Strophe.info("_connect_cb was called");
+        Strophe.debug("_connect_cb was called");
         this.connected = true;
 
         let bodyWrap;
@@ -2948,7 +2948,7 @@ Strophe.Connection.prototype = {
      */
     _sasl_bind_cb: function (elem) {
         if (elem.getAttribute("type") === "error") {
-            Strophe.info("SASL binding failed.");
+            Strophe.warn("SASL binding failed.");
             const conflict = elem.getElementsByTagName("conflict");
             let condition;
             if (conflict.length > 0) {
@@ -2978,7 +2978,7 @@ Strophe.Connection.prototype = {
                 }
             }
         } else {
-            Strophe.info("SASL binding failed.");
+            Strophe.warn("SASL binding failed.");
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -3001,7 +3001,7 @@ Strophe.Connection.prototype = {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
-            Strophe.info("Session creation failed.");
+            Strophe.warn("Session creation failed.");
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -3108,7 +3108,7 @@ Strophe.Connection.prototype = {
      *    false to remove the handler.
      */
     _onDisconnectTimeout: function () {
-        Strophe.info("_onDisconnectTimeout was called");
+        Strophe.debug("_onDisconnectTimeout was called");
         this._changeConnectStatus(Strophe.Status.CONNTIMEOUT, null);
         this._proto._onDisconnectTimeout();
         // actually disconnect

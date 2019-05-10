@@ -522,8 +522,7 @@ Strophe.Bosh.prototype = {
         // if no requests are in progress, poll
         if (this._conn.authenticated && this._requests.length === 0 &&
             data.length === 0 && !this._conn.disconnecting) {
-            Strophe.info("no requests during idle cycle, sending " +
-                         "blank request");
+            Strophe.debug("no requests during idle cycle, sending blank request");
             data.push(null);
         }
 
@@ -851,7 +850,7 @@ Strophe.Bosh.prototype = {
      *  presence if authentication has completed.
      */
     _sendTerminate: function (pres) {
-        Strophe.info("_sendTerminate was called");
+        Strophe.debug("_sendTerminate was called");
         const body = this._buildBody().attrs({type: "terminate"});
         if (pres) {
             body.cnode(pres.tree());

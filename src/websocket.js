@@ -288,7 +288,7 @@ Strophe.Websocket.prototype = {
             try {
                 this.socket.send(closeString);
             } catch (e) {
-                Strophe.info("Couldn't send <close /> tag.");
+                Strophe.warn("Couldn't send <close /> tag.");
             }
         }
         this._conn._doDisconnect();
@@ -300,7 +300,7 @@ Strophe.Websocket.prototype = {
      *  Just closes the Socket for WebSockets
      */
     _doDisconnect: function () {
-        Strophe.info("WebSockets _doDisconnect was called");
+        Strophe.debug("WebSockets _doDisconnect was called");
         this._closeSocket();
     },
 
@@ -361,7 +361,7 @@ Strophe.Websocket.prototype = {
             );
             this._conn._doDisconnect();
         } else {
-            Strophe.info("Websocket closed");
+            Strophe.debug("Websocket closed");
         }
     },
 
@@ -503,7 +503,7 @@ Strophe.Websocket.prototype = {
      * The opening stream tag is sent here.
      */
     _onOpen: function() {
-        Strophe.info("Websocket open");
+        Strophe.debug("Websocket open");
         const start = this._buildStream();
         this._conn.xmlOutput(start.tree());
 
