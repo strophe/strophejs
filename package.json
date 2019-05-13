@@ -37,11 +37,12 @@
   "license": "MIT",
   "main": "dist/strophe.min.js",
   "scripts": {
+    "dev": "webpack --mode development",
     "build": "webpack --mode production",
     "lint": "make jshint",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "yarpm run build"
+    "prepare": "yarpm run build && yarpm run dev"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
