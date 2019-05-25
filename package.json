@@ -35,10 +35,12 @@
     "JC Brand (jcbrand)"
   ],
   "license": "MIT",
-  "main": "dist/strophe.min.js",
+  "main": "dist/strophe.common.js",
+  "browser": "dist/strophe.umd.js",
+  "module": "dist/strophe.esm.js",
   "scripts": {
     "dev": "webpack --mode development",
-    "build": "webpack --mode production",
+    "build": "rollup -c",
     "lint": "make jshint",
     "clean": "make clean",
     "doc": "make doc",
@@ -61,11 +63,14 @@
     "npm": "^5.7.1",
     "qunitjs": "~1.16.0",
     "requirejs": "2.3.5",
+    "rollup": "^1.12.3",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-commonjs": "^10.0.0",
+    "rollup-plugin-node-resolve": "^5.0.0",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0",
-    "webpack": "^4.0.1",
-    "webpack-cli": "^2.1.4",
     "yarpm": "^0.2.1"
-  }
+  },
+  "dependencies": {}
 }
