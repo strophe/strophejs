@@ -6,9 +6,9 @@
 */
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
 
-import MD5 from 'md5';
-import SHA1 from 'sha1';
-import utils from 'utils';
+import MD5 from './md5';
+import SHA1 from './sha1';
+import utils from './utils';
 
 /** Function: $build
  *  Create a Strophe.Builder.
