@@ -19,7 +19,7 @@ export default [
             commonjs(),
             globals(),
             babel({
-                exclude: ['node_modules/**'],
+                babelrc: false,
                 presets: [
                     ['@babel/preset-env', {
                         targets: {
@@ -43,7 +43,7 @@ export default [
             commonjs(),
             globals(),
             babel({
-                exclude: ['node_modules/**'],
+                babelrc: false,
                 presets: [
                     ['@babel/preset-env', {
                         targets: {
@@ -58,7 +58,7 @@ export default [
     // CommonJS (for Node) and ES module (for bundlers) build.
     {
         input: 'src/strophe.js',
-        external: ['window', 'md5'],
+        external: ['window', 'abab'],
         output: [
             { file: pkg.main, format: 'cjs' },
             { file: pkg.module, format: 'es' }
@@ -66,7 +66,7 @@ export default [
         plugins: [
             globals(),
             babel({
-                exclude: ['node_modules/**'],
+                babelrc: false,
                 presets: [
                     ['@babel/preset-env']
                 ]
