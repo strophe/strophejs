@@ -6,20 +6,20 @@ import { uglify } from 'rollup-plugin-uglify';
 import pkg from './package.json';
 
 export default [
-	// browser-friendly UMD build
-	{
-		input: 'src/strophe.js',
-		output: {
-			name: 'strophe',
-			file: pkg.browser,
-			format: 'umd'
-		},
-		plugins: [
-			resolve(),
-			commonjs(),
+    // browser-friendly UMD build
+    {
+        input: 'src/strophe.js',
+        output: {
+            name: 'strophe',
+            file: pkg.browser,
+            format: 'umd'
+        },
+        plugins: [
+            resolve(),
+            commonjs(),
             globals(),
-			babel({
-				exclude: ['node_modules/**'],
+            babel({
+                exclude: ['node_modules/**'],
                 presets: [
                     ['@babel/preset-env', {
                         targets: {
@@ -27,22 +27,22 @@ export default [
                         }
                     }]
                 ]
-			})
-		]
-	},
-	// Minified UMD build
-	{
-		input: 'src/strophe.js',
-		output: {
-			name: 'strophe',
-			file: 'dist/strophe.umd.min.js',
-			format: 'umd'
-		},
-		plugins: [
-			resolve(),
-			commonjs(),
+            })
+        ]
+    },
+    // Minified UMD build
+    {
+        input: 'src/strophe.js',
+        output: {
+            name: 'strophe',
+            file: 'dist/strophe.umd.min.js',
+            format: 'umd'
+        },
+        plugins: [
+            resolve(),
+            commonjs(),
             globals(),
-			babel({
+            babel({
                 exclude: ['node_modules/**'],
                 presets: [
                     ['@babel/preset-env', {
@@ -53,24 +53,24 @@ export default [
                 ]
             }),
             uglify()
-		]
-	},
-	// CommonJS (for Node) and ES module (for bundlers) build.
-	{
-		input: 'src/strophe.js',
-		external: ['window', 'md5'],
-		output: [
-			{ file: pkg.main, format: 'cjs' },
-			{ file: pkg.module, format: 'es' }
-		],
-		plugins: [
+        ]
+    },
+    // CommonJS (for Node) and ES module (for bundlers) build.
+    {
+        input: 'src/strophe.js',
+        external: ['window', 'md5'],
+        output: [
+            { file: pkg.main, format: 'cjs' },
+            { file: pkg.module, format: 'es' }
+        ],
+        plugins: [
             globals(),
-			babel({
-				exclude: ['node_modules/**'],
+            babel({
+                exclude: ['node_modules/**'],
                 presets: [
                     ['@babel/preset-env']
                 ]
-			})
-		]
-	}
+            })
+        ]
+    }
 ];
