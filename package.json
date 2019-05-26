@@ -73,7 +73,9 @@
     "sinon-qunit": "~2.0.0",
     "yarpm": "^0.2.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "abab": "^2.0.0"
+  },
   "optionalDependencies": {
     "ws": "^7.0.0",
     "xmldom": "^0.1.27"
