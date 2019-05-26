@@ -39,6 +39,7 @@
   "main": "dist/strophe.common.js",
   "browser": "dist/strophe.umd.js",
   "module": "dist/strophe.esm.js",
+  "unpkg": "dist/strophe.umd.min.js",
   "scripts": {
     "build": "rollup -c",
     "lint": "make jshint",
