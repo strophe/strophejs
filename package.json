@@ -50,11 +50,9 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
-    "@babel/cli": "^7.1.0",
-    "@babel/core": "^7.1.0",
+    "@babel/core": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
     "almond": "~0.3.0",
-    "babel-loader": "^8.0.0",
     "es6-promise": "^4.1.0",
     "eslint": "4.19.1",
     "http-server": "^0.10.0",
