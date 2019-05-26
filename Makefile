@@ -8,21 +8,20 @@ NDPROJ_DIR 		= ndproj
 SED				?= sed
 SHELL			?= /usr/env/bin/bash
 SRC_DIR			= src
-STROPHE			= dist/strophe.js
-STROPHE_MIN		= dist/strophe.min.js
+STROPHE			= dist/strophe.umd.js
 
-all: doc $(STROPHE) $(STROPHE_MIN)
+all: doc $(STROPHE)
 
 .PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of the following:"
 	@echo ""
-	@echo " all         Update docs + build $(STROPHE) and $(STROPHE_MIN)"
+	@echo " all         Update docs + build strophe"
 	@echo " doc         Update docs"
-	@echo " dist        Build $(STROPHE) and $(STROPHE_MIN)"
+	@echo " dist        Build strophe"
 	@echo " check       Build and run the tests"
 	@echo " eslint      Check code quality"
-	@echo " release     Prepare a new release of $(STROPHE). E.g. \`make release VERSION=1.2.14\`"
+	@echo " release     Prepare a new release of strophe. E.g. \`make release VERSION=1.2.14\`"
 	@echo " serve       Serve this directory via a webserver on port 8000."
 	@echo " stamp-npm   Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
 	@echo ""
@@ -57,15 +56,10 @@ watchjs: stamp-npm
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
 .PHONY: dist
-dist: $(STROPHE) $(STROPHE_MIN)
+dist: $(STROPHE)
 
-$(STROPHE_MIN): src webpack.config.js node_modules Makefile stamp-npm
-	./node_modules/.bin/npx  webpack --mode=production
-	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE_MIN)
-
-$(STROPHE): src webpack.config.js node_modules Makefile stamp-npm
-	./node_modules/.bin/npx  webpack --mode=development
-	$(SED) -i s/@VERSION@/$(VERSION)/ $(STROPHE)
+$(STROPHE): src rollup.config.js node_modules Makefile stamp-npm
+	npm run build
 
 .PHONY: eslint
 eslint: stamp-npm
