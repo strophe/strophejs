@@ -9,6 +9,7 @@
 import MD5 from './md5';
 import SHA1 from './sha1';
 import utils from './utils';
+import * as shims from './shims';
 
 /** Function: $build
  *  Create a Strophe.Builder.
@@ -330,26 +331,6 @@ const Strophe = {
      */
     _xmlGenerator: null,
 
-    /** PrivateFunction: _makeGenerator
-     *  _Private_ function that creates a dummy XML DOM document to serve as
-     *  an element and text node generator.
-     */
-    _makeGenerator: function () {
-        let doc;
-        // IE9 does implement createDocument(); however, using it will cause the browser to leak memory on page unload.
-        // Here, we test for presence of createDocument() plus IE's proprietary documentMode attribute, which would be
-        // less than 10 in the case of IE9 and below.
-        if (document.implementation.createDocument === undefined ||
-                    document.implementation.createDocument && document.documentMode && document.documentMode < 10) {
-            doc = this._getIEXmlDom();
-            doc.appendChild(doc.createElement('strophe'));
-        } else {
-            doc = document.implementation
-                .createDocument('jabber:client', 'strophe', null);
-        }
-        return doc;
-    },
-
     /** Function: xmlGenerator
      *  Get the DOM document to generate elements.
      *
@@ -358,43 +339,9 @@ const Strophe = {
      */
     xmlGenerator: function () {
         if (!Strophe._xmlGenerator) {
-            Strophe._xmlGenerator = Strophe._makeGenerator();
+            Strophe._xmlGenerator = shims.getDummyXMLDOMDocument()
         }
         return Strophe._xmlGenerator;
-    },
-
-    /** PrivateFunction: _getIEXmlDom
-     *  Gets IE xml doc object
-     *
-     *  Returns:
-     *    A Microsoft XML DOM Object
-     *  See Also:
-     *    http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
-     */
-    _getIEXmlDom : function() {
-        let doc = null;
-        const docStrings = [
-            "Msxml2.DOMDocument.6.0",
-            "Msxml2.DOMDocument.5.0",
-            "Msxml2.DOMDocument.4.0",
-            "MSXML2.DOMDocument.3.0",
-            "MSXML2.DOMDocument",
-            "MSXML.DOMDocument",
-            "Microsoft.XMLDOM"
-        ];
-
-        for (let d=0; d<docStrings.length; d++) {
-            if (doc === null) {
-                try {
-                    doc = new ActiveXObject(docStrings[d]);
-                } catch (e) {
-                    doc = null;
-                }
-            } else {
-                break;
-            }
-        }
-        return doc;
     },
 
     /** Function: xmlElement
@@ -512,8 +459,8 @@ const Strophe = {
     xmlHtmlNode: function (html) {
         let node;
         //ensure text is escaped
-        if (DOMParser) {
-            const parser = new DOMParser();
+        if (shims.DOMParser) {
+            const parser = new shims.DOMParser();
             node = parser.parseFromString(html, "text/xml");
         } else {
             node = new ActiveXObject("Microsoft.XMLDOM");
@@ -1160,7 +1107,7 @@ Strophe.Builder.prototype = {
      *    The Strophe.Builder object.
      */
     h: function (html) {
-        const fragment = document.createElement('body');
+        const fragment = Strophe.xmlGenerator().createElement('body');
         // force the browser to try and fix any invalid HTML tags
         fragment.innerHTML = html;
         // copy cleaned html into an xml dom
@@ -3505,7 +3452,6 @@ Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", tru
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.pass !== null;
 };
-
 Strophe.SASLOAuthBearer.prototype.onChallenge = function(connection) {
     let auth_str = 'n,';
     if (connection.authcid !== null) {

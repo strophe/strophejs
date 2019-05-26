@@ -8,6 +8,7 @@
 /* global window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject */
 
 import core from './core';
+import { DOMParser } from './shims'
 
 const Strophe = core.Strophe;
 const $build = core.$build;
