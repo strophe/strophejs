@@ -1,7 +1,7 @@
 require.config({
     baseUrl: '../',
     paths: {
-        "strophe":          "dist/strophe.min",
+        "strophe":          "dist/strophe.umd",
 
         // Examples
         "basic":            "examples/basic",

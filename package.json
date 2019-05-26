@@ -35,16 +35,16 @@
     "JC Brand (jcbrand)"
   ],
   "license": "MIT",
+  "browserslist": ">1%, maintained node versions",
   "main": "dist/strophe.common.js",
   "browser": "dist/strophe.umd.js",
   "module": "dist/strophe.esm.js",
   "scripts": {
-    "dev": "webpack --mode development",
     "build": "rollup -c",
     "lint": "make jshint",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "yarpm run build && yarpm run dev"
+    "prepare": "yarpm run build"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
@@ -52,7 +52,7 @@
   "devDependencies": {
     "@babel/cli": "^7.1.0",
     "@babel/core": "^7.1.0",
-    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-env": "^7.4.5",
     "almond": "~0.3.0",
     "babel-loader": "^8.0.0",
     "es6-promise": "^4.1.0",
@@ -66,7 +66,9 @@
     "rollup": "^1.12.3",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^10.0.0",
+    "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.0.0",
+    "rollup-plugin-uglify": "^6.0.2",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "sinon-qunit": "~2.0.0",
