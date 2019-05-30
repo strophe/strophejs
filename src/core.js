@@ -1915,11 +1915,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XML data received by the connection.
      */
-    /* jshint unused:false */
     xmlInput: function (elem) {
         return;
     },
-    /* jshint unused:true */
 
     /** Function: xmlOutput
      *  User overrideable function that receives XML data sent to the
@@ -1939,11 +1937,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XMLdata sent by the connection.
      */
-    /* jshint unused:false */
     xmlOutput: function (elem) {
         return;
     },
-    /* jshint unused:true */
 
     /** Function: rawInput
      *  User overrideable function that receives raw data coming into the
@@ -1957,11 +1953,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data received by the connection.
      */
-    /* jshint unused:false */
     rawInput: function (data) {
         return;
     },
-    /* jshint unused:true */
 
     /** Function: rawOutput
      *  User overrideable function that receives raw data sent to the
@@ -1975,11 +1969,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data sent by the connection.
      */
-    /* jshint unused:false */
     rawOutput: function (data) {
         return;
     },
-    /* jshint unused:true */
 
     /** Function: nextValidRid
      *  User overrideable function that receives the new valid rid.
@@ -1992,11 +1984,9 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (Number) rid - The next valid rid
      */
-    /* jshint unused:false */
     nextValidRid: function (rid) {
         return;
     },
-    /* jshint unused:true */
 
     /** Function: send
      *  Send a stanza.
@@ -2775,7 +2765,6 @@ Strophe.Connection.prototype = {
     /** PrivateFunction: _attemptLegacyAuth
      *
      *  Attempt legacy (i.e. non-SASL) authentication.
-     *
      */
     _attemptLegacyAuth: function () {
         if (Strophe.getNodeFromJid(this.jid) === null) {
@@ -2837,7 +2826,6 @@ Strophe.Connection.prototype = {
         this.send(iq.tree());
         return false;
     },
-    /* jshint unused:true */
 
     /** PrivateFunction: _sasl_success_cb
      *  _Private_ handler for succesful SASL authentication.
@@ -3074,7 +3062,6 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    /* jshint unused:false */
     _sasl_failure_cb: function (elem) {
         // delete unneeded handlers
         if (this._sasl_success_handler) {
@@ -3091,7 +3078,6 @@ Strophe.Connection.prototype = {
         this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
         return false;
     },
-    /* jshint unused:true */
 
     /** PrivateFunction: _auth2_cb
      *  _Private_ handler to finish legacy authentication.
@@ -3303,11 +3289,9 @@ Strophe.SASLMechanism.prototype = {
      *  Returns:
      *    (Boolean) If mechanism was able to run.
      */
-    /* jshint unused:false */
     test: function(connection) {
         return true;
     },
-    /* jshint unused:true */
 
     /** PrivateFunction: onStart
      *  Called before starting mechanism on some connection.
@@ -3330,11 +3314,9 @@ Strophe.SASLMechanism.prototype = {
      *  Returns:
      *    (String) Mechanism response.
      */
-    /* jshint unused:false */
     onChallenge: function (connection, challenge) {
         throw new Error("You should implement challenge handling!");
     },
-    /* jshint unused:true */
 
     /** PrivateFunction: onFailure
      *  Protocol informs mechanism implementation about SASL failure.
