@@ -89,7 +89,7 @@ const Strophe = {
      *  NS.MUC - Multi-User Chat namespace from XEP 45.
      *  NS.SASL - XMPP SASL namespace from RFC 3920.
      *  NS.STREAM - XMPP Streams namespace from RFC 3920.
-     *  NS.BIND - XMPP Binding namespace from RFC 3920.
+     *  NS.BIND - XMPP Binding namespace from RFC 3920 and RFC 6120.
      *  NS.SESSION - XMPP Session namespace from RFC 3920.
      *  NS.XHTML_IM - XHTML-IM namespace from XEP 71.
      *  NS.XHTML - XHTML body namespace from XEP 71.
@@ -208,7 +208,8 @@ const Strophe = {
         DISCONNECTING: 7,
         ATTACHED: 8,
         REDIRECT: 9,
-        CONNTIMEOUT: 10
+        CONNTIMEOUT: 10,
+        BINDREQUIRED: 11
     },
 
     ErrorCondition: {
@@ -1466,6 +1467,16 @@ Strophe.TimedHandler.prototype = {
  *      ANONYMOUS - 20
  *      EXTERNAL - 10
  *
+ *  explicitResourceBinding:
+ *
+ *  If `explicitResourceBinding` is set to a truthy value, then the XMPP client
+ *  needs to explicitly call `Strophe.Connection.prototype.bind` once the XMPP
+ *  server has advertised the "urn:ietf:params:xml:ns:xmpp-bind" feature.
+ *
+ *  Making this step explicit allows client authors to first finish other
+ *  stream related tasks, such as setting up an XEP-0198 Stream Management
+ *  session, before binding the JID resource for this session.
+ *
  *  WebSocket options:
  *  ------------------
  *
@@ -2679,6 +2690,25 @@ Strophe.Connection.prototype = {
         return mechanisms;
     },
 
+    /** Function: authenticate
+     * Set up authentication
+     *
+     *  Continues the initial connection request by setting up authentication
+     *  handlers and starting the authentication process.
+     *
+     *  SASL authentication will be attempted if available, otherwise
+     *  the code will fall back to legacy authentication.
+     *
+     *  Parameters:
+     *    (Array) matched - Array of SASL mechanisms supported.
+     *
+     */
+    authenticate: function (matched) {
+        if (!this._attemptSASLAuth(matched)) {
+            this._attemptLegacyAuth();
+        }
+    },
+
     /** PrivateFunction: _attemptSASLAuth
      *
      *  Iterate through an array of SASL mechanisms and attempt authentication
@@ -2727,6 +2757,21 @@ Strophe.Connection.prototype = {
         return mechanism_found;
     },
 
+    /** PrivateFunction: _sasl_challenge_cb
+     *  _Private_ handler for the SASL challenge
+     *
+     */
+    _sasl_challenge_cb: function(elem) {
+      const challenge = atob(Strophe.getText(elem));
+      const response = this._sasl_mechanism.onChallenge(this, challenge);
+      const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
+      if (response !== "") {
+        stanza.t(btoa(response));
+      }
+      this.send(stanza.tree());
+      return true;
+    },
+
     /** PrivateFunction: _attemptLegacyAuth
      *
      *  Attempt legacy (i.e. non-SASL) authentication.
@@ -2745,7 +2790,7 @@ Strophe.Connection.prototype = {
             // Fall back to legacy authentication
             this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
             this._addSysHandler(
-                this._auth1_cb.bind(this),
+                this._onLegacyAuthIQResult.bind(this),
                 null, null, null, "_auth_1"
             );
             this.send($iq({
@@ -2758,41 +2803,7 @@ Strophe.Connection.prototype = {
         }
     },
 
-    /** Function: authenticate
-     * Set up authentication
-     *
-     *  Continues the initial connection request by setting up authentication
-     *  handlers and starting the authentication process.
-     *
-     *  SASL authentication will be attempted if available, otherwise
-     *  the code will fall back to legacy authentication.
-     *
-     *  Parameters:
-     *    (Array) matched - Array of SASL mechanisms supported.
-     *
-     */
-    authenticate: function (matched) {
-        if (!this._attemptSASLAuth(matched)) {
-            this._attemptLegacyAuth();
-        }
-    },
-
-    /** PrivateFunction: _sasl_challenge_cb
-     *  _Private_ handler for the SASL challenge
-     *
-     */
-    _sasl_challenge_cb: function(elem) {
-      const challenge = atob(Strophe.getText(elem));
-      const response = this._sasl_mechanism.onChallenge(this, challenge);
-      const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
-      if (response !== "") {
-        stanza.t(btoa(response));
-      }
-      this.send(stanza.tree());
-      return true;
-    },
-
-    /** PrivateFunction: _auth1_cb
+    /** PrivateFunction: _onLegacyAuthIQResult
      *  _Private_ handler for legacy authentication.
      *
      *  This handler is called in response to the initial <iq type='get'/>
@@ -2806,8 +2817,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    /* jshint unused:false */
-    _auth1_cb: function (elem) {
+    _onLegacyAuthIQResult: function (elem) {
         // build plaintext auth iq
         const iq = $iq({type: "set", id: "_auth_2"})
             .c('query', {xmlns: Strophe.NS.AUTH})
@@ -2876,7 +2886,7 @@ Strophe.Connection.prototype = {
             while (handlers.length) {
                 this.deleteHandler(handlers.pop());
             }
-            this._sasl_auth1_cb(elem);
+            this._onStreamFeaturesAfterSASL(elem);
             return false;
         };
         streamfeature_handlers.push(
@@ -2894,16 +2904,14 @@ Strophe.Connection.prototype = {
         return false;
     },
 
-    /** PrivateFunction: _sasl_auth1_cb
-     *  _Private_ handler to start stream binding.
-     *
+    /** PrivateFunction: _onStreamFeaturesAfterSASL
      *  Parameters:
      *    (XMLElement) elem - The matching stanza.
      *
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_auth1_cb: function (elem) {
+     _onStreamFeaturesAfterSASL: function (elem) {
         // save stream:features for future usage
         this.features = elem;
         for (let i=0; i < elem.childNodes.length; i++) {
@@ -2919,25 +2927,52 @@ Strophe.Connection.prototype = {
         if (!this.do_bind) {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null);
             return false;
+        } else if (!this.options.explicitResourceBinding) {
+            this.bind();
         } else {
-            this._addSysHandler(this._sasl_bind_cb.bind(this), null, null,
-                                null, "_bind_auth_2");
-
-            const resource = Strophe.getResourceFromJid(this.jid);
-            if (resource) {
-                this.send($iq({type: "set", id: "_bind_auth_2"})
-                          .c('bind', {xmlns: Strophe.NS.BIND})
-                          .c('resource', {}).t(resource).tree());
-            } else {
-                this.send($iq({type: "set", id: "_bind_auth_2"})
-                          .c('bind', {xmlns: Strophe.NS.BIND})
-                          .tree());
-            }
+            this._changeConnectStatus(Strophe.Status.BINDREQUIRED, null);
         }
         return false;
     },
 
-    /** PrivateFunction: _sasl_bind_cb
+    /** Function: bind
+     *
+     *  Sends an IQ to the XMPP server to bind a JID resource for this session.
+     *
+     *  https://tools.ietf.org/html/rfc6120#section-7.5
+     *
+     *  If `explicitResourceBinding` was set to a truthy value in the options
+     *  passed to the Strophe.Connection constructor, then this function needs
+     *  to be called explicitly by the client author.
+     *
+     *  Otherwise it'll be called automatically as soon as the XMPP server
+     *  advertises the "urn:ietf:params:xml:ns:xmpp-bind" stream feature.
+     */
+    bind: function () {
+        if (!this.do_bind) {
+            Strophe.log(
+                 Strophe.LogLevel.INFO,
+                `Strophe.Connection.prototype.bind called but "do_bind" is false`
+            );
+            return;
+        }
+        this._addSysHandler(
+            this._onResourceBindResultIQ.bind(this),
+            null, null, null, "_bind_auth_2");
+
+        const resource = Strophe.getResourceFromJid(this.jid);
+        if (resource) {
+            this.send($iq({type: "set", id: "_bind_auth_2"})
+                      .c('bind', {xmlns: Strophe.NS.BIND})
+                      .c('resource', {}).t(resource).tree());
+        } else {
+            this.send($iq({type: "set", id: "_bind_auth_2"})
+                      .c('bind', {xmlns: Strophe.NS.BIND})
+                      .tree());
+        }
+    },
+
+    /** PrivateFunction: _onResourceBindIQ
      *  _Private_ handler for binding result and session start.
      *
      *  Parameters:
@@ -2946,9 +2981,9 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_bind_cb: function (elem) {
+    _onResourceBindResultIQ: function (elem) {
         if (elem.getAttribute("type") === "error") {
-            Strophe.warn("SASL binding failed.");
+            Strophe.warn("Resource binding failed.");
             const conflict = elem.getElementsByTagName("conflict");
             let condition;
             if (conflict.length > 0) {
@@ -2957,38 +2992,60 @@ Strophe.Connection.prototype = {
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, condition, elem);
             return false;
         }
-
         // TODO - need to grab errors
         const bind = elem.getElementsByTagName("bind");
         if (bind.length > 0) {
             const jidNode = bind[0].getElementsByTagName("jid");
             if (jidNode.length > 0) {
                 this.jid = Strophe.getText(jidNode[0]);
-
                 if (this.do_session) {
-                    this._addSysHandler(this._sasl_session_cb.bind(this),
-                                        null, null, null, "_session_auth_2");
-
-                    this.send($iq({type: "set", id: "_session_auth_2"})
-                                  .c('session', {xmlns: Strophe.NS.SESSION})
-                                  .tree());
+                    this._establishSession();
                 } else {
                     this.authenticated = true;
                     this._changeConnectStatus(Strophe.Status.CONNECTED, null);
                 }
             }
         } else {
-            Strophe.warn("SASL binding failed.");
+            Strophe.warn("Resource binding failed.");
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
         }
     },
 
-    /** PrivateFunction: _sasl_session_cb
-     *  _Private_ handler to finish successful SASL connection.
+    /** PrivateFunction: _establishSession
+     *  Send IQ request to establish a session with the XMPP server.
+     *
+     *  See https://xmpp.org/rfcs/rfc3921.html#session
+     *
+     *  Note: The protocol for session establishment has been determined as
+     *  unnecessary and removed in RFC-6121.
+     */
+    _establishSession: function () {
+        if (!this.do_session) {
+            throw new Error(`Strophe.Connection.prototype._establishSession `+
+                `called but apparently ${Strophe.NS.SESSION} wasn't advertised by the server`);
+        }
+        this._addSysHandler(
+            this._onSessionResultIQ.bind(this),
+            null, null, null, "_session_auth_2");
+
+        this.send(
+            $iq({type: "set", id: "_session_auth_2"})
+                .c('session', {xmlns: Strophe.NS.SESSION})
+                .tree());
+    },
+
+    /** PrivateFunction: _onSessionResultIQ
+     *  _Private_ handler for the server's IQ response to a client's session
+     *  request.
      *
      *  This sets Connection.authenticated to true on success, which
      *  starts the processing of user handlers.
+     *
+     *  See https://xmpp.org/rfcs/rfc3921.html#session
+     *
+     *  Note: The protocol for session establishment has been determined as
+     *  unnecessary and removed in RFC-6121.
      *
      *  Parameters:
      *    (XMLElement) elem - The matching stanza.
@@ -2996,7 +3053,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_session_cb: function (elem) {
+    _onSessionResultIQ: function (elem) {
         if (elem.getAttribute("type") === "result") {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
