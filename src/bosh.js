@@ -506,9 +506,7 @@ Strophe.Bosh.prototype = {
             const req = this._requests.pop();
             req.abort = true;
             req.xhr.abort();
-            // jslint complains, but this is fine. setting to empty func
-            // is necessary for IE6
-            req.xhr.onreadystatechange = function () {}; // jshint ignore:line
+            req.xhr.onreadystatechange = function () {};
         }
     },
 
