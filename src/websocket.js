@@ -321,7 +321,9 @@ Strophe.Websocket.prototype = {
     _closeSocket: function () {
         if (this.socket) {
             try {
+                this.socket.onclose = null;
                 this.socket.onerror = null;
+                this.socket.onmessage = null;
                 this.socket.close();
             } catch (e) {
                 Strophe.debug(e.message);
