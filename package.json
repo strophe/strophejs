@@ -42,7 +42,7 @@
   "unpkg": "dist/strophe.umd.min.js",
   "scripts": {
     "build": "rollup -c",
-    "lint": "make jshint",
+    "lint": "make eslint",
     "clean": "make clean",
     "doc": "make doc",
     "prepare": "yarpm run build"
