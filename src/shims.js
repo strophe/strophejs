@@ -80,6 +80,7 @@ function _getIEXmlDom () {
     ];
     for (let d = 0; d < docStrings.length; d++) {
         try {
+            // eslint-disable-next-line no-undef
             const doc = new ActiveXObject(docStrings[d]);
             return doc
         } catch (e) {

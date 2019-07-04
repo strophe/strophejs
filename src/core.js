@@ -6,12 +6,11 @@
 */
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
 
+import * as shims from './shims';
 import { atob, btoa } from 'abab'
-
 import MD5 from './md5';
 import SHA1 from './sha1';
 import utils from './utils';
-import * as shims from './shims';
 
 /** Function: $build
  *  Create a Strophe.Builder.
