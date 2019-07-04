@@ -8,6 +8,8 @@
  * NPM module that provides a compatible implementation.
  */
 
+/* global global */
+
 /**
  * WHATWG WebSockets API
  * https://www.w3.org/TR/websockets/
@@ -21,7 +23,7 @@
  *   https://www.npmjs.com/package/ws
  */
 function getWebSocketImplementation () {
-    let WebSocketImplementation = WebSocket
+    let WebSocketImplementation = global.WebSocket
     if (typeof WebSocketImplementation === 'undefined') {
         try {
             WebSocketImplementation = require('ws');
@@ -46,7 +48,7 @@ export const WebSocket = getWebSocketImplementation()
  *   https://www.npmjs.com/package/xmldom
  */
 function getDOMParserImplementation () {
-    let DOMParserImplementation = DOMParser
+    let DOMParserImplementation = global.DOMParser
     if (typeof DOMParserImplementation === 'undefined') {
         try {
             DOMParserImplementation = require('xmldom').DOMParser;
