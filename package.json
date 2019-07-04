@@ -69,8 +69,8 @@
     "rollup-plugin-node-resolve": "^5.0.0",
     "rollup-plugin-uglify": "^6.0.2",
     "run-headless-chromium": "^0.1.1",
-    "sinon": "1.17.7",
-    "sinon-qunit": "~2.0.0",
+    "sinon": "^2.4.1",
+    "sinon-qunit": "^2.0.0",
     "yarpm": "^0.2.1"
   },
   "dependencies": {
