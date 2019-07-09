@@ -374,7 +374,7 @@ Strophe.Websocket.prototype = {
      */
     _no_auth_received: function (callback) {
         Strophe.error("Server did not offer a supported authentication mechanism");
-        this._changeConnectStatus(
+        this._conn._changeConnectStatus(
             Strophe.Status.CONNFAIL,
             Strophe.ErrorCondition.NO_AUTH_MECH
         );
