@@ -12,3 +12,5 @@
 9. Tag code with version (git tag -s vVERSION )
 10. Push repo and tags (git push && git push --tags)
 11. Publish on NPM: "npm publish"
+12. Update the release notes on https://github.com/strophe/strophejs/releases
+13. Run `npm pack` and upload the tgz file to the releases page.
