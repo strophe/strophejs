@@ -24,13 +24,12 @@ const $build = core.$build;
 
 /** PrivateConstructor: Strophe.Request
  *  Create and initialize a new Strophe.Request object.
- *
- *  Parameters:
- *    (XMLElement) elem - The XML data to be sent in the request.
- *    (Function) func - The function that will be called when the
+ * 
+ *    @param {XMLElement} elem - The XML data to be sent in the request.
+ *    @param {function} func - The function that will be called when the
  *      XMLHttpRequest readyState changes.
- *    (Integer) rid - The BOSH rid attribute associated with this request.
- *    (Integer) sends - The number of times this same request has been sent.
+ *    @param {number} rid - The BOSH rid attribute associated with this request.
+ *    @param {number} sends - The number of times this same request has been sent.
  */
 Strophe.Request = function (elem, func, rid, sends) {
     this.id = ++Strophe._requestId;
@@ -66,12 +65,11 @@ Strophe.Request.prototype = {
      *  This function attempts to get a response from the request and checks
      *  for errors.
      *
-     *  Throws:
+     *  @throws
      *    "parsererror" - A parser error occured.
      *    "bad-format" - The entity has sent XML that cannot be processed.
      *
-     *  Returns:
-     *    The DOM element tree of the response.
+     *  @returns The DOM element tree of the response.
      */
     getResponse: function () {
         let node = null;
@@ -106,8 +104,7 @@ Strophe.Request.prototype = {
      *
      *  This function creates XMLHttpRequests across all implementations.
      *
-     *  Returns:
-     *    A new XMLHttpRequest.
+     *  @returns A new XMLHttpRequest.
      */
     _newXHR: function () {
         let xhr = null;
@@ -143,11 +140,9 @@ Strophe.Request.prototype = {
 /** PrivateConstructor: Strophe.Bosh
  *  Create and initialize a Strophe.Bosh object.
  *
- *  Parameters:
- *    (Strophe.Connection) connection - The Strophe.Connection that will use BOSH.
+ *    @param {Strophe.Connection} connection - The Strophe.Connection that will use BOSH.
  *
- *  Returns:
- *    A new Strophe.Bosh object.
+ *  @returns A new Strophe.Bosh object.
  */
 Strophe.Bosh = function(connection) {
     this._conn = connection;
@@ -184,8 +179,7 @@ Strophe.Bosh.prototype = {
     /** PrivateFunction: _buildBody
      *  _Private_ helper function to generate the <body/> wrapper for BOSH.
      *
-     *  Returns:
-     *    A Strophe.Builder with a <body/> element.
+     *  @returns A Strophe.Builder with a <body/> element.
      */
     _buildBody: function () {
         const bodyWrap = $build('body', {
@@ -260,20 +254,20 @@ Strophe.Bosh.prototype = {
      *  application.  This is often used to support auto-login type features
      *  without putting user credentials into the page.
      *
-     *  Parameters:
-     *    (String) jid - The full JID that is bound by the session.
-     *    (String) sid - The SID of the BOSH session.
-     *    (String) rid - The current RID of the BOSH session.  This RID
+     * 
+     *    @param {String} jid - The full JID that is bound by the session.
+     *    @param {String} sid - The SID of the BOSH session.
+     *    @param {String} rid - The current RID of the BOSH session.  This RID
      *      will be used by the next request.
-     *    (Function) callback The connect callback function.
-     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
+     *    @param {function} callback The connect callback function.
+     *    @param {number} wait - The optional HTTPBIND wait value.  This is the
      *      time the server will wait before returning an empty result for
      *      a request.  The default setting of 60 seconds is recommended.
      *      Other settings will require tweaks to the Strophe.TIMEOUT value.
-     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
+     *    @param {number} hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-     *    (Integer) wind - The optional HTTBIND window value.  This is the
+     *    @param {number} wind - The optional HTTBIND window value.  This is the
      *      allowed range of request ids that are valid.  The default is 5.
      */
     _attach: function (jid, sid, rid, callback, wait, hold, wind) {
@@ -295,21 +289,20 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _restore
      *  Attempt to restore a cached BOSH session
-     *
-     *  Parameters:
-     *    (String) jid - The full JID that is bound by the session.
+     *     
+     *    @param {string} jid - The full JID that is bound by the session.
      *      This parameter is optional but recommended, specifically in cases
      *      where prebinded BOSH sessions are used where it's important to know
      *      that the right session is being restored.
-     *    (Function) callback The connect callback function.
-     *    (Integer) wait - The optional HTTPBIND wait value.  This is the
+     *    @param {function} callback The connect callback function.
+     *    @param {number} wait - The optional HTTPBIND wait value.  This is the
      *      time the server will wait before returning an empty result for
      *      a request.  The default setting of 60 seconds is recommended.
      *      Other settings will require tweaks to the Strophe.TIMEOUT value.
-     *    (Integer) hold - The optional HTTPBIND hold value.  This is the
+     *    @param {number} hold - The optional HTTPBIND hold value.  This is the
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
-     *    (Integer) wind - The optional HTTBIND window value.  This is the
+     *    @param {number} wind - The optional HTTBIND window value.  This is the
      *      allowed range of request ids that are valid.  The default is 5.
      */
     _restore: function (jid, callback, wait, hold, wind) {
@@ -340,8 +333,8 @@ Strophe.Bosh.prototype = {
      *  _Private_ handler for the beforeunload event.
      *
      *  This handler is used to process the Bosh-part of the initial request.
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
+     *
+     *    @param {Strophe.Request} bodyWrap - The received stanza.
      */
     _cacheSession: function () {
         if (this._conn.authenticated) {
@@ -361,8 +354,8 @@ Strophe.Bosh.prototype = {
      *  _Private_ handler for initial connection request.
      *
      *  This handler is used to process the Bosh-part of the initial request.
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
+     *
+     *  @param {Strophe.Request} bodyWrap - The received stanza.
      */
     _connect_cb: function (bodyWrap) {
         const typ = bodyWrap.getAttribute("type");
@@ -400,9 +393,8 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _disconnect
      *  _Private_ part of Connection.disconnect for Bosh
-     *
-     *  Parameters:
-     *    (Request) pres - This stanza will be sent before disconnecting.
+     *     
+     *    @param {Request} pres - This stanza will be sent before disconnecting.
      */
     _disconnect: function (pres) {
         this._sendTerminate(pres);
@@ -426,8 +418,7 @@ Strophe.Bosh.prototype = {
     /** PrivateFunction: _emptyQueue
      * _Private_ function to check if the Request queue is empty.
      *
-     *  Returns:
-     *    True, if there are no Requests queued, False otherwise.
+     *  @returns {boolean} True, if there are no Requests queued, False otherwise.
      */
     _emptyQueue: function () {
         return this._requests.length === 0;
@@ -436,8 +427,7 @@ Strophe.Bosh.prototype = {
     /** PrivateFunction: _callProtocolErrorHandlers
      *  _Private_ function to call error handlers registered for HTTP errors.
      *
-     *  Parameters:
-     *    (Strophe.Request) req - The request that is changing readyState.
+     *  @param {Strophe.Request} req - The request that is changing readyState.
      */
     _callProtocolErrorHandlers: function (req) {
         const reqStatus = this._getRequestStatus(req);
@@ -454,8 +444,8 @@ Strophe.Bosh.prototype = {
      *  5.  Each time an error is encountered, this function is called to
      *  increment the count and disconnect if the count is too high.
      *
-     *  Parameters:
-     *    (Integer) reqStatus - The request status.
+     *      
+     *    @param {number} reqStatus - The request status.
      */
     _hitError: function (reqStatus) {
         this.errors++;
@@ -577,11 +567,10 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _getRequestStatus
      *
-     *  Returns the HTTP status code from a Strophe.Request
+     *  @returns The HTTP status code from a Strophe.Request
      *
-     *  Parameters:
-     *    (Strophe.Request) req - The Strophe.Request instance.
-     *    (Integer) def - The default value that should be returned if no
+     *    @param {Strophe.Request} req - The Strophe.Request instance.
+     *    @param {number} def - The default value that should be returned if no
      *          status value was found.
      */
     _getRequestStatus: function (req, def) {
@@ -610,10 +599,9 @@ Strophe.Bosh.prototype = {
      *  It contains a lot of error handling logic for the many ways that
      *  requests can fail, and calls the request callback when requests
      *  succeed.
-     *
-     *  Parameters:
-     *    (Function) func - The handler for the request.
-     *    (Strophe.Request) req - The request that is changing readyState.
+     *     
+     *    @param {function} func - The handler for the request.
+     *    @param {Strophe.Request} req - The request that is changing readyState.
      */
     _onRequestStateChange: function (func, req) {
         Strophe.debug("request id "+req.id+"."+req.sends+
@@ -687,8 +675,7 @@ Strophe.Bosh.prototype = {
      *  This function takes requests off the queue and sends them and
      *  restarts dead requests.
      *
-     *  Parameters:
-     *    (Integer) i - The index of the request in the queue.
+     *    @param {number} i - The index of the request in the queue.
      */
     _processRequest: function (i) {
         let req = this._requests[i];
@@ -790,9 +777,8 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _removeRequest
      *  _Private_ function to remove a request from the queue.
-     *
-     *  Parameters:
-     *    (Strophe.Request) req - The request to remove.
+     *     
+     *    @param {Strophe.Request} req - The request to remove.
      */
     _removeRequest: function (req) {
         Strophe.debug("removing request");
@@ -809,8 +795,7 @@ Strophe.Bosh.prototype = {
     /** PrivateFunction: _restartRequest
      *  _Private_ function to restart a request that is presumed dead.
      *
-     *  Parameters:
-     *    (Integer) i - The index of the request in the queue.
+     *    @param {number} i - The index of the request in the queue.
      */
     _restartRequest: function (i) {
         const req = this._requests[i];
@@ -826,11 +811,9 @@ Strophe.Bosh.prototype = {
      * Tries to extract a stanza out of a Request Object.
      * When this fails the current connection will be disconnected.
      *
-     *  Parameters:
-     *    (Object) req - The Request.
+     *  @param {Object} req - The Request.
      *
-     *  Returns:
-     *    The stanza that was passed.
+     *  @returns The stanza that was passed.
      */
     _reqToData: function (req) {
         try {
@@ -885,7 +868,7 @@ Strophe.Bosh.prototype = {
 
     /** PrivateFunction: _throttledRequestHandler
      *  _Private_ function to throttle requests to the connection window.
-     *
+     * 
      *  This function makes sure we don't send requests so fast that the
      *  request ids overflow the connection window in the case that one
      *  request died.
