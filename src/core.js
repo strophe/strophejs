@@ -2306,7 +2306,11 @@ Strophe.Connection.prototype = {
      */
     disconnect: function (reason) {
         this._changeConnectStatus(Strophe.Status.DISCONNECTING, reason);
-        Strophe.warn("Disconnect was called because: " + reason);
+        if (reason) {
+            Strophe.warn("Disconnect was called because: " + reason);
+        } else {
+            Strophe.info("Disconnect was called");
+        }
         if (this.connected) {
             let pres = false;
             this.disconnecting = true;
