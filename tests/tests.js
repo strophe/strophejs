@@ -490,14 +490,6 @@ define([
 
         module("Misc");
 
-        test("Quoting strings", function () {
-            var input = '"beep \\40"';
-            var saslmd5 = new Strophe.SASLMD5();
-            var output = saslmd5._quote(input);
-            equal(output, "\"\\\"beep \\\\40\\\"\"",
-                "string should be quoted and escaped");
-        });
-
         test("Function binding", function () {
             var spy = sinon.spy();
             var obj = {};
@@ -572,9 +564,8 @@ define([
 
         test("Default mechanisms will be registered if none are provided", function () {
             var conn = new Strophe.Connection('localhost');
-            equal(Object.keys(conn.mechanisms).length, 7, 'Seven by default registered SASL mechanisms');
+            equal(Object.keys(conn.mechanisms).length, 6, 'Seven by default registered SASL mechanisms');
             equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
-            equal('DIGEST-MD5' in conn.mechanisms, true, 'DIGEST-MD is registered');
             equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
             equal('OAUTHBEARER' in conn.mechanisms, true, 'OAUTHBEARER is registered');
             equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
@@ -666,28 +657,6 @@ define([
             equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
                 "checking second auth challenge");
             saslsha1.onSuccess();
-        });
-
-        test("SASL DIGEST-MD-5 Auth", function () {
-            var conn = {
-                pass: "secret",
-                authcid: "chris",
-                authzid: "user@xmpp.org",
-                servtype: "imap",
-                domain: "elwood.innosoft.com",
-                _sasl_data: []
-            };
-            var saslmd5 = new Strophe.SASLMD5();
-            saslmd5.onStart(conn);
-            ok(saslmd5.test(conn), "DIGEST MD-5 is enabled by default.");
-            // test taken from example section on:
-            // URL: http://www.ietf.org/rfc/rfc2831.txt
-            var response = saslmd5.onChallenge(conn, "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8", "OA6MHXh6VqTrRk");
-            equal(response, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth",
-                "checking first auth challenge");
-            response = saslmd5.onChallenge(conn, "rspauth=ea40f60335c427b5527b84dbabcdfffd");
-            equal(response, "", "checking second auth challenge");
-            saslmd5.onSuccess();
         });
 
         test("SASL EXTERNAL Auth", function () {

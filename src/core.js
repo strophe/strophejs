@@ -1341,7 +1341,7 @@ Strophe.TimedHandler.prototype = {
  *
  *  This class is the main part of Strophe.  It manages a BOSH or websocket
  *  connection to an XMPP server and dispatches events to the user callbacks
- *  as data arrives. It supports SASL PLAIN, SASL DIGEST-MD5, SASL SCRAM-SHA1
+ *  as data arrives. It supports SASL PLAIN, SASL SCRAM-SHA-1
  *  and legacy authentication.
  *
  *  After creating a Strophe.Connection object, the user will typically
@@ -1407,13 +1407,12 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      SCRAM-SHA1 - 70
- *      DIGEST-MD5 - 60
- *      PLAIN - 50
- *      OAUTH-BEARER - 40
- *      OAUTH-2 - 30
- *      ANONYMOUS - 20
- *      EXTERNAL - 10
+ *      OAUTHBEARER - 60
+ *      X-OAUTH2    - 50
+ *      SCRAM-SHA-1  - 40
+ *      PLAIN       - 30
+ *      ANONYMOUS   - 20
+ *      EXTERNAL    - 10
  *
  *  explicitResourceBinding:
  *
@@ -1736,11 +1735,6 @@ Strophe.Connection.prototype = {
          *  Authentication identity (User password).
          */
         this.pass = pass;
-
-        /** Variable: servtype
-         *  Digest MD5 compatibility.
-         */
-        this.servtype = "xmpp";
 
         this.connect_callback = callback;
         this.disconnecting = false;
@@ -2274,7 +2268,6 @@ Strophe.Connection.prototype = {
         mechanisms = mechanisms || [
             Strophe.SASLAnonymous,
             Strophe.SASLExternal,
-            Strophe.SASLMD5,
             Strophe.SASLOAuthBearer,
             Strophe.SASLXOAuth2,
             Strophe.SASLPlain,
@@ -3168,11 +3161,11 @@ Strophe.Connection.prototype = {
  *  By default, all mechanisms are enabled and the priorities are
  *
  *      OAUTHBEARER - 60
- *      SCRAM-SHA1 - 50
- *      DIGEST-MD5 - 40
- *      PLAIN - 30
- *      ANONYMOUS - 20
- *      EXTERNAL - 10
+ *      X-OAUTH2    - 50
+ *      SCRAM-SHA-1  - 40
+ *      PLAIN       - 30
+ *      ANONYMOUS   - 20
+ *      EXTERNAL    - 10
  *
  *  See: Strophe.Connection.addSupportedSASLMechanisms
  */
@@ -3204,13 +3197,12 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
    *
    *  In the default configuration the priorities are
    *
-   *  SCRAM-SHA1 - 40
-   *  DIGEST-MD5 - 30
+   *  SCRAM-SHA-1 - 40
    *  Plain - 20
    *
    *  Example: (This will cause Strophe to choose the mechanism that the server sent first)
    *
-   *  > Strophe.SASLMD5.priority = Strophe.SASLSHA1.priority;
+   *  > Strophe.SASLPlain.priority = Strophe.SASLSHA1.priority;
    *
    *  See <SASL mechanisms> for a list of available mechanisms.
    *
@@ -3284,13 +3276,12 @@ Strophe.SASLMechanism.prototype = {
 /** Constants: SASL mechanisms
  *  Available authentication mechanisms
  *
- *  Strophe.SASLAnonymous - SASL ANONYMOUS authentication.
- *  Strophe.SASLPlain - SASL PLAIN authentication.
- *  Strophe.SASLMD5 - SASL DIGEST-MD5 authentication
- *  Strophe.SASLSHA1 - SASL SCRAM-SHA1 authentication
+ *  Strophe.SASLAnonymous   - SASL ANONYMOUS authentication.
+ *  Strophe.SASLPlain       - SASL PLAIN authentication.
+ *  Strophe.SASLSHA1        - SASL SCRAM-SHA-1 authentication
  *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
- *  Strophe.SASLExternal - SASL EXTERNAL authentication
- *  Strophe.SASLXOAuth2 - SASL X-OAuth2 authentication
+ *  Strophe.SASLExternal    - SASL EXTERNAL authentication
+ *  Strophe.SASLXOAuth2     - SASL X-OAuth2 authentication
  */
 
 // Building SASL callbacks
@@ -3310,7 +3301,7 @@ Strophe.SASLAnonymous.prototype.test = function(connection) {
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 50);
+Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 30);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3330,7 +3321,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 70);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3405,89 +3396,11 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
 };
 
 
-/** PrivateConstructor: SASLMD5
- *  SASL DIGEST MD5 authentication.
- */
-Strophe.SASLMD5 = function() {};
-Strophe.SASLMD5.prototype = new Strophe.SASLMechanism("DIGEST-MD5", false, 60);
-
-Strophe.SASLMD5.prototype.test = function(connection) {
-    return connection.authcid !== null;
-};
-
-/** PrivateFunction: _quote
- *  _Private_ utility function to backslash escape and quote strings.
- *
- *  Parameters:
- *    (String) str - The string to be quoted.
- *
- *  Returns:
- *    quoted string
- */
-Strophe.SASLMD5.prototype._quote = function (str) {
-    return '"' + str.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-    //" end string workaround for emacs
-};
-
-Strophe.SASLMD5.prototype.onChallenge = function(connection, challenge, test_cnonce) {
-    const attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
-    const cnonce = test_cnonce || MD5.hexdigest("" + (Math.random() * 1234567890));
-    let realm = "";
-    let host = null;
-    let nonce = "";
-    let qop = "";
-
-    while (challenge.match(attribMatch)) {
-        const matches = challenge.match(attribMatch);
-        challenge = challenge.replace(matches[0], "");
-        matches[2] = matches[2].replace(/^"(.+)"$/, "$1");
-        switch (matches[1]) {
-        case "realm":
-           realm = matches[2];
-           break;
-        case "nonce":
-           nonce = matches[2];
-           break;
-        case "qop":
-           qop = matches[2];
-           break;
-        case "host":
-           host = matches[2];
-           break;
-        }
-    }
-    let digest_uri = connection.servtype + "/" + connection.domain;
-    if (host !== null) {
-        digest_uri = digest_uri + "/" + host;
-    }
-
-    const cred = utils.utf16to8(connection.authcid + ":" + realm + ":" + this._connection.pass);
-    const A1 = MD5.hash(cred) + ":" + nonce + ":" + cnonce;
-    const A2 = 'AUTHENTICATE:' + digest_uri;
-
-    let responseText = "";
-    responseText += 'charset=utf-8,';
-    responseText += 'username=' + this._quote(utils.utf16to8(connection.authcid)) + ',';
-    responseText += 'realm=' + this._quote(realm) + ',';
-    responseText += 'nonce=' + this._quote(nonce) + ',';
-    responseText += 'nc=00000001,';
-    responseText += 'cnonce=' + this._quote(cnonce) + ',';
-    responseText += 'digest-uri=' + this._quote(digest_uri) + ',';
-    responseText += 'response=' + MD5.hexdigest(MD5.hexdigest(A1) + ":" +
-                                                nonce + ":00000001:" +
-                                                cnonce + ":auth:" +
-                                                MD5.hexdigest(A2)) + ",";
-    responseText += 'qop=auth';
-    this.onChallenge = () => "";
-    return responseText;
-};
-
-
 /** PrivateConstructor: SASLOAuthBearer
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 40);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.pass !== null;
@@ -3534,7 +3447,7 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
  *  SASL X-OAuth2 authentication.
  */
 Strophe.SASLXOAuth2 = function () { };
-Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 30);
+Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 50);
 
 Strophe.SASLXOAuth2.prototype.test = function (connection) {
     return connection.pass !== null;
