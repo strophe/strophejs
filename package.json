@@ -1,7 +1,7 @@
 {
   "name": "strophe.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "homepage": "http://strophe.im/strophejs",
   "repository": {
     "type": "git",
