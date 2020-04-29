@@ -3,7 +3,7 @@
 ## Version 1.3.5 - (2020-04-29)
 
 * Remove support for obselete SASL DIGEST-MD5 auth
-* Varous compatibility fixes to make Strophe.js work in NodeJS
+* #329 Varous compatibility fixes to make Strophe.js work in NodeJS
 * #344 Properly set Strophe.VERSION
 
 ## Version 1.3.4 - (2019-08-08)
