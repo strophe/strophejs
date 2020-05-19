@@ -90,7 +90,7 @@ Strophe.Request.prototype = {
             node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
             if (!node) {
                 throw new Error('Parsing produced null node');
-            } else if (node.querySelector('parsererror')) {
+            } else if (node.querySelector && node.querySelector('parsererror')) {
                 Strophe.error("invalid response received: " + node.querySelector('parsererror').textContent);
                 Strophe.error("responseText: " + this.xhr.responseText);
                 const error = new Error();
