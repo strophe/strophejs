@@ -62,7 +62,7 @@ watchjs: node_modules
 .PHONY: dist
 dist: $(STROPHE)
 
-$(STROPHE): src rollup.config.js node_modules Makefile node_modules
+$(STROPHE): src rollup.config.js node_modules Makefile
 	npm run build
 
 .PHONY: eslint
