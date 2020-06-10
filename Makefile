@@ -24,13 +24,12 @@ help:
 	@echo " eslint      Check code quality"
 	@echo " release     Prepare a new release of strophe. E.g. \`make release VERSION=1.2.14\`"
 	@echo " serve       Serve this directory via a webserver on port 8000."
-	@echo " stamp-npm   Install NPM dependencies and create the guard file stamp-npm which will prevent those dependencies from being installed again."
+	@echo " node_modules   Install NPM dependencies and create the guard file node_modules which will prevent those dependencies from being installed again."
 	@echo ""
 	@echo "If you are a Mac user:\n  1. Install \`gnu-sed\` (brew install gnu-sed) \n  2. Set \`SED\` to \`gsed\` in all commands. E.g. \`make release SED=gsed VERSION=1.2.14\`"
 
-stamp-npm: package.json
+node_modules: package.json
 	npm install
-	touch stamp-npm
 
 .PHONY: doc
 doc:
@@ -57,34 +56,34 @@ release:
 	make doc
 
 .PHONY: watchjs
-watchjs: stamp-npm
+watchjs: node_modules
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
 .PHONY: dist
 dist: $(STROPHE)
 
-$(STROPHE): src rollup.config.js node_modules Makefile stamp-npm
+$(STROPHE): src rollup.config.js node_modules Makefile
 	npm run build
 
 .PHONY: eslint
-eslint: stamp-npm
+eslint: node_modules
 	$(ESLINT) src/
 
 .PHONY: check
-check:: stamp-npm eslint
+check:: node_modules eslint
 	LOG_CR_VERBOSITY=INFO $(CHROMIUM) --no-sandbox http://localhost:$(HTTPSERVE_PORT)/tests/
 
 .PHONY: serve
-serve: stamp-npm
+serve: node_modules
 	$(HTTPSERVE) -p $(HTTPSERVE_PORT)
 
 .PHONY: serve_bg
-serve_bg: stamp-npm
+serve_bg: node_modules
 	$(HTTPSERVE) -p $(HTTPSERVE_PORT) -c-1 -s &
 
 .PHONY: clean
 clean:
-	@@rm -f stamp-npm
+	@@rm -f node_modules
 	@@rm -rf node_modules
 	@@rm -f $(STROPHE)
 	@@rm -f $(STROPHE_MIN)

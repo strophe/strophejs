@@ -78,6 +78,6 @@
   },
   "optionalDependencies": {
     "ws": "^7.0.0",
-    "xmldom": "^0.1.27"
+    "xmldom": "partap/xmldom#3cfd418b41ef2dcd918b3c9cba994441ed5063e4"
   }
 }

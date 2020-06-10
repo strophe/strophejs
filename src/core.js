@@ -4,7 +4,7 @@
 
     Copyright 2006-2018, OGG, LLC
 */
-/*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
+/*global define, sessionStorage, setTimeout, clearTimeout, btoa, atob, module */
 
 import * as shims from './shims';
 import { atob, btoa } from 'abab'
@@ -459,17 +459,8 @@ const Strophe = {
      *    A new XML DOM text node.
      */
     xmlHtmlNode: function (html) {
-        let node;
-        //ensure text is escaped
-        if (shims.DOMParser) {
-            const parser = new shims.DOMParser();
-            node = parser.parseFromString(html, "text/xml");
-        } else {
-            node = new ActiveXObject("Microsoft.XMLDOM");
-            node.async="false";
-            node.loadXML(html);
-        }
-        return node;
+        const parser = new shims.DOMParser();
+        return parser.parseFromString(html, "text/xml");
     },
 
     /** Function: getText

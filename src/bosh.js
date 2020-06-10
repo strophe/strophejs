@@ -5,11 +5,12 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global window, setTimeout, clearTimeout, XMLHttpRequest, ActiveXObject */
+/* global window, setTimeout, clearTimeout, XMLHttpRequest */
 
-import { DOMParser } from './shims'
+import * as shims from './shims';
 import core from './core';
 
+const { DOMParser } = shims;
 const Strophe = core.Strophe;
 const $build = core.$build;
 
@@ -110,14 +111,9 @@ Strophe.Request.prototype = {
      *    A new XMLHttpRequest.
      */
     _newXHR: function () {
-        let xhr = null;
-        if (window.XMLHttpRequest) {
-            xhr = new XMLHttpRequest();
-            if (xhr.overrideMimeType) {
-                xhr.overrideMimeType("text/xml; charset=utf-8");
-            }
-        } else if (window.ActiveXObject) {
-            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        const xhr = new XMLHttpRequest();
+        if (xhr.overrideMimeType) {
+            xhr.overrideMimeType("text/xml; charset=utf-8");
         }
         // use Function.bind() to prepend ourselves as an argument
         xhr.onreadystatechange = this.func.bind(null, this);

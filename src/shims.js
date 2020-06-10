@@ -8,7 +8,20 @@
  * NPM module that provides a compatible implementation.
  */
 
-/* global global */
+/* global global, globalThis, SharedWorkerGlobalScope */
+import xmldom from 'xmldom';
+
+
+function getEnv () {
+    if (globalThis.toString() === "[object Window]") {
+        return 'Window';
+    } else if (globalThis.toString() === "[object SharedWorkerGlobalScope]") {
+        return 'Worker';
+    } else {
+        return 'Node';
+    }
+}
+
 
 /**
  * WHATWG WebSockets API
@@ -23,15 +36,16 @@
  *   https://www.npmjs.com/package/ws
  */
 function getWebSocketImplementation () {
-    let WebSocketImplementation = global.WebSocket
-    if (typeof WebSocketImplementation === 'undefined') {
+    const env = getEnv();
+    if (env === 'Window' || env === 'Worker') {
+        return globalThis.Websocket;
+    } else {
         try {
-            WebSocketImplementation = require('ws');
+            return require('ws');
         } catch (err) {
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
-    return WebSocketImplementation
 }
 export const WebSocket = getWebSocketImplementation()
 
@@ -48,46 +62,20 @@ export const WebSocket = getWebSocketImplementation()
  *   https://www.npmjs.com/package/xmldom
  */
 function getDOMParserImplementation () {
-    let DOMParserImplementation = global.DOMParser
-    if (typeof DOMParserImplementation === 'undefined') {
+    const env = getEnv();
+    if (env === 'Window') {
+        return globalThis.DOMParser;
+    } else if (env === 'Worker') {
+        return xmldom.DOMParser;
+    } else {
         try {
-            DOMParserImplementation = require('xmldom').DOMParser;
+            return require('xmldom').DOMParser;
         } catch (err) {
             throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
         }
     }
-    return DOMParserImplementation
 }
 export const DOMParser = getDOMParserImplementation()
-
-/**
- *  Gets IE xml doc object. Used by getDummyXMLDocument shim.
- *
- *  Returns:
- *    A Microsoft XML DOM Object
- *  See Also:
- *    http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
- */
-function _getIEXmlDom () {
-    const docStrings = [
-        "Msxml2.DOMDocument.6.0",
-        "Msxml2.DOMDocument.5.0",
-        "Msxml2.DOMDocument.4.0",
-        "MSXML2.DOMDocument.3.0",
-        "MSXML2.DOMDocument",
-        "MSXML.DOMDocument",
-        "Microsoft.XMLDOM"
-    ];
-    for (let d = 0; d < docStrings.length; d++) {
-        try {
-            // eslint-disable-next-line no-undef
-            const doc = new ActiveXObject(docStrings[d]);
-            return doc
-        } catch (e) {
-            // Try next one
-        }
-    }
-}
 
 /**
  * Creates a dummy XML DOM document to serve as an element and text node generator.
@@ -99,8 +87,12 @@ function _getIEXmlDom () {
  *  - nodejs: use 'xmldom'
  */
 export function getDummyXMLDOMDocument () {
-    // nodejs
-    if (typeof document === 'undefined') {
+    const env = getEnv();
+    if (env === 'Window') {
+        return document.implementation.createDocument('jabber:client', 'strophe', null)
+    } else if (env === 'Worker') {
+        return new xmldom.DOMImplementation().createDocument('jabber:client', 'strophe', null);
+    } else {
         try {
             const DOMImplementation = require('xmldom').DOMImplementation;
             return new DOMImplementation().createDocument('jabber:client', 'strophe', null);
@@ -108,16 +100,5 @@ export function getDummyXMLDOMDocument () {
             throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
         }
     }
-    // IE < 10
-    if (
-        document.implementation.createDocument === undefined ||
-        document.implementation.createDocument && document.documentMode && document.documentMode < 10
-    ) {
-        const doc = _getIEXmlDom();
-        doc.appendChild(doc.createElement('strophe'));
-        return doc
-    }
-    // All other supported browsers
-    return document.implementation.createDocument('jabber:client', 'strophe', null)
 }
 

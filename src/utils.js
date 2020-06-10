@@ -54,8 +54,7 @@ const utils = {
                     domain = cookieObj.domain ? ";domain="+cookieObj.domain : '';
                     path = cookieObj.path ? ";path="+cookieObj.path : '';
                 }
-                document.cookie =
-                    cookieName+'='+cookieValue + expires + domain + path;
+                document.cookie = cookieName+'='+cookieValue + expires + domain + path;
             }
         }
     }

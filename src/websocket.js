@@ -5,10 +5,11 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global window, clearTimeout, WebSocket, DOMParser */
+/* global window, clearTimeout */
 
-import { DOMParser, WebSocket } from './shims';
+import { DOMParser, Websocket } from './shims';
 import core from './core';
+import xmldom from 'xmldom';
 
 const Strophe = core.Strophe;
 const $build = core.$build;
@@ -102,6 +103,7 @@ Strophe.Websocket.prototype = {
         if (errors.length === 0) {
             return false;
         }
+
         const error = errors[0];
 
         let condition = "";
