@@ -1407,10 +1407,10 @@ Strophe.TimedHandler.prototype = {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      OAUTHBEARER - 60
- *      X-OAUTH2    - 50
- *      SCRAM-SHA-1  - 40
- *      PLAIN       - 30
+ *      SCRAM-SHA-1 - 60
+ *      PLAIN       - 50
+ *      OAUTHBEARER - 40
+ *      X-OAUTH2    - 30
  *      ANONYMOUS   - 20
  *      EXTERNAL    - 10
  *
@@ -3164,10 +3164,10 @@ Strophe.Connection.prototype = {
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
- *      OAUTHBEARER - 60
- *      X-OAUTH2    - 50
- *      SCRAM-SHA-1  - 40
- *      PLAIN       - 30
+ *      SCRAM-SHA-1 - 60
+ *      PLAIN       - 50
+ *      OAUTHBEARER - 40
+ *      X-OAUTH2    - 30
  *      ANONYMOUS   - 20
  *      EXTERNAL    - 10
  *
@@ -3198,11 +3198,6 @@ Strophe.SASLMechanism = function(name, isClientFirst, priority) {
   /** Variable: priority
    *  Determines which <SASLMechanism> is chosen for authentication (Higher is better).
    *  Users may override this to prioritize mechanisms differently.
-   *
-   *  In the default configuration the priorities are
-   *
-   *  SCRAM-SHA-1 - 40
-   *  Plain - 20
    *
    *  Example: (This will cause Strophe to choose the mechanism that the server sent first)
    *
@@ -3305,7 +3300,7 @@ Strophe.SASLAnonymous.prototype.test = function(connection) {
  *  SASL PLAIN authentication.
  */
 Strophe.SASLPlain = function() {};
-Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 30);
+Strophe.SASLPlain.prototype = new Strophe.SASLMechanism("PLAIN", true, 50);
 
 Strophe.SASLPlain.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3325,7 +3320,7 @@ Strophe.SASLPlain.prototype.onChallenge = function(connection) {
  *  SASL SCRAM SHA 1 authentication.
  */
 Strophe.SASLSHA1 = function() {};
-Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 40);
+Strophe.SASLSHA1.prototype = new Strophe.SASLMechanism("SCRAM-SHA-1", true, 60);
 
 Strophe.SASLSHA1.prototype.test = function(connection) {
     return connection.authcid !== null;
@@ -3404,7 +3399,7 @@ Strophe.SASLSHA1.prototype.onChallenge = function(connection, challenge, test_cn
  *  SASL OAuth Bearer authentication.
  */
 Strophe.SASLOAuthBearer = function() {};
-Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 60);
+Strophe.SASLOAuthBearer.prototype = new Strophe.SASLMechanism("OAUTHBEARER", true, 40);
 
 Strophe.SASLOAuthBearer.prototype.test = function(connection) {
     return connection.pass !== null;
@@ -3451,7 +3446,7 @@ Strophe.SASLExternal.prototype.onChallenge = function(connection) {
  *  SASL X-OAuth2 authentication.
  */
 Strophe.SASLXOAuth2 = function () { };
-Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 50);
+Strophe.SASLXOAuth2.prototype = new Strophe.SASLMechanism("X-OAUTH2", true, 30);
 
 Strophe.SASLXOAuth2.prototype.test = function (connection) {
     return connection.pass !== null;
