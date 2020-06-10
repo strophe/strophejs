@@ -157,7 +157,8 @@ Strophe.Websocket = class Websocket {
         this.socket.onopen = () => this._onOpen();
         this.socket.onerror = (e) => this._onError(e);
         this.socket.onclose = (e) => this._onClose(e);
-        this.socket.onmessage = (message) => this._onSocketMessage(message);
+        // Gets replaced with this._onMessage once _onInitialMessage is called
+        this.socket.onmessage = (message) => this._onInitialMessage(message);
     }
 
     /** PrivateFunction: _connect_cb
@@ -209,13 +210,13 @@ Strophe.Websocket = class Websocket {
         return true;
     }
 
-    /** PrivateFunction: _onSocketMessage
+    /** PrivateFunction: _onInitialMessage
      * _Private_ function that handles the first connection messages.
      *
      * On receiving an opening stream tag this callback replaces itself with the real
      * message handler. On receiving a stream error the connection is terminated.
      */
-    _onSocketMessage (message) {
+    _onInitialMessage (message) {
         if (message.data.indexOf("<open ") === 0 || message.data.indexOf("<?xml") === 0) {
             // Strip the XML Declaration, if there is one
             const data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
@@ -258,11 +259,22 @@ Strophe.Websocket = class Websocket {
                 this._conn._doDisconnect();
             }
         } else {
+            this._replaceMessageHandler();
             const string = this._streamWrap(message.data);
             const elem = new DOMParser().parseFromString(string, "text/xml").documentElement;
-            this.socket.onmessage = this._onMessage.bind(this);
             this._conn._connect_cb(elem, null, message.data);
         }
+    }
+
+    /** PrivateFunction: _replaceMessageHandler
+     *
+     * Called by _onInitialMessage in order to replace itself with the general message handler.
+     * This method is overridden by Strophe.WorkerWebsocket, which manages a
+     * websocket connection via a service worker and doesn't have direct access
+     * to the socket.
+     */
+    _replaceMessageHandler () {
+        this.socket.onmessage = (m) => this._onMessage(m);
     }
 
     /** PrivateFunction: _disconnect
@@ -341,8 +353,6 @@ Strophe.Websocket = class Websocket {
 
     /** PrivateFunction: _onClose
      * _Private_ function to handle websockets closing.
-     *
-     * Nothing to do here for WebSockets
      */
     _onClose (e) {
         if (this._conn.connected && !this._conn.disconnecting) {

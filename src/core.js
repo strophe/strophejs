@@ -211,7 +211,8 @@ export const Strophe = {
         ATTACHED: 8,
         REDIRECT: 9,
         CONNTIMEOUT: 10,
-        BINDREQUIRED: 11
+        BINDREQUIRED: 11,
+        ATTACHFAIL: 12
     },
 
     ErrorCondition: {
@@ -1429,6 +1430,8 @@ Strophe.TimedHandler = class TimedHandler {
  *  WebSocket options:
  *  ------------------
  *
+ *  protocol:
+ *
  *  If you want to connect to the current host with a WebSocket connection you
  *  can tell Strophe to use WebSockets through a "protocol" attribute in the
  *  optional options parameter. Valid values are "ws" for WebSocket and "wss"
@@ -1443,6 +1446,16 @@ Strophe.TimedHandler = class TimedHandler {
  *  Also because downgrading security is not permitted by browsers, when using
  *  relative URLs both BOSH and WebSocket connections will use their secure
  *  variants if the current connection to the site is also secure (https).
+ *
+ *  worker:
+ *
+ *  Set this option to URL from where the shared worker script should be loaded.
+ *
+ *  To run the websocket connection inside a shared worker.
+ *  This allows you to share a single websocket-based connection between
+ *  multiple Strophe.Connection instances, for example one per browser tab.
+ *
+ *  The script to use is the one in `src/shared-connection-worker.js`.
  *
  *  BOSH options:
  *  -------------
@@ -1500,7 +1513,11 @@ Strophe.Connection = class Connection {
         const proto = this.options.protocol || "";
 
         // Select protocal based on service or options
-        if (service.indexOf("ws:") === 0 || service.indexOf("wss:") === 0 ||
+        if (this.options.worker) {
+            this._proto = new Strophe.WorkerWebsocket(this);
+        } else if (
+                service.indexOf("ws:") === 0 ||
+                service.indexOf("wss:") === 0 ||
                 proto.indexOf("ws") === 0) {
             this._proto = new Strophe.Websocket(this);
         } else {
@@ -1780,10 +1797,10 @@ Strophe.Connection = class Connection {
      *      allowed range of request ids that are valid.  The default is 5.
      */
     attach (jid, sid, rid, callback, wait, hold, wind) {
-        if (this._proto instanceof Strophe.Bosh) {
-            this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        if (this._proto._attach) {
+            return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
         } else {
-            const error = new Error('The "attach" method can only be used with a BOSH connection.');
+            const error = new Error('The "attach" method is not available for your connection protocol');
             error.name = 'StropheSessionError';
             throw error;
         }

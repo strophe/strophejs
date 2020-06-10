@@ -2,6 +2,7 @@
 
 import './bosh';
 import './websocket';
+import './worker-websocket';
 import * as strophe from './core';
 
 global.$build = strophe.default.$build;

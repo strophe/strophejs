@@ -1,5 +1,10 @@
 # Strophe.js Change Log
 
+## Version 1.4.0 - (Unreleased)
+
+* #354: Strophe.js sends an authzid during PLAIN when not acting on behalf of another entity
+* Add support for running a websocket connection inside a shared worker
+
 ## Version 1.3.6 - (2020-06-15)
 
 - #250 Bugfix: OAuth's SASL priority being higher causes problems
