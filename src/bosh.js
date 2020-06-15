@@ -628,7 +628,7 @@ Strophe.Bosh.prototype = {
         }
         const reqStatus = this._getRequestStatus(req);
         this.lastResponseHeaders = req.xhr.getAllResponseHeaders();
-        if (this.disconnecting && reqStatus >= 400) {
+        if (this._conn.disconnecting && reqStatus >= 400) {
             this._hitError(reqStatus);
             this._callProtocolErrorHandlers(req);
             return;

@@ -1,5 +1,10 @@
 # Strophe.js Change Log
 
+## Version 1.3.5 - (Unreleased)
+
+- #250 Bugfix: OAuth's SASL priority being higher causes problems
+- #352 Bugfix: Referencing undefined property
+
 ## Version 1.3.5 - (2020-04-29)
 
 * Remove support for obselete SASL DIGEST-MD5 auth
