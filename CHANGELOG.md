@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.3.5 - (Unreleased)
+## Version 1.3.6 - (2020-06-15)
 
 - #250 Bugfix: OAuth's SASL priority being higher causes problems
 - #352 Bugfix: Referencing undefined property
