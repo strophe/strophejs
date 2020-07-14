@@ -2416,7 +2416,6 @@ Strophe.Connection.prototype = {
      *    (string) req - The stanza a raw string (optiona).
      */
     _dataRecv: function (req, raw) {
-        Strophe.debug("_dataRecv called");
         const elem = this._proto._reqToData(req);
         if (elem === null) { return; }
 
