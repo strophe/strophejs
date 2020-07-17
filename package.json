@@ -55,7 +55,7 @@
     "@babel/preset-env": "^7.4.5",
     "almond": "~0.3.0",
     "es6-promise": "^4.1.0",
-    "eslint": "4.19.1",
+    "eslint": "^7.3.0",
     "http-server": "^0.12.3",
     "jquery": "^3.5.1",
     "minimist": "^1.2.5",
