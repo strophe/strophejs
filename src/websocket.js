@@ -83,7 +83,7 @@ Strophe.Websocket.prototype = {
         });
     },
 
-    /** PrivateFunction: _check_streamerror
+    /** PrivateFunction: _checkStreamError
      * _Private_ checks a message for stream:error
      *
      *  Parameters:
@@ -92,7 +92,7 @@ Strophe.Websocket.prototype = {
      *  Returns:
      *     true if there was a streamerror, false otherwise.
      */
-    _check_streamerror: function (bodyWrap, connectstatus) {
+    _checkStreamError: function (bodyWrap, connectstatus) {
         let errors;
         if (bodyWrap.getElementsByTagNameNS) {
             errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "error");
@@ -155,13 +155,11 @@ Strophe.Websocket.prototype = {
     _connect: function () {
         // Ensure that there is no open WebSocket from a previous Connection.
         this._closeSocket();
-
-        // Create the new WobSocket
         this.socket = new WebSocket(this._conn.service, "xmpp");
-        this.socket.onopen = this._onOpen.bind(this);
-        this.socket.onerror = this._onError.bind(this);
-        this.socket.onclose = this._onClose.bind(this);
-        this.socket.onmessage = this._connect_cb_wrapper.bind(this);
+        this.socket.onopen = () => this._onOpen();
+        this.socket.onerror = (e) => this._onError(e);
+        this.socket.onclose = (e) => this._onClose(e);
+        this.socket.onmessage = (message) => this._onSocketMessage(message);
     },
 
     /** PrivateFunction: _connect_cb
@@ -172,8 +170,8 @@ Strophe.Websocket.prototype = {
      *  Parameters:
      *    (Strophe.Request) bodyWrap - The received stanza.
      */
-    _connect_cb: function(bodyWrap) {
-        const error = this._check_streamerror(bodyWrap, Strophe.Status.CONNFAIL);
+    _connect_cb: function (bodyWrap) {
+        const error = this._checkStreamError(bodyWrap, Strophe.Status.CONNFAIL);
         if (error) {
             return Strophe.Status.CONNFAIL;
         }
@@ -213,13 +211,13 @@ Strophe.Websocket.prototype = {
         return true;
     },
 
-    /** PrivateFunction: _connect_cb_wrapper
+    /** PrivateFunction: _onSocketMessage
      * _Private_ function that handles the first connection messages.
      *
      * On receiving an opening stream tag this callback replaces itself with the real
      * message handler. On receiving a stream error the connection is terminated.
      */
-    _connect_cb_wrapper: function(message) {
+    _onSocketMessage: function (message) {
         if (message.data.indexOf("<open ") === 0 || message.data.indexOf("<?xml") === 0) {
             // Strip the XML Declaration, if there is one
             const data = message.data.replace(/^(<\?.*?\?>\s*)*/, "");
@@ -348,7 +346,7 @@ Strophe.Websocket.prototype = {
      *
      * Nothing to do here for WebSockets
      */
-    _onClose: function(e) {
+    _onClose: function (e) {
         if (this._conn.connected && !this._conn.disconnecting) {
             Strophe.error("Websocket closed unexpectedly");
             this._conn._doDisconnect();
@@ -403,7 +401,7 @@ Strophe.Websocket.prototype = {
      * Parameters:
      * (Object) error - The websocket error.
      */
-    _onError: function(error) {
+    _onError: function (error) {
         Strophe.error("Websocket error " + error);
         this._conn._changeConnectStatus(
             Strophe.Status.CONNFAIL,
@@ -483,7 +481,7 @@ Strophe.Websocket.prototype = {
             elem = new DOMParser().parseFromString(data, "text/xml").documentElement;
         }
 
-        if (this._check_streamerror(elem, Strophe.Status.ERROR)) {
+        if (this._checkStreamError(elem, Strophe.Status.ERROR)) {
             return;
         }
 
@@ -505,7 +503,7 @@ Strophe.Websocket.prototype = {
      *
      * The opening stream tag is sent here.
      */
-    _onOpen: function() {
+    _onOpen: function () {
         Strophe.debug("Websocket open");
         const start = this._buildStream();
         this._conn.xmlOutput(start.tree());
