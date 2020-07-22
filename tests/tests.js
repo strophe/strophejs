@@ -1,5 +1,6 @@
 /*global equal, notEqual, ok, module, test */
 
+
 define([
     'jquery',
     'sinon',
@@ -22,12 +23,23 @@ define([
         };
     };
 
-    var run = function () {
-        var $build = wrapper.$build;
-        var $iq  = wrapper.$iq;
-        var $msg = wrapper.$msg;
-        var $pres = wrapper.$pres;
-        var Strophe = wrapper.Strophe;
+    const run = function () {
+        const $build = wrapper.$build;
+        const $iq  = wrapper.$iq;
+        const $msg = wrapper.$msg;
+        const $pres = wrapper.$pres;
+        const Strophe = wrapper.Strophe;
+
+        class SASLFoo extends Strophe.SASLMechanism {
+           constructor () {
+              super("FOO", false, 10);
+           }
+
+           static get name () {
+              return "FOO";
+           }
+        }
+
 
         module("Utility Methods");
 
@@ -66,23 +78,22 @@ define([
         });
 
         test("_getRequestStatus", function () {
-            var conn = new Strophe.Connection("http://example.org");
-            var req = new Strophe.Request('', function(){});
+            const req = new Strophe.Request('', function(){});
             req.xhr = new xhr(200, 4);
-            equal(conn._proto._getRequestStatus(req), 200, "Returns the status");
+            equal(Strophe.Bosh._getRequestStatus(req), 200, "Returns the status");
             req.xhr = new xhr(500, 4);
-            equal(conn._proto._getRequestStatus(req), 500,
+            equal(Strophe.Bosh._getRequestStatus(req), 500,
                     "Returns the default if the request is not finished yet");
 
             req.xhr = new xhr(200, 3);
-            equal(conn._proto._getRequestStatus(req), 0,
+            equal(Strophe.Bosh._getRequestStatus(req), 0,
                     "Returns the default if the request is not finished yet");
 
             req.xhr = new xhr(undefined, 4);
-            equal(conn._proto._getRequestStatus(req, -1), -1,
+            equal(Strophe.Bosh._getRequestStatus(req, -1), -1,
                     "Returns the default if the request doesn't have a status");
 
-            equal(conn._proto._getRequestStatus(req, 0), 0,
+            equal(Strophe.Bosh._getRequestStatus(req, 0), 0,
                     "Returns the default if the request doesn't have a status");
         });
 
@@ -545,16 +556,14 @@ define([
 
         test("Incomplete requests do nothing", function () {
             Strophe.Connection.prototype._onIdle = function () {};
-            var conn = new Strophe.Connection("http://fake");
-
+            const conn = new Strophe.Connection("http://fake");
             // simulate a finished but aborted request
-            var req = {id: 44,
+            const req = {id: 44,
                     sends: 1,
                     xhr: new xhr(undefined, 3)
             };
-
             conn._requests = [req];
-            var spy = sinon.spy();
+            const spy = sinon.spy();
             conn._proto._onRequestStateChange(spy, req);
             equal(conn._requests.length, 1, "_requests should be same length");
             equal(spy.called, false, "callback should not be called");
@@ -563,7 +572,7 @@ define([
         module("SASL Mechanisms");
 
         test("Default mechanisms will be registered if none are provided", function () {
-            var conn = new Strophe.Connection('localhost');
+            const conn = new Strophe.Connection('localhost');
             equal(Object.keys(conn.mechanisms).length, 6, 'Seven by default registered SASL mechanisms');
             equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
             equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
@@ -574,9 +583,7 @@ define([
         });
 
         test("Custom mechanisms be specified when instantiating Strophe.Connection", function () {
-            var SASLFoo = function() {};
-            SASLFoo.prototype = new Strophe.SASLMechanism("FOO", false, 10);
-            var conn = new Strophe.Connection('localhost', {'mechanisms': [SASLFoo]});
+            let conn = new Strophe.Connection('localhost', {'mechanisms': [SASLFoo]});
             equal(Object.keys(conn.mechanisms).length, 1, 'Only one registered SASL mechanism');
             equal('FOO' in conn.mechanisms, true, 'FOO is registered');
             notEqual('PLAIN' in conn.mechanisms, true, 'PLAIN is not registered');
@@ -594,12 +601,12 @@ define([
         test("The supported mechanism with the highest priority will be used", function () {
             Strophe.SASLExternal.prototype.priority = 10;
             Strophe.SASLSHA1.prototype.priority = 20;
-            var conn = new Strophe.Connection('localhost',
+            const conn = new Strophe.Connection('localhost',
                 { 'mechanisms': [
                         Strophe.SASLSHA1,
                         Strophe.SASLExternal
                 ]});
-            var authSpy = sinon.spy(conn, '_attemptSASLAuth');
+            const authSpy = sinon.spy(conn, '_attemptSASLAuth');
             equal(authSpy.called, false);
             conn.connect('dummy@localhost', 'secret');
             conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
@@ -608,19 +615,19 @@ define([
             equal(authSpy.returnValues[0], true);
             equal(conn._sasl_mechanism.name, 'SCRAM-SHA-1');
 
-            Strophe.SASLExternal.prototype.priority = 30;
-            Strophe.SASLSHA1.prototype.priority = 20;
+            Object.defineProperty(Strophe.SASLExternal, 'priority', { get () { return 30 } });
+            Object.defineProperty(Strophe.SASLSHA1, 'priority', { get () { return 20 } });
             conn.connect('dummy@localhost', 'secret');
             conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
             equal(conn._sasl_mechanism.name, 'EXTERNAL');
         });
 
         test("SASL PLAIN Auth", function () {
-            var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
-            var saslplain = new Strophe.SASLPlain();
+            const conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+            const saslplain = new Strophe.SASLPlain();
             saslplain.onStart(conn);
-            ok(saslplain.test(conn), "PLAIN is enabled by default.");
-            var response = saslplain.onChallenge(conn, null);
+            ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
+            const response = saslplain.onChallenge(conn, null);
             equal(response, [conn.authzid, conn.authcid, conn.pass].join("\u0000"),
                 "checking plain auth challenge");
             saslplain.onSuccess();
@@ -639,15 +646,15 @@ define([
              * S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
              *
              */
-            var conn = {
+            const conn = {
                 pass: "pencil",
                 authcid: "user",
                 authzid: "user@xmpp.org",
                 _sasl_data: []
             };
-            var saslsha1 = new Strophe.SASLSHA1();
+            const saslsha1 = new Strophe.SASLSHA1();
             saslsha1.onStart(conn);
-            ok(saslsha1.test(conn), "SHA-1 is enabled by default.");
+            ok(Strophe.SASLSHA1.test(conn), "SHA-1 is enabled by default.");
             // test taken from example section on:
             // URL: http://tools.ietf.org/html/rfc5802#section-5
             var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
@@ -660,19 +667,19 @@ define([
         });
 
         test("SASL EXTERNAL Auth", function () {
-            var conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
-            var sasl_external = new Strophe.SASLExternal();
-            ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
+            let conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+            let sasl_external = new Strophe.SASLExternal();
+            ok(Strophe.SASLExternal.test(conn), "EXTERNAL is enabled by default.");
             sasl_external.onStart(conn);
 
-            var response = sasl_external.onChallenge(conn, null);
+            let response = sasl_external.onChallenge(conn, null);
             equal(response, conn.authzid,
                  "Response to EXTERNAL auth challenge should be authzid if different authcid was passed in.");
             sasl_external.onSuccess();
 
             conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
             sasl_external = new Strophe.SASLExternal();
-            ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
+            ok(Strophe.SASLExternal.test(conn), "EXTERNAL is enabled by default.");
             sasl_external.onStart(conn);
             response = sasl_external.onChallenge(conn, null);
             equal(response, conn.authzid,
