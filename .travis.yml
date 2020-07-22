@@ -1,4 +1,4 @@
-dist: trusty
+dist: bionic
 language: node_js
 cache:
     directories:
@@ -6,7 +6,7 @@ cache:
 addons:
     chrome: stable
 node_js:
- - "9"
-install: make stamp-npm
+ - "14"
+install: make node_modules
 before_script: make serve_bg
 script: make check
