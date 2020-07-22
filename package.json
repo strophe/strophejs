@@ -51,22 +51,22 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "@rollup/plugin-babel": "^5.1.0",
+    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
     "almond": "~0.3.0",
-    "es6-promise": "^4.1.0",
+    "es6-promise": "^4.2.8",
     "eslint": "4.19.1",
     "http-server": "^0.12.3",
     "jquery": "^3.5.1",
     "minimist": "^1.2.5",
-    "npm": "^5.7.1",
+    "npm": "^6.14.7",
     "qunitjs": "~1.16.0",
     "requirejs": "2.3.5",
-    "rollup": "^1.12.3",
-    "rollup-plugin-babel": "^4.3.2",
-    "rollup-plugin-commonjs": "^10.0.0",
+    "rollup": "^1.32.1",
     "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-node-resolve": "^5.0.0",
     "rollup-plugin-uglify": "^6.0.4",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
@@ -74,7 +74,7 @@
     "yarpm": "^0.2.1"
   },
   "dependencies": {
-    "abab": "^2.0.0"
+    "abab": "^2.0.3"
   },
   "optionalDependencies": {
     "ws": "^7.0.0",

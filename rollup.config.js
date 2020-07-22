@@ -1,9 +1,9 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
+import commonjs from '@rollup/plugin-commonjs';
 import globals from 'rollup-plugin-node-globals';
-import { uglify } from 'rollup-plugin-uglify';
 import pkg from './package.json';
+import resolve from '@rollup/plugin-node-resolve';
+import { uglify } from 'rollup-plugin-uglify';
 
 export default [
     // browser-friendly UMD build
