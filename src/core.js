@@ -4,7 +4,7 @@
 
     Copyright 2006-2018, OGG, LLC
 */
-/*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob, module */
+/*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
 
 import * as shims from './shims';
 import { atob, btoa } from 'abab'
@@ -1857,7 +1857,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XML data received by the connection.
      */
-    xmlInput: function (elem) {
+    xmlInput (elem) { // eslint-disable-line no-unused-vars
         return;
     },
 
@@ -1879,7 +1879,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (XMLElement) elem - The XMLdata sent by the connection.
      */
-    xmlOutput: function (elem) {
+    xmlOutput (elem) { // eslint-disable-line no-unused-vars
         return;
     },
 
@@ -1895,7 +1895,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data received by the connection.
      */
-    rawInput: function (data) {
+    rawInput (data) { // eslint-disable-line no-unused-vars
         return;
     },
 
@@ -1911,7 +1911,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (String) data - The data sent by the connection.
      */
-    rawOutput: function (data) {
+    rawOutput (data) { // eslint-disable-line no-unused-vars
         return;
     },
 
@@ -1926,7 +1926,7 @@ Strophe.Connection.prototype = {
      *  Parameters:
      *    (Number) rid - The next valid rid
      */
-    nextValidRid: function (rid) {
+    nextValidRid (rid) { // eslint-disable-line no-unused-vars
         return;
     },
 
@@ -2750,7 +2750,7 @@ Strophe.Connection.prototype = {
      *  Returns:
      *    false to remove the handler.
      */
-    _onLegacyAuthIQResult: function (elem) {
+    _onLegacyAuthIQResult (elem) { // eslint-disable-line no-unused-vars
         // build plaintext auth iq
         const iq = $iq({type: "set", id: "_auth_2"})
             .c('query', {xmlns: Strophe.NS.AUTH})
@@ -3227,7 +3227,7 @@ Strophe.SASLMechanism.prototype = {
      *  Returns:
      *    (Boolean) If mechanism was able to run.
      */
-    test: function(connection) {
+    test (connection) { // eslint-disable-line no-unused-vars
         return true;
     },
 
@@ -3237,7 +3237,7 @@ Strophe.SASLMechanism.prototype = {
      *  Parameters:
      *    (Strophe.Connection) connection - Target Connection.
      */
-    onStart: function(connection) {
+    onStart (connection) {
         this._connection = connection;
     },
 
@@ -3252,21 +3252,21 @@ Strophe.SASLMechanism.prototype = {
      *  Returns:
      *    (String) Mechanism response.
      */
-    onChallenge: function (connection, challenge) {
+    onChallenge (connection, challenge) {  // eslint-disable-line no-unused-vars
         throw new Error("You should implement challenge handling!");
     },
 
     /** PrivateFunction: onFailure
      *  Protocol informs mechanism implementation about SASL failure.
      */
-    onFailure: function() {
+    onFailure () {
         this._connection = null;
     },
 
     /** PrivateFunction: onSuccess
      *  Protocol informs mechanism implementation about SASL success.
      */
-    onSuccess: function() {
+    onSuccess () {
         this._connection = null;
     }
 };

@@ -1,8 +1,8 @@
 /*global global*/
 
 import * as Strophe from './core';
-import * as bosh from './bosh';
-import * as websocket from './websocket';
+import './bosh';
+import './websocket';
 
 global.Strophe = Strophe.default.Strophe;
 global.$build = Strophe.default.$build;
