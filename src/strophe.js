@@ -1,13 +1,13 @@
 /*global global*/
 
-import * as Strophe from './core';
 import './bosh';
 import './websocket';
+import * as strophe from './core';
 
-global.Strophe = Strophe.default.Strophe;
-global.$build = Strophe.default.$build;
-global.$iq = Strophe.default.$iq;
-global.$msg = Strophe.default.$msg;
-global.$pres = Strophe.default.$pres;
+global.$build = strophe.default.$build;
+global.$iq = strophe.default.$iq;
+global.$msg = strophe.default.$msg;
+global.$pres = strophe.default.$pres;
+global.Strophe = strophe.default.Strophe;
 
-export { default } from './core';
+export { Strophe, $build, $iq, $msg, $pres } from './core';

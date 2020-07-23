@@ -7,10 +7,10 @@
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
 
 import * as shims from './shims';
-import { atob, btoa } from 'abab'
 import MD5 from './md5';
 import SHA1 from './sha1';
 import utils from './utils';
+import { atob, btoa } from 'abab'
 
 /** Function: $build
  *  Create a Strophe.Builder.
@@ -23,7 +23,7 @@ import utils from './utils';
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $build(name, attrs) {
+export function $build(name, attrs) {
     return new Strophe.Builder(name, attrs);
 }
 
@@ -36,7 +36,7 @@ function $build(name, attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $msg(attrs) {
+export function $msg(attrs) {
     return new Strophe.Builder("message", attrs);
 }
 
@@ -49,7 +49,7 @@ function $msg(attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $iq(attrs) {
+export function $iq(attrs) {
     return new Strophe.Builder("iq", attrs);
 }
 
@@ -62,7 +62,7 @@ function $iq(attrs) {
  *  Returns:
  *    A new Strophe.Builder object.
  */
-function $pres(attrs) {
+export function $pres(attrs) {
     return new Strophe.Builder("presence", attrs);
 }
 
@@ -73,7 +73,7 @@ function $pres(attrs) {
  *  used in the library.  It is not meant to be instantiated, but to
  *  provide a namespace for library objects, constants, and functions.
  */
-const Strophe = {
+export const Strophe = {
     /** Constant: VERSION */
     VERSION: "1.3.6",
 
@@ -3461,7 +3461,7 @@ Strophe.SASLXOAuth2.prototype.onChallenge = function (connection) {
     return utils.utf16to8(auth_str);
 };
 
-export { Strophe, $build, $iq, $msg, $pres, SHA1, MD5 };
+export { SHA1, MD5 };
 
 export default {
     'Strophe':         Strophe,

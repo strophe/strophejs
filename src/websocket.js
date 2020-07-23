@@ -7,11 +7,8 @@
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
-import { DOMParser, WebSocket } from './shims';
-import core from './core';
-
-const Strophe = core.Strophe;
-const $build = core.$build;
+import { DOMParser, Websocket } from './shims'; // eslint-disable-line no-unused-vars
+import { $build, Strophe } from './core';
 
 
 /** Class: Strophe.WebSocket
@@ -102,6 +99,7 @@ Strophe.Websocket.prototype = {
         if (errors.length === 0) {
             return false;
         }
+
         const error = errors[0];
 
         let condition = "";
