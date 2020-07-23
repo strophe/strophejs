@@ -623,7 +623,18 @@ define([
         });
 
         test("SASL PLAIN Auth", function () {
-            const conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
+            const conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org", domain: "xmpp.org"};
+            const saslplain = new Strophe.SASLPlain();
+            saslplain.onStart(conn);
+            ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
+            const response = saslplain.onChallenge(conn);
+            equal(response, ['', conn.authcid, conn.pass].join("\u0000"),
+                "checking plain auth challenge");
+            saslplain.onSuccess();
+        });
+
+        test("SASL PLAIN Auth with authzid", function () {
+            const conn = {pass: "password", authcid: "user", authzid: "admin@xmpp.org", domain: "xmpp.org"};
             const saslplain = new Strophe.SASLPlain();
             saslplain.onStart(conn);
             ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
