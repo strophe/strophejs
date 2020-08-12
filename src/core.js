@@ -2306,8 +2306,9 @@ Strophe.Connection = class Connection {
      *    (Object) mechanism - Object with a Strophe.SASLMechanism prototype
      *
      */
-    registerSASLMechanism (mechanism) {
-        this.mechanisms[mechanism.name] = mechanism;
+    registerSASLMechanism (Mechanism) {
+        const mechanism = new Mechanism()
+        this.mechanisms[mechanism.mechname] = mechanism;
     }
 
     /** Function: disconnect
@@ -2685,12 +2686,12 @@ Strophe.Connection = class Connection {
                 this._sasl_challenge_cb.bind(this), null,
                 "challenge", null, null);
 
-            this._sasl_mechanism = new mechanisms[i]();
+            this._sasl_mechanism = mechanisms[i];
             this._sasl_mechanism.onStart(this);
 
             const request_auth_exchange = $build("auth", {
                 'xmlns': Strophe.NS.SASL,
-                'mechanism': this._sasl_mechanism.name
+                'mechanism': this._sasl_mechanism.mechname
             });
             if (this._sasl_mechanism.isClientFirst) {
                 const response = this._sasl_mechanism.onChallenge(this, null);
@@ -3167,7 +3168,7 @@ Strophe.Connection = class Connection {
 
 /** Class: Strophe.SASLMechanism
  *
- *  encapsulates SASL authentication mechanisms.
+ *  Encapsulates an SASL authentication mechanism.
  *
  *  User code may override the priority for each mechanism or disable it completely.
  *  See <priority> for information about changing priority and <test> for informatian on
@@ -3199,14 +3200,16 @@ Strophe.SASLMechanism = class SASLMechanism {
      *    A new Strophe.SASLMechanism object.
      */
     constructor (name, isClientFirst, priority) {
-        /** PrivateVariable: name
+        /** PrivateVariable: mechname
          *  Mechanism name.
          */
-        this.name = name;
+        this.mechname = name;
+
         /** PrivateVariable: isClientFirst
          *  If client sends response without initial server challenge.
          */
         this.isClientFirst = isClientFirst;
+
         /** Variable: priority
          *  Determines which <SASLMechanism> is chosen for authentication (Higher is better).
          *  Users may override this to prioritize mechanisms differently.
@@ -3239,7 +3242,7 @@ Strophe.SASLMechanism = class SASLMechanism {
      *  Returns:
      *    (Boolean) If mechanism was able to run.
      */
-    static test (connection) { // eslint-disable-line no-unused-vars
+    test () { // eslint-disable-line class-methods-use-this
         return true;
     }
 
@@ -3301,19 +3304,11 @@ Strophe.SASLAnonymous = class SASLAnonymous extends Strophe.SASLMechanism {
     /** PrivateConstructor: SASLAnonymous
      *  SASL ANONYMOUS authentication.
      */
-    constructor () {
-        super(Strophe.SASLAnonymous.name, false, Strophe.SASLAnonymous.priority);
+    constructor (mechname='ANONYMOUS', isClientFirst=false, priority=20) {
+        super(mechname, isClientFirst, priority);
     }
 
-    static get name () {
-        return "ANONYMOUS";
-    }
-
-    static get priority () {
-        return 20;
-    }
-
-    static test (connection) {
+    test (connection) { // eslint-disable-line class-methods-use-this
         return connection.authcid === null;
     }
 }
@@ -3324,19 +3319,11 @@ Strophe.SASLPlain = class SASLPlain extends Strophe.SASLMechanism {
     /** PrivateConstructor: SASLPlain
      *  SASL PLAIN authentication.
      */
-    constructor () {
-        super(Strophe.SASLPlain.name, true, Strophe.SASLPlain.priority);
+    constructor (mechname='PLAIN', isClientFirst=true, priority=50) {
+        super(mechname, isClientFirst, priority);
     }
 
-    static get name () {
-        return "PLAIN";
-    }
-
-    static get priority () {
-        return 50;
-    }
-
-    static test (connection) {
+    test (connection) { // eslint-disable-line class-methods-use-this
         return connection.authcid !== null;
     }
 
@@ -3362,19 +3349,11 @@ Strophe.SASLSHA1 = class SASLSHA1 extends Strophe.SASLMechanism {
     /** PrivateConstructor: SASLSHA1
      *  SASL SCRAM SHA 1 authentication.
      */
-    constructor () {
-        super(Strophe.SASLSHA1.name, true, Strophe.SASLSHA1.priority);
+    constructor (mechname='SCRAM-SHA-1', isClientFirst=true, priority=60) {
+        super(mechname, isClientFirst, priority);
     }
 
-    static get name () {
-        return "SCRAM-SHA-1";
-    }
-
-    static get priority () {
-        return 60;
-    }
-
-    static test (connection) {
+    test (connection) { // eslint-disable-line class-methods-use-this
         return connection.authcid !== null;
     }
 
@@ -3453,19 +3432,11 @@ Strophe.SASLOAuthBearer = class SASLOAuthBearer extends Strophe.SASLMechanism {
     /** PrivateConstructor: SASLOAuthBearer
      *  SASL OAuth Bearer authentication.
      */
-    constructor () {
-        super(Strophe.SASLOAuthBearer.name, true, Strophe.SASLOAuthBearer.priority);
+    constructor (mechname='OAUTHBEARER', isClientFirst=true, priority=40) {
+        super(mechname, isClientFirst, priority);
     }
 
-    static get name () {
-        return "OAUTHBEARER";
-    }
-
-    static get priority () {
-        return 40;
-    }
-
-    static test (connection) {
+    test (connection) { // eslint-disable-line class-methods-use-this
         return connection.pass !== null;
     }
 
@@ -3495,16 +3466,8 @@ Strophe.SASLExternal = class SASLExternal extends Strophe.SASLMechanism {
      *  authenticate the client. The external means may be, for instance,
      *  TLS services.
      */
-    constructor () {
-        super(Strophe.SASLExternal.name, true, Strophe.SASLExternal.priority);
-    }
-
-    static get name () {
-        return "EXTERNAL";
-    }
-
-    static get priority () {
-        return 10;
+    constructor (mechname='EXTERNAL', isClientFirst=true, priority=10) {
+        super(mechname, isClientFirst, priority);
     }
 
     onChallenge (connection) { // eslint-disable-line class-methods-use-this
@@ -3525,19 +3488,11 @@ Strophe.SASLXOAuth2 = class SASLXOAuth2 extends Strophe.SASLMechanism {
     /** PrivateConstructor: SASLXOAuth2
      *  SASL X-OAuth2 authentication.
      */
-    constructor () {
-        super(Strophe.SASLXOAuth2.name, true, Strophe.SASLXOAuth2.priority);
+    constructor (mechname='X-OAUTH2', isClientFirst=true, priority=30) {
+        super(mechname, isClientFirst, priority);
     }
 
-    static get name () {
-        return "X-OAUTH2";
-    }
-
-    static get priority () {
-        return 30;
-    }
-
-    static test (connection) {
+    test (connection) { // eslint-disable-line class-methods-use-this
         return connection.pass !== null;
     }
 

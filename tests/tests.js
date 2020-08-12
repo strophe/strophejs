@@ -609,24 +609,26 @@ define([
             const authSpy = sinon.spy(conn, '_attemptSASLAuth');
             equal(authSpy.called, false);
             conn.connect('dummy@localhost', 'secret');
-            conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
+
+            const mechanisms = Object.values(conn.mechanisms);
+            conn.authenticate(mechanisms);
             equal(authSpy.called, true);
             equal(authSpy.returnValues.length, 1);
             equal(authSpy.returnValues[0], true);
-            equal(conn._sasl_mechanism.name, 'SCRAM-SHA-1');
+            equal(conn._sasl_mechanism.mechname, 'SCRAM-SHA-1');
 
-            Object.defineProperty(Strophe.SASLExternal, 'priority', { get () { return 30 } });
-            Object.defineProperty(Strophe.SASLSHA1, 'priority', { get () { return 20 } });
+            mechanisms[0].priority = 20;
+            mechanisms[1].priority = 30;
             conn.connect('dummy@localhost', 'secret');
-            conn.authenticate([Strophe.SASLSHA1, Strophe.SASLExternal]);
-            equal(conn._sasl_mechanism.name, 'EXTERNAL');
+            conn.authenticate(Object.values(mechanisms));
+            equal(conn._sasl_mechanism.mechname, 'EXTERNAL');
         });
 
         test("SASL PLAIN Auth", function () {
             const conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org", domain: "xmpp.org"};
             const saslplain = new Strophe.SASLPlain();
             saslplain.onStart(conn);
-            ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
+            ok(saslplain.test(conn), "PLAIN is enabled by default.");
             const response = saslplain.onChallenge(conn);
             equal(response, ['', conn.authcid, conn.pass].join("\u0000"),
                 "checking plain auth challenge");
@@ -637,7 +639,7 @@ define([
             const conn = {pass: "password", authcid: "user", authzid: "admin@xmpp.org", domain: "xmpp.org"};
             const saslplain = new Strophe.SASLPlain();
             saslplain.onStart(conn);
-            ok(Strophe.SASLPlain.test(conn), "PLAIN is enabled by default.");
+            ok(saslplain.test(conn), "PLAIN is enabled by default.");
             const response = saslplain.onChallenge(conn, null);
             equal(response, [conn.authzid, conn.authcid, conn.pass].join("\u0000"),
                 "checking plain auth challenge");
@@ -665,10 +667,10 @@ define([
             };
             const saslsha1 = new Strophe.SASLSHA1();
             saslsha1.onStart(conn);
-            ok(Strophe.SASLSHA1.test(conn), "SHA-1 is enabled by default.");
+            ok(saslsha1.test(conn), "SHA-1 is enabled by default.");
             // test taken from example section on:
             // URL: http://tools.ietf.org/html/rfc5802#section-5
-            var response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
+            let response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
             equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
 
             response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
@@ -680,7 +682,7 @@ define([
         test("SASL EXTERNAL Auth", function () {
             let conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
             let sasl_external = new Strophe.SASLExternal();
-            ok(Strophe.SASLExternal.test(conn), "EXTERNAL is enabled by default.");
+            ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
             sasl_external.onStart(conn);
 
             let response = sasl_external.onChallenge(conn, null);
@@ -690,7 +692,7 @@ define([
 
             conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
             sasl_external = new Strophe.SASLExternal();
-            ok(Strophe.SASLExternal.test(conn), "EXTERNAL is enabled by default.");
+            ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
             sasl_external.onStart(conn);
             response = sasl_external.onChallenge(conn, null);
             equal(response, conn.authzid,
