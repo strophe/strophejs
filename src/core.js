@@ -2942,11 +2942,11 @@ Strophe.Connection = class Connection {
         if (bind.length > 0) {
             const jidNode = bind[0].getElementsByTagName("jid");
             if (jidNode.length > 0) {
+                this.authenticated = true;
                 this.jid = Strophe.getText(jidNode[0]);
                 if (this.do_session) {
                     this._establishSession();
                 } else {
-                    this.authenticated = true;
                     this._changeConnectStatus(Strophe.Status.CONNECTED, null);
                 }
             }
@@ -3003,6 +3003,7 @@ Strophe.Connection = class Connection {
             this.authenticated = true;
             this._changeConnectStatus(Strophe.Status.CONNECTED, null);
         } else if (elem.getAttribute("type") === "error") {
+            this.authenticated = false;
             Strophe.warn("Session creation failed.");
             this._changeConnectStatus(Strophe.Status.AUTHFAIL, null, elem);
             return false;
