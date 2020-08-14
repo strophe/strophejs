@@ -300,7 +300,7 @@ Strophe.Websocket = class Websocket {
                 Strophe.warn("Couldn't send <close /> tag.");
             }
         }
-        this._conn._doDisconnect();
+        setTimeout(() => this._conn._doDisconnect, 0);
     }
 
     /** PrivateFunction: _doDisconnect

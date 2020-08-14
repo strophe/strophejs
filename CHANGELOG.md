@@ -4,6 +4,7 @@
 
 * #354: Strophe.js sends an authzid during PLAIN when not acting on behalf of another entity
 * Add support for running a websocket connection inside a shared worker
+* #359 Bugfix: WebSocket connection failed: Data frame received after close
 
 ## Version 1.3.6 - (2020-06-15)
 
