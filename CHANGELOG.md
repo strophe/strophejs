@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.4.0 - (Unreleased)
+## Version 1.4.0 - (2020-09-10)
 
 * #347: Bugfix. Reconnection fails when SessionResultIQ arrives too late
 * #354: Strophe.js sends an authzid during PLAIN when not acting on behalf of another entity
