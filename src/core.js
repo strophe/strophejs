@@ -760,10 +760,8 @@ export const Strophe = {
      *    (String) msg - The log message.
      */
     log (level, msg) {
-        if (level === this.LogLevel.FATAL &&
-            typeof window.console === 'object' &&
-            typeof window.console.error === 'function') {
-            window.console.error(msg);
+        if (level === this.LogLevel.FATAL) {
+            window?.console?.error(msg);
         }
     },
 
