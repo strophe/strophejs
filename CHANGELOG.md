@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.4.1 - (Unreleased)
+
+* #201: NodeJS related fixes: `window` and `WebSocket` are `undefined`
+
 ## Version 1.4.0 - (2020-09-10)
 
 * #347: Bugfix. Reconnection fails when SessionResultIQ arrives too late
@@ -55,7 +59,7 @@
 * #259 XML element should be sent to xmlOutput
 * #266 Support Browserify/CommonJS. `require('strophe.js/src/wrapper')`
 * #296 Remove error handler from old websocket before closing
-* #271 SASL X-OAUTH2 authentication mechanism implemented 
+* #271 SASL X-OAUTH2 authentication mechanism implemented
 * #288 Strophe now logs fatal errors by default.
 * Run tests with headless Chromium instead of Phantomjs
 
