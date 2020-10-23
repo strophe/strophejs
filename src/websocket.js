@@ -7,7 +7,7 @@
 
 /* global window, clearTimeout, WebSocket, DOMParser */
 
-import { DOMParser, Websocket } from './shims'; // eslint-disable-line no-unused-vars
+import { DOMParser, WebSocket } from './shims';
 import { $build, Strophe } from './core';
 
 
