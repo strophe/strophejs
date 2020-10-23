@@ -5,6 +5,23 @@ import pkg from './package.json';
 import resolve from '@rollup/plugin-node-resolve';
 import { uglify } from 'rollup-plugin-uglify';
 
+
+const babelConfig = {
+    babelrc: false,
+    presets: [
+        ['@babel/preset-env', {
+            targets: {
+                browsers: '>1%'
+            }
+        }]
+    ],
+    plugins: [
+        '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+}
+
+
 export default [
     // browser-friendly UMD build
     {
@@ -15,19 +32,10 @@ export default [
             format: 'umd'
         },
         plugins: [
+            babel(babelConfig),
             resolve(),
             commonjs(),
-            globals(),
-            babel({
-                babelrc: false,
-                presets: [
-                    ['@babel/preset-env', {
-                        targets: {
-                            browsers: '>1%'
-                        }
-                    }]
-                ]
-            })
+            globals()
         ]
     },
     // Minified UMD build
@@ -39,19 +47,10 @@ export default [
             format: 'umd'
         },
         plugins: [
+            babel(babelConfig),
             resolve(),
             commonjs(),
             globals(),
-            babel({
-                babelrc: false,
-                presets: [
-                    ['@babel/preset-env', {
-                        targets: {
-                            browsers: '>1%'
-                        }
-                    }]
-                ]
-            }),
             uglify()
         ]
     },
@@ -64,13 +63,8 @@ export default [
             { file: pkg.module, format: 'es' }
         ],
         plugins: [
-            globals(),
-            babel({
-                babelrc: false,
-                presets: [
-                    ['@babel/preset-env']
-                ]
-            })
+            babel(babelConfig),
+            globals()
         ]
     }
 ];
