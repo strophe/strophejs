@@ -761,7 +761,7 @@ export const Strophe = {
      */
     log (level, msg) {
         if (level === this.LogLevel.FATAL) {
-            window?.console?.error(msg);
+            console?.error(msg);
         }
     },
 
