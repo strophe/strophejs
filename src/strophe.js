@@ -10,5 +10,6 @@ global.$iq = strophe.default.$iq;
 global.$msg = strophe.default.$msg;
 global.$pres = strophe.default.$pres;
 global.Strophe = strophe.default.Strophe;
+global.b64_sha1 = strophe.default.b64_sha1;
 
-export { Strophe, $build, $iq, $msg, $pres } from './core';
+export { Strophe, $build, $iq, $msg, $pres, b64_sha1 } from './core';
