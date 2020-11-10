@@ -12,3 +12,5 @@ global.$pres = strophe.default.$pres;
 global.Strophe = strophe.default.Strophe;
 
 export { Strophe, $build, $iq, $msg, $pres } from './core';
+
+export const { b64_sha1 } = strophe.SHA1;
