@@ -1508,19 +1508,8 @@ Strophe.Connection = class Connection {
         this.service = service;
         // Configuration options
         this.options = options || {};
-        const proto = this.options.protocol || "";
 
-        // Select protocal based on service or options
-        if (this.options.worker) {
-            this._proto = new Strophe.WorkerWebsocket(this);
-        } else if (
-                service.indexOf("ws:") === 0 ||
-                service.indexOf("wss:") === 0 ||
-                proto.indexOf("ws") === 0) {
-            this._proto = new Strophe.Websocket(this);
-        } else {
-            this._proto = new Strophe.Bosh(this);
-        }
+        this.setProtocol();
 
         /* The connected JID. */
         this.jid = "";
@@ -1584,6 +1573,22 @@ Strophe.Connection = class Connection {
         }
     }
 
+    /** Function: setProtocol
+     *  Select protocal based on this.options or this.service
+     */
+    setProtocol () {
+        const proto = this.options.protocol || "";
+        if (this.options.worker) {
+            this._proto = new Strophe.WorkerWebsocket(this);
+        } else if (
+                this.service.indexOf("ws:") === 0 ||
+                this.service.indexOf("wss:") === 0 ||
+                proto.indexOf("ws") === 0) {
+            this._proto = new Strophe.Websocket(this);
+        } else {
+            this._proto = new Strophe.Bosh(this);
+        }
+    }
 
     /** Function: reset
      *  Reset the connection.
