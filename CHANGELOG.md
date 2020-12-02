@@ -1,8 +1,10 @@
 # Strophe.js Change Log
 
-## Version 1.4.1 - (Unreleased)
+## Version 1.4.1 - (2020-12-02)
 
 * #201: NodeJS related fixes: `window` and `WebSocket` are `undefined`
+* New method `Strophe.Connection.prototype.setProtocol` which can be used to
+  determine the protocol used after the connection has been constructed.
 
 ## Version 1.4.0 - (2020-09-10)
 

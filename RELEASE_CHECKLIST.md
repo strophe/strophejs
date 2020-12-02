@@ -1,15 +1,17 @@
 # Release Checklist
 
+## Note: it's assumed that you have Strophe.js and Strophe.im checked out in sibling directories.
+
 1. Make sure all tests pass (run 'make check')
 2. Update CHANGELOG.md
-3. Run `make release VERSION=1.4.0` (on Mac, prefix with "SED=gsed" so that GNU-sed is used).
+3. Run `make release VERSION=1.4.1` (on Mac, prefix with "SED=gsed" so that GNU-sed is used).
 4. Run `make doc`
-5. Run `cp -r doc ../strophe.im/strophejs/doc/1.4.0`
-5. Update links in `strophejs/index.markdown` in Strophe.im
-6. Commit and push new documentation
+5. Run `cp -r doc ../strophe.im/strophejs/doc/1.4.1`
+5. Update links in `../strophe.im/strophejs/index.markdown` in Strophe.im
+6. `git commit -am "Docs for Strophe.js 1.4.1" && git push`
 7. Update link to documentation in README (of strophe.js)
-8. Commit the newly generated files (mention it's a new release)
-9. Tag code with version (git tag -s vVERSION )
+8. `cd ../strophe.js && git commit -am "Release 1.4.1"`
+9. `git tag -s v1.4.1 -m "Release 1.4.1"`
 10. Push repo and tags (git push && git push --tags)
 11. Publish on NPM: "npm publish"
 12. Update the release notes on https://github.com/strophe/strophejs/releases
