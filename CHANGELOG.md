@@ -1,5 +1,8 @@
 # Strophe.js Change Log
 
+## Version 1.4.2 - (Unreleased)
+
+
 ## Version 1.4.1 - (2020-12-02)
 
 * #201: NodeJS related fixes: `window` and `WebSocket` are `undefined`
