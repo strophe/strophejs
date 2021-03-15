@@ -2,6 +2,7 @@
 
 ## Version 1.4.2 - (Unreleased)
 
+* Update optional NodeJS-specific dependency xmldom to version 0.5.0 which includes a security fix.
 
 ## Version 1.4.1 - (2020-12-02)
 
