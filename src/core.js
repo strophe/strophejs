@@ -8,6 +8,13 @@
 
 import * as shims from './shims';
 import MD5 from './md5';
+import SASLAnonymous from './sasl-anon.js';
+import SASLExternal from './sasl-external.js';
+import SASLMechanism from './sasl.js';
+import SASLOAuthBearer from './sasl-oauthbearer.js';
+import SASLPlain from './sasl-plain.js';
+import SASLSHA1 from './sasl-sha1.js';
+import SASLXOAuth2 from './sasl-xoauth2.js';
 import SHA1 from './sha1';
 import utils from './utils';
 import { atob, btoa } from 'abab'
@@ -3170,125 +3177,8 @@ Strophe.Connection = class Connection {
     }
 };
 
-/** Class: Strophe.SASLMechanism
- *
- *  Encapsulates an SASL authentication mechanism.
- *
- *  User code may override the priority for each mechanism or disable it completely.
- *  See <priority> for information about changing priority and <test> for informatian on
- *  how to disable a mechanism.
- *
- *  By default, all mechanisms are enabled and the priorities are
- *
- *      SCRAM-SHA-1 - 60
- *      PLAIN       - 50
- *      OAUTHBEARER - 40
- *      X-OAUTH2    - 30
- *      ANONYMOUS   - 20
- *      EXTERNAL    - 10
- *
- *  See: Strophe.Connection.addSupportedSASLMechanisms
- */
-Strophe.SASLMechanism = class SASLMechanism {
 
-    /**
-     * PrivateConstructor: Strophe.SASLMechanism
-     * SASL auth mechanism abstraction.
-     *
-     *  Parameters:
-     *    (String) name - SASL Mechanism name.
-     *    (Boolean) isClientFirst - If client should send response first without challenge.
-     *    (Number) priority - Priority.
-     *
-     *  Returns:
-     *    A new Strophe.SASLMechanism object.
-     */
-    constructor (name, isClientFirst, priority) {
-        /** PrivateVariable: mechname
-         *  Mechanism name.
-         */
-        this.mechname = name;
-
-        /** PrivateVariable: isClientFirst
-         *  If client sends response without initial server challenge.
-         */
-        this.isClientFirst = isClientFirst;
-
-        /** Variable: priority
-         *  Determines which <SASLMechanism> is chosen for authentication (Higher is better).
-         *  Users may override this to prioritize mechanisms differently.
-         *
-         *  Example: (This will cause Strophe to choose the mechanism that the server sent first)
-         *
-         *  > Strophe.SASLPlain.priority = Strophe.SASLSHA1.priority;
-         *
-         *  See <SASL mechanisms> for a list of available mechanisms.
-         *
-         */
-        this.priority = priority;
-    }
-
-    /**
-     *  Function: test
-     *  Checks if mechanism able to run.
-     *  To disable a mechanism, make this return false;
-     *
-     *  To disable plain authentication run
-     *  > Strophe.SASLPlain.test = function() {
-     *  >   return false;
-     *  > }
-     *
-     *  See <SASL mechanisms> for a list of available mechanisms.
-     *
-     *  Parameters:
-     *    (Strophe.Connection) connection - Target Connection.
-     *
-     *  Returns:
-     *    (Boolean) If mechanism was able to run.
-     */
-    test () { // eslint-disable-line class-methods-use-this
-        return true;
-    }
-
-    /** PrivateFunction: onStart
-     *  Called before starting mechanism on some connection.
-     *
-     *  Parameters:
-     *    (Strophe.Connection) connection - Target Connection.
-     */
-    onStart (connection) {
-        this._connection = connection;
-    }
-
-    /** PrivateFunction: onChallenge
-     *  Called by protocol implementation on incoming challenge. If client is
-     *  first (isClientFirst === true) challenge will be null on the first call.
-     *
-     *  Parameters:
-     *    (Strophe.Connection) connection - Target Connection.
-     *    (String) challenge - current challenge to handle.
-     *
-     *  Returns:
-     *    (String) Mechanism response.
-     */
-    onChallenge (connection, challenge) {  // eslint-disable-line
-        throw new Error("You should implement challenge handling!");
-    }
-
-    /** PrivateFunction: onFailure
-     *  Protocol informs mechanism implementation about SASL failure.
-     */
-    onFailure () {
-        this._connection = null;
-    }
-
-    /** PrivateFunction: onSuccess
-     *  Protocol informs mechanism implementation about SASL success.
-     */
-    onSuccess () {
-        this._connection = null;
-    }
-};
+Strophe.SASLMechanism = SASLMechanism;
 
 /** Constants: SASL mechanisms
  *  Available authentication mechanisms
@@ -3300,216 +3190,13 @@ Strophe.SASLMechanism = class SASLMechanism {
  *  Strophe.SASLExternal    - SASL EXTERNAL authentication
  *  Strophe.SASLXOAuth2     - SASL X-OAuth2 authentication
  */
+Strophe.SASLAnonymous = SASLAnonymous;
+Strophe.SASLPlain = SASLPlain;
+Strophe.SASLSHA1 = SASLSHA1;
+Strophe.SASLOAuthBearer = SASLOAuthBearer;
+Strophe.SASLExternal = SASLExternal;
+Strophe.SASLXOAuth2 = SASLXOAuth2;
 
-// Building SASL callbacks
-
-Strophe.SASLAnonymous = class SASLAnonymous extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLAnonymous
-     *  SASL ANONYMOUS authentication.
-     */
-    constructor (mechname='ANONYMOUS', isClientFirst=false, priority=20) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    test (connection) { // eslint-disable-line class-methods-use-this
-        return connection.authcid === null;
-    }
-}
-
-
-Strophe.SASLPlain = class SASLPlain extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLPlain
-     *  SASL PLAIN authentication.
-     */
-    constructor (mechname='PLAIN', isClientFirst=true, priority=50) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    test (connection) { // eslint-disable-line class-methods-use-this
-        return connection.authcid !== null;
-    }
-
-    onChallenge (connection) { // eslint-disable-line class-methods-use-this
-        const { authcid, authzid, domain, pass } = connection;
-        if (!domain) {
-            throw new Error("SASLPlain onChallenge: domain is not defined!");
-        }
-        // Only include authzid if it differs from authcid.
-        // See: https://tools.ietf.org/html/rfc6120#section-6.3.8
-        let auth_str = (authzid !== `${authcid}@${domain}`) ? authzid : '';
-        auth_str = auth_str + "\u0000";
-        auth_str = auth_str + authcid;
-        auth_str = auth_str + "\u0000";
-        auth_str = auth_str + pass;
-        return utils.utf16to8(auth_str);
-    }
-}
-
-
-Strophe.SASLSHA1 = class SASLSHA1 extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLSHA1
-     *  SASL SCRAM SHA 1 authentication.
-     */
-    constructor (mechname='SCRAM-SHA-1', isClientFirst=true, priority=60) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    test (connection) { // eslint-disable-line class-methods-use-this
-        return connection.authcid !== null;
-    }
-
-    onChallenge (connection, challenge, test_cnonce) {
-        const cnonce = test_cnonce || MD5.hexdigest("" + (Math.random() * 1234567890));
-        let auth_str = "n=" + utils.utf16to8(connection.authcid);
-        auth_str += ",r=";
-        auth_str += cnonce;
-        connection._sasl_data.cnonce = cnonce;
-        connection._sasl_data["client-first-message-bare"] = auth_str;
-        auth_str = "n,," + auth_str;
-
-        this.onChallenge = (connection, challenge) => {
-            let nonce, salt, iter, Hi, U, U_old, i, k;
-            let responseText = "c=biws,";
-            let authMessage = `${connection._sasl_data["client-first-message-bare"]},${challenge},`;
-            const cnonce = connection._sasl_data.cnonce;
-            const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
-
-            while (challenge.match(attribMatch)) {
-                const matches = challenge.match(attribMatch);
-                challenge = challenge.replace(matches[0], "");
-                switch (matches[1]) {
-                case "r":
-                    nonce = matches[2];
-                    break;
-                case "s":
-                    salt = matches[2];
-                    break;
-                case "i":
-                    iter = matches[2];
-                    break;
-                }
-            }
-
-            if (nonce.substr(0, cnonce.length) !== cnonce) {
-                connection._sasl_data = {};
-                return connection._sasl_failure_cb();
-            }
-
-            responseText += "r=" + nonce;
-            authMessage += responseText;
-
-            salt = atob(salt);
-            salt += "\x00\x00\x00\x01";
-
-            const pass = utils.utf16to8(connection.pass);
-            Hi = U_old = SHA1.core_hmac_sha1(pass, salt);
-            for (i=1; i<iter; i++) {
-                U = SHA1.core_hmac_sha1(pass, SHA1.binb2str(U_old));
-                for (k = 0; k < 5; k++) {
-                    Hi[k] ^= U[k];
-                }
-                U_old = U;
-            }
-            Hi = SHA1.binb2str(Hi);
-
-            const clientKey = SHA1.core_hmac_sha1(Hi, "Client Key");
-            const serverKey = SHA1.str_hmac_sha1(Hi, "Server Key");
-            const clientSignature = SHA1.core_hmac_sha1(SHA1.str_sha1(SHA1.binb2str(clientKey)), authMessage);
-            connection._sasl_data["server-signature"] = SHA1.b64_hmac_sha1(serverKey, authMessage);
-
-            for (k = 0; k < 5; k++) {
-                clientKey[k] ^= clientSignature[k];
-            }
-            responseText += ",p=" + btoa(SHA1.binb2str(clientKey));
-            return responseText;
-        }
-        return auth_str;
-    }
-}
-
-
-Strophe.SASLOAuthBearer = class SASLOAuthBearer extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLOAuthBearer
-     *  SASL OAuth Bearer authentication.
-     */
-    constructor (mechname='OAUTHBEARER', isClientFirst=true, priority=40) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    test (connection) { // eslint-disable-line class-methods-use-this
-        return connection.pass !== null;
-    }
-
-    onChallenge (connection) {  // eslint-disable-line class-methods-use-this
-        let auth_str = 'n,';
-        if (connection.authcid !== null) {
-            auth_str = auth_str + 'a=' + connection.authzid;
-        }
-        auth_str = auth_str + ',';
-        auth_str = auth_str + "\u0001";
-        auth_str = auth_str + 'auth=Bearer ';
-        auth_str = auth_str + connection.pass;
-        auth_str = auth_str + "\u0001";
-        auth_str = auth_str + "\u0001";
-        return utils.utf16to8(auth_str);
-    }
-}
-
-
-Strophe.SASLExternal = class SASLExternal extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLExternal
-     *  SASL EXTERNAL authentication.
-     *
-     *  The EXTERNAL mechanism allows a client to request the server to use
-     *  credentials established by means external to the mechanism to
-     *  authenticate the client. The external means may be, for instance,
-     *  TLS services.
-     */
-    constructor (mechname='EXTERNAL', isClientFirst=true, priority=10) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    onChallenge (connection) { // eslint-disable-line class-methods-use-this
-        /** According to XEP-178, an authzid SHOULD NOT be presented when the
-         * authcid contained or implied in the client certificate is the JID (i.e.
-         * authzid) with which the user wants to log in as.
-         *
-         * To NOT send the authzid, the user should therefore set the authcid equal
-         * to the JID when instantiating a new Strophe.Connection object.
-         */
-        return connection.authcid === connection.authzid ? '' : connection.authzid;
-    }
-};
-
-
-Strophe.SASLXOAuth2 = class SASLXOAuth2 extends Strophe.SASLMechanism {
-
-    /** PrivateConstructor: SASLXOAuth2
-     *  SASL X-OAuth2 authentication.
-     */
-    constructor (mechname='X-OAUTH2', isClientFirst=true, priority=30) {
-        super(mechname, isClientFirst, priority);
-    }
-
-    test (connection) { // eslint-disable-line class-methods-use-this
-        return connection.pass !== null;
-    }
-
-    onChallenge (connection) { // eslint-disable-line class-methods-use-this
-        let auth_str = '\u0000';
-        if (connection.authcid !== null) {
-            auth_str = auth_str + connection.authzid;
-        }
-        auth_str = auth_str + "\u0000";
-        auth_str = auth_str + connection.pass;
-        return utils.utf16to8(auth_str);
-    }
-};
 
 export { SHA1, MD5 };
 
