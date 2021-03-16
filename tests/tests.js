@@ -670,7 +670,7 @@ define([
             ok(saslsha1.test(conn), "SHA-1 is enabled by default.");
             // test taken from example section on:
             // URL: http://tools.ietf.org/html/rfc5802#section-5
-            let response = saslsha1.onChallenge(conn, null, "fyko+d2lbbFgONRv9qkxdawL");
+            let response = saslsha1.clientChallenge(conn, "fyko+d2lbbFgONRv9qkxdawL");
             equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
 
             response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
@@ -685,7 +685,7 @@ define([
             ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
             sasl_external.onStart(conn);
 
-            let response = sasl_external.onChallenge(conn, null);
+            let response = sasl_external.clientChallenge(conn);
             equal(response, conn.authzid,
                  "Response to EXTERNAL auth challenge should be authzid if different authcid was passed in.");
             sasl_external.onSuccess();

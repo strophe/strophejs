@@ -3,6 +3,8 @@
 ## Version 1.4.2 - (Unreleased)
 
 * Update optional NodeJS-specific dependency xmldom to version 0.5.0 which includes a security fix.
+* Add `clientChallenge` SASL mechanism method to avoid having to monkey patch `onChallenge`,
+  which prevents reconnection when using SCRAM-SHA1.
 
 ## Version 1.4.1 - (2020-12-02)
 

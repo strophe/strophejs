@@ -89,8 +89,11 @@ export default class SASLMechanism {
     }
 
     /** PrivateFunction: onChallenge
-     *  Called by protocol implementation on incoming challenge. If client is
-     *  first (isClientFirst === true) challenge will be null on the first call.
+     *  Called by protocol implementation on incoming challenge.
+     *
+     *  By deafult, if the client is expected to send data first (isClientFirst === true),
+     *  this method is called with `challenge` as null on the first call,
+     *  unless `clientChallenge` is overridden in the relevant subclass.
      *
      *  Parameters:
      *    (Strophe.Connection) connection - Target Connection.
@@ -101,6 +104,23 @@ export default class SASLMechanism {
      */
     onChallenge (connection, challenge) {  // eslint-disable-line
         throw new Error("You should implement challenge handling!");
+    }
+
+    /** PrivateFunction: clientChallenge
+     *  Called by the protocol implementation if the client is expected to send
+     *  data first in the authentication exchange (i.e. isClientFirst === true).
+     *
+     *  Parameters:
+     *    (Strophe.Connection) connection - Target Connection.
+     *
+     *  Returns:
+     *    (String) Mechanism response.
+     */
+    clientChallenge (connection) {
+        if (!this.isClientFirst) {
+            throw new Error("clientChallenge should not be called if isClientFirst is false!");
+        }
+        return this.onChallenge(connection);
     }
 
     /** PrivateFunction: onFailure

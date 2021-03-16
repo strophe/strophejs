@@ -2704,7 +2704,7 @@ Strophe.Connection = class Connection {
                 'mechanism': this._sasl_mechanism.mechname
             });
             if (this._sasl_mechanism.isClientFirst) {
-                const response = this._sasl_mechanism.onChallenge(this, null);
+                const response = this._sasl_mechanism.clientChallenge(this);
                 request_auth_exchange.t(btoa(response));
             }
             this.send(request_auth_exchange.tree());
