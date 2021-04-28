@@ -1,9 +1,9 @@
 # Strophe.js Change Log
 
-## Version 1.4.2 - (Unreleased)
+## Version 1.4.2 - (2021-04-28)
 
 * Update optional NodeJS-specific dependency xmldom to version 0.5.0 which includes a security fix.
-* Add `clientChallenge` SASL mechanism method to avoid having to monkey patch `onChallenge`,
+* #369 Add `clientChallenge` SASL mechanism method to avoid having to monkey patch `onChallenge`,
   which prevents reconnection when using SCRAM-SHA1.
 
 ## Version 1.4.1 - (2020-12-02)
