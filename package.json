@@ -41,11 +41,11 @@
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
   "scripts": {
-    "build": "rollup -c",
+    "build": "npx rollup -c",
     "lint": "make eslint",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "yarpm run build"
+    "prepare": "npx yarpm run build"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
@@ -78,7 +78,7 @@
     "abab": "^2.0.3"
   },
   "optionalDependencies": {
-    "ws": "^7.0.0",
+    "ws": "^7.5.1",
     "xmldom": "0.5.0"
   }
 }
