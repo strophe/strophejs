@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/strophe/strophejs.png?branch=master)](https://travis-ci.org/strophe/strophejs)
 
 Strophe.js is a JavaScript library for speaking XMPP via BOSH
-([XEP 124](http://xmpp.org/extensions/xep-0124.html)
-and [XEP 206](http://xmpp.org/extensions/xep-0206.html)) and WebSockets
+([XEP 124](https://xmpp.org/extensions/xep-0124.html)
+and [XEP 206](https://xmpp.org/extensions/xep-0206.html)) and WebSockets
 ([RFC 7395](http://tools.ietf.org/html/rfc7395)).
 
 Its primary purpose is to enable web-based, real-time XMPP applications that
@@ -15,10 +15,10 @@ covers Strophe in detail in the context of web applications.
 
 ## Quick Links
 
-* [Homepage](http://strophe.im/strophejs)
-* [Documentation](http://strophe.im/strophejs/doc/1.4.2/files/strophe-js.html)
-* [Mailing list](http://groups.google.com/group/strophe)
-* [Community Plugins](http://github.com/strophe/strophejs-plugins)
+* [Homepage](https://strophe.im/strophejs/)
+* [Documentation](https://strophe.im/strophejs/doc/1.4.2/files/strophe-umd-js.html)
+* [Mailing list](https://groups.google.com/g/strophe)
+* [Community Plugins](https://github.com/strophe/strophejs-plugins)
 
 ## Browser support
 
