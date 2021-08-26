@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.4.3 - (Unreleased)
+
+* Update xmldom to version 0.7.1
+
 ## Version 1.4.2 - (2021-04-28)
 
 * Update optional NodeJS-specific dependency xmldom to version 0.5.0 which includes a security fix.
