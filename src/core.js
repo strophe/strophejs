@@ -1751,7 +1751,7 @@ Strophe.Connection = class Connection {
      *      certificate), set authcid to that same JID. See XEP-178 for more
      *      details.
      */
-    connect (jid, pass, callback, wait, hold, route, authcid, disconnectionTimeout) {
+    connect (jid, pass, callback, wait, hold, route, authcid, disconnectionTimeout = 3000) {
         this.jid = jid;
         /** Variable: authzid
          *  Authorization identity.
@@ -1773,7 +1773,7 @@ Strophe.Connection = class Connection {
         this.connected = false;
         this.authenticated = false;
         this.restored = false;
-        this.disconnectionTimeout = 3000;
+        this.disconnectionTimeout = disconnectionTimeout;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
