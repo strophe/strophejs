@@ -410,7 +410,7 @@ Strophe.Websocket = class Websocket {
      * (Object) error - The websocket error.
      */
     _onError (error) {
-        Strophe.error("Websocket error " + error);
+        Strophe.error("Websocket error " + JSON.stringify(error));
         this._conn._changeConnectStatus(
             Strophe.Status.CONNFAIL,
             "The WebSocket connection could not be established or was disconnected."
