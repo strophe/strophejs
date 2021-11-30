@@ -1751,7 +1751,7 @@ Strophe.Connection = class Connection {
      *      certificate), set authcid to that same JID. See XEP-178 for more
      *      details.
      */
-    connect (jid, pass, callback, wait, hold, route, authcid) {
+    connect (jid, pass, callback, wait, hold, route, authcid, disconnectionTimeout) {
         this.jid = jid;
         /** Variable: authzid
          *  Authorization identity.
@@ -1773,6 +1773,7 @@ Strophe.Connection = class Connection {
         this.connected = false;
         this.authenticated = false;
         this.restored = false;
+        this.disconnectionTimeout = 3000;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
@@ -2355,7 +2356,7 @@ Strophe.Connection = class Connection {
             }
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
-                3000, this._onDisconnectTimeout.bind(this));
+                this.disconnectionTimeout, this._onDisconnectTimeout.bind(this));
             this._proto._disconnect(pres);
         } else {
             Strophe.warn("Disconnect was called before Strophe connected to the server");
