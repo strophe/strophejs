@@ -434,10 +434,14 @@ Strophe.Websocket = class Websocket {
                     } else {
                         stanza = data[i];
                     }
-                    const rawStanza = Strophe.serialize(stanza);
-                    this._conn.xmlOutput(stanza);
-                    this._conn.rawOutput(rawStanza);
-                    this.socket.send(rawStanza);
+                    try {
+                      const rawStanza = Strophe.serialize(stanza);
+                      this._conn.xmlOutput(stanza);
+                      this._conn.rawOutput(rawStanza);
+                      this.socket.send(rawStanza);
+                    } catch (error) {
+                      Strophe.error("Websocket could not send stanza, error: " + JSON.stringify(error));
+                    }
                 }
             }
             this._conn._data = [];
