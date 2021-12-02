@@ -79,6 +79,6 @@
   },
   "optionalDependencies": {
     "ws": "^7.5.1",
-    "@xmldom/xmldom": "0.7.1"
+    "@xmldom/xmldom": "0.7.5"
   }
 }
