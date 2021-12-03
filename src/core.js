@@ -1750,8 +1750,10 @@ Strophe.Connection = class Connection {
      *      (for example when the JID is already contained in the client
      *      certificate), set authcid to that same JID. See XEP-178 for more
      *      details.
+     *     (Integer) disconnectionTimeout - The optional disconnection timeout 
+     *      in milliseconds before _doDisconnect will be called.
      */
-    connect (jid, pass, callback, wait, hold, route, authcid) {
+    connect (jid, pass, callback, wait, hold, route, authcid, disconnection_timeout = 3000) {
         this.jid = jid;
         /** Variable: authzid
          *  Authorization identity.
@@ -1773,6 +1775,7 @@ Strophe.Connection = class Connection {
         this.connected = false;
         this.authenticated = false;
         this.restored = false;
+        this.disconnection_timeout = disconnection_timeout;
 
         // parse jid for domain
         this.domain = Strophe.getDomainFromJid(this.jid);
@@ -2355,7 +2358,7 @@ Strophe.Connection = class Connection {
             }
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
-                3000, this._onDisconnectTimeout.bind(this));
+                this.disconnection_timeout, this._onDisconnectTimeout.bind(this));
             this._proto._disconnect(pres);
         } else {
             Strophe.warn("Disconnect was called before Strophe connected to the server");
