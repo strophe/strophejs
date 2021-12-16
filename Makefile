@@ -1,9 +1,9 @@
-CHROMIUM		?= ./node_modules/.bin/run-headless-chromium
+CHROMIUM		?= ./node_modules/run-headless-chromium/run-headless-chromium.js
 DOC_DIR			= doc
 DOC_TEMP		= doc-temp
-HTTPSERVE		?= ./node_modules/.bin/http-server
+HTTPSERVE		?= ./node_modules/http-server/bin/http-server
 HTTPSERVE_PORT  ?= 8080
-ESLINT		  	?= ./node_modules/.bin/eslint
+ESLINT		  	?= ./node_modules/eslint/bin/eslint.js
 NDPROJ_DIR 		= ndproj
 SED				?= sed
 SHELL			?= /usr/env/bin/bash

@@ -2,7 +2,9 @@
 
 ## Version 1.4.3 - (Unreleased)
 
-* Update xmldom to version 0.7.1
+* Update xmldom to version 0.7.5
+* Add disconnection_timeout setting: an optional timeout in milliseconds before `_doDisconnect` is called.
+* Update ws optional dependency to fix security issue https://github.com/websockets/ws/commit/00c425ec77993773d823f018f64a5c44e17023ff
 
 ## Version 1.4.2 - (2021-04-28)
 

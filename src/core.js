@@ -1750,7 +1750,7 @@ Strophe.Connection = class Connection {
      *      (for example when the JID is already contained in the client
      *      certificate), set authcid to that same JID. See XEP-178 for more
      *      details.
-     *     (Integer) disconnectionTimeout - The optional disconnection timeout 
+     *     (Integer) disconnection_timeout - The optional disconnection timeout
      *      in milliseconds before _doDisconnect will be called.
      */
     connect (jid, pass, callback, wait, hold, route, authcid, disconnection_timeout = 3000) {
