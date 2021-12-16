@@ -3,7 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import globals from 'rollup-plugin-node-globals';
 import pkg from './package.json';
 import resolve from '@rollup/plugin-node-resolve';
-import { uglify } from 'rollup-plugin-uglify';
+import { terser } from 'rollup-plugin-terser';
 
 
 const babelConfig = {
@@ -51,7 +51,7 @@ export default [
             resolve(),
             commonjs(),
             globals(),
-            uglify()
+            terser()
         ]
     },
     // CommonJS (for Node) and ES module (for bundlers) build.

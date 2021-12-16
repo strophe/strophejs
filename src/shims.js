@@ -23,7 +23,7 @@
  *   https://www.npmjs.com/package/ws
  */
 function getWebSocketImplementation () {
-    let WebSocketImplementation = global.WebSocket
+    let WebSocketImplementation = global.WebSocket;
     if (typeof WebSocketImplementation === 'undefined') {
         try {
             WebSocketImplementation = require('ws');
@@ -120,4 +120,3 @@ export function getDummyXMLDOMDocument () {
     // All other supported browsers
     return document.implementation.createDocument('jabber:client', 'strophe', null)
 }
-
