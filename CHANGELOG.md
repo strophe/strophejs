@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.4.3 - (Unreleased)
+## Version 1.4.3 - (2021-12-16)
 
 * Update xmldom to version 0.7.5
 * Add disconnection_timeout setting: an optional timeout in milliseconds before `_doDisconnect` is called.
