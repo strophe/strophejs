@@ -44,14 +44,14 @@ export const WebSocket = getWebSocketImplementation()
  * Used implementations:
  * - supported browsers: built-in in DOMParser global
  *   https://developer.mozilla.org/en-US/docs/Web/API/DOMParser#Browser_compatibility
- * - nodejs: use 'xmldom' module
- *   https://www.npmjs.com/package/xmldom
+ * - nodejs: use '@xmldom/xmldom' module
+ *   https://www.npmjs.com/package/@xmldom/xmldom
  */
 function getDOMParserImplementation () {
     let DOMParserImplementation = global.DOMParser
     if (typeof DOMParserImplementation === 'undefined') {
         try {
-            DOMParserImplementation = require('xmldom').DOMParser;
+            DOMParserImplementation = require('@xmldom/xmldom').DOMParser;
         } catch (err) {
             throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
         }
@@ -96,13 +96,13 @@ function _getIEXmlDom () {
  *  - IE < 10: avoid using createDocument() due to a memory leak, use ie-specific
  *    workaround
  *  - other supported browsers: use document's createDocument
- *  - nodejs: use 'xmldom'
+ *  - nodejs: use '@xmldom/xmldom'
  */
 export function getDummyXMLDOMDocument () {
     // nodejs
     if (typeof document === 'undefined') {
         try {
-            const DOMImplementation = require('xmldom').DOMImplementation;
+            const DOMImplementation = require('@xmldom/xmldom').DOMImplementation;
             return new DOMImplementation().createDocument('jabber:client', 'strophe', null);
         } catch (err) {
             throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
