@@ -53,7 +53,7 @@ function getDOMParserImplementation () {
         try {
             DOMParserImplementation = require('@xmldom/xmldom').DOMParser;
         } catch (err) {
-            throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
+            throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
         }
     }
     return DOMParserImplementation
@@ -105,7 +105,7 @@ export function getDummyXMLDOMDocument () {
             const DOMImplementation = require('@xmldom/xmldom').DOMImplementation;
             return new DOMImplementation().createDocument('jabber:client', 'strophe', null);
         } catch (err) {
-            throw new Error('You must install the "xmldom" package to use Strophe in nodejs.');
+            throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
         }
     }
     // IE < 10
