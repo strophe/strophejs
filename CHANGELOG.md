@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.4.4 - (2022-01-21)
+
+* Properly import xmldom
+
 ## Version 1.4.3 - (2021-12-16)
 
 * Update xmldom to version 0.7.5
