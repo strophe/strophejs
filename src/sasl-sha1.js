@@ -40,7 +40,7 @@ export default class SASLSHA1 extends SASLMechanism {
            }
        }
 
-       if (nonce.substr(0, cnonce.length) !== cnonce) {
+       if (nonce.slice(0, cnonce.length) !== cnonce) {
            connection._sasl_data = {};
            return connection._sasl_failure_cb();
        }
