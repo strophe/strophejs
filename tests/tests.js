@@ -24,6 +24,16 @@ class SASLFoo extends Strophe.SASLMechanism {
    }
 }
 
+function makeRequest (stanza) {
+    const req = new Strophe.Request(stanza, () => {});
+    req.getResponse = function () {
+        const env = new Strophe.Builder('env', {type: 'mock'}).tree();
+        env.appendChild(stanza);
+        return env;
+    };
+    return req;
+}
+
 const { module, test } = QUnit;
 
 
@@ -404,7 +414,7 @@ test("HTTP errors", (assert) => {
     const conn = new Strophe.Connection("http://fake");
     conn.addProtocolErrorHandler('HTTP', 500, spy500);
     conn.addProtocolErrorHandler('HTTP', 401, spy401);
-    const req = new Strophe.Request('', function (){});
+    const req = new Strophe.Request('', () => {});
     req.xhr = new xhr(200, 4);
     conn._proto._onRequestStateChange(() => {}, req);
     assert.equal(spy500.called, false, "Error handler does not get called when no HTTP error");
@@ -418,6 +428,44 @@ test("HTTP errors", (assert) => {
     req.xhr = new xhr(500, 4);
     conn._proto._onRequestStateChange(() => {}, req);
     assert.equal(spy500.called, true, "Error handler gets called on HTTP 500 error");
+});
+
+test("IQ fallback handler", (assert) => {
+    // Strophe returns an IQ error stanza to unhandled incoming IQ get and set stanzas
+    const conn = new Strophe.Connection("http://fake");
+    conn.authenticated = true;
+    const spy = sinon.spy(conn, 'send');
+
+    conn._dataRecv(makeRequest($iq({'type': 'get', 'id': '1'}).tree()));
+    assert.equal(spy.calledOnce, true, "send was called only once");
+    assert.equal(
+        Strophe.serialize(spy.args[0][0].nodeTree),
+        '<iq id="1" type="error" xmlns="jabber:client">'+
+            '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>'+
+        '</iq>'
+    );
+
+    conn._dataRecv(makeRequest($iq({'type': 'get', 'id': '2'}).tree()));
+    assert.equal(spy.calledTwice, true, "send was called twice");
+    assert.equal(
+        Strophe.serialize(spy.args[1][0].nodeTree),
+        '<iq id="2" type="error" xmlns="jabber:client">'+
+            '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>'+
+        '</iq>'
+    );
+
+    // When there is a handler, then the fallback handler isn't called.
+    const handlerStub = sinon.stub();
+    handlerStub.returns(true);
+    conn.addHandler(handlerStub, null, 'iq');
+
+    conn._dataRecv(makeRequest($iq({'type': 'set'}).tree()));
+    assert.equal(spy.calledTwice, true, "send was called twice");
+
+    conn._dataRecv(makeRequest($iq({'type': 'get'}).tree()));
+    assert.equal(spy.calledTwice, true, "send was called twice");
+
+    assert.equal(handlerStub.calledTwice, true, "The manually registered IQ handler was called twice");
 });
 
 test("Full JID matching", (assert) => {

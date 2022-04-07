@@ -1,8 +1,13 @@
 # Strophe.js Change Log
 
+## Version 1.5.0 - (Unreleased)
+
+* Add an automatic fallback handler for unhandled IQ "set" and "get" stanzas
+  that returns an IQ error with `service-unavailable`.
+
 ## Version 1.4.4 - (2022-01-21)
 
-* Properly import xmldom
+* #388 Properly import xmldom
 
 ## Version 1.4.3 - (2021-12-16)
 

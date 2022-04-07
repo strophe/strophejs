@@ -1569,6 +1569,17 @@ Strophe.Connection = class Connection {
         utils.addCookies(this.options.cookies);
         this.registerSASLMechanisms(this.options.mechanisms);
 
+        // A client must always respond to incoming IQ "set" and "get" stanzas.
+        // See https://datatracker.ietf.org/doc/html/rfc6120#section-8.2.3
+        //
+        // This is a fallback handler which gets called when no other handler
+        // was called for a received IQ "set" or "get".
+        this.iqFallbackHandler = new Strophe.Handler(
+            (iq) => this.send($iq({type: 'error', id: iq.getAttribute('id')})
+                    .c('error', {'type': 'cancel'})
+                    .c('service-unavailable', {'xmlns': Strophe.NS.STANZAS})),
+            null, 'iq', ['get', 'set']);
+
         // initialize plugins
         for (const k in Strophe._connectionPlugins) {
             if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
@@ -2452,6 +2463,7 @@ Strophe.Connection = class Connection {
      *    (string) req - The stanza a raw string (optiona).
      */
     _dataRecv (req, raw) {
+
         const elem = this._proto._reqToData(req);
         if (elem === null) { return; }
 
@@ -2515,27 +2527,32 @@ Strophe.Connection = class Connection {
         }
 
         // send each incoming stanza through the handler chain
-        Strophe.forEachChild(elem, null, child => {
-            // process handlers
-            const newList = this.handlers;
-            this.handlers = [];
-            for (let i=0; i < newList.length; i++) {
-                const hand = newList[i];
-                // encapsulate 'handler.run' not to lose the whole handler list if
-                // one of the handlers throws an exception
+        Strophe.forEachChild(elem, null, (child) => {
+            const matches = [];
+            this.handlers = this.handlers.reduce((handlers, handler) => {
                 try {
-                    if (hand.isMatch(child) &&
-                        (this.authenticated || !hand.user)) {
-                        if (hand.run(child)) {
-                            this.handlers.push(hand);
+                    if (handler.isMatch(child) &&
+                        (this.authenticated || !handler.user)) {
+                        if (handler.run(child)) {
+                            handlers.push(handler);
                         }
+                        matches.push(handler);
                     } else {
-                        this.handlers.push(hand);
+                        handlers.push(handler);
                     }
-                } catch(e) {
+
+                } catch (e) {
                     // if the handler throws an exception, we consider it as false
                     Strophe.warn('Removing Strophe handlers due to uncaught exception: '+e.message);
                 }
+
+                return handlers;
+            }, []);
+
+            // If no handler was fired for an incoming IQ with type="set",
+            // then we return an IQ error stanza with service-unavailable.
+            if (!matches.length && this.iqFallbackHandler.isMatch(child)) {
+                this.iqFallbackHandler.run(child);
             }
         });
     }
