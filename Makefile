@@ -70,8 +70,8 @@ eslint: node_modules
 	$(ESLINT) src/
 
 .PHONY: check
-check:: node_modules eslint
-	LOG_CR_VERBOSITY=INFO $(CHROMIUM) --no-sandbox http://localhost:$(HTTPSERVE_PORT)/tests/
+check:: node_modules eslint dist
+	npm run test
 
 .PHONY: serve
 serve: node_modules

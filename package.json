@@ -42,10 +42,11 @@
   "unpkg": "dist/strophe.umd.min.js",
   "scripts": {
     "build": "npx rollup -c",
-    "lint": "make eslint",
+    "lint": "eslint src/*.js test/*.js",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "npx yarpm run build"
+    "prepare": "npx yarpm run build",
+    "test": "karma start && npm run lint"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
@@ -62,25 +63,27 @@
     "eslint": "4.19.1",
     "http-server": "^0.12.3",
     "jquery": "^3.5.1",
+    "karma": "^6.3.17",
+    "karma-chrome-launcher": "^3.1.1",
+    "karma-qunit": "^4.1.2",
     "minimist": "^1.2.5",
     "npm": "^6.14.7",
-    "qunitjs": "~1.16.0",
-    "requirejs": "2.3.5",
+    "qunit": "2.18.1",
     "rollup": "^2.32.1",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-uglify": "^6.0.4",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
-    "sinon-qunit": "~2.0.0",
     "terser": "^5.10.0",
     "yarpm": "^0.2.1"
   },
   "dependencies": {
-    "abab": "^2.0.3"
+    "abab": "^2.0.3",
+    "karma-rollup-preprocessor": "^7.0.8"
   },
   "optionalDependencies": {
-    "ws": "^7.5.1",
-    "@xmldom/xmldom": "0.7.5"
+    "@xmldom/xmldom": "0.7.5",
+    "ws": "^7.5.1"
   }
 }
