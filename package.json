@@ -82,7 +82,7 @@
     "karma-rollup-preprocessor": "^7.0.8"
   },
   "optionalDependencies": {
-    "@xmldom/xmldom": "0.7.5",
+    "@xmldom/xmldom": "0.8.2",
     "ws": "^7.5.1"
   }
 }
