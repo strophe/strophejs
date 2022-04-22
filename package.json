@@ -75,7 +75,7 @@
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "terser": "^5.10.0",
-    "yarpm": "^0.2.1"
+    "yarpm": "^1.1.1"
   },
   "dependencies": {
     "abab": "^2.0.3",
