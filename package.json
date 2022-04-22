@@ -55,7 +55,7 @@
     "@babel/core": "^7.10.5",
     "@babel/preset-env": "^7.12.1",
     "@rollup/plugin-babel": "^5.1.0",
-    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-node-resolve": "^8.4.0",
     "almond": "~0.3.0",
     "babel-eslint": "^10.1.0",
