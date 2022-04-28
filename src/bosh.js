@@ -619,6 +619,9 @@ Strophe.Bosh = class Bosh {
             return;
         }
 
+        const reqIs0 = (this._requests[0] === req);
+        const reqIs1 = (this._requests[1] === req);
+
         const valid_request = reqStatus > 0 && reqStatus < 500;
         const too_many_retries = req.sends > this._conn.maxRetries;
         if (valid_request || too_many_retries) {
@@ -629,8 +632,6 @@ Strophe.Bosh = class Bosh {
 
         if (reqStatus === 200) {
             // request succeeded
-            const reqIs0 = (this._requests[0] === req);
-            const reqIs1 = (this._requests[1] === req);
             // if request 1 finished, or request 0 finished and request
             // 1 is over Strophe.SECONDARY_TIMEOUT seconds old, we need to
             // restart the other - both will be in the first spot, as the
