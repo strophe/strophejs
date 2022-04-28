@@ -1,10 +1,13 @@
 # Strophe.js Change Log
 
+## Version 1.5.1 - (Unreleased)
+
 ## Version 1.5.0 - (2022-04-28)
 
 * Add an automatic fallback handler for unhandled IQ "set" and "get" stanzas
   that returns an IQ error with `service-unavailable`.
 * Update various 3rd party dependencies
+* #390 Replace deprecated String.prototype.substr()
 * #418 BOSH fix: mark first request dead when second is done
 
 ## Version 1.4.4 - (2022-01-21)

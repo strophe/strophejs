@@ -1,6 +1,7 @@
 # Strophe.js
 
-[![Build Status](https://travis-ci.org/strophe/strophejs.png?branch=master)](https://travis-ci.org/strophe/strophejs)
+![Build Status](https://github.com/strophe/strophejs/actions/workflows/karma-tests.yml/badge.svg)
+
 
 Strophe.js is a JavaScript library for speaking XMPP via BOSH
 ([XEP 124](https://xmpp.org/extensions/xep-0124.html)
