@@ -71,7 +71,6 @@
     "rollup": "^2.32.1",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-uglify": "^6.0.4",
     "run-headless-chromium": "^0.1.1",
     "sinon": "1.17.7",
     "terser": "^5.10.0",
