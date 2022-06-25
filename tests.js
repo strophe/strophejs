@@ -608,12 +608,15 @@ module("SASL Mechanisms");
 
 test("Default mechanisms will be registered if none are provided", (assert) => {
     const conn = new Strophe.Connection('localhost');
-    assert.equal(Object.keys(conn.mechanisms).length, 6, 'Seven by default registered SASL mechanisms');
+    assert.equal(Object.keys(conn.mechanisms).length, 9, 'Ten by default registered SASL mechanisms');
     assert.equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
     assert.equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
     assert.equal('OAUTHBEARER' in conn.mechanisms, true, 'OAUTHBEARER is registered');
     assert.equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
     assert.equal('SCRAM-SHA-1' in conn.mechanisms, true, 'SCRAM-SHA-1 is registered');
+    assert.equal('SCRAM-SHA-256' in conn.mechanisms, true, 'SCRAM-SHA-256 is registered');
+    assert.equal('SCRAM-SHA-384' in conn.mechanisms, true, 'SCRAM-SHA-384 is registered');
+    assert.equal('SCRAM-SHA-512' in conn.mechanisms, true, 'SCRAM-SHA-512 is registered');
     assert.equal('X-OAUTH2' in conn.mechanisms, true, 'X-OAUTH2 is registered');
 });
 
@@ -659,29 +662,29 @@ test("The supported mechanism with the highest priority will be used", (assert) 
     assert.equal(conn._sasl_mechanism.mechname, 'EXTERNAL');
 });
 
-test("SASL PLAIN Auth", (assert) => {
+test("SASL PLAIN Auth", async (assert) => {
     const conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org", domain: "xmpp.org"};
     const saslplain = new Strophe.SASLPlain();
     saslplain.onStart(conn);
     assert.ok(saslplain.test(conn), "PLAIN is enabled by default.");
-    const response = saslplain.onChallenge(conn);
+    const response = await saslplain.onChallenge(conn);
     assert.equal(response, ['', conn.authcid, conn.pass].join("\u0000"),
         "checking plain auth challenge");
     saslplain.onSuccess();
 });
 
-test("SASL PLAIN Auth with authzid", (assert) => {
+test("SASL PLAIN Auth with authzid", async (assert) => {
     const conn = {pass: "password", authcid: "user", authzid: "admin@xmpp.org", domain: "xmpp.org"};
     const saslplain = new Strophe.SASLPlain();
     saslplain.onStart(conn);
     assert.ok(saslplain.test(conn), "PLAIN is enabled by default.");
-    const response = saslplain.onChallenge(conn, null);
+    const response = await saslplain.onChallenge(conn, null);
     assert.equal(response, [conn.authzid, conn.authcid, conn.pass].join("\u0000"),
         "checking plain auth challenge");
     saslplain.onSuccess();
 });
 
-test("SASL SCRAM-SHA-1 Auth", (assert) => {
+test("SASL SCRAM-SHA-1 Auth", async (assert) => {
     /* This is a simple example of a SCRAM-SHA-1 authentication exchange
     * when the client doesn't support channel bindings (username 'user' and
     * password 'pencil' are used):
@@ -705,22 +708,55 @@ test("SASL SCRAM-SHA-1 Auth", (assert) => {
     assert.ok(saslsha1.test(conn), "SHA-1 is enabled by default.");
     // test taken from example section on:
     // URL: http://tools.ietf.org/html/rfc5802#section-5
-    let response = saslsha1.clientChallenge(conn, "fyko+d2lbbFgONRv9qkxdawL");
+    let response = await saslsha1.clientChallenge(conn, "fyko+d2lbbFgONRv9qkxdawL");
     assert.equal(response, "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL", "checking first auth challenge");
 
-    response = saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
+    response = await saslsha1.onChallenge(conn, "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096");
     assert.equal(response, "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
         "checking second auth challenge");
     saslsha1.onSuccess();
 });
 
-test("SASL EXTERNAL Auth", (assert) => {
+test("SASL SCRAM-SHA-256 Auth", async (assert) => {
+    /* This is a simple example of a SCRAM-SHA-256 authentication exchange
+    * when the client doesn't support channel bindings (username 'user' and
+    * password 'pencil' are used):
+    *
+    * C: n,,n=user,r=rOprNGfwEbeRWgbNEkqO
+    * S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,
+    * s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
+    * C: c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,
+    * p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ=
+    * S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
+    *
+    */
+    const conn = {
+        pass: "pencil",
+        authcid: "user",
+        authzid: "user@xmpp.org",
+        _sasl_data: []
+    };
+    const saslsha256 = new Strophe.SASLSHA256();
+    saslsha256.onStart(conn);
+    assert.ok(saslsha256.test(conn), "SHA-256 is enabled by default.");
+    // test taken from example section on:
+    // URL: https://datatracker.ietf.org/doc/html/rfc7677#section-3
+    let response = await saslsha256.clientChallenge(conn, "rOprNGfwEbeRWgbNEkqO");
+    assert.equal(response, "n,,n=user,r=rOprNGfwEbeRWgbNEkqO", "checking first auth challenge");
+
+    response = await saslsha256.onChallenge(conn, "r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096");
+    assert.equal(response, "c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ=",
+        "checking second auth challenge");
+    saslsha256.onSuccess();
+});
+
+test("SASL EXTERNAL Auth", async (assert) => {
     let conn = {pass: "password", authcid: "user", authzid: "user@xmpp.org"};
     let sasl_external = new Strophe.SASLExternal();
     assert.ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
     sasl_external.onStart(conn);
 
-    let response = sasl_external.clientChallenge(conn);
+    let response = await sasl_external.clientChallenge(conn);
     assert.equal(response, conn.authzid,
         "Response to EXTERNAL auth challenge should be authzid if different authcid was passed in.");
     sasl_external.onSuccess();
@@ -729,7 +765,7 @@ test("SASL EXTERNAL Auth", (assert) => {
     sasl_external = new Strophe.SASLExternal();
     assert.ok(sasl_external.test(conn), "EXTERNAL is enabled by default.");
     sasl_external.onStart(conn);
-    response = sasl_external.onChallenge(conn, null);
+    response = await sasl_external.onChallenge(conn, null);
     assert.equal(response, conn.authzid,
         "Response to EXTERNAL auth challenge should be empty string if authcid = authzid");
     sasl_external.onSuccess();

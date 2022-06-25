@@ -7,15 +7,16 @@
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
 
 import * as shims from './shims';
-import MD5 from './md5';
 import SASLAnonymous from './sasl-anon.js';
 import SASLExternal from './sasl-external.js';
 import SASLMechanism from './sasl.js';
 import SASLOAuthBearer from './sasl-oauthbearer.js';
 import SASLPlain from './sasl-plain.js';
 import SASLSHA1 from './sasl-sha1.js';
+import SASLSHA256 from './sasl-sha256.js';
+import SASLSHA384 from './sasl-sha384.js';
+import SASLSHA512 from './sasl-sha512.js';
 import SASLXOAuth2 from './sasl-xoauth2.js';
-import SHA1 from './sha1';
 import utils from './utils';
 import { atob, btoa } from 'abab'
 
@@ -1415,12 +1416,15 @@ Strophe.TimedHandler = class TimedHandler {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      SCRAM-SHA-1 - 60
- *      PLAIN       - 50
- *      OAUTHBEARER - 40
- *      X-OAUTH2    - 30
- *      ANONYMOUS   - 20
- *      EXTERNAL    - 10
+ *      SCRAM-SHA-512 - 72
+ *      SCRAM-SHA-384 - 71
+ *      SCRAM-SHA-256 - 70
+ *      SCRAM-SHA-1   - 60
+ *      PLAIN         - 50
+ *      OAUTHBEARER   - 40
+ *      X-OAUTH2      - 30
+ *      ANONYMOUS     - 20
+ *      EXTERNAL      - 10
  *
  *  explicitResourceBinding:
  *
@@ -1742,7 +1746,16 @@ Strophe.Connection = class Connection {
      *      or a full JID.  If a node is not supplied, SASL OAUTHBEARER or
      *      SASL ANONYMOUS authentication will be attempted (OAUTHBEARER will
      *      process the provided password value as an access token).
-     *    (String) pass - The user's password.
+     *    (String or Object) pass - The user's password, or an object containing
+     *      the users SCRAM client and server keys, in a fashion described as follows:
+     *
+     *      { name: String, representing the hash used (eg. SHA-1),
+     *        salt: String, base64 encoded salt used to derive the client key,
+     *        iter: Int,    the iteration count used to derive the client key,
+     *        ck:   String, the base64 encoding of the SCRAM client key
+     *        sk:   String, the base64 encoding of the SCRAM server key
+     *      }
+     *
      *    (Function) callback - The connect callback function.
      *    (Integer) wait - The optional HTTPBIND wait value.  This is the
      *      time the server will wait before returning an empty result for
@@ -1778,8 +1791,16 @@ Strophe.Connection = class Connection {
 
         /** Variable: pass
          *  Authentication identity (User password).
+         *
          */
         this.pass = pass;
+
+        /** Variable: scram_keys
+         *  The SASL SCRAM client and server keys. This variable will be populated with a non-null
+         *  object of the above described form after a successful SCRAM connection
+         *
+         */
+        this.scram_keys = null;
 
         this.connect_callback = callback;
         this.disconnecting = false;
@@ -2317,7 +2338,10 @@ Strophe.Connection = class Connection {
             Strophe.SASLOAuthBearer,
             Strophe.SASLXOAuth2,
             Strophe.SASLPlain,
-            Strophe.SASLSHA1
+            Strophe.SASLSHA1,
+            Strophe.SASLSHA256,
+            Strophe.SASLSHA384,
+            Strophe.SASLSHA512
         ];
         mechanisms.forEach(m => this.registerSASLMechanism(m));
     }
@@ -2738,9 +2762,9 @@ Strophe.Connection = class Connection {
      *  _Private_ handler for the SASL challenge
      *
      */
-    _sasl_challenge_cb (elem) {
+    async _sasl_challenge_cb (elem) {
       const challenge = atob(Strophe.getText(elem));
-      const response = this._sasl_mechanism.onChallenge(this, challenge);
+      const response = await this._sasl_mechanism.onChallenge(this, challenge);
       const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
       if (response !== "") {
         stanza.t(btoa(response));
@@ -2845,6 +2869,10 @@ Strophe.Connection = class Connection {
             }
         }
         Strophe.info("SASL authentication succeeded.");
+
+        if (this._sasl_data.keys) {
+            this.scram_keys = this._sasl_data.keys;
+        }
 
         if (this._sasl_mechanism) {
             this._sasl_mechanism.onSuccess();
@@ -3206,6 +3234,9 @@ Strophe.SASLMechanism = SASLMechanism;
  *  Strophe.SASLAnonymous   - SASL ANONYMOUS authentication.
  *  Strophe.SASLPlain       - SASL PLAIN authentication.
  *  Strophe.SASLSHA1        - SASL SCRAM-SHA-1 authentication
+ *  Strophe.SASLSHA256      - SASL SCRAM-SHA-256 authentication
+ *  Strophe.SASLSHA384      - SASL SCRAM-SHA-384 authentication
+ *  Strophe.SASLSHA512      - SASL SCRAM-SHA-512 authentication
  *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
  *  Strophe.SASLExternal    - SASL EXTERNAL authentication
  *  Strophe.SASLXOAuth2     - SASL X-OAuth2 authentication
@@ -3213,12 +3244,13 @@ Strophe.SASLMechanism = SASLMechanism;
 Strophe.SASLAnonymous = SASLAnonymous;
 Strophe.SASLPlain = SASLPlain;
 Strophe.SASLSHA1 = SASLSHA1;
+Strophe.SASLSHA256 = SASLSHA256;
+Strophe.SASLSHA384 = SASLSHA384;
+Strophe.SASLSHA512 = SASLSHA512;
 Strophe.SASLOAuthBearer = SASLOAuthBearer;
 Strophe.SASLExternal = SASLExternal;
 Strophe.SASLXOAuth2 = SASLXOAuth2;
 
-
-export { SHA1, MD5 };
 
 export default {
     'Strophe':         Strophe,
@@ -3226,10 +3258,4 @@ export default {
     '$iq':             $iq,
     '$msg':            $msg,
     '$pres':           $pres,
-    'SHA1':            SHA1,
-    'MD5':             MD5,
-    'b64_hmac_sha1':   SHA1.b64_hmac_sha1,
-    'b64_sha1':        SHA1.b64_sha1,
-    'str_hmac_sha1':   SHA1.str_hmac_sha1,
-    'str_sha1':        SHA1.str_sha1
 };
