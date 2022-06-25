@@ -14,7 +14,7 @@ export default class SASLExternal extends SASLMechanism {
         super(mechname, isClientFirst, priority);
     }
 
-    onChallenge (connection) { // eslint-disable-line class-methods-use-this
+    async onChallenge (connection) { // eslint-disable-line class-methods-use-this
         /** According to XEP-178, an authzid SHOULD NOT be presented when the
          * authcid contained or implied in the client certificate is the JID (i.e.
          * authzid) with which the user wants to log in as.

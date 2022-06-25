@@ -20,6 +20,33 @@ const utils = {
         return out;
     },
 
+    xorArrayBuffers: function (x, y) {
+        let xIntArray = new Uint8Array(x);
+        let yIntArray = new Uint8Array(y);
+        let zIntArray = new Uint8Array(x.byteLength);
+        for (let i = 0; i < x.byteLength; i++) {
+             zIntArray[i] = xIntArray[i] ^ yIntArray[i];
+        }
+        return zIntArray.buffer;
+    },
+
+    arrayBufToBase64: function ( buffer ) {
+        /* This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
+        *  and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
+        */
+        var binary = '';
+        var bytes = new Uint8Array( buffer );
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[ i ] );
+        }
+        return window.btoa( binary );
+    },
+
+    base64ToArrayBuf: function (str) {
+        return Uint8Array.from(atob(str), c => c.charCodeAt(0))?.buffer;
+    },
+
     addCookies: function (cookies) {
         /* Parameters:
          *  (Object) cookies - either a map of cookie names

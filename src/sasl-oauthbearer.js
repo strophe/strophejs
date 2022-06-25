@@ -14,7 +14,7 @@ export default class SASLOAuthBearer extends SASLMechanism {
         return connection.pass !== null;
     }
 
-    onChallenge (connection) {  // eslint-disable-line class-methods-use-this
+    async onChallenge (connection) {  // eslint-disable-line class-methods-use-this
         let auth_str = 'n,';
         if (connection.authcid !== null) {
             auth_str = auth_str + 'a=' + connection.authzid;

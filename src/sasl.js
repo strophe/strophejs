@@ -8,12 +8,14 @@
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
- *      SCRAM-SHA-1 - 60
- *      PLAIN       - 50
- *      OAUTHBEARER - 40
- *      X-OAUTH2    - 30
- *      ANONYMOUS   - 20
- *      EXTERNAL    - 10
+ *      SCRAM-SHA-512 - 80
+ *      SCRAM-SHA-256 - 70
+ *      SCRAM-SHA-1   - 60
+ *      PLAIN         - 50
+ *      OAUTHBEARER   - 40
+ *      X-OAUTH2      - 30
+ *      ANONYMOUS     - 20
+ *      EXTERNAL      - 10
  *
  *  See: Strophe.Connection.addSupportedSASLMechanisms
  */
@@ -136,4 +138,5 @@ export default class SASLMechanism {
     onSuccess () {
         this._connection = null;
     }
+
 }
