@@ -124,7 +124,7 @@ async function scramResponse ( connection, challenge, hashName, hashBits ) {
 
         // Either restore the client key and server key passed in, or derive new ones
         if ( connection.pass?.name === hashName &&
-             connection.pass?.salt === challengeData.salt &&
+             connection.pass?.salt === utils.arrayBufToBase64(challengeData.salt) &&
              connection.pass?.iter === challengeData.iter) {
 
             clientKey = utils.base64ToArrayBuf(connection.pass.ck);
@@ -155,6 +155,7 @@ async function scramResponse ( connection, challenge, hashName, hashBits ) {
         connection._sasl_data.keys =
             { "name": hashName,
               "iter": challengeData.iter,
+              "salt": utils.arrayBufToBase64(challengeData.salt),
               "ck":   utils.arrayBufToBase64(clientKey),
               "sk":   utils.arrayBufToBase64(serverKey)
             };
