@@ -1,8 +1,6 @@
 import utils from './utils';
 
 async function scramClientProof( authMessage, clientKey, hashName ) {
-    const enc = new TextEncoder();
-
     const storedKey = await window.crypto.subtle.importKey(
       "raw",
       await window.crypto.subtle.digest(hashName, clientKey),
@@ -10,7 +8,7 @@ async function scramClientProof( authMessage, clientKey, hashName ) {
       false,
       ["sign"]
     );
-    const clientSignature = await window.crypto.subtle.sign("HMAC", storedKey, enc.encode(authMessage).buffer);
+    const clientSignature = await window.crypto.subtle.sign("HMAC", storedKey, utils.stringToArrayBuf(authMessage));
 
     return utils.xorArrayBuffers(clientKey, clientSignature);
 }
@@ -68,11 +66,9 @@ function scramParseChallenge ( challenge ) {
  * }
  */
 async function scramDeriveKeys ( password, salt, iter, hashName, hashBits ) {
-    const enc = new TextEncoder();
-
     const saltedPasswordBits = await window.crypto.subtle.deriveBits(
         { "name": "PBKDF2", "salt": salt, "iterations": iter, "hash": { "name": hashName } },
-        await window.crypto.subtle.importKey("raw", enc.encode(password).buffer, "PBKDF2", false, ["deriveBits"]),
+        await window.crypto.subtle.importKey("raw", utils.stringToArrayBuf(password), "PBKDF2", false, ["deriveBits"]),
         hashBits
     );
     const saltedPassword = await window.crypto.subtle.importKey(
@@ -83,14 +79,12 @@ async function scramDeriveKeys ( password, salt, iter, hashName, hashBits ) {
         ["sign"]
     );
 
-    return { "ck": await window.crypto.subtle.sign("HMAC", saltedPassword, enc.encode("Client Key").buffer),
-             "sk": await window.crypto.subtle.sign("HMAC", saltedPassword, enc.encode("Server Key").buffer)
+    return { "ck": await window.crypto.subtle.sign("HMAC", saltedPassword, utils.stringToArrayBuf("Client Key")),
+             "sk": await window.crypto.subtle.sign("HMAC", saltedPassword, utils.stringToArrayBuf("Server Key"))
            }
 }
 
 async function scramServerSign ( authMessage, sk, hashName ) {
-    const enc = new TextEncoder();
-
     const serverKey = await window.crypto.subtle.importKey(
         "raw",
         sk,
@@ -99,7 +93,7 @@ async function scramServerSign ( authMessage, sk, hashName ) {
         ["sign"]
     );
 
-    return window.crypto.subtle.sign("HMAC", serverKey, enc.encode(authMessage).buffer);
+    return window.crypto.subtle.sign("HMAC", serverKey, utils.stringToArrayBuf(authMessage));
 }
 
 // Generate an ASCII nonce (not containing the ',' character)

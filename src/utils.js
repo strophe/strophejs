@@ -47,6 +47,11 @@ const utils = {
         return Uint8Array.from(atob(str), c => c.charCodeAt(0))?.buffer;
     },
 
+    stringToArrayBuf: function (str) {
+        const bytes = new TextEncoder("utf-8").encode(str);
+        return bytes.buffer;
+    },
+
     addCookies: function (cookies) {
         /* Parameters:
          *  (Object) cookies - either a map of cookie names
