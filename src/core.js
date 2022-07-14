@@ -1795,12 +1795,12 @@ Strophe.Connection = class Connection {
          */
         this.pass = pass;
 
-        /** Variable: scramKeys
+        /** Variable: scram_keys
          *  The SASL SCRAM client and server keys. This variable will be populated with a non-null
          *  object of the above described form after a successful SCRAM connection
          *
          */
-        this.scramKeys = null;
+        this.scram_keys = null;
 
         this.connect_callback = callback;
         this.disconnecting = false;
@@ -2871,7 +2871,7 @@ Strophe.Connection = class Connection {
         Strophe.info("SASL authentication succeeded.");
 
         if (this._sasl_data.keys) {
-            this.scramKeys = this._sasl_data.keys;
+            this.scram_keys = this._sasl_data.keys;
         }
 
         if (this._sasl_mechanism) {

@@ -718,7 +718,7 @@ test("SASL SCRAM-SHA-1 Auth", async (assert) => {
 });
 
 test("SASL SCRAM-SHA-256 Auth", async (assert) => {
-    /* This is a simple example of a SCRAM-SHA-1 authentication exchange
+    /* This is a simple example of a SCRAM-SHA-256 authentication exchange
     * when the client doesn't support channel bindings (username 'user' and
     * password 'pencil' are used):
     *
@@ -740,7 +740,7 @@ test("SASL SCRAM-SHA-256 Auth", async (assert) => {
     saslsha256.onStart(conn);
     assert.ok(saslsha256.test(conn), "SHA-256 is enabled by default.");
     // test taken from example section on:
-    // URL: http://tools.ietf.org/html/rfc5802#section-5
+    // URL: https://datatracker.ietf.org/doc/html/rfc7677#section-3
     let response = await saslsha256.clientChallenge(conn, "rOprNGfwEbeRWgbNEkqO");
     assert.equal(response, "n,,n=user,r=rOprNGfwEbeRWgbNEkqO", "checking first auth challenge");
 

@@ -111,15 +111,15 @@ function generate_cnonce () {
 
 const scram = {
 
-        /* On success, sets
-         * connection_sasl_data["server-signature"]
-         * and
-         * connection._sasl_data.keys
-         *
-         * The server signature should be verified after this function completes..
-         *
-         * On failure, returns connection._sasl_failure_cb();
-         */
+    /* On success, sets
+     * connection_sasl_data["server-signature"]
+     * and
+     * connection._sasl_data.keys
+     *
+     * The server signature should be verified after this function completes..
+     *
+     * On failure, returns connection._sasl_failure_cb();
+     */
     scramResponse: async function ( connection, challenge, hashName, hashBits ) {
         const cnonce = connection._sasl_data.cnonce;
         const challengeData = scramParseChallenge(challenge);
