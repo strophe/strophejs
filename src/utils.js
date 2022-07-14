@@ -21,9 +21,9 @@ const utils = {
     },
 
     xorArrayBuffers: function (x, y) {
-        let xIntArray = new Uint8Array(x);
-        let yIntArray = new Uint8Array(y);
-        let zIntArray = new Uint8Array(x.byteLength);
+        const xIntArray = new Uint8Array(x);
+        const yIntArray = new Uint8Array(y);
+        const zIntArray = new Uint8Array(x.byteLength);
         for (let i = 0; i < x.byteLength; i++) {
              zIntArray[i] = xIntArray[i] ^ yIntArray[i];
         }
@@ -34,11 +34,11 @@ const utils = {
         /* This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
         *  and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
         */
-        var binary = '';
-        var bytes = new Uint8Array( buffer );
-        var len = bytes.byteLength;
-        for (var i = 0; i < len; i++) {
-            binary += String.fromCharCode( bytes[ i ] );
+        let binary = '';
+        const bytes = new Uint8Array( buffer );
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[i] );
         }
         return window.btoa( binary );
     },
@@ -85,6 +85,7 @@ const utils = {
             }
         }
     }
+
 };
 
 export { utils as default };

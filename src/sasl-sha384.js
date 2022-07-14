@@ -1,12 +1,12 @@
 import SASLMechanism from './sasl.js';
 import scram from './scram.js';
 
-export default class SASLSHA256 extends SASLMechanism {
+export default class SASLSHA384 extends SASLMechanism {
 
-    /** PrivateConstructor: SASLSHA256
-     *  SASL SCRAM SHA 256 authentication.
+    /** PrivateConstructor: SASLSHA384
+     *  SASL SCRAM SHA 384 authentication.
      */
-    constructor (mechname='SCRAM-SHA-256', isClientFirst=true, priority=70) {
+    constructor (mechname='SCRAM-SHA-384', isClientFirst=true, priority=71) {
         super(mechname, isClientFirst, priority);
     }
 
@@ -15,7 +15,7 @@ export default class SASLSHA256 extends SASLMechanism {
     }
 
     async onChallenge (connection, challenge) { // eslint-disable-line class-methods-use-this, require-await
-        return scram.scramResponse(connection, challenge, "SHA-256", 256);
+        return scram.scramResponse(connection, challenge, "SHA-384", 384);
     }
 
     clientChallenge (connection, test_cnonce) {  // eslint-disable-line class-methods-use-this

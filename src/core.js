@@ -7,7 +7,6 @@
 /*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
 
 import * as shims from './shims';
-import MD5 from './md5';
 import SASLAnonymous from './sasl-anon.js';
 import SASLExternal from './sasl-external.js';
 import SASLMechanism from './sasl.js';
@@ -15,9 +14,9 @@ import SASLOAuthBearer from './sasl-oauthbearer.js';
 import SASLPlain from './sasl-plain.js';
 import SASLSHA1 from './sasl-sha1.js';
 import SASLSHA256 from './sasl-sha256.js';
+import SASLSHA384 from './sasl-sha384.js';
 import SASLSHA512 from './sasl-sha512.js';
 import SASLXOAuth2 from './sasl-xoauth2.js';
-import SHA1 from './sha1';
 import utils from './utils';
 import { atob, btoa } from 'abab'
 
@@ -1417,7 +1416,8 @@ Strophe.TimedHandler = class TimedHandler {
  *  If nothing is specified, then the following mechanisms (and their
  *  priorities) are registered:
  *
- *      SCRAM-SHA-512 - 80
+ *      SCRAM-SHA-512 - 72
+ *      SCRAM-SHA-384 - 71
  *      SCRAM-SHA-256 - 70
  *      SCRAM-SHA-1   - 60
  *      PLAIN         - 50
@@ -2340,6 +2340,7 @@ Strophe.Connection = class Connection {
             Strophe.SASLPlain,
             Strophe.SASLSHA1,
             Strophe.SASLSHA256,
+            Strophe.SASLSHA384,
             Strophe.SASLSHA512
         ];
         mechanisms.forEach(m => this.registerSASLMechanism(m));
@@ -2761,16 +2762,15 @@ Strophe.Connection = class Connection {
      *  _Private_ handler for the SASL challenge
      *
      */
-    _sasl_challenge_cb (elem) {
+    async _sasl_challenge_cb (elem) {
       const challenge = atob(Strophe.getText(elem));
-      this._sasl_mechanism.onChallenge(this, challenge).then(response => {;
-            const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
-            if (response !== "") {
-              stanza.t(btoa(response));
-            }
-            this.send(stanza.tree());
-            return true;
-       });
+      const response = await this._sasl_mechanism.onChallenge(this, challenge);
+      const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
+      if (response !== "") {
+        stanza.t(btoa(response));
+      }
+      this.send(stanza.tree());
+      return true;
     }
 
     /** PrivateFunction: _attemptLegacyAuth
@@ -3234,6 +3234,9 @@ Strophe.SASLMechanism = SASLMechanism;
  *  Strophe.SASLAnonymous   - SASL ANONYMOUS authentication.
  *  Strophe.SASLPlain       - SASL PLAIN authentication.
  *  Strophe.SASLSHA1        - SASL SCRAM-SHA-1 authentication
+ *  Strophe.SASLSHA256      - SASL SCRAM-SHA-256 authentication
+ *  Strophe.SASLSHA384      - SASL SCRAM-SHA-384 authentication
+ *  Strophe.SASLSHA512      - SASL SCRAM-SHA-512 authentication
  *  Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
  *  Strophe.SASLExternal    - SASL EXTERNAL authentication
  *  Strophe.SASLXOAuth2     - SASL X-OAuth2 authentication
@@ -3242,13 +3245,12 @@ Strophe.SASLAnonymous = SASLAnonymous;
 Strophe.SASLPlain = SASLPlain;
 Strophe.SASLSHA1 = SASLSHA1;
 Strophe.SASLSHA256 = SASLSHA256;
+Strophe.SASLSHA384 = SASLSHA384;
 Strophe.SASLSHA512 = SASLSHA512;
 Strophe.SASLOAuthBearer = SASLOAuthBearer;
 Strophe.SASLExternal = SASLExternal;
 Strophe.SASLXOAuth2 = SASLXOAuth2;
 
-
-export { SHA1, MD5 };
 
 export default {
     'Strophe':         Strophe,
@@ -3256,10 +3258,4 @@ export default {
     '$iq':             $iq,
     '$msg':            $msg,
     '$pres':           $pres,
-    'SHA1':            SHA1,
-    'MD5':             MD5,
-    'b64_hmac_sha1':   SHA1.b64_hmac_sha1,
-    'b64_sha1':        SHA1.b64_sha1,
-    'str_hmac_sha1':   SHA1.str_hmac_sha1,
-    'str_sha1':        SHA1.str_sha1
 };

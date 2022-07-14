@@ -1,7 +1,7 @@
 import utils from './utils';
 
 async function scramClientProof( authMessage, clientKey, hashName ) {
-    let enc = new TextEncoder();
+    const enc = new TextEncoder();
 
     const storedKey = await window.crypto.subtle.importKey(
       "raw",
@@ -10,20 +10,20 @@ async function scramClientProof( authMessage, clientKey, hashName ) {
       false,
       ["sign"]
     );
-    const clientSignature = await window.crypto.subtle.sign("HMAC", storedKey, enc.encode(authMessage));
+    const clientSignature = await window.crypto.subtle.sign("HMAC", storedKey, enc.encode(authMessage).buffer);
 
     return utils.xorArrayBuffers(clientKey, clientSignature);
 }
 
+/* This function parses the information in a SASL SCRAM challenge response,
+ * into an object of the form
+ * { nonce: String,
+ *   salt:  ArrayBuffer,
+ *   iter:  Int
+ * }
+ * Returns undefined on failure.
+ */
 function scramParseChallenge ( challenge ) {
-    /* This function parses the information in a SASL SCRAM challenge response,
-     * into an object of the form
-     * { nonce: String,
-     *   salt:  ArrayBuffer,
-     *   iter:  Int
-     * }
-     * Returns undefined on failure.
-     */
     let nonce, salt, iter;
     const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
     while (challenge.match(attribMatch)) {
@@ -37,7 +37,7 @@ function scramParseChallenge ( challenge ) {
             salt = utils.base64ToArrayBuf(matches[2]);
             break;
         case "i":
-            iter = parseInt(matches[2]);
+            iter = parseInt(matches[2], 10);
             break;
         default: return undefined;
         }
@@ -46,10 +46,13 @@ function scramParseChallenge ( challenge ) {
     // Consider iteration counts less than 4096 insecure, as reccommended by
     // RFC 5802
     if (isNaN(iter) || iter < 4096) {
+        // TODO: Console.warn should definitely be replaced by a real logging function.
+        console.warn("strophe.js: Failing SCRAM authentication because server supplied iteration count < 4096.");
         return undefined;
     }
 
     if (!salt) {
+        console.warn("strophe.js: Failing SCRAM authentication because server supplied incorrect salt.");
         return undefined;
     }
 
@@ -57,20 +60,19 @@ function scramParseChallenge ( challenge ) {
 
 }
 
+/* Derive the client and server keys given a string password,
+ * a hash name, and a bit length.
+ * Returns an object of the following form:
+ * { ck: ArrayBuffer, the client key
+ *   sk: ArrayBuffer, the server key
+ * }
+ */
 async function scramDeriveKeys ( password, salt, iter, hashName, hashBits ) {
-    /* Derive the client and server keys given a string password,
-     * a hash name, and a bit length.
-     * Returns an object of the following form:
-     * { ck: ArrayBuffer, the client key
-     *   sk: ArrayBuffer, the server key
-     * }
-     */
-
-    let enc = new TextEncoder();
+    const enc = new TextEncoder();
 
     const saltedPasswordBits = await window.crypto.subtle.deriveBits(
         { "name": "PBKDF2", "salt": salt, "iterations": iter, "hash": { "name": hashName } },
-        await window.crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]),
+        await window.crypto.subtle.importKey("raw", enc.encode(password).buffer, "PBKDF2", false, ["deriveBits"]),
         hashBits
     );
     const saltedPassword = await window.crypto.subtle.importKey(
@@ -87,7 +89,7 @@ async function scramDeriveKeys ( password, salt, iter, hashName, hashBits ) {
 }
 
 async function scramServerSign ( authMessage, sk, hashName ) {
-    let enc = new TextEncoder();
+    const enc = new TextEncoder();
 
     const serverKey = await window.crypto.subtle.importKey(
         "raw",
@@ -97,10 +99,18 @@ async function scramServerSign ( authMessage, sk, hashName ) {
         ["sign"]
     );
 
-    return await window.crypto.subtle.sign("HMAC", serverKey, enc.encode(authMessage));
+    return window.crypto.subtle.sign("HMAC", serverKey, enc.encode(authMessage).buffer);
 }
 
-async function scramResponse ( connection, challenge, hashName, hashBits ) {
+// Generate an ASCII nonce (not containing the ',' character)
+function generate_cnonce () {
+    // generate 16 random bytes of nonce, base64 encoded
+    const bytes = new Uint8Array(16);
+    return utils.arrayBufToBase64(crypto.getRandomValues(bytes).buffer);
+}
+
+const scram = {
+
         /* On success, sets
          * connection_sasl_data["server-signature"]
          * and
@@ -110,12 +120,14 @@ async function scramResponse ( connection, challenge, hashName, hashBits ) {
          *
          * On failure, returns connection._sasl_failure_cb();
          */
+    scramResponse: async function ( connection, challenge, hashName, hashBits ) {
         const cnonce = connection._sasl_data.cnonce;
         const challengeData = scramParseChallenge(challenge);
 
         // The RFC requires that we verify the (server) nonce has the client
         // nonce as an initial substring.
         if (!challengeData && challengeData?.nonce.slice(0, cnonce.length) !== cnonce) {
+            console.warn("strophe.js: Failing SCRAM authentication because server supplied incorrect nonce.");
             connection._sasl_data = {};
             return connection._sasl_failure_cb();
         }
@@ -130,7 +142,7 @@ async function scramResponse ( connection, challenge, hashName, hashBits ) {
             clientKey = utils.base64ToArrayBuf(connection.pass.ck);
             serverKey = utils.base64ToArrayBuf(connection.pass.sk);
         } else if (typeof connection.pass === "string" || connection.pass instanceof String) {
-            let keys = await scramDeriveKeys(
+            const keys = await scramDeriveKeys(
                 connection.pass,
                 challengeData.salt,
                 challengeData.iter,
@@ -161,7 +173,18 @@ async function scramResponse ( connection, challenge, hashName, hashBits ) {
             };
 
         return `${clientFinalMessageBare},p=${utils.arrayBufToBase64(clientProof)}`;
+    },
+
+    // Returns a string containing the client first message 
+    clientChallenge: function ( connection, test_cnonce ) {
+        const cnonce = test_cnonce || generate_cnonce();
+        const client_first_message_bare = `n=${connection.authcid},r=${cnonce}`;
+        connection._sasl_data.cnonce = cnonce;
+        connection._sasl_data["client-first-message-bare"] = client_first_message_bare;
+        return `n,,${client_first_message_bare}`;
+    }
+
 }
 
-export { scramResponse as default };
+export { scram as default };
 

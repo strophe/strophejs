@@ -8,7 +8,8 @@
  *
  *  By default, all mechanisms are enabled and the priorities are
  *
- *      SCRAM-SHA-512 - 80
+ *      SCRAM-SHA-512 - 72
+ *      SCRAM-SHA-384 - 71
  *      SCRAM-SHA-256 - 70
  *      SCRAM-SHA-1   - 60
  *      PLAIN         - 50
