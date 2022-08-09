@@ -1,4 +1,5 @@
 import utils from './utils';
+import { Strophe } from './core.js';
 
 async function scramClientProof( authMessage, clientKey, hashName ) {
     const storedKey = await window.crypto.subtle.importKey(
@@ -44,13 +45,12 @@ function scramParseChallenge ( challenge ) {
     // Consider iteration counts less than 4096 insecure, as reccommended by
     // RFC 5802
     if (isNaN(iter) || iter < 4096) {
-        // TODO: Console.warn should definitely be replaced by a real logging function.
-        console.warn("strophe.js: Failing SCRAM authentication because server supplied iteration count < 4096.");
+        Strophe.warn("Failing SCRAM authentication because server supplied iteration count < 4096.");
         return undefined;
     }
 
     if (!salt) {
-        console.warn("strophe.js: Failing SCRAM authentication because server supplied incorrect salt.");
+        Strophe.warn("Failing SCRAM authentication because server supplied incorrect salt.");
         return undefined;
     }
 
@@ -114,14 +114,14 @@ const scram = {
      *
      * On failure, returns connection._sasl_failure_cb();
      */
-    scramResponse: async function ( connection, challenge, hashName, hashBits ) {
+    async scramResponse ( connection, challenge, hashName, hashBits ) {
         const cnonce = connection._sasl_data.cnonce;
         const challengeData = scramParseChallenge(challenge);
 
         // The RFC requires that we verify the (server) nonce has the client
         // nonce as an initial substring.
         if (!challengeData && challengeData?.nonce.slice(0, cnonce.length) !== cnonce) {
-            console.warn("strophe.js: Failing SCRAM authentication because server supplied incorrect nonce.");
+            Strophe.warn("Failing SCRAM authentication because server supplied incorrect nonce.");
             connection._sasl_data = {};
             return connection._sasl_failure_cb();
         }
@@ -169,16 +169,14 @@ const scram = {
         return `${clientFinalMessageBare},p=${utils.arrayBufToBase64(clientProof)}`;
     },
 
-    // Returns a string containing the client first message 
-    clientChallenge: function ( connection, test_cnonce ) {
+    // Returns a string containing the client first message
+    clientChallenge ( connection, test_cnonce ) {
         const cnonce = test_cnonce || generate_cnonce();
         const client_first_message_bare = `n=${connection.authcid},r=${cnonce}`;
         connection._sasl_data.cnonce = cnonce;
         connection._sasl_data["client-first-message-bare"] = client_first_message_bare;
         return `n,,${client_first_message_bare}`;
     }
-
 }
 
 export { scram as default };
-

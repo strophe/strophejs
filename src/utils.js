@@ -1,11 +1,10 @@
 const utils = {
 
-    utf16to8: function (str) {
-        var i, c;
-        var out = "";
-        var len = str.length;
-        for (i = 0; i < len; i++) {
-            c = str.charCodeAt(i);
+    utf16to8 (str) {
+        let out = "";
+        const len = str.length;
+        for (let i = 0; i < len; i++) {
+            const c = str.charCodeAt(i);
             if ((c >= 0x0000) && (c <= 0x007F)) {
                 out += str.charAt(i);
             } else if (c > 0x07FF) {
@@ -20,7 +19,7 @@ const utils = {
         return out;
     },
 
-    xorArrayBuffers: function (x, y) {
+    xorArrayBuffers (x, y) {
         const xIntArray = new Uint8Array(x);
         const yIntArray = new Uint8Array(y);
         const zIntArray = new Uint8Array(x.byteLength);
@@ -30,10 +29,9 @@ const utils = {
         return zIntArray.buffer;
     },
 
-    arrayBufToBase64: function ( buffer ) {
-        /* This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
-        *  and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
-        */
+    arrayBufToBase64 (buffer) {
+        // This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
+        //  and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
         let binary = '';
         const bytes = new Uint8Array( buffer );
         const len = bytes.byteLength;
@@ -43,16 +41,16 @@ const utils = {
         return window.btoa( binary );
     },
 
-    base64ToArrayBuf: function (str) {
+    base64ToArrayBuf (str) {
         return Uint8Array.from(atob(str), c => c.charCodeAt(0))?.buffer;
     },
 
-    stringToArrayBuf: function (str) {
+    stringToArrayBuf (str) {
         const bytes = new TextEncoder("utf-8").encode(str);
         return bytes.buffer;
     },
 
-    addCookies: function (cookies) {
+    addCookies (cookies) {
         /* Parameters:
          *  (Object) cookies - either a map of cookie names
          *    to string values or to maps of cookie values.
@@ -90,7 +88,6 @@ const utils = {
             }
         }
     }
-
 };
 
 export { utils as default };
