@@ -17,7 +17,7 @@ covers Strophe in detail in the context of web applications.
 ## Quick Links
 
 * [Homepage](https://strophe.im/strophejs/)
-* [Documentation](https://strophe.im/strophejs/doc/1.4.2/files/strophe-umd-js.html)
+* [Documentation](https://strophe.im/strophejs/doc/1.6.0/files/strophe-umd-js.html)
 * [Mailing list](https://groups.google.com/g/strophe)
 * [Community Plugins](https://github.com/strophe/strophejs-plugins)
 

@@ -83,7 +83,7 @@ export function $pres(attrs) {
  */
 export const Strophe = {
     /** Constant: VERSION */
-    VERSION: "1.5.0",
+    VERSION: "1.6.0",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.

@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.6.0 - (Unreleased)
+## Version 1.6.0 - (2022-10-29)
 
 * #314 Support for SCRAM-SHA-256 and SCRAM-SHA-512 authentication
 
