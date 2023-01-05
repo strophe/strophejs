@@ -175,7 +175,7 @@ test("Strophe.Connection.prototype.send() accepts Builders (#27)", (assert) => {
     const stanza = $pres();
     const conn = new Strophe.Connection("");
     const sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
-    const timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+    const timeoutStub = sinon.stub(window, "setTimeout").callsFake(function (func) {
         // Stub setTimeout to immediately call functions, otherwise our
         // assertions fail due to async execution.
         func.apply(arguments);
@@ -195,7 +195,7 @@ test("withCredentials can be set on the XMLHttpRequest object", (assert) => {
     const sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+    const timeoutStub = sinon.stub(window, "setTimeout").callsFake(function (func) {
         func.apply(arguments);
     });
 
@@ -221,7 +221,7 @@ test("content type can be set on the XMLHttpRequest object", (assert) => {
     const sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+    const timeoutStub = sinon.stub(window, "setTimeout").callsFake(function (func) {
         func.apply(arguments);
     });
     const setRetRequestHeaderStub = sinon.stub(XMLHttpRequest.prototype, "setRequestHeader");
@@ -275,7 +275,7 @@ test("Cookies can be added to the document passing them as options to Strophe.Co
     const sendStub = sinon.stub(XMLHttpRequest.prototype, "send");
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, "setTimeout", function (func) {
+    const timeoutStub = sinon.stub(window, "setTimeout").callsFake(function (func) {
         func.apply(arguments);
     });
     conn.send(stanza);
@@ -965,9 +965,7 @@ test("nextValidRid is not called after failed request", (assert) => {
 });
 
 test("nextValidRid is called after failed request with disconnection", (assert) => {
-    sinon.stub(Math, "random", function (){
-    return 1;
-    });
+    sinon.stub(Math, "random").callsFake(() => 1);
     Strophe.Connection.prototype._onIdle = () => {};
     const conn = new Strophe.Connection("http://fake");
     const spy = sinon.spy(conn, 'nextValidRid');
@@ -984,9 +982,7 @@ test("nextValidRid is called after failed request with disconnection", (assert) 
 });
 
 test("nextValidRid is called after connection reset", (assert) => {
-    sinon.stub(Math, "random", function (){
-    return 1;
-    });
+    sinon.stub(Math, "random").callsFake(() => 1);
     Strophe.Connection.prototype._onIdle = () => {};
     const conn = new Strophe.Connection("http://fake");
     const spy = sinon.spy(conn, 'nextValidRid');
@@ -995,4 +991,3 @@ test("nextValidRid is called after connection reset", (assert) => {
     assert.equal(spy.calledWith(4294967295), true, "The RID was valid");
     Math.random.restore();
 });
-
