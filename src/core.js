@@ -4,7 +4,7 @@
 
     Copyright 2006-2018, OGG, LLC
 */
-/*global define, document, sessionStorage, setTimeout, clearTimeout, ActiveXObject, DOMParser, btoa, atob */
+/*global sessionStorage, setTimeout, clearTimeout, ActiveXObject */
 
 import * as shims from './shims';
 import SASLAnonymous from './sasl-anon.js';

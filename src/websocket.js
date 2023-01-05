@@ -5,7 +5,7 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global window, clearTimeout, WebSocket, DOMParser */
+/* global window, clearTimeout */
 
 import { DOMParser, WebSocket } from './shims';
 import { $build, Strophe } from './core';
