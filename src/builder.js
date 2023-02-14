@@ -1,6 +1,62 @@
 import { NS } from './constants.js';
 import { copyElement, createHtml, serialize, xmlElement, xmlGenerator, xmlTextNode } from './utils.js';
 
+
+/** Function: $build
+ *  Create a Strophe.Builder.
+ *  This is an alias for 'new Strophe.Builder(name, attrs)'.
+ *
+ *  Parameters:
+ *    (String) name - The root element name.
+ *    (Object) attrs - The attributes for the root element in object notation.
+ *
+ *  Returns:
+ *    A new Strophe.Builder object.
+ */
+export function $build(name, attrs) {
+    return new Builder(name, attrs);
+}
+
+/** Function: $msg
+ *  Create a Strophe.Builder with a <message/> element as the root.
+ *
+ *  Parameters:
+ *    (Object) attrs - The <message/> element attributes in object notation.
+ *
+ *  Returns:
+ *    A new Strophe.Builder object.
+ */
+export function $msg(attrs) {
+    return new Builder("message", attrs);
+}
+
+/** Function: $iq
+ *  Create a Strophe.Builder with an <iq/> element as the root.
+ *
+ *  Parameters:
+ *    (Object) attrs - The <iq/> element attributes in object notation.
+ *
+ *  Returns:
+ *    A new Strophe.Builder object.
+ */
+export function $iq(attrs) {
+    return new Builder("iq", attrs);
+}
+
+/** Function: $pres
+ *  Create a Strophe.Builder with a <presence/> element as the root.
+ *
+ *  Parameters:
+ *    (Object) attrs - The <presence/> element attributes in object notation.
+ *
+ *  Returns:
+ *    A new Strophe.Builder object.
+ */
+export function $pres(attrs) {
+    return new Builder("presence", attrs);
+}
+
+
 /** Class: Strophe.Builder
  *  XML DOM builder.
  *
