@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.6.1 - (Unreleased)
+
+* #602 Websocket connection times out instead of being disconnected
+
 ## Version 1.6.0 - (2022-10-29)
 
 * #314 Support for SCRAM-SHA-256 and SCRAM-SHA-512 authentication
