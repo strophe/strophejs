@@ -85,7 +85,7 @@ export function $pres(attrs) {
  */
 export const Strophe = {
     /** Constant: VERSION */
-    VERSION: "1.6.0",
+    VERSION: "1.6.1",
 
     Builder,
     NS,

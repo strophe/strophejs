@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.6.1 - (Unreleased)
+## Version 1.6.1 - (2023-05-15)
 
 * #602 Websocket connection times out instead of being disconnected
 

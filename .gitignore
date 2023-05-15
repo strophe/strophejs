@@ -14,3 +14,5 @@ doc
 *~
 .*.sw?
 doc-tmp
+tags.lock
+tags.temp
