@@ -65,6 +65,7 @@
     "karma": "^6.3.17",
     "karma-chrome-launcher": "^3.1.1",
     "karma-qunit": "^4.1.2",
+    "karma-rollup-preprocessor": "^7.0.8",
     "minimist": "^1.2.5",
     "npm": "^6.14.7",
     "qunit": "2.19.4",
@@ -77,8 +78,7 @@
     "yarpm": "^1.1.1"
   },
   "dependencies": {
-    "abab": "^2.0.3",
-    "karma-rollup-preprocessor": "^7.0.8"
+    "abab": "^2.0.3"
   },
   "optionalDependencies": {
     "@xmldom/xmldom": "0.8.7",
