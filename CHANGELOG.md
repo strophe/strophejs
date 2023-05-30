@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 1.6.2 - (Unreleased)
+
+* #613 TypeError: XHTML.validTag is not a function
+
 ## Version 1.6.1 - (2023-05-15)
 
 * #602 Websocket connection times out instead of being disconnected

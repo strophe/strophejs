@@ -261,7 +261,7 @@ export function createHtml (elem) {
     let el;
     if (elem.nodeType === ElementType.NORMAL) {
         const tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
-        if (XHTML.validTag(tag)) {
+        if (validTag(tag)) {
             try {
                 el = xmlElement(tag);
                 for (let i = 0; i < XHTML.attributes[tag].length; i++) {
