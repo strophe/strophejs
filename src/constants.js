@@ -18,25 +18,25 @@
  *  Strophe.NS.XHTML - XHTML body namespace from XEP 71.
  */
 export const NS = {
-    HTTPBIND: "http://jabber.org/protocol/httpbind",
-    BOSH: "urn:xmpp:xbosh",
-    CLIENT: "jabber:client",
-    AUTH: "jabber:iq:auth",
-    ROSTER: "jabber:iq:roster",
-    PROFILE: "jabber:iq:profile",
-    DISCO_INFO: "http://jabber.org/protocol/disco#info",
-    DISCO_ITEMS: "http://jabber.org/protocol/disco#items",
-    MUC: "http://jabber.org/protocol/muc",
-    SASL: "urn:ietf:params:xml:ns:xmpp-sasl",
-    STREAM: "http://etherx.jabber.org/streams",
-    FRAMING: "urn:ietf:params:xml:ns:xmpp-framing",
-    BIND: "urn:ietf:params:xml:ns:xmpp-bind",
-    SESSION: "urn:ietf:params:xml:ns:xmpp-session",
-    VERSION: "jabber:iq:version",
-    STANZAS: "urn:ietf:params:xml:ns:xmpp-stanzas",
-    XHTML_IM: "http://jabber.org/protocol/xhtml-im",
-    XHTML: "http://www.w3.org/1999/xhtml",
-}
+    HTTPBIND: 'http://jabber.org/protocol/httpbind',
+    BOSH: 'urn:xmpp:xbosh',
+    CLIENT: 'jabber:client',
+    AUTH: 'jabber:iq:auth',
+    ROSTER: 'jabber:iq:roster',
+    PROFILE: 'jabber:iq:profile',
+    DISCO_INFO: 'http://jabber.org/protocol/disco#info',
+    DISCO_ITEMS: 'http://jabber.org/protocol/disco#items',
+    MUC: 'http://jabber.org/protocol/muc',
+    SASL: 'urn:ietf:params:xml:ns:xmpp-sasl',
+    STREAM: 'http://etherx.jabber.org/streams',
+    FRAMING: 'urn:ietf:params:xml:ns:xmpp-framing',
+    BIND: 'urn:ietf:params:xml:ns:xmpp-bind',
+    SESSION: 'urn:ietf:params:xml:ns:xmpp-session',
+    VERSION: 'jabber:iq:version',
+    STANZAS: 'urn:ietf:params:xml:ns:xmpp-stanzas',
+    XHTML_IM: 'http://jabber.org/protocol/xhtml-im',
+    XHTML: 'http://www.w3.org/1999/xhtml',
+};
 
 /** Constants: XHTML_IM Namespace
  *  contains allowed tags, tag attributes, and css properties.
@@ -45,24 +45,35 @@ export const NS = {
  *  allowed tags and their attributes.
  */
 export const XHTML = {
-    tags: ['a','blockquote','br','cite','em','img','li','ol','p','span','strong','ul','body'],
+    tags: ['a', 'blockquote', 'br', 'cite', 'em', 'img', 'li', 'ol', 'p', 'span', 'strong', 'ul', 'body'],
     attributes: {
-        'a':          ['href'],
+        'a': ['href'],
         'blockquote': ['style'],
-        'br':         [],
-        'cite':       ['style'],
-        'em':         [],
-        'img':        ['src', 'alt', 'style', 'height', 'width'],
-        'li':         ['style'],
-        'ol':         ['style'],
-        'p':          ['style'],
-        'span':       ['style'],
-        'strong':     [],
-        'ul':         ['style'],
-        'body':       []
+        'br': [],
+        'cite': ['style'],
+        'em': [],
+        'img': ['src', 'alt', 'style', 'height', 'width'],
+        'li': ['style'],
+        'ol': ['style'],
+        'p': ['style'],
+        'span': ['style'],
+        'strong': [],
+        'ul': ['style'],
+        'body': [],
     },
-    css: ['background-color','color','font-family','font-size','font-style','font-weight','margin-left','margin-right','text-align','text-decoration'],
-}
+    css: [
+        'background-color',
+        'color',
+        'font-family',
+        'font-size',
+        'font-style',
+        'font-weight',
+        'margin-left',
+        'margin-right',
+        'text-align',
+        'text-decoration',
+    ],
+};
 
 /** Constants: Connection Status Constants
  *  Connection status constants for use by the connection handler
@@ -93,17 +104,16 @@ export const Status = {
     REDIRECT: 9,
     CONNTIMEOUT: 10,
     BINDREQUIRED: 11,
-    ATTACHFAIL: 12
-}
+    ATTACHFAIL: 12,
+};
 
 export const ErrorCondition = {
-    BAD_FORMAT: "bad-format",
-    CONFLICT: "conflict",
-    MISSING_JID_NODE: "x-strophe-bad-non-anon-jid",
-    NO_AUTH_MECH: "no-auth-mech",
-    UNKNOWN_REASON: "unknown",
-}
-
+    BAD_FORMAT: 'bad-format',
+    CONFLICT: 'conflict',
+    MISSING_JID_NODE: 'x-strophe-bad-non-anon-jid',
+    NO_AUTH_MECH: 'no-auth-mech',
+    UNKNOWN_REASON: 'unknown',
+};
 
 /** Constants: Log Level Constants
  *  Logging level indicators.
@@ -119,8 +129,8 @@ export const LogLevel = {
     INFO: 1,
     WARN: 2,
     ERROR: 3,
-    FATAL: 4
-}
+    FATAL: 4,
+};
 
 /** PrivateConstants: DOM Element Type Constants
  *  DOM element types.
@@ -134,8 +144,7 @@ export const ElementType = {
     TEXT: 3,
     CDATA: 4,
     FRAGMENT: 11,
-}
-
+};
 
 /** PrivateConstants: Timeout Values
  *  Timeout values for error states.  These values are in seconds.

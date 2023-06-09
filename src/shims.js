@@ -22,7 +22,7 @@
  * - nodejs: use standard-compliant 'ws' module
  *   https://www.npmjs.com/package/ws
  */
-function getWebSocketImplementation () {
+function getWebSocketImplementation() {
     let WebSocketImplementation = global.WebSocket;
     if (typeof WebSocketImplementation === 'undefined') {
         try {
@@ -31,9 +31,9 @@ function getWebSocketImplementation () {
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
-    return WebSocketImplementation
+    return WebSocketImplementation;
 }
-export const WebSocket = getWebSocketImplementation()
+export const WebSocket = getWebSocketImplementation();
 
 /**
  * DOMParser
@@ -47,8 +47,8 @@ export const WebSocket = getWebSocketImplementation()
  * - nodejs: use '@xmldom/xmldom' module
  *   https://www.npmjs.com/package/@xmldom/xmldom
  */
-function getDOMParserImplementation () {
-    let DOMParserImplementation = global.DOMParser
+function getDOMParserImplementation() {
+    let DOMParserImplementation = global.DOMParser;
     if (typeof DOMParserImplementation === 'undefined') {
         try {
             DOMParserImplementation = require('@xmldom/xmldom').DOMParser;
@@ -56,9 +56,9 @@ function getDOMParserImplementation () {
             throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
         }
     }
-    return DOMParserImplementation
+    return DOMParserImplementation;
 }
-export const DOMParser = getDOMParserImplementation()
+export const DOMParser = getDOMParserImplementation();
 
 /**
  *  Gets IE xml doc object. Used by getDummyXMLDocument shim.
@@ -68,21 +68,21 @@ export const DOMParser = getDOMParserImplementation()
  *  See Also:
  *    http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
  */
-function _getIEXmlDom () {
+function _getIEXmlDom() {
     const docStrings = [
-        "Msxml2.DOMDocument.6.0",
-        "Msxml2.DOMDocument.5.0",
-        "Msxml2.DOMDocument.4.0",
-        "MSXML2.DOMDocument.3.0",
-        "MSXML2.DOMDocument",
-        "MSXML.DOMDocument",
-        "Microsoft.XMLDOM"
+        'Msxml2.DOMDocument.6.0',
+        'Msxml2.DOMDocument.5.0',
+        'Msxml2.DOMDocument.4.0',
+        'MSXML2.DOMDocument.3.0',
+        'MSXML2.DOMDocument',
+        'MSXML.DOMDocument',
+        'Microsoft.XMLDOM',
     ];
     for (let d = 0; d < docStrings.length; d++) {
         try {
             // eslint-disable-next-line no-undef
             const doc = new ActiveXObject(docStrings[d]);
-            return doc
+            return doc;
         } catch (e) {
             // Try next one
         }
@@ -98,7 +98,7 @@ function _getIEXmlDom () {
  *  - other supported browsers: use document's createDocument
  *  - nodejs: use '@xmldom/xmldom'
  */
-export function getDummyXMLDOMDocument () {
+export function getDummyXMLDOMDocument() {
     // nodejs
     if (typeof document === 'undefined') {
         try {
@@ -111,12 +111,12 @@ export function getDummyXMLDOMDocument () {
     // IE < 10
     if (
         document.implementation.createDocument === undefined ||
-        document.implementation.createDocument && document.documentMode && document.documentMode < 10
+        (document.implementation.createDocument && document.documentMode && document.documentMode < 10)
     ) {
         const doc = _getIEXmlDom();
         doc.appendChild(doc.createElement('strophe'));
-        return doc
+        return doc;
     }
     // All other supported browsers
-    return document.implementation.createDocument('jabber:client', 'strophe', null)
+    return document.implementation.createDocument('jabber:client', 'strophe', null);
 }

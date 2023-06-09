@@ -32,14 +32,13 @@ import { forEachChild, getBareJidFromJid } from './utils';
  */
 
 export default class Handler {
-
-    constructor (handler, ns, name, type, id, from, options) {
+    constructor(handler, ns, name, type, id, from, options) {
         this.handler = handler;
         this.ns = ns;
         this.name = name;
         this.type = type;
         this.id = id;
-        this.options = options || {'matchBareFromJid': false, 'ignoreNamespaceFragment': false};
+        this.options = options || { 'matchBareFromJid': false, 'ignoreNamespaceFragment': false };
         // BBB: Maintain backward compatibility with old `matchBare` option
         if (this.options.matchBare) {
             Strophe.warn('The "matchBare" option is deprecated, use "matchBareFromJid" instead.');
@@ -66,8 +65,8 @@ export default class Handler {
      *  Returns:
      *    The namespace, with optionally the fragment stripped.
      */
-    getNamespace (elem) {
-        let elNamespace = elem.getAttribute("xmlns");
+    getNamespace(elem) {
+        let elNamespace = elem.getAttribute('xmlns');
         if (elNamespace && this.options.ignoreNamespaceFragment) {
             elNamespace = elNamespace.split('#')[0];
         }
@@ -83,7 +82,7 @@ export default class Handler {
      *  Returns:
      *    true if the stanza matches and false otherwise.
      */
-    namespaceMatch (elem) {
+    namespaceMatch(elem) {
         let nsMatch = false;
         if (!this.ns) {
             return true;
@@ -106,18 +105,21 @@ export default class Handler {
      *  Returns:
      *    true if the stanza matches and false otherwise.
      */
-    isMatch (elem) {
+    isMatch(elem) {
         let from = elem.getAttribute('from');
         if (this.options.matchBareFromJid) {
             from = getBareJidFromJid(from);
         }
-        const elem_type = elem.getAttribute("type");
-        if (this.namespaceMatch(elem) &&
+        const elem_type = elem.getAttribute('type');
+        if (
+            this.namespaceMatch(elem) &&
             (!this.name || Strophe.isTagEqual(elem, this.name)) &&
-            (!this.type || (Array.isArray(this.type) ? this.type.indexOf(elem_type) !== -1 : elem_type === this.type)) &&
-            (!this.id || elem.getAttribute("id") === this.id) &&
-            (!this.from || from === this.from)) {
-                return true;
+            (!this.type ||
+                (Array.isArray(this.type) ? this.type.indexOf(elem_type) !== -1 : elem_type === this.type)) &&
+            (!this.id || elem.getAttribute('id') === this.id) &&
+            (!this.from || from === this.from)
+        ) {
+            return true;
         }
         return false;
     }
@@ -132,7 +134,7 @@ export default class Handler {
      *  Returns:
      *    A boolean indicating if the handler should remain active.
      */
-    run (elem) {
+    run(elem) {
         let result = null;
         try {
             result = this.handler(elem);
@@ -149,8 +151,7 @@ export default class Handler {
      *  Returns:
      *    A String.
      */
-    toString () {
-        return "{Handler: " + this.handler + "(" + this.name + "," +
-            this.id + "," + this.ns + ")}";
+    toString() {
+        return '{Handler: ' + this.handler + '(' + this.name + ',' + this.id + ',' + this.ns + ')}';
     }
 }

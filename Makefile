@@ -69,6 +69,10 @@ $(STROPHE): src rollup.config.js node_modules Makefile
 eslint: node_modules
 	$(ESLINT) src/
 
+.PHONY: prettier
+prettier: node_modules
+	npm run prettier
+
 .PHONY: check
 check:: node_modules eslint dist
 	npm run test

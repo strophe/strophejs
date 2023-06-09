@@ -22,7 +22,6 @@ import SASLXOAuth2 from './sasl-xoauth2.js';
 import TimedHandler from './timed-handler.js';
 import { ElementType, ErrorCondition, LogLevel, NS, Status, XHTML } from './constants.js';
 
-
 /** Class: Strophe
  *  An object container for all Strophe library functions.
  *
@@ -32,7 +31,7 @@ import { ElementType, ErrorCondition, LogLevel, NS, Status, XHTML } from './cons
  */
 export const Strophe = {
     /** Constant: VERSION */
-    VERSION: "1.6.1",
+    VERSION: '1.6.1',
 
     Builder,
     Connection,
@@ -65,26 +64,27 @@ export const Strophe = {
      *      referenced under Strophe.NS
      *    (String) value - The actual namespace.
      */
-    addNamespace (name, value) {
+    addNamespace(name, value) {
         Strophe.NS[name] = value;
     },
 
     /** PrivateFunction: _handleError
      *  _Private_ function that properly logs an error to the console
      */
-    _handleError (e) {
-        if (typeof e.stack !== "undefined") {
+    _handleError(e) {
+        if (typeof e.stack !== 'undefined') {
             Strophe.fatal(e.stack);
         }
         if (e.sourceURL) {
-            Strophe.fatal("error: " + this.handler + " " + e.sourceURL + ":" +
-                          e.line + " - " + e.name + ": " + e.message);
+            Strophe.fatal(
+                'error: ' + this.handler + ' ' + e.sourceURL + ':' + e.line + ' - ' + e.name + ': ' + e.message
+            );
         } else if (e.fileName) {
-            Strophe.fatal("error: " + this.handler + " " +
-                          e.fileName + ":" + e.lineNumber + " - " +
-                          e.name + ": " + e.message);
+            Strophe.fatal(
+                'error: ' + this.handler + ' ' + e.fileName + ':' + e.lineNumber + ' - ' + e.name + ': ' + e.message
+            );
         } else {
-            Strophe.fatal("error: " + e.message);
+            Strophe.fatal('error: ' + e.message);
         }
     },
 
@@ -117,7 +117,7 @@ export const Strophe = {
      *      be one of the values in Strophe.LogLevel.
      *    (String) msg - The log message.
      */
-    log (level, msg) {
+    log(level, msg) {
         if (level === this.LogLevel.FATAL) {
             console?.error(msg);
         }
@@ -129,7 +129,7 @@ export const Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    debug (msg) {
+    debug(msg) {
         this.log(this.LogLevel.DEBUG, msg);
     },
 
@@ -139,7 +139,7 @@ export const Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    info (msg) {
+    info(msg) {
         this.log(this.LogLevel.INFO, msg);
     },
 
@@ -149,7 +149,7 @@ export const Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    warn (msg) {
+    warn(msg) {
         this.log(this.LogLevel.WARN, msg);
     },
 
@@ -159,7 +159,7 @@ export const Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    error (msg) {
+    error(msg) {
         this.log(this.LogLevel.ERROR, msg);
     },
 
@@ -169,7 +169,7 @@ export const Strophe = {
      *  Parameters:
      *    (String) msg - The log message.
      */
-    fatal (msg) {
+    fatal(msg) {
         this.log(this.LogLevel.FATAL, msg);
     },
 
@@ -192,11 +192,10 @@ export const Strophe = {
      *    (String) name - The name of the extension.
      *    (Object) ptype - The plugin's prototype.
      */
-    addConnectionPlugin (name, ptype) {
+    addConnectionPlugin(name, ptype) {
         Strophe._connectionPlugins[name] = ptype;
-    }
+    },
 };
-
 
 /** Constants: SASL mechanisms
  *  Available authentication mechanisms
@@ -224,9 +223,9 @@ Strophe.SASLXOAuth2 = SASLXOAuth2;
 export { $build, $iq, $msg, $pres } from './builder.js';
 
 export default {
-    'Strophe':         Strophe,
-    '$build':          $build,
-    '$iq':             $iq,
-    '$msg':            $msg,
-    '$pres':           $pres,
+    'Strophe': Strophe,
+    '$build': $build,
+    '$iq': $iq,
+    '$msg': $msg,
+    '$pres': $pres,
 };

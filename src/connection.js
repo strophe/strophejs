@@ -1,13 +1,12 @@
 /*global sessionStorage, setTimeout, clearTimeout */
 
-import Handler from "./handler";
-import TimedHandler from "./timed-handler";
-import { $build, $iq, $pres } from "./builder";
-import { Status } from "./constants";
-import { Strophe } from "./core";
-import { addCookies, getText } from "./utils";
-import { atob, btoa } from "abab"
-
+import Handler from './handler';
+import TimedHandler from './timed-handler';
+import { $build, $iq, $pres } from './builder';
+import { Status } from './constants';
+import { Strophe } from './core';
+import { addCookies, getText } from './utils';
+import { atob, btoa } from 'abab';
 
 /** Class: Strophe.Connection
  *  XMPP Connection manager.
@@ -177,8 +176,7 @@ import { atob, btoa } from "abab"
  */
 
 export default class Connection {
-
-    constructor (service, options) {
+    constructor(service, options) {
         // The service URL
         this.service = service;
         // Configuration options
@@ -187,7 +185,7 @@ export default class Connection {
         this.setProtocol();
 
         /* The connected JID. */
-        this.jid = "";
+        this.jid = '';
         /* the JIDs domain */
         this.domain = null;
         /* stream:features */
@@ -197,7 +195,7 @@ export default class Connection {
         this._sasl_data = {};
         this.do_bind = false;
         this.do_session = false;
-        this.mechanisms = {}
+        this.mechanisms = {};
 
         // handler lists
         this.timedHandlers = [];
@@ -208,7 +206,7 @@ export default class Connection {
         this.addHandlers = [];
         this.protocolErrorHandlers = {
             'HTTP': {},
-            'websocket': {}
+            'websocket': {},
         };
 
         this._idleTimeout = null;
@@ -243,10 +241,16 @@ export default class Connection {
         // This is a fallback handler which gets called when no other handler
         // was called for a received IQ "set" or "get".
         this.iqFallbackHandler = new Handler(
-            (iq) => this.send($iq({type: 'error', id: iq.getAttribute('id')})
-                    .c('error', {'type': 'cancel'})
-                    .c('service-unavailable', {'xmlns': Strophe.NS.STANZAS})),
-            null, 'iq', ['get', 'set']);
+            (iq) =>
+                this.send(
+                    $iq({ type: 'error', id: iq.getAttribute('id') })
+                        .c('error', { 'type': 'cancel' })
+                        .c('service-unavailable', { 'xmlns': Strophe.NS.STANZAS })
+                ),
+            null,
+            'iq',
+            ['get', 'set']
+        );
 
         // initialize plugins
         for (const k in Strophe._connectionPlugins) {
@@ -262,14 +266,15 @@ export default class Connection {
     /** Function: setProtocol
      *  Select protocal based on this.options or this.service
      */
-    setProtocol () {
-        const proto = this.options.protocol || "";
+    setProtocol() {
+        const proto = this.options.protocol || '';
         if (this.options.worker) {
             this._proto = new Strophe.WorkerWebsocket(this);
         } else if (
-                this.service.indexOf("ws:") === 0 ||
-                this.service.indexOf("wss:") === 0 ||
-                proto.indexOf("ws") === 0) {
+            this.service.indexOf('ws:') === 0 ||
+            this.service.indexOf('wss:') === 0 ||
+            proto.indexOf('ws') === 0
+        ) {
             this._proto = new Strophe.Websocket(this);
         } else {
             this._proto = new Strophe.Bosh(this);
@@ -282,7 +287,7 @@ export default class Connection {
      *  This function should be called after a connection is disconnected
      *  before that connection is reused.
      */
-    reset () {
+    reset() {
         this._proto._reset();
 
         // SASL
@@ -316,7 +321,7 @@ export default class Connection {
      *  This causes Strophe to send the data in a single request, saving
      *  many request trips.
      */
-    pause () {
+    pause() {
         this.paused = true;
     }
 
@@ -325,7 +330,7 @@ export default class Connection {
      *
      *  This resumes after pause() has been called.
      */
-    resume () {
+    resume() {
         this.paused = false;
     }
 
@@ -351,16 +356,17 @@ export default class Connection {
      *  Returns:
      *    A unique string to be used for the id attribute.
      */
-    getUniqueId (suffix) { // eslint-disable-line class-methods-use-this
+    // eslint-disable-next-line class-methods-use-this
+    getUniqueId(suffix) {
         const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            const r = Math.random() * 16 | 0,
-                  v = c === 'x' ? r : r & 0x3 | 0x8;
+            const r = (Math.random() * 16) | 0,
+                v = c === 'x' ? r : (r & 0x3) | 0x8;
             return v.toString(16);
         });
-        if (typeof(suffix) === "string" || typeof(suffix) === "number") {
-            return uuid + ":" + suffix;
+        if (typeof suffix === 'string' || typeof suffix === 'number') {
+            return uuid + ':' + suffix;
         } else {
-            return uuid + "";
+            return uuid + '';
         }
     }
 
@@ -386,7 +392,7 @@ export default class Connection {
      *  // Triggers HTTP 500 error and onError handler will be called
      *  conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect);
      */
-    addProtocolErrorHandler (protocol, status_code, callback){
+    addProtocolErrorHandler(protocol, status_code, callback) {
         this.protocolErrorHandlers[protocol][status_code] = callback;
     }
 
@@ -441,7 +447,7 @@ export default class Connection {
      *     (Integer) disconnection_timeout - The optional disconnection timeout
      *      in milliseconds before _doDisconnect will be called.
      */
-    connect (jid, pass, callback, wait, hold, route, authcid, disconnection_timeout = 3000) {
+    connect(jid, pass, callback, wait, hold, route, authcid, disconnection_timeout = 3000) {
         this.jid = jid;
         /** Variable: authzid
          *  Authorization identity.
@@ -505,7 +511,7 @@ export default class Connection {
      *    (Integer) wind - The optional HTTBIND window value.  This is the
      *      allowed range of request ids that are valid.  The default is 5.
      */
-    attach (jid, sid, rid, callback, wait, hold, wind) {
+    attach(jid, sid, rid, callback, wait, hold, wind) {
         if (this._proto._attach) {
             return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
         } else {
@@ -542,7 +548,7 @@ export default class Connection {
      *    (Integer) wind - The optional HTTBIND window value.  This is the
      *      allowed range of request ids that are valid.  The default is 5.
      */
-    restore (jid, callback, wait, hold, wind) {
+    restore(jid, callback, wait, hold, wind) {
         if (this._sessionCachingSupported()) {
             this._proto._restore(jid, callback, wait, hold, wind);
         } else {
@@ -556,9 +562,11 @@ export default class Connection {
      * Checks whether sessionStorage and JSON are supported and whether we're
      * using BOSH.
      */
-    _sessionCachingSupported () {
+    _sessionCachingSupported() {
         if (this._proto instanceof Strophe.Bosh) {
-            if (!JSON) { return false; }
+            if (!JSON) {
+                return false;
+            }
             try {
                 sessionStorage.setItem('_strophe_', '_strophe_');
                 sessionStorage.removeItem('_strophe_');
@@ -588,7 +596,8 @@ export default class Connection {
      *  Parameters:
      *    (XMLElement) elem - The XML data received by the connection.
      */
-    xmlInput (elem) { // eslint-disable-line
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    xmlInput(elem) {
         return;
     }
 
@@ -610,7 +619,8 @@ export default class Connection {
      *  Parameters:
      *    (XMLElement) elem - The XMLdata sent by the connection.
      */
-    xmlOutput (elem) { // eslint-disable-line
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    xmlOutput(elem) {
         return;
     }
 
@@ -626,9 +636,10 @@ export default class Connection {
      *  Parameters:
      *    (String) data - The data received by the connection.
      */
-    rawInput (data) { // eslint-disable-line
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    rawInput(data) {
         return;
-     }
+    }
 
     /** Function: rawOutput
      *  User overrideable function that receives raw data sent to the
@@ -642,7 +653,8 @@ export default class Connection {
      *  Parameters:
      *    (String) data - The data sent by the connection.
      */
-    rawOutput (data) { // eslint-disable-line
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    rawOutput(data) {
         return;
     }
 
@@ -657,7 +669,8 @@ export default class Connection {
      *  Parameters:
      *    (Number) rid - The next valid rid
      */
-    nextValidRid (rid) { // eslint-disable-line
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    nextValidRid(rid) {
         return;
     }
 
@@ -673,13 +686,15 @@ export default class Connection {
      *     [XMLElement] |
      *     Strophe.Builder) elem - The stanza to send.
      */
-    send (elem) {
-        if (elem === null) { return ; }
-        if (typeof(elem.sort) === "function") {
-            for (let i=0; i < elem.length; i++) {
+    send(elem) {
+        if (elem === null) {
+            return;
+        }
+        if (typeof elem.sort === 'function') {
+            for (let i = 0; i < elem.length; i++) {
                 this._queueData(elem[i]);
             }
-        } else if (typeof(elem.tree) === "function") {
+        } else if (typeof elem.tree === 'function') {
             this._queueData(elem.tree());
         } else {
             this._queueData(elem);
@@ -695,7 +710,7 @@ export default class Connection {
      *  several send()s are called in succession. flush() can be used to
      *  immediately send all pending data.
      */
-    flush () {
+    flush() {
         // cancel the pending idle period and run the idle function
         // immediately
         clearTimeout(this._idleTimeout);
@@ -718,31 +733,38 @@ export default class Connection {
      *  Returns:
      *    The id used to send the presence.
      */
-    sendPresence (elem, callback, errback, timeout) {
+    sendPresence(elem, callback, errback, timeout) {
         let timeoutHandler = null;
-        if (typeof(elem.tree) === "function") {
+        if (typeof elem.tree === 'function') {
             elem = elem.tree();
         }
         let id = elem.getAttribute('id');
-        if (!id) { // inject id if not found
-            id = this.getUniqueId("sendPresence");
-            elem.setAttribute("id", id);
+        if (!id) {
+            // inject id if not found
+            id = this.getUniqueId('sendPresence');
+            elem.setAttribute('id', id);
         }
 
-        if (typeof callback === "function" || typeof errback === "function") {
-            const handler = this.addHandler(stanza => {
-                // remove timeout handler if there is one
-                if (timeoutHandler) {
-                    this.deleteTimedHandler(timeoutHandler);
-                }
-                if (stanza.getAttribute('type') === 'error') {
-                    if (errback) {
-                        errback(stanza);
+        if (typeof callback === 'function' || typeof errback === 'function') {
+            const handler = this.addHandler(
+                (stanza) => {
+                    // remove timeout handler if there is one
+                    if (timeoutHandler) {
+                        this.deleteTimedHandler(timeoutHandler);
                     }
-                } else if (callback) {
-                    callback(stanza);
-                }
-            }, null, 'presence', null, id);
+                    if (stanza.getAttribute('type') === 'error') {
+                        if (errback) {
+                            errback(stanza);
+                        }
+                    } else if (callback) {
+                        callback(stanza);
+                    }
+                },
+                null,
+                'presence',
+                null,
+                id
+            );
 
             // if timeout specified, set up a timeout handler.
             if (timeout) {
@@ -774,39 +796,46 @@ export default class Connection {
      *
      *  Returns:
      *    The id used to send the IQ.
-    */
-    sendIQ (elem, callback, errback, timeout) {
+     */
+    sendIQ(elem, callback, errback, timeout) {
         let timeoutHandler = null;
-        if (typeof(elem.tree) === "function") {
+        if (typeof elem.tree === 'function') {
             elem = elem.tree();
         }
         let id = elem.getAttribute('id');
-        if (!id) { // inject id if not found
-            id = this.getUniqueId("sendIQ");
-            elem.setAttribute("id", id);
+        if (!id) {
+            // inject id if not found
+            id = this.getUniqueId('sendIQ');
+            elem.setAttribute('id', id);
         }
 
-        if (typeof callback === "function" || typeof errback === "function") {
-            const handler = this.addHandler(stanza => {
-                // remove timeout handler if there is one
-                if (timeoutHandler) {
-                    this.deleteTimedHandler(timeoutHandler);
-                }
-                const iqtype = stanza.getAttribute('type');
-                if (iqtype === 'result') {
-                    if (callback) {
-                        callback(stanza);
+        if (typeof callback === 'function' || typeof errback === 'function') {
+            const handler = this.addHandler(
+                (stanza) => {
+                    // remove timeout handler if there is one
+                    if (timeoutHandler) {
+                        this.deleteTimedHandler(timeoutHandler);
                     }
-                } else if (iqtype === 'error') {
-                    if (errback) {
-                        errback(stanza);
+                    const iqtype = stanza.getAttribute('type');
+                    if (iqtype === 'result') {
+                        if (callback) {
+                            callback(stanza);
+                        }
+                    } else if (iqtype === 'error') {
+                        if (errback) {
+                            errback(stanza);
+                        }
+                    } else {
+                        const error = new Error(`Got bad IQ type of ${iqtype}`);
+                        error.name = 'StropheError';
+                        throw error;
                     }
-                } else {
-                    const error = new Error(`Got bad IQ type of ${iqtype}`);
-                    error.name = "StropheError";
-                    throw(error);
-                }
-            }, null, 'iq', ['error', 'result'], id);
+                },
+                null,
+                'iq',
+                ['error', 'result'],
+                id
+            );
 
             // if timeout specified, set up a timeout handler.
             if (timeout) {
@@ -829,13 +858,11 @@ export default class Connection {
      *  Queue outgoing data for later sending.  Also ensures that the data
      *  is a DOMElement.
      */
-    _queueData (element) {
-        if (element === null ||
-                !element.tagName ||
-                !element.childNodes) {
-            const error = new Error("Cannot queue non-DOMElement.");
-            error.name = "StropheError";
-            throw(error);
+    _queueData(element) {
+        if (element === null || !element.tagName || !element.childNodes) {
+            const error = new Error('Cannot queue non-DOMElement.');
+            error.name = 'StropheError';
+            throw error;
         }
         this._data.push(element);
     }
@@ -843,8 +870,8 @@ export default class Connection {
     /** PrivateFunction: _sendRestart
      *  Send an xmpp:restart stanza.
      */
-    _sendRestart () {
-        this._data.push("restart");
+    _sendRestart() {
+        this._data.push('restart');
         this._proto._sendRestart();
         this._idleTimeout = setTimeout(() => this._onIdle(), 100);
     }
@@ -871,7 +898,7 @@ export default class Connection {
      *  Returns:
      *    A reference to the handler that can be used to remove it.
      */
-    addTimedHandler (period, handler) {
+    addTimedHandler(period, handler) {
         const thand = new Strophe.TimedHandler(period, handler);
         this.addTimeds.push(thand);
         return thand;
@@ -887,7 +914,7 @@ export default class Connection {
      *  Parameters:
      *    (Strophe.TimedHandler) handRef - The handler reference.
      */
-    deleteTimedHandler (handRef) {
+    deleteTimedHandler(handRef) {
         // this must be done in the Idle loop so that we don't change
         // the handlers during iteration
         this.removeTimeds.push(handRef);
@@ -957,7 +984,7 @@ export default class Connection {
      *  Returns:
      *    A reference to the handler that can be used to remove it.
      */
-    addHandler (handler, ns, name, type, id, from, options) {
+    addHandler(handler, ns, name, type, id, from, options) {
         const hand = new Handler(handler, ns, name, type, id, from, options);
         this.addHandlers.push(hand);
         return hand;
@@ -973,7 +1000,7 @@ export default class Connection {
      *  Parameters:
      *    (Handler) handRef - The handler reference.
      */
-    deleteHandler (handRef) {
+    deleteHandler(handRef) {
         // this must be done in the Idle loop so that we don't change
         // the handlers during iteration
         this.removeHandlers.push(handRef);
@@ -994,7 +1021,7 @@ export default class Connection {
      *    (Array) mechanisms - Array of objects with Strophe.SASLMechanism prototypes
      *
      */
-    registerSASLMechanisms (mechanisms) {
+    registerSASLMechanisms(mechanisms) {
         this.mechanisms = {};
         mechanisms = mechanisms || [
             Strophe.SASLAnonymous,
@@ -1005,9 +1032,9 @@ export default class Connection {
             Strophe.SASLSHA1,
             Strophe.SASLSHA256,
             Strophe.SASLSHA384,
-            Strophe.SASLSHA512
+            Strophe.SASLSHA512,
         ];
-        mechanisms.forEach(m => this.registerSASLMechanism(m));
+        mechanisms.forEach((m) => this.registerSASLMechanism(m));
     }
 
     /** Function: registerSASLMechanism
@@ -1018,8 +1045,8 @@ export default class Connection {
      *    (Object) mechanism - Object with a Strophe.SASLMechanism prototype
      *
      */
-    registerSASLMechanism (Mechanism) {
-        const mechanism = new Mechanism()
+    registerSASLMechanism(Mechanism) {
+        const mechanism = new Mechanism();
         this.mechanisms[mechanism.mechname] = mechanism;
     }
 
@@ -1039,12 +1066,12 @@ export default class Connection {
      *  Parameters:
      *    (String) reason - The reason the disconnect is occuring.
      */
-    disconnect (reason) {
+    disconnect(reason) {
         this._changeConnectStatus(Status.DISCONNECTING, reason);
         if (reason) {
-            Strophe.warn("Disconnect was called because: " + reason);
+            Strophe.warn('Disconnect was called because: ' + reason);
         } else {
-            Strophe.info("Disconnect was called");
+            Strophe.info('Disconnect was called');
         }
         if (this.connected) {
             let pres = false;
@@ -1052,15 +1079,17 @@ export default class Connection {
             if (this.authenticated) {
                 pres = $pres({
                     'xmlns': Strophe.NS.CLIENT,
-                    'type': 'unavailable'
+                    'type': 'unavailable',
                 });
             }
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
-                this.disconnection_timeout, this._onDisconnectTimeout.bind(this));
+                this.disconnection_timeout,
+                this._onDisconnectTimeout.bind(this)
+            );
             this._proto._disconnect(pres);
         } else {
-            Strophe.warn("Disconnect was called before Strophe connected to the server");
+            Strophe.warn('Disconnect was called before Strophe connected to the server');
             this._proto._abortAllRequests();
             this._doDisconnect();
         }
@@ -1076,7 +1105,7 @@ export default class Connection {
      *    (String) condition - the error condition or null
      *    (XMLElement) elem - The triggering stanza.
      */
-    _changeConnectStatus (status, condition, elem) {
+    _changeConnectStatus(status, condition, elem) {
         // notify all plugins listening for status changes
         for (const k in Strophe._connectionPlugins) {
             if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
@@ -1107,8 +1136,8 @@ export default class Connection {
      *  This is the last piece of the disconnection logic.  This resets the
      *  connection and alerts the user's connection callback.
      */
-    _doDisconnect (condition) {
-        if (typeof this._idleTimeout === "number") {
+    _doDisconnect(condition) {
+        if (typeof this._idleTimeout === 'number') {
             clearTimeout(this._idleTimeout);
         }
 
@@ -1118,7 +1147,7 @@ export default class Connection {
             this._disconnectTimeout = null;
         }
 
-        Strophe.debug("_doDisconnect was called");
+        Strophe.debug('_doDisconnect was called');
         this._proto._doDisconnect();
 
         this.authenticated = false;
@@ -1150,10 +1179,11 @@ export default class Connection {
      *    (Strophe.Request) req - The request that has data ready.
      *    (string) req - The stanza a raw string (optiona).
      */
-    _dataRecv (req, raw) {
-
+    _dataRecv(req, raw) {
         const elem = this._proto._reqToData(req);
-        if (elem === null) { return; }
+        if (elem === null) {
+            return;
+        }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
             if (elem.nodeName === this._proto.strip && elem.childNodes.length) {
@@ -1190,25 +1220,22 @@ export default class Connection {
             return;
         }
 
-        const type = elem.getAttribute("type");
-        if (type !== null && type === "terminate") {
+        const type = elem.getAttribute('type');
+        if (type !== null && type === 'terminate') {
             // Don't process stanzas that come in after disconnect
             if (this.disconnecting) {
                 return;
             }
             // an error occurred
-            let cond = elem.getAttribute("condition");
-            const conflict = elem.getElementsByTagName("conflict");
+            let cond = elem.getAttribute('condition');
+            const conflict = elem.getElementsByTagName('conflict');
             if (cond !== null) {
-                if (cond === "remote-stream-error" && conflict.length > 0) {
-                    cond = "conflict";
+                if (cond === 'remote-stream-error' && conflict.length > 0) {
+                    cond = 'conflict';
                 }
                 this._changeConnectStatus(Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(
-                    Status.CONNFAIL,
-                    Strophe.ErrorCondition.UNKOWN_REASON
-                );
+                this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.UNKOWN_REASON);
             }
             this._doDisconnect(cond);
             return;
@@ -1219,8 +1246,7 @@ export default class Connection {
             const matches = [];
             this.handlers = this.handlers.reduce((handlers, handler) => {
                 try {
-                    if (handler.isMatch(child) &&
-                        (this.authenticated || !handler.user)) {
+                    if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
                         if (handler.run(child)) {
                             handlers.push(handler);
                         }
@@ -1228,10 +1254,9 @@ export default class Connection {
                     } else {
                         handlers.push(handler);
                     }
-
                 } catch (e) {
                     // if the handler throws an exception, we consider it as false
-                    Strophe.warn('Removing Strophe handlers due to uncaught exception: '+e.message);
+                    Strophe.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                 }
 
                 return handlers;
@@ -1261,22 +1286,23 @@ export default class Connection {
      *      Useful for plugins with their own xmpp connect callback (when they
      *      want to do something special).
      */
-    _connect_cb (req, _callback, raw) {
-        Strophe.debug("_connect_cb was called");
+    _connect_cb(req, _callback, raw) {
+        Strophe.debug('_connect_cb was called');
         this.connected = true;
 
         let bodyWrap;
         try {
             bodyWrap = this._proto._reqToData(req);
         } catch (e) {
-            if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) { throw e; }
-            this._changeConnectStatus(
-                Status.CONNFAIL,
-                Strophe.ErrorCondition.BAD_FORMAT
-            );
+            if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) {
+                throw e;
+            }
+            this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.BAD_FORMAT);
             this._doDisconnect(Strophe.ErrorCondition.BAD_FORMAT);
         }
-        if (!bodyWrap) { return; }
+        if (!bodyWrap) {
+            return;
+        }
 
         if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
             if (bodyWrap.nodeName === this._proto.strip && bodyWrap.childNodes.length) {
@@ -1301,22 +1327,23 @@ export default class Connection {
         // Check for the stream:features tag
         let hasFeatures;
         if (bodyWrap.getElementsByTagNameNS) {
-            hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, "features").length > 0;
+            hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, 'features').length > 0;
         } else {
-            hasFeatures = bodyWrap.getElementsByTagName("stream:features").length > 0 ||
-                            bodyWrap.getElementsByTagName("features").length > 0;
+            hasFeatures =
+                bodyWrap.getElementsByTagName('stream:features').length > 0 ||
+                bodyWrap.getElementsByTagName('features').length > 0;
         }
         if (!hasFeatures) {
             this._proto._no_auth_received(_callback);
             return;
         }
 
-        const matched = Array.from(bodyWrap.getElementsByTagName("mechanism"))
-            .map(m => this.mechanisms[m.textContent])
-            .filter(m => m);
+        const matched = Array.from(bodyWrap.getElementsByTagName('mechanism'))
+            .map((m) => this.mechanisms[m.textContent])
+            .filter((m) => m);
 
         if (matched.length === 0) {
-            if (bodyWrap.getElementsByTagName("auth").length === 0) {
+            if (bodyWrap.getElementsByTagName('auth').length === 0) {
                 // There are no matching SASL mechanisms and also no legacy
                 // auth available.
                 this._proto._no_auth_received(_callback);
@@ -1337,11 +1364,12 @@ export default class Connection {
      *    (Array) mechanisms - Array of SASL mechanisms.
      *
      */
-    sortMechanismsByPriority (mechanisms) { // eslint-disable-line class-methods-use-this
+    // eslint-disable-next-line  class-methods-use-this
+    sortMechanismsByPriority(mechanisms) {
         // Sorting mechanisms according to priority.
-        for (let i=0; i < mechanisms.length - 1; ++i) {
+        for (let i = 0; i < mechanisms.length - 1; ++i) {
             let higher = i;
-            for (let j=i + 1; j < mechanisms.length; ++j) {
+            for (let j = i + 1; j < mechanisms.length; ++j) {
                 if (mechanisms[j].priority > mechanisms[higher].priority) {
                     higher = j;
                 }
@@ -1368,7 +1396,7 @@ export default class Connection {
      *    (Array) matched - Array of SASL mechanisms supported.
      *
      */
-    authenticate (matched) {
+    authenticate(matched) {
         if (!this._attemptSASLAuth(matched)) {
             this._attemptLegacyAuth();
         }
@@ -1387,29 +1415,41 @@ export default class Connection {
      *          valid SASL mechanism was found with which authentication could be
      *          started.
      */
-    _attemptSASLAuth (mechanisms) {
+    _attemptSASLAuth(mechanisms) {
         mechanisms = this.sortMechanismsByPriority(mechanisms || []);
         let mechanism_found = false;
-        for (let i=0; i < mechanisms.length; ++i) {
+        for (let i = 0; i < mechanisms.length; ++i) {
             if (!mechanisms[i].test(this)) {
                 continue;
             }
             this._sasl_success_handler = this._addSysHandler(
-                this._sasl_success_cb.bind(this), null,
-                "success", null, null);
+                this._sasl_success_cb.bind(this),
+                null,
+                'success',
+                null,
+                null
+            );
             this._sasl_failure_handler = this._addSysHandler(
-                this._sasl_failure_cb.bind(this), null,
-                "failure", null, null);
+                this._sasl_failure_cb.bind(this),
+                null,
+                'failure',
+                null,
+                null
+            );
             this._sasl_challenge_handler = this._addSysHandler(
-                this._sasl_challenge_cb.bind(this), null,
-                "challenge", null, null);
+                this._sasl_challenge_cb.bind(this),
+                null,
+                'challenge',
+                null,
+                null
+            );
 
             this._sasl_mechanism = mechanisms[i];
             this._sasl_mechanism.onStart(this);
 
-            const request_auth_exchange = $build("auth", {
+            const request_auth_exchange = $build('auth', {
                 'xmlns': Strophe.NS.SASL,
-                'mechanism': this._sasl_mechanism.mechname
+                'mechanism': this._sasl_mechanism.mechname,
             });
             if (this._sasl_mechanism.isClientFirst) {
                 const response = this._sasl_mechanism.clientChallenge(this);
@@ -1426,44 +1466,42 @@ export default class Connection {
      *  _Private_ handler for the SASL challenge
      *
      */
-    async _sasl_challenge_cb (elem) {
-      const challenge = atob(getText(elem));
-      const response = await this._sasl_mechanism.onChallenge(this, challenge);
-      const stanza = $build('response', {'xmlns': Strophe.NS.SASL});
-      if (response !== "") {
-        stanza.t(btoa(response));
-      }
-      this.send(stanza.tree());
-      return true;
+    async _sasl_challenge_cb(elem) {
+        const challenge = atob(getText(elem));
+        const response = await this._sasl_mechanism.onChallenge(this, challenge);
+        const stanza = $build('response', { 'xmlns': Strophe.NS.SASL });
+        if (response !== '') {
+            stanza.t(btoa(response));
+        }
+        this.send(stanza.tree());
+        return true;
     }
 
     /** PrivateFunction: _attemptLegacyAuth
      *
      *  Attempt legacy (i.e. non-SASL) authentication.
      */
-    _attemptLegacyAuth () {
+    _attemptLegacyAuth() {
         if (Strophe.getNodeFromJid(this.jid) === null) {
             // we don't have a node, which is required for non-anonymous
             // client connections
-            this._changeConnectStatus(
-                Status.CONNFAIL,
-                Strophe.ErrorCondition.MISSING_JID_NODE
-            );
+            this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.MISSING_JID_NODE);
             this.disconnect(Strophe.ErrorCondition.MISSING_JID_NODE);
         } else {
             // Fall back to legacy authentication
             this._changeConnectStatus(Status.AUTHENTICATING, null);
-            this._addSysHandler(
-                this._onLegacyAuthIQResult.bind(this),
-                null, null, null, "_auth_1"
-            );
-            this.send($iq({
-                    'type': "get",
+            this._addSysHandler(this._onLegacyAuthIQResult.bind(this), null, null, null, '_auth_1');
+            this.send(
+                $iq({
+                    'type': 'get',
                     'to': this.domain,
-                    'id': "_auth_1"
-                }).c("query", {xmlns: Strophe.NS.AUTH})
-                .c("username", {}).t(Strophe.getNodeFromJid(this.jid))
-                .tree());
+                    'id': '_auth_1',
+                })
+                    .c('query', { xmlns: Strophe.NS.AUTH })
+                    .c('username', {})
+                    .t(Strophe.getNodeFromJid(this.jid))
+                    .tree()
+            );
         }
     }
 
@@ -1481,13 +1519,16 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _onLegacyAuthIQResult (elem) { // eslint-disable-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
+    _onLegacyAuthIQResult(elem) {
         // build plaintext auth iq
-        const iq = $iq({type: "set", id: "_auth_2"})
-            .c('query', {xmlns: Strophe.NS.AUTH})
-            .c('username', {}).t(Strophe.getNodeFromJid(this.jid))
+        const iq = $iq({ type: 'set', id: '_auth_2' })
+            .c('query', { xmlns: Strophe.NS.AUTH })
+            .c('username', {})
+            .t(Strophe.getNodeFromJid(this.jid))
             .up()
-            .c('password').t(this.pass);
+            .c('password')
+            .t(this.pass);
 
         if (!Strophe.getResourceFromJid(this.jid)) {
             // since the user has not supplied a resource, we pick
@@ -1497,7 +1538,7 @@ export default class Connection {
         }
         iq.up().c('resource', {}).t(Strophe.getResourceFromJid(this.jid));
 
-        this._addSysHandler(this._auth2_cb.bind(this), null, null, null, "_auth_2");
+        this._addSysHandler(this._auth2_cb.bind(this), null, null, null, '_auth_2');
         this.send(iq.tree());
         return false;
     }
@@ -1511,16 +1552,16 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_success_cb (elem) {
-        if (this._sasl_data["server-signature"]) {
+    _sasl_success_cb(elem) {
+        if (this._sasl_data['server-signature']) {
             let serverSignature;
             const success = atob(getText(elem));
             const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
             const matches = success.match(attribMatch);
-            if (matches[1] === "v") {
+            if (matches[1] === 'v') {
                 serverSignature = matches[2];
             }
-            if (serverSignature !== this._sasl_data["server-signature"]) {
+            if (serverSignature !== this._sasl_data['server-signature']) {
                 // remove old handlers
                 this.deleteHandler(this._sasl_failure_handler);
                 this._sasl_failure_handler = null;
@@ -1532,7 +1573,7 @@ export default class Connection {
                 return this._sasl_failure_cb(null);
             }
         }
-        Strophe.info("SASL authentication succeeded.");
+        Strophe.info('SASL authentication succeeded.');
 
         if (this._sasl_data.keys) {
             this.scram_keys = this._sasl_data.keys;
@@ -1557,13 +1598,17 @@ export default class Connection {
             return false;
         };
         streamfeature_handlers.push(
-            this._addSysHandler(elem => wrapper(streamfeature_handlers, elem),
-            null, "stream:features", null, null)
+            this._addSysHandler((elem) => wrapper(streamfeature_handlers, elem), null, 'stream:features', null, null)
         );
 
         streamfeature_handlers.push(
-            this._addSysHandler(elem => wrapper(streamfeature_handlers, elem),
-            Strophe.NS.STREAM, "features", null, null)
+            this._addSysHandler(
+                (elem) => wrapper(streamfeature_handlers, elem),
+                Strophe.NS.STREAM,
+                'features',
+                null,
+                null
+            )
         );
 
         // we must send an xmpp:restart now
@@ -1578,10 +1623,10 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-     _onStreamFeaturesAfterSASL (elem) {
+    _onStreamFeaturesAfterSASL(elem) {
         // save stream:features for future usage
         this.features = elem;
-        for (let i=0; i < elem.childNodes.length; i++) {
+        for (let i = 0; i < elem.childNodes.length; i++) {
             const child = elem.childNodes[i];
             if (child.nodeName === 'bind') {
                 this.do_bind = true;
@@ -1615,27 +1660,24 @@ export default class Connection {
      *  Otherwise it'll be called automatically as soon as the XMPP server
      *  advertises the "urn:ietf:params:xml:ns:xmpp-bind" stream feature.
      */
-    bind () {
+    bind() {
         if (!this.do_bind) {
-            Strophe.log(
-                 Strophe.LogLevel.INFO,
-                `Strophe.Connection.prototype.bind called but "do_bind" is false`
-            );
+            Strophe.log(Strophe.LogLevel.INFO, `Strophe.Connection.prototype.bind called but "do_bind" is false`);
             return;
         }
-        this._addSysHandler(
-            this._onResourceBindResultIQ.bind(this),
-            null, null, null, "_bind_auth_2");
+        this._addSysHandler(this._onResourceBindResultIQ.bind(this), null, null, null, '_bind_auth_2');
 
         const resource = Strophe.getResourceFromJid(this.jid);
         if (resource) {
-            this.send($iq({type: "set", id: "_bind_auth_2"})
-                      .c('bind', {xmlns: Strophe.NS.BIND})
-                      .c('resource', {}).t(resource).tree());
+            this.send(
+                $iq({ type: 'set', id: '_bind_auth_2' })
+                    .c('bind', { xmlns: Strophe.NS.BIND })
+                    .c('resource', {})
+                    .t(resource)
+                    .tree()
+            );
         } else {
-            this.send($iq({type: "set", id: "_bind_auth_2"})
-                      .c('bind', {xmlns: Strophe.NS.BIND})
-                      .tree());
+            this.send($iq({ type: 'set', id: '_bind_auth_2' }).c('bind', { xmlns: Strophe.NS.BIND }).tree());
         }
     }
 
@@ -1648,10 +1690,10 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _onResourceBindResultIQ (elem) {
-        if (elem.getAttribute("type") === "error") {
-            Strophe.warn("Resource binding failed.");
-            const conflict = elem.getElementsByTagName("conflict");
+    _onResourceBindResultIQ(elem) {
+        if (elem.getAttribute('type') === 'error') {
+            Strophe.warn('Resource binding failed.');
+            const conflict = elem.getElementsByTagName('conflict');
             let condition;
             if (conflict.length > 0) {
                 condition = Strophe.ErrorCondition.CONFLICT;
@@ -1660,9 +1702,9 @@ export default class Connection {
             return false;
         }
         // TODO - need to grab errors
-        const bind = elem.getElementsByTagName("bind");
+        const bind = elem.getElementsByTagName('bind');
         if (bind.length > 0) {
-            const jidNode = bind[0].getElementsByTagName("jid");
+            const jidNode = bind[0].getElementsByTagName('jid');
             if (jidNode.length > 0) {
                 this.authenticated = true;
                 this.jid = getText(jidNode[0]);
@@ -1673,7 +1715,7 @@ export default class Connection {
                 }
             }
         } else {
-            Strophe.warn("Resource binding failed.");
+            Strophe.warn('Resource binding failed.');
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -1687,19 +1729,16 @@ export default class Connection {
      *  Note: The protocol for session establishment has been determined as
      *  unnecessary and removed in RFC-6121.
      */
-    _establishSession () {
+    _establishSession() {
         if (!this.do_session) {
-            throw new Error(`Strophe.Connection.prototype._establishSession `+
-                `called but apparently ${Strophe.NS.SESSION} wasn't advertised by the server`);
+            throw new Error(
+                `Strophe.Connection.prototype._establishSession ` +
+                    `called but apparently ${Strophe.NS.SESSION} wasn't advertised by the server`
+            );
         }
-        this._addSysHandler(
-            this._onSessionResultIQ.bind(this),
-            null, null, null, "_session_auth_2");
+        this._addSysHandler(this._onSessionResultIQ.bind(this), null, null, null, '_session_auth_2');
 
-        this.send(
-            $iq({type: "set", id: "_session_auth_2"})
-                .c('session', {xmlns: Strophe.NS.SESSION})
-                .tree());
+        this.send($iq({ type: 'set', id: '_session_auth_2' }).c('session', { xmlns: Strophe.NS.SESSION }).tree());
     }
 
     /** PrivateFunction: _onSessionResultIQ
@@ -1720,13 +1759,13 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _onSessionResultIQ (elem) {
-        if (elem.getAttribute("type") === "result") {
+    _onSessionResultIQ(elem) {
+        if (elem.getAttribute('type') === 'result') {
             this.authenticated = true;
             this._changeConnectStatus(Status.CONNECTED, null);
-        } else if (elem.getAttribute("type") === "error") {
+        } else if (elem.getAttribute('type') === 'error') {
             this.authenticated = false;
-            Strophe.warn("Session creation failed.");
+            Strophe.warn('Session creation failed.');
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -1742,7 +1781,7 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _sasl_failure_cb (elem) {
+    _sasl_failure_cb(elem) {
         // delete unneeded handlers
         if (this._sasl_success_handler) {
             this.deleteHandler(this._sasl_success_handler);
@@ -1753,8 +1792,7 @@ export default class Connection {
             this._sasl_challenge_handler = null;
         }
 
-        if(this._sasl_mechanism)
-          this._sasl_mechanism.onFailure();
+        if (this._sasl_mechanism) this._sasl_mechanism.onFailure();
         this._changeConnectStatus(Status.AUTHFAIL, null, elem);
         return false;
     }
@@ -1771,11 +1809,11 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _auth2_cb (elem) {
-        if (elem.getAttribute("type") === "result") {
+    _auth2_cb(elem) {
+        if (elem.getAttribute('type') === 'result') {
             this.authenticated = true;
             this._changeConnectStatus(Status.CONNECTED, null);
-        } else if (elem.getAttribute("type") === "error") {
+        } else if (elem.getAttribute('type') === 'error') {
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);
             this.disconnect('authentication failed');
         }
@@ -1793,7 +1831,7 @@ export default class Connection {
      *    (Integer) period - The period of the handler.
      *    (Function) handler - The callback function.
      */
-    _addSysTimedHandler (period, handler) {
+    _addSysTimedHandler(period, handler) {
         const thand = new TimedHandler(period, handler);
         thand.user = false;
         this.addTimeds.push(thand);
@@ -1814,7 +1852,7 @@ export default class Connection {
      *    (String) type - The stanza type attribute to match.
      *    (String) id - The stanza id attribute to match.
      */
-    _addSysHandler (handler, ns, name, type, id) {
+    _addSysHandler(handler, ns, name, type, id) {
         const hand = new Handler(handler, ns, name, type, id);
         hand.user = false;
         this.addHandlers.push(hand);
@@ -1830,8 +1868,8 @@ export default class Connection {
      *  Returns:
      *    false to remove the handler.
      */
-    _onDisconnectTimeout () {
-        Strophe.debug("_onDisconnectTimeout was called");
+    _onDisconnectTimeout() {
+        Strophe.debug('_onDisconnectTimeout was called');
         this._changeConnectStatus(Status.CONNTIMEOUT, null);
         this._proto._onDisconnectTimeout();
         // actually disconnect
@@ -1845,7 +1883,7 @@ export default class Connection {
      *  This handler is called every 100ms to fire timed handlers that
      *  are ready and keep poll requests going.
      */
-    _onIdle () {
+    _onIdle() {
         // add timed handlers scheduled for addition
         // NOTE: we add before remove in the case a timed handler is
         // added and then deleted before the next _onIdle() call.
@@ -1865,7 +1903,7 @@ export default class Connection {
         // call ready timed handlers
         const now = new Date().getTime();
         const newList = [];
-        for (let i=0; i < this.timedHandlers.length; i++) {
+        for (let i = 0; i < this.timedHandlers.length; i++) {
             const thand = this.timedHandlers[i];
             if (this.authenticated || !thand.user) {
                 const since = thand.lastCalled + thand.period;

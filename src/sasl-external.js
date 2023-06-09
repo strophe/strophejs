@@ -1,7 +1,6 @@
 import SASLMechanism from './sasl.js';
 
 export default class SASLExternal extends SASLMechanism {
-
     /** PrivateConstructor: SASLExternal
      *  SASL EXTERNAL authentication.
      *
@@ -10,11 +9,12 @@ export default class SASLExternal extends SASLMechanism {
      *  authenticate the client. The external means may be, for instance,
      *  TLS services.
      */
-    constructor (mechname='EXTERNAL', isClientFirst=true, priority=10) {
+    constructor(mechname = 'EXTERNAL', isClientFirst = true, priority = 10) {
         super(mechname, isClientFirst, priority);
     }
 
-    onChallenge (connection) { // eslint-disable-line class-methods-use-this
+    // eslint-disable-next-line class-methods-use-this
+    onChallenge(connection) {
         /** According to XEP-178, an authzid SHOULD NOT be presented when the
          * authcid contained or implied in the client certificate is the JID (i.e.
          * authzid) with which the user wants to log in as.

@@ -11,7 +11,6 @@
  *  Strophe.Connection.deleteTimedHandler().
  */
 export default class TimedHandler {
-
     /** PrivateConstructor: Strophe.TimedHandler
      *  Create and initialize a new Strophe.TimedHandler object.
      *
@@ -24,7 +23,7 @@ export default class TimedHandler {
      *  Returns:
      *    A new Strophe.TimedHandler object.
      */
-    constructor (period, handler) {
+    constructor(period, handler) {
         this.period = period;
         this.handler = handler;
         this.lastCalled = new Date().getTime();
@@ -38,7 +37,7 @@ export default class TimedHandler {
      *    true if the Strophe.TimedHandler should be called again, and false
      *      otherwise.
      */
-    run () {
+    run() {
         this.lastCalled = new Date().getTime();
         return this.handler();
     }
@@ -46,7 +45,7 @@ export default class TimedHandler {
     /** PrivateFunction: reset
      *  Reset the last called time for the Strophe.TimedHandler.
      */
-    reset () {
+    reset() {
         this.lastCalled = new Date().getTime();
     }
 
@@ -56,7 +55,7 @@ export default class TimedHandler {
      *  Returns:
      *    The string representation.
      */
-    toString () {
-        return "{TimedHandler: " + this.handler + "(" + this.period +")}";
+    toString() {
+        return '{TimedHandler: ' + this.handler + '(' + this.period + ')}';
     }
 }

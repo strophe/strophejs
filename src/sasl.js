@@ -21,7 +21,6 @@
  *  See: Strophe.Connection.addSupportedSASLMechanisms
  */
 export default class SASLMechanism {
-
     /**
      * PrivateConstructor: Strophe.SASLMechanism
      * SASL auth mechanism abstraction.
@@ -34,7 +33,7 @@ export default class SASLMechanism {
      *  Returns:
      *    A new Strophe.SASLMechanism object.
      */
-    constructor (name, isClientFirst, priority) {
+    constructor(name, isClientFirst, priority) {
         /** PrivateVariable: mechname
          *  Mechanism name.
          */
@@ -77,7 +76,8 @@ export default class SASLMechanism {
      *  Returns:
      *    (Boolean) If mechanism was able to run.
      */
-    test () { // eslint-disable-line class-methods-use-this
+    // eslint-disable-next-line class-methods-use-this
+    test() {
         return true;
     }
 
@@ -87,7 +87,7 @@ export default class SASLMechanism {
      *  Parameters:
      *    (Strophe.Connection) connection - Target Connection.
      */
-    onStart (connection) {
+    onStart(connection) {
         this._connection = connection;
     }
 
@@ -105,8 +105,9 @@ export default class SASLMechanism {
      *  Returns:
      *    (String) Mechanism response.
      */
-    onChallenge (connection, challenge) {  // eslint-disable-line
-        throw new Error("You should implement challenge handling!");
+    // eslint-disable-next-line no-unused-vars, class-methods-use-this
+    onChallenge(connection, challenge) {
+        throw new Error('You should implement challenge handling!');
     }
 
     /** PrivateFunction: clientChallenge
@@ -119,9 +120,9 @@ export default class SASLMechanism {
      *  Returns:
      *    (String) Mechanism response.
      */
-    clientChallenge (connection) {
+    clientChallenge(connection) {
         if (!this.isClientFirst) {
-            throw new Error("clientChallenge should not be called if isClientFirst is false!");
+            throw new Error('clientChallenge should not be called if isClientFirst is false!');
         }
         return this.onChallenge(connection);
     }
@@ -129,15 +130,14 @@ export default class SASLMechanism {
     /** PrivateFunction: onFailure
      *  Protocol informs mechanism implementation about SASL failure.
      */
-    onFailure () {
+    onFailure() {
         this._connection = null;
     }
 
     /** PrivateFunction: onSuccess
      *  Protocol informs mechanism implementation about SASL success.
      */
-    onSuccess () {
+    onSuccess() {
         this._connection = null;
     }
-
 }

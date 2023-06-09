@@ -46,7 +46,8 @@
     "clean": "make clean",
     "doc": "make doc",
     "prepare": "npx yarpm run build",
-    "test": "karma start && npm run lint"
+    "test": "karma start && npm run lint",
+    "prettier": "prettier --write src/*.js"
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
@@ -70,6 +71,7 @@
     "karma-rollup-preprocessor": "^7.0.8",
     "minimist": "^1.2.5",
     "npm": "^6.14.7",
+    "prettier": "^2.8.8",
     "qunit": "2.19.4",
     "rollup": "^2.32.1",
     "rollup-plugin-node-globals": "^1.4.0",

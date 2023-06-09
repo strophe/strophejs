@@ -1,7 +1,6 @@
 import { NS } from './constants.js';
 import { copyElement, createHtml, serialize, xmlElement, xmlGenerator, xmlTextNode } from './utils.js';
 
-
 /** Function: $build
  *  Create a Strophe.Builder.
  *  This is an alias for 'new Strophe.Builder(name, attrs)'.
@@ -27,7 +26,7 @@ export function $build(name, attrs) {
  *    A new Strophe.Builder object.
  */
 export function $msg(attrs) {
-    return new Builder("message", attrs);
+    return new Builder('message', attrs);
 }
 
 /** Function: $iq
@@ -40,7 +39,7 @@ export function $msg(attrs) {
  *    A new Strophe.Builder object.
  */
 export function $iq(attrs) {
-    return new Builder("iq", attrs);
+    return new Builder('iq', attrs);
 }
 
 /** Function: $pres
@@ -53,9 +52,8 @@ export function $iq(attrs) {
  *    A new Strophe.Builder object.
  */
 export function $pres(attrs) {
-    return new Builder("presence", attrs);
+    return new Builder('presence', attrs);
 }
-
 
 /** Class: Strophe.Builder
  *  XML DOM builder.
@@ -101,8 +99,7 @@ export function $pres(attrs) {
  */
 
 export default class Builder {
-
-    constructor (name, attrs) {
+    constructor(name, attrs) {
         // Set correct namespace for jabber:client elements
         if (name === 'presence' || name === 'message' || name === 'iq') {
             if (attrs && !attrs.xmlns) {
@@ -126,7 +123,7 @@ export default class Builder {
      *  Returns:
      *    The DOM tree as a element object.
      */
-    tree () {
+    tree() {
         return this.nodeTree;
     }
 
@@ -140,7 +137,7 @@ export default class Builder {
      *  Returns:
      *    The serialized DOM tree in a String.
      */
-    toString () {
+    toString() {
         return serialize(this.nodeTree);
     }
 
@@ -154,7 +151,7 @@ export default class Builder {
      *  Returns:
      *    The Stophe.Builder object.
      */
-    up () {
+    up() {
         this.node = this.node.parentNode;
         return this;
     }
@@ -169,7 +166,7 @@ export default class Builder {
      *  Returns:
      *    The Stophe.Builder object.
      */
-    root () {
+    root() {
         this.node = this.nodeTree;
         return this;
     }
@@ -186,7 +183,7 @@ export default class Builder {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    attrs (moreattrs) {
+    attrs(moreattrs) {
         for (const k in moreattrs) {
             if (Object.prototype.hasOwnProperty.call(moreattrs, k)) {
                 if (moreattrs[k] === undefined) {
@@ -215,7 +212,7 @@ export default class Builder {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    c (name, attrs, text) {
+    c(name, attrs, text) {
         const child = xmlElement(name, attrs, text);
         this.node.appendChild(child);
         if (typeof text !== 'string' && typeof text !== 'number') {
@@ -238,7 +235,7 @@ export default class Builder {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    cnode (elem) {
+    cnode(elem) {
         let impNode;
         const xmlGen = xmlGenerator();
         try {
@@ -264,7 +261,7 @@ export default class Builder {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    t (text) {
+    t(text) {
         const child = xmlTextNode(text);
         this.node.appendChild(child);
         return this;
@@ -281,7 +278,7 @@ export default class Builder {
      *  Returns:
      *    The Strophe.Builder object.
      */
-    h (html) {
+    h(html) {
         const fragment = xmlGenerator().createElement('body');
         // force the browser to try and fix any invalid HTML tags
         fragment.innerHTML = html;

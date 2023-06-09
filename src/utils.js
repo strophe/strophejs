@@ -2,7 +2,7 @@
 import * as shims from './shims';
 import { ElementType, XHTML } from './constants.js';
 
-export function utf16to8 (str) {
+export function utf16to8(str) {
     let out = '';
     const len = str.length;
     for (let i = 0; i < len; i++) {
@@ -21,7 +21,7 @@ export function utf16to8 (str) {
     return out;
 }
 
-export function xorArrayBuffers (x, y) {
+export function xorArrayBuffers(x, y) {
     const xIntArray = new Uint8Array(x);
     const yIntArray = new Uint8Array(y);
     const zIntArray = new Uint8Array(x.byteLength);
@@ -31,7 +31,7 @@ export function xorArrayBuffers (x, y) {
     return zIntArray.buffer;
 }
 
-export function arrayBufToBase64 (buffer) {
+export function arrayBufToBase64(buffer) {
     // This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
     // and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
     let binary = '';
@@ -43,16 +43,16 @@ export function arrayBufToBase64 (buffer) {
     return window.btoa(binary);
 }
 
-export function base64ToArrayBuf (str) {
-    return Uint8Array.from(atob(str), c => c.charCodeAt(0))?.buffer;
+export function base64ToArrayBuf(str) {
+    return Uint8Array.from(atob(str), (c) => c.charCodeAt(0))?.buffer;
 }
 
-export function stringToArrayBuf (str) {
+export function stringToArrayBuf(str) {
     const bytes = new TextEncoder('utf-8').encode(str);
     return bytes.buffer;
 }
 
-export function addCookies (cookies) {
+export function addCookies(cookies) {
     /* Parameters:
      *  (Object) cookies - either a map of cookie names
      *    to string values or to maps of cookie values.
@@ -99,7 +99,7 @@ let _xmlGenerator = null;
  *  Returns:
  *    The currently used DOM document.
  */
-export function xmlGenerator () {
+export function xmlGenerator() {
     if (!_xmlGenerator) {
         _xmlGenerator = shims.getDummyXMLDOMDocument();
     }
@@ -117,7 +117,7 @@ export function xmlGenerator () {
  *  Returns:
  *    A new XML DOM text node.
  */
-export function xmlTextNode (text) {
+export function xmlTextNode(text) {
     return xmlGenerator().createTextNode(text);
 }
 
@@ -130,7 +130,7 @@ export function xmlTextNode (text) {
  *  Returns:
  *    A new XML DOM text node.
  */
-export function xmlHtmlNode (html) {
+export function xmlHtmlNode(html) {
     let node;
     //ensure text is escaped
     if (shims.DOMParser) {
@@ -162,7 +162,7 @@ export function xmlHtmlNode (html) {
  *  Returns:
  *    A new XML DOM element.
  */
-export function xmlElement (name) {
+export function xmlElement(name) {
     if (!name) {
         return null;
     }
@@ -207,7 +207,7 @@ export function xmlElement (name) {
  *
  * XHTML tag names are case sensitive and must be lower case.
  */
-export function validTag (tag) {
+export function validTag(tag) {
     for (let i = 0; i < XHTML.tags.length; i++) {
         if (tag === XHTML.tags[i]) {
             return true;
@@ -223,7 +223,7 @@ export function validTag (tag) {
  *
  * XHTML attribute names are case sensitive and must be lower case.
  */
-export function validAttribute (tag, attribute) {
+export function validAttribute(tag, attribute) {
     if (typeof XHTML.attributes[tag] !== 'undefined' && XHTML.attributes[tag].length > 0) {
         for (let i = 0; i < XHTML.attributes[tag].length; i++) {
             if (attribute === XHTML.attributes[tag][i]) {
@@ -235,7 +235,7 @@ export function validAttribute (tag, attribute) {
 }
 
 /** Function: Strophe.XHTML.validCSS */
-export function validCSS (style) {
+export function validCSS(style) {
     for (let i = 0; i < XHTML.css.length; i++) {
         if (style === XHTML.css[i]) {
             return true;
@@ -257,7 +257,7 @@ export function validCSS (style) {
  *  Returns:
  *    A new, copied DOM element tree.
  */
-export function createHtml (elem) {
+export function createHtml(elem) {
     let el;
     if (elem.nodeType === ElementType.NORMAL) {
         const tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
@@ -335,7 +335,7 @@ export function createHtml (elem) {
  *  Returns:
  *    A new, copied DOM element tree.
  */
-export function copyElement (elem) {
+export function copyElement(elem) {
     let el;
     if (elem.nodeType === ElementType.NORMAL) {
         el = xmlElement(elem.tagName);
@@ -362,7 +362,7 @@ export function copyElement (elem) {
  *  Returns:
  *      Escaped text.
  */
-export function xmlescape (text) {
+export function xmlescape(text) {
     text = text.replace(/\&/g, '&amp;');
     text = text.replace(/</g, '&lt;');
     text = text.replace(/>/g, '&gt;');
@@ -380,7 +380,7 @@ export function xmlescape (text) {
  *  Returns:
  *      Unescaped text.
  */
-export function xmlunescape (text) {
+export function xmlunescape(text) {
     text = text.replace(/\&amp;/g, '&');
     text = text.replace(/&lt;/g, '<');
     text = text.replace(/&gt;/g, '>');
@@ -398,14 +398,14 @@ export function xmlunescape (text) {
  *  Returns:
  *    The serialized element tree as a String.
  */
-export function serialize (elem) {
+export function serialize(elem) {
     if (!elem) {
         return null;
     }
     if (typeof elem.tree === 'function') {
         elem = elem.tree();
     }
-    const names = [...Array(elem.attributes.length).keys()].map(i => elem.attributes[i].nodeName);
+    const names = [...Array(elem.attributes.length).keys()].map((i) => elem.attributes[i].nodeName);
     names.sort();
     let result = names.reduce(
         (a, n) => `${a} ${n}="${xmlescape(elem.attributes.getNamedItem(n).value)}"`,
@@ -451,11 +451,10 @@ export function serialize (elem) {
  *    (Function) func - The function to apply to each child.  This
  *      function should take a single argument, a DOM element.
  */
-export function forEachChild (elem, elemName, func) {
-    for (let i=0; i<elem.childNodes.length; i++) {
+export function forEachChild(elem, elemName, func) {
+    for (let i = 0; i < elem.childNodes.length; i++) {
         const childNode = elem.childNodes[i];
-        if (childNode.nodeType === ElementType.NORMAL &&
-            (!elemName || this.isTagEqual(childNode, elemName))) {
+        if (childNode.nodeType === ElementType.NORMAL && (!elemName || this.isTagEqual(childNode, elemName))) {
             func(childNode);
         }
     }
@@ -474,7 +473,7 @@ export function forEachChild (elem, elemName, func) {
  *    true if the element's tag name matches _el_, and false
  *    otherwise.
  */
-export function isTagEqual (el, name) {
+export function isTagEqual(el, name) {
     return el.tagName === name;
 }
 
@@ -487,14 +486,16 @@ export function isTagEqual (el, name) {
  *  Returns:
  *    A String with the concatenated text of all text element children.
  */
-export function getText (elem) {
-    if (!elem) { return null; }
+export function getText(elem) {
+    if (!elem) {
+        return null;
+    }
 
-    let str = "";
+    let str = '';
     if (elem.childNodes.length === 0 && elem.nodeType === ElementType.TEXT) {
         str += elem.nodeValue;
     }
-    for (let i=0; i<elem.childNodes.length; i++) {
+    for (let i = 0; i < elem.childNodes.length; i++) {
         if (elem.childNodes[i].nodeType === ElementType.TEXT) {
             str += elem.childNodes[i].nodeValue;
         }
@@ -511,19 +512,22 @@ export function getText (elem) {
  *  Returns:
  *    An escaped node (or local part).
  */
-export function escapeNode (node) {
-    if (typeof node !== "string") { return node; }
-    return node.replace(/^\s+|\s+$/g, '')
-        .replace(/\\/g,  "\\5c")
-        .replace(/ /g,   "\\20")
-        .replace(/\"/g,  "\\22")
-        .replace(/\&/g,  "\\26")
-        .replace(/\'/g,  "\\27")
-        .replace(/\//g,  "\\2f")
-        .replace(/:/g,   "\\3a")
-        .replace(/</g,   "\\3c")
-        .replace(/>/g,   "\\3e")
-        .replace(/@/g,   "\\40");
+export function escapeNode(node) {
+    if (typeof node !== 'string') {
+        return node;
+    }
+    return node
+        .replace(/^\s+|\s+$/g, '')
+        .replace(/\\/g, '\\5c')
+        .replace(/ /g, '\\20')
+        .replace(/\"/g, '\\22')
+        .replace(/\&/g, '\\26')
+        .replace(/\'/g, '\\27')
+        .replace(/\//g, '\\2f')
+        .replace(/:/g, '\\3a')
+        .replace(/</g, '\\3c')
+        .replace(/>/g, '\\3e')
+        .replace(/@/g, '\\40');
 }
 
 /** Function: Strophe.unescapeNode
@@ -535,18 +539,21 @@ export function escapeNode (node) {
  *  Returns:
  *    An unescaped node (or local part).
  */
-export function unescapeNode (node) {
-    if (typeof node !== "string") { return node; }
-    return node.replace(/\\20/g, " ")
+export function unescapeNode(node) {
+    if (typeof node !== 'string') {
+        return node;
+    }
+    return node
+        .replace(/\\20/g, ' ')
         .replace(/\\22/g, '"')
-        .replace(/\\26/g, "&")
+        .replace(/\\26/g, '&')
         .replace(/\\27/g, "'")
-        .replace(/\\2f/g, "/")
-        .replace(/\\3a/g, ":")
-        .replace(/\\3c/g, "<")
-        .replace(/\\3e/g, ">")
-        .replace(/\\40/g, "@")
-        .replace(/\\5c/g, "\\");
+        .replace(/\\2f/g, '/')
+        .replace(/\\3a/g, ':')
+        .replace(/\\3c/g, '<')
+        .replace(/\\3e/g, '>')
+        .replace(/\\40/g, '@')
+        .replace(/\\5c/g, '\\');
 }
 
 /** Function: Strophe.getNodeFromJid
@@ -558,9 +565,11 @@ export function unescapeNode (node) {
  *  Returns:
  *    A String containing the node.
  */
-export function getNodeFromJid (jid) {
-    if (jid.indexOf("@") < 0) { return null; }
-    return jid.split("@")[0];
+export function getNodeFromJid(jid) {
+    if (jid.indexOf('@') < 0) {
+        return null;
+    }
+    return jid.split('@')[0];
 }
 
 /** Function: Strophe.getDomainFromJid
@@ -572,12 +581,12 @@ export function getNodeFromJid (jid) {
  *  Returns:
  *    A String containing the domain.
  */
-export function getDomainFromJid (jid) {
+export function getDomainFromJid(jid) {
     const bare = getBareJidFromJid(jid);
-    if (bare.indexOf("@") < 0) {
+    if (bare.indexOf('@') < 0) {
         return bare;
     } else {
-        const parts = bare.split("@");
+        const parts = bare.split('@');
         parts.splice(0, 1);
         return parts.join('@');
     }
@@ -592,10 +601,14 @@ export function getDomainFromJid (jid) {
  *  Returns:
  *    A String containing the resource.
  */
-export function getResourceFromJid (jid) {
-    if (!jid) { return null; }
-    const s = jid.split("/");
-    if (s.length < 2) { return null; }
+export function getResourceFromJid(jid) {
+    if (!jid) {
+        return null;
+    }
+    const s = jid.split('/');
+    if (s.length < 2) {
+        return null;
+    }
     s.splice(0, 1);
     return s.join('/');
 }
@@ -609,10 +622,9 @@ export function getResourceFromJid (jid) {
  *  Returns:
  *    A String containing the bare JID.
  */
-export function getBareJidFromJid (jid) {
-    return jid ? jid.split("/")[0] : null;
+export function getBareJidFromJid(jid) {
+    return jid ? jid.split('/')[0] : null;
 }
-
 
 const utils = {
     utf16to8,
