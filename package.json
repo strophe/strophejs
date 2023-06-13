@@ -45,7 +45,6 @@
     "lint": "eslint src/*.js tests.js",
     "clean": "make clean",
     "doc": "make doc",
-    "prepare": "npx yarpm run build",
     "test": "karma start && npm run lint",
     "prettier": "prettier --write src/*.js"
   },
@@ -70,7 +69,6 @@
     "karma-qunit": "^4.1.2",
     "karma-rollup-preprocessor": "^7.0.8",
     "minimist": "^1.2.5",
-    "npm": "^6.14.7",
     "prettier": "^2.8.8",
     "qunit": "2.19.4",
     "rollup": "^2.32.1",
@@ -78,8 +76,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "run-headless-chromium": "^0.1.1",
     "sinon": "15.0.4",
-    "terser": "^5.10.0",
-    "yarpm": "^1.1.1"
+    "terser": "^5.10.0"
   },
   "dependencies": {
     "abab": "^2.0.3"

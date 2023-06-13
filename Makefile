@@ -1,4 +1,3 @@
-CHROMIUM		?= ./node_modules/run-headless-chromium/run-headless-chromium.js
 DOC_DIR			= doc
 DOC_TEMP		= doc-temp
 HTTPSERVE		?= ./node_modules/http-server/bin/http-server
