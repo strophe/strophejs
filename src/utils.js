@@ -1,4 +1,5 @@
-/* global ActiveXObject */
+/* global btoa, ActiveXObject */
+import { Strophe } from './core';
 import * as shims from './shims';
 import { ElementType, XHTML } from './constants.js';
 
@@ -40,7 +41,7 @@ export function arrayBufToBase64(buffer) {
     for (let i = 0; i < len; i++) {
         binary += String.fromCharCode(bytes[i]);
     }
-    return window.btoa(binary);
+    return btoa(binary);
 }
 
 export function base64ToArrayBuf(str) {
@@ -53,6 +54,10 @@ export function stringToArrayBuf(str) {
 }
 
 export function addCookies(cookies) {
+    if (typeof document === 'undefined') {
+        Strophe.log(Strophe.LogLevel.ERROR, `addCookies: not adding any cookies, since there's no document object`);
+    }
+
     /* Parameters:
      *  (Object) cookies - either a map of cookie names
      *    to string values or to maps of cookie values.
@@ -492,10 +497,10 @@ export function getText(elem) {
     }
 
     let str = '';
-    if (elem.childNodes.length === 0 && elem.nodeType === ElementType.TEXT) {
+    if (!elem.childNodes?.length && elem.nodeType === ElementType.TEXT) {
         str += elem.nodeValue;
     }
-    for (let i = 0; i < elem.childNodes.length; i++) {
+    for (let i = 0; i < elem.childNodes?.length ?? 0; i++) {
         if (elem.childNodes[i].nodeType === ElementType.TEXT) {
             str += elem.childNodes[i].nodeValue;
         }

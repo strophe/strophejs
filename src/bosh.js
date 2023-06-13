@@ -5,7 +5,7 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global ActiveXObject */
+/* global ActiveXObject, XMLHttpRequest, sessionStorage, globalThis */
 
 import { DOMParser } from './shims';
 import { $build, Strophe } from './core';
@@ -83,14 +83,17 @@ Strophe.Request = class Request {
                 throw new Error('parsererror');
             }
         } else if (this.xhr.responseText) {
-            // In React Native, we may get responseText but no responseXML.  We can try to parse it manually.
+            // In Node (with xhr2) or React Native, we may get responseText but no responseXML.
+            // We can try to parse it manually.
             Strophe.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
             node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
-            if (!node) {
-                throw new Error('Parsing produced null node');
-            } else if (node.querySelector('parsererror')) {
-                Strophe.error('invalid response received: ' + node.querySelector('parsererror').textContent);
-                Strophe.error('responseText: ' + this.xhr.responseText);
+
+            const parserError = node?.querySelector('parsererror');
+            if (!node || parserError) {
+                if (parserError) {
+                    Strophe.error('invalid response received: ' + parserError.textContent);
+                    Strophe.error('responseText: ' + this.xhr.responseText);
+                }
                 const error = new Error();
                 error.name = Strophe.ErrorCondition.BAD_FORMAT;
                 throw error;
@@ -109,12 +112,12 @@ Strophe.Request = class Request {
      */
     _newXHR() {
         let xhr = null;
-        if (window.XMLHttpRequest) {
+        if (globalThis.XMLHttpRequest) {
             xhr = new XMLHttpRequest();
             if (xhr.overrideMimeType) {
                 xhr.overrideMimeType('text/xml; charset=utf-8');
             }
-        } else if (window.ActiveXObject) {
+        } else if (globalThis.ActiveXObject) {
             xhr = new ActiveXObject('Microsoft.XMLHTTP');
         }
         // use Function.bind() to prepend ourselves as an argument
@@ -196,7 +199,7 @@ Strophe.Bosh = class Bosh {
         this.sid = null;
         this.errors = 0;
         if (this._conn._sessionCachingSupported()) {
-            window.sessionStorage.removeItem('strophe-bosh-session');
+            sessionStorage.removeItem('strophe-bosh-session');
         }
 
         this._conn.nextValidRid(this.rid);
@@ -298,7 +301,7 @@ Strophe.Bosh = class Bosh {
      *      allowed range of request ids that are valid.  The default is 5.
      */
     _restore(jid, callback, wait, hold, wind) {
-        const session = JSON.parse(window.sessionStorage.getItem('strophe-bosh-session'));
+        const session = JSON.parse(sessionStorage.getItem('strophe-bosh-session'));
         if (
             typeof session !== 'undefined' &&
             session !== null &&
@@ -331,7 +334,7 @@ Strophe.Bosh = class Bosh {
     _cacheSession() {
         if (this._conn.authenticated) {
             if (this._conn.jid && this.rid && this.sid) {
-                window.sessionStorage.setItem(
+                sessionStorage.setItem(
                     'strophe-bosh-session',
                     JSON.stringify({
                         'jid': this._conn.jid,
@@ -341,7 +344,7 @@ Strophe.Bosh = class Bosh {
                 );
             }
         } else {
-            window.sessionStorage.removeItem('strophe-bosh-session');
+            sessionStorage.removeItem('strophe-bosh-session');
         }
     }
 
@@ -413,7 +416,7 @@ Strophe.Bosh = class Bosh {
         this.sid = null;
         this.rid = Math.floor(Math.random() * 4294967295);
         if (this._conn._sessionCachingSupported()) {
-            window.sessionStorage.removeItem('strophe-bosh-session');
+            sessionStorage.removeItem('strophe-bosh-session');
         }
 
         this._conn.nextValidRid(this.rid);

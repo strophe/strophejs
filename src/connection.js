@@ -1,4 +1,4 @@
-/*global sessionStorage, setTimeout, clearTimeout */
+/*sessionStorage, setTimeout, clearTimeout */
 
 import Handler from './handler';
 import TimedHandler from './timed-handler';

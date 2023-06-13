@@ -1,4 +1,4 @@
-/*global Strophe, $iq, $msg, $build, $pres, QUnit */
+/*global globalThis, Strophe, $iq, $msg, $build, $pres, QUnit */
 
 /**
  * Mock xhr, provides getAllResponseHeaders function.
@@ -33,17 +33,33 @@ function makeRequest(stanza) {
     return req;
 }
 
+const _sessionStorage = {};
+
+if (!globalThis.sessionStorage) {
+    Object.defineProperty(globalThis, 'sessionStorage', {
+        value: {
+            setItem: (key, value) => (_sessionStorage[key] = value),
+            getItem: (key) => _sessionStorage[key] ?? null,
+            removeItem: (key) => delete _sessionStorage[key],
+        },
+    });
+}
+
 const { test } = QUnit;
 
 QUnit.module('Utility Methods');
 
 test('xvalidTag', (assert) => {
-    /* Utility method to determine whether a tag is allowed
+    /**
+     * Utility method to determine whether a tag is allowed
      * in the XHTML_IM namespace.
      *
-     * Used in the createHtml function to filter incoming html into the allowed XHTML-IM subset.
-     * See http://xmpp.org/extensions/xep-0071.html#profile-summary for the list of recommended
+     * Used in the createHtml function to filter incoming HTML
+     * into the allowed XHTML-IM subset.
+     * See http://xmpp.org/extensions/xep-0071.html#profile-summary
+     * for the list of recommended
      */
+
     // Tags must always be lower case (as per XHMTL)
     assert.equal(Strophe.XHTML.validTag('BODY'), false);
     assert.equal(Strophe.XHTML.validTag('A'), false);
@@ -166,7 +182,7 @@ test('Strophe.Connection.prototype.send() accepts Builders (#27)', (assert) => {
     const stanza = $pres();
     const conn = new Strophe.Connection('');
     const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
-    const timeoutStub = sinon.stub(window, 'setTimeout').callsFake(function (func) {
+    const timeoutStub = sinon.stub(globalThis, 'setTimeout').callsFake(function (func) {
         // Stub setTimeout to immediately call functions, otherwise our
         // assertions fail due to async execution.
         func.apply(arguments);
@@ -186,14 +202,14 @@ test('withCredentials can be set on the XMLHttpRequest object', (assert) => {
     const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, 'setTimeout').callsFake(function (func) {
+    const timeoutStub = sinon.stub(globalThis, 'setTimeout').callsFake(function (func) {
         func.apply(arguments);
     });
 
     let conn = new Strophe.Connection('example.org');
     conn.send(stanza);
     assert.equal(sendStub.called, true);
-    assert.equal(sendStub.getCalls()[0].thisValue.withCredentials, false);
+    assert.equal(!!sendStub.getCalls()[0].thisValue.withCredentials, false);
 
     conn = new Strophe.Connection('example.org', { 'withCredentials': true });
     conn.send(stanza);
@@ -210,7 +226,7 @@ test('content type can be set on the XMLHttpRequest object', (assert) => {
     const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, 'setTimeout').callsFake(function (func) {
+    const timeoutStub = sinon.stub(globalThis, 'setTimeout').callsFake(function (func) {
         func.apply(arguments);
     });
     const setRetRequestHeaderStub = sinon.stub(XMLHttpRequest.prototype, 'setRequestHeader');
@@ -229,8 +245,14 @@ test('content type can be set on the XMLHttpRequest object', (assert) => {
 });
 
 test('Cookies can be added to the document passing them as options to Strophe.Connection', (assert) => {
+    if (typeof document === 'undefined') {
+        console.warn("Skipping test since there's no 'document' object");
+        assert.equal(true, true);
+        return;
+    }
+
     const stanza = $pres();
-    let conn = new Strophe.Connection('localhost', {
+    let conn = new Strophe.Connection('http://localhost', {
         'cookies': {
             '_xxx': {
                 'value': '1234',
@@ -245,7 +267,7 @@ test('Cookies can be added to the document passing them as options to Strophe.Co
     assert.equal(document.cookie.substring(start, end), '_xxx=1234');
 
     // Also test when passing only a string
-    conn = new Strophe.Connection('localhost', { 'cookies': { '_yyy': '4321' }, 'withCredentials': true });
+    conn = new Strophe.Connection('http://localhost', { 'cookies': { '_yyy': '4321' }, 'withCredentials': true });
     assert.notEqual(document.cookie.indexOf('_yyy'), -1);
     start = document.cookie.indexOf('_yyy');
     end = document.cookie.indexOf(';', start);
@@ -257,7 +279,7 @@ test('Cookies can be added to the document passing them as options to Strophe.Co
     const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
     // Stub setTimeout to immediately call functions, otherwise our
     // assertions fail due to async execution.
-    const timeoutStub = sinon.stub(window, 'setTimeout').callsFake(function (func) {
+    const timeoutStub = sinon.stub(globalThis, 'setTimeout').callsFake(function (func) {
         func.apply(arguments);
     });
     conn.send(stanza);
@@ -360,7 +382,7 @@ test('copyElement() double escape bug', function (assert) {
 });
 
 test('XML serializing', function (assert) {
-    const parser = new DOMParser();
+    const parser = new Strophe.shims.DOMParser();
     // Attributes
     const element1 = parser.parseFromString("<foo attr1='abc' attr2='edf'>bar</foo>", 'text/xml').documentElement;
     assert.equal(Strophe.serialize(element1), '<foo attr1="abc" attr2="edf">bar</foo>', 'should be serialized');
@@ -595,7 +617,7 @@ test('Incomplete requests do nothing', (assert) => {
 QUnit.module('SASL Mechanisms');
 
 test('Default mechanisms will be registered if none are provided', (assert) => {
-    const conn = new Strophe.Connection('localhost');
+    const conn = new Strophe.Connection('http://localhost');
     assert.equal(Object.keys(conn.mechanisms).length, 9, 'Ten by default registered SASL mechanisms');
     assert.equal('ANONYMOUS' in conn.mechanisms, true, 'ANONYMOUS is registered');
     assert.equal('EXTERNAL' in conn.mechanisms, true, 'EXTERNAL is registered');
@@ -609,12 +631,12 @@ test('Default mechanisms will be registered if none are provided', (assert) => {
 });
 
 test('Custom mechanisms be specified when instantiating Strophe.Connection', (assert) => {
-    let conn = new Strophe.Connection('localhost', { 'mechanisms': [SASLFoo] });
+    let conn = new Strophe.Connection('http://localhost', { 'mechanisms': [SASLFoo] });
     assert.equal(Object.keys(conn.mechanisms).length, 1, 'Only one registered SASL mechanism');
     assert.equal('FOO' in conn.mechanisms, true, 'FOO is registered');
     assert.notEqual('PLAIN' in conn.mechanisms, true, 'PLAIN is not registered');
 
-    conn = new Strophe.Connection('localhost', { 'mechanisms': [SASLFoo, Strophe.SASLPlain] });
+    conn = new Strophe.Connection('http://localhost', { 'mechanisms': [SASLFoo, Strophe.SASLPlain] });
     assert.equal(Object.keys(conn.mechanisms).length, 2, 'Only two registered SASL mechanisms');
     assert.equal('FOO' in conn.mechanisms, true, 'FOO is registered');
     assert.equal('PLAIN' in conn.mechanisms, true, 'PLAIN is registered');
@@ -623,7 +645,7 @@ test('Custom mechanisms be specified when instantiating Strophe.Connection', (as
 test('The supported mechanism with the highest priority will be used', (assert) => {
     Strophe.SASLExternal.prototype.priority = 10;
     Strophe.SASLSHA1.prototype.priority = 20;
-    const conn = new Strophe.Connection('localhost', { 'mechanisms': [Strophe.SASLSHA1, Strophe.SASLExternal] });
+    const conn = new Strophe.Connection('http://localhost', { 'mechanisms': [Strophe.SASLSHA1, Strophe.SASLExternal] });
     const authSpy = sinon.spy(conn, '_attemptSASLAuth');
     assert.equal(authSpy.called, false);
     conn.connect('dummy@localhost', 'secret');
@@ -777,19 +799,19 @@ test('When passing in {keepalive: true} to Strophe.Connection, then the session 
     assert.equal(cacheSpy.called, false);
     conn._proto._buildBody();
     assert.equal(cacheSpy.called, true);
-    assert.equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+    assert.equal(sessionStorage.getItem('strophe-bosh-session'), null);
     conn.authenticated = true;
     conn._proto._buildBody();
-    assert.ok(window.sessionStorage.getItem('strophe-bosh-session'));
+    assert.ok(sessionStorage.getItem('strophe-bosh-session'));
     assert.equal(cacheSpy.called, true);
     conn.authenticated = false;
     conn._proto._buildBody();
-    assert.equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+    assert.equal(sessionStorage.getItem('strophe-bosh-session'), null);
     assert.equal(cacheSpy.called, true);
 });
 
 test('the request ID (RID) has the proper value whenever a session is restored', (assert) => {
-    window.sessionStorage.removeItem('strophe-bosh-session');
+    sessionStorage.removeItem('strophe-bosh-session');
     const conn = new Strophe.Connection('', { 'keepalive': true });
     conn.authenticated = true;
     conn.jid = 'dummy@localhost';
@@ -851,23 +873,23 @@ test('restore can only be called with BOSH and when {keepalive: true} is passed 
 });
 
 test('the _cacheSession method caches the BOSH session tokens', (assert) => {
-    window.sessionStorage.removeItem('strophe-bosh-session');
+    sessionStorage.removeItem('strophe-bosh-session');
     const conn = new Strophe.Connection('http://fake', { 'keepalive': true });
     // Nothing gets cached if there aren't tokens to cache
     conn._proto._cacheSession();
-    assert.equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+    assert.equal(sessionStorage.getItem('strophe-bosh-session'), null);
     // Let's create some tokens to cache
     conn.authenticated = true;
     conn.jid = 'dummy@localhost';
     conn._proto.rid = '123456';
     conn._proto.sid = '987654321';
-    assert.equal(window.sessionStorage.getItem('strophe-bosh-session'), null);
+    assert.equal(sessionStorage.getItem('strophe-bosh-session'), null);
     conn._proto._cacheSession();
-    assert.notEqual(window.sessionStorage.getItem('strophe-bosh-session'), null);
+    assert.notEqual(sessionStorage.getItem('strophe-bosh-session'), null);
 });
 
 test('when calling "restore" without a restorable session, an exception is raised', (assert) => {
-    window.sessionStorage.removeItem('strophe-bosh-session');
+    sessionStorage.removeItem('strophe-bosh-session');
     const conn = new Strophe.Connection('', { 'keepalive': true });
     const boshSpy = sinon.spy(conn._proto, '_restore');
     const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
@@ -884,7 +906,7 @@ test('when calling "restore" without a restorable session, an exception is raise
 });
 
 test('"restore" takes an optional JID argument for more precise session verification', (assert) => {
-    window.sessionStorage.removeItem('strophe-bosh-session');
+    sessionStorage.removeItem('strophe-bosh-session');
     const conn = new Strophe.Connection('', { 'keepalive': true });
     const boshSpy = sinon.spy(conn._proto, '_restore');
     const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
@@ -916,7 +938,7 @@ test('"restore" takes an optional JID argument for more precise session verifica
 });
 
 test('when calling "restore" with a restorable session, bosh._attach is called with the session tokens', (assert) => {
-    window.sessionStorage.removeItem('strophe-bosh-session');
+    sessionStorage.removeItem('strophe-bosh-session');
     const conn = new Strophe.Connection('', { 'keepalive': true });
     conn.authenticated = true;
     conn.jid = 'dummy@localhost';

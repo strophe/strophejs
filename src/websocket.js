@@ -5,7 +5,7 @@
     Copyright 2006-2008, OGG, LLC
 */
 
-/* global window, clearTimeout */
+/* global clearTimeout, location */
 
 import { DOMParser, WebSocket } from './shims';
 import { $build, Strophe } from './core';
@@ -48,15 +48,15 @@ Strophe.Websocket = class Websocket {
             // If the service is not an absolute URL, assume it is a path and put the absolute
             // URL together from options, current URL and the path.
             let new_service = '';
-            if (connection.options.protocol === 'ws' && window.location.protocol !== 'https:') {
+            if (connection.options.protocol === 'ws' && location.protocol !== 'https:') {
                 new_service += 'ws';
             } else {
                 new_service += 'wss';
             }
 
-            new_service += '://' + window.location.host;
+            new_service += '://' + location.host;
             if (service.indexOf('/') !== 0) {
-                new_service += window.location.pathname + service;
+                new_service += location.pathname + service;
             } else {
                 new_service += service;
             }
