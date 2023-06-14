@@ -3,6 +3,7 @@
 ## Version 1.6.2 - (Unreleased)
 
 * #613 TypeError: XHTML.validTag is not a function
+* Re-add NodeJS support and add the ability to run tests on NodeJS to avoid regressions
 
 ## Version 1.6.1 - (2023-05-15)
 
