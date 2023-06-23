@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 1.6.2 - (Unreleased)
+## Version 1.6.2 - (2023-06-23)
 
 * #613 TypeError: XHTML.validTag is not a function
 * Re-add NodeJS support and add the ability to run tests on NodeJS to avoid regressions
