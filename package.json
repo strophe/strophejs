@@ -85,7 +85,7 @@
     "abab": "^2.0.3"
   },
   "optionalDependencies": {
-    "@xmldom/xmldom": "0.8.7",
+    "@xmldom/xmldom": "0.8.8",
     "ws": "^8.5.0"
   }
 }
