@@ -1,4 +1,4 @@
-/* global btoa, ActiveXObject */
+/* global btoa */
 import { Strophe } from './core';
 import * as shims from './shims';
 import { ElementType, XHTML } from './constants.js';
@@ -58,24 +58,24 @@ export function addCookies(cookies) {
         Strophe.log(Strophe.LogLevel.ERROR, `addCookies: not adding any cookies, since there's no document object`);
     }
 
-    /* Parameters:
-     *  (Object) cookies - either a map of cookie names
-     *    to string values or to maps of cookie values.
+    /**
+     * (Object) cookies - either a map of cookie names
+     *  to string values or to maps of cookie values.
      *
      * For example:
      * { "myCookie": "1234" }
      *
      * or:
      * { "myCookie": {
-     *      "value": "1234",
-     *      "domain": ".example.org",
-     *      "path": "/",
-     *      "expires": expirationDate
-     *      }
-     *  }
+     *    "value": "1234",
+     *    "domain": ".example.org",
+     *    "path": "/",
+     *    "expires": expirationDate
+     *    }
+     * }
      *
-     *  These values get passed to Strophe.Connection via
-     *   options.cookies
+     * These values get passed to Strophe.Connection via
+     * options.cookies
      */
     cookies = cookies || {};
     for (const cookieName in cookies) {
@@ -98,11 +98,9 @@ export function addCookies(cookies) {
 
 let _xmlGenerator = null;
 
-/** Function: Strophe.xmlGenerator
- *  Get the DOM document to generate elements.
- *
- *  Returns:
- *    The currently used DOM document.
+/**
+ * Get the DOM document to generate elements.
+ * @return {Document} - The currently used DOM document.
  */
 export function xmlGenerator() {
     if (!_xmlGenerator) {
@@ -111,61 +109,41 @@ export function xmlGenerator() {
     return _xmlGenerator;
 }
 
-/** Function: Strophe.xmlTextNode
- *  Creates an XML DOM text node.
- *
- *  Provides a cross implementation version of document.createTextNode.
- *
- *  Parameters:
- *    (String) text - The content of the text node.
- *
- *  Returns:
- *    A new XML DOM text node.
+/**
+ * Creates an XML DOM text node.
+ * Provides a cross implementation version of document.createTextNode.
+ * @param {String} text - The content of the text node.
+ * @return {Text} - A new XML DOM text node.
  */
 export function xmlTextNode(text) {
     return xmlGenerator().createTextNode(text);
 }
 
-/** Function: Strophe.xmlHtmlNode
- *  Creates an XML DOM html node.
- *
- *  Parameters:
- *    (String) html - The content of the html node.
- *
- *  Returns:
- *    A new XML DOM text node.
+/**
+ * Creates an XML DOM node.
+ * @param {String} html - The content of the html node.
+ * @param {XMLDocument}
  */
 export function xmlHtmlNode(html) {
-    let node;
-    //ensure text is escaped
-    if (shims.DOMParser) {
-        const parser = new shims.DOMParser();
-        node = parser.parseFromString(html, 'text/xml');
-    } else {
-        node = new ActiveXObject('Microsoft.XMLDOM');
-        node.async = 'false';
-        node.loadXML(html);
-    }
-    return node;
+    const parser = new shims.DOMParser();
+    return parser.parseFromString(html, 'text/xml');
 }
 
-/** Function: Strophe.xmlElement
- *  Create an XML DOM element.
+/**
+ * Create an XML DOM element.
  *
- *  This function creates an XML DOM element correctly across all
- *  implementations. Note that these are not HTML DOM elements, which
- *  aren't appropriate for XMPP stanzas.
+ * This function creates an XML DOM element correctly across all
+ * implementations. Note that these are not HTML DOM elements, which
+ * aren't appropriate for XMPP stanzas.
  *
- *  Parameters:
- *    (String) name - The name for the element.
- *    (Array|Object) attrs - An optional array or object containing
- *      key/value pairs to use as element attributes. The object should
- *      be in the format {'key': 'value'} or {key: 'value'}. The array
- *      should have the format [['key1', 'value1'], ['key2', 'value2']].
- *    (String) text - The text child data for the element.
+ * @param {String} name - The name for the element.
+ * @param {Array|Object} attrs - An optional array or object containing
+ *    key/value pairs to use as element attributes. The object should
+ *    be in the format `{'key': 'value'}` or `{key: 'value'}`. The array
+ *    should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
+ * @param {String} text - The text child data for the element.
  *
- *  Returns:
- *    A new XML DOM element.
+ * @return {Element} A new XML DOM element.
  */
 export function xmlElement(name) {
     if (!name) {
@@ -205,12 +183,12 @@ export function xmlElement(name) {
     return node;
 }
 
-/** Function: Strophe.XHTML.validTag
- *
+/**
  * Utility method to determine whether a tag is allowed
  * in the XHTML_IM namespace.
  *
  * XHTML tag names are case sensitive and must be lower case.
+ * @method Strophe.XHTML.validTag
  */
 export function validTag(tag) {
     for (let i = 0; i < XHTML.tags.length; i++) {
@@ -221,12 +199,12 @@ export function validTag(tag) {
     return false;
 }
 
-/** Function: Strophe.XHTML.validAttribute
- *
+/**
  * Utility method to determine whether an attribute is allowed
  * as recommended per XEP-0071
  *
  * XHTML attribute names are case sensitive and must be lower case.
+ * @method Strophe.XHTML.validAttribute
  */
 export function validAttribute(tag, attribute) {
     if (typeof XHTML.attributes[tag] !== 'undefined' && XHTML.attributes[tag].length > 0) {
@@ -239,7 +217,9 @@ export function validAttribute(tag, attribute) {
     return false;
 }
 
-/** Function: Strophe.XHTML.validCSS */
+/**
+ * @method Strophe.XHTML.validCSS
+ */
 export function validCSS(style) {
     for (let i = 0; i < XHTML.css.length; i++) {
         if (style === XHTML.css[i]) {
@@ -249,18 +229,13 @@ export function validCSS(style) {
     return false;
 }
 
-/** Function: Strophe.createHtml
- *
- *  Copy an HTML DOM element into an XML DOM.
- *
- *  This function copies a DOM element and all its descendants and returns
- *  the new copy.
- *
- *  Parameters:
- *    (HTMLElement) elem - A DOM element.
- *
- *  Returns:
- *    A new, copied DOM element tree.
+/**
+ * Copy an HTML DOM element into an XML DOM.
+ * This function copies a DOM element and all its descendants and returns
+ * the new copy.
+ * @method Strophe.createHtml
+ * @param {Ement} elem - A DOM element.
+ * @return {Element} - A new, copied DOM element tree.
  */
 export function createHtml(elem) {
     let el;
@@ -328,17 +303,14 @@ export function createHtml(elem) {
     return el;
 }
 
-/** Function: Strophe.copyElement
- *  Copy an XML DOM element.
+/**
+ * Copy an XML DOM element.
  *
- *  This function copies a DOM element and all its descendants and returns
- *  the new copy.
- *
- *  Parameters:
- *    (XMLElement) elem - A DOM element.
- *
- *  Returns:
- *    A new, copied DOM element tree.
+ * This function copies a DOM element and all its descendants and returns
+ * the new copy.
+ * @method Strophe.copyElement
+ * @param {Element} elem - A DOM element.
+ * @return {Element} - A new, copied DOM element tree.
  */
 export function copyElement(elem) {
     let el;
@@ -358,14 +330,11 @@ export function copyElement(elem) {
     return el;
 }
 
-/*  Function: Strophe.xmlescape
- *  Excapes invalid xml characters.
- *
- *  Parameters:
- *     (String) text - text to escape.
- *
- *  Returns:
- *      Escaped text.
+/**
+ * Excapes invalid xml characters.
+ * @method Strophe.xmlescape
+ * @param {string} text - text to escape.
+ * @return {string} - Escaped text.
  */
 export function xmlescape(text) {
     text = text.replace(/\&/g, '&amp;');
@@ -376,14 +345,11 @@ export function xmlescape(text) {
     return text;
 }
 
-/*  Function: Strophe.xmlunescape
- *  Unexcapes invalid xml characters.
- *
- *  Parameters:
- *     (String) text - text to unescape.
- *
- *  Returns:
- *      Unescaped text.
+/**
+ * Unexcapes invalid xml characters.
+ * @method Strophe.xmlunescape
+ * @param {String} text - text to unescape.
+ * @return {string} - Unescaped text.
  */
 export function xmlunescape(text) {
     text = text.replace(/\&amp;/g, '&');
@@ -394,14 +360,11 @@ export function xmlunescape(text) {
     return text;
 }
 
-/** Function: Strophe.serialize
- *  Render a DOM element and all descendants to a String.
- *
- *  Parameters:
- *    (XMLElement) elem - A DOM element.
- *
- *  Returns:
- *    The serialized element tree as a String.
+/**
+ * Render a DOM element and all descendants to a String.
+ * @method Strophe.serialize
+ * @param {XMLElement} elem - A DOM element.
+ * @return {string} - The serialized element tree as a String.
  */
 export function serialize(elem) {
     if (!elem) {
@@ -442,19 +405,19 @@ export function serialize(elem) {
     return result;
 }
 
-/** Function: Strophe.forEachChild
- *  Map a function over some or all child elements of a given element.
+/**
+ * Map a function over some or all child elements of a given element.
  *
- *  This is a small convenience function for mapping a function over
- *  some or all of the children of an element.  If elemName is null, all
- *  children will be passed to the function, otherwise only children
- *  whose tag names match elemName will be passed.
+ * This is a small convenience function for mapping a function over
+ * some or all of the children of an element.  If elemName is null, all
+ * children will be passed to the function, otherwise only children
+ * whose tag names match elemName will be passed.
  *
- *  Parameters:
- *    (XMLElement) elem - The element to operate on.
- *    (String) elemName - The child element tag name filter.
- *    (Function) func - The function to apply to each child.  This
- *      function should take a single argument, a DOM element.
+ * @method Strophe.forEachChild
+ * @param {XMLElement} elem - The element to operate on.
+ * @param {String} elemName - The child element tag name filter.
+ * @param {Function} func - The function to apply to each child.  This
+ *    function should take a single argument, a DOM element.
  */
 export function forEachChild(elem, elemName, func) {
     for (let i = 0; i < elem.childNodes.length; i++) {
@@ -465,31 +428,27 @@ export function forEachChild(elem, elemName, func) {
     }
 }
 
-/** Function: Strophe.isTagEqual
- *  Compare an element's tag name with a string.
+/**
+ * Compare an element's tag name with a string.
  *
- *  This function is case sensitive.
- *
- *  Parameters:
- *    (XMLElement) el - A DOM element.
- *    (String) name - The element name.
- *
- *  Returns:
- *    true if the element's tag name matches _el_, and false
- *    otherwise.
+ * This function is case sensitive.
+ * @method Strophe.isTagEqual
+ * @param {XMLElement} el - A DOM element.
+ * @param {String} name - The element name.
+ * @return {boolean}
+ *  true if the element's tag name matches _el_, and false
+ *  otherwise.
  */
 export function isTagEqual(el, name) {
     return el.tagName === name;
 }
 
-/** Function: Strophe.getText
- *  Get the concatenation of all text children of an element.
+/**
+ * Get the concatenation of all text children of an element.
  *
- *  Parameters:
- *    (XMLElement) elem - A DOM element.
- *
- *  Returns:
- *    A String with the concatenated text of all text element children.
+ * @method Strophe.getText
+ * @param {XMLElement} elem - A DOM element.
+ * @return {string} - A String with the concatenated text of all text element children.
  */
 export function getText(elem) {
     if (!elem) {
@@ -508,14 +467,12 @@ export function getText(elem) {
     return xmlescape(str);
 }
 
-/** Function: Strophe.escapeNode
- *  Escape the node part (also called local part) of a JID.
+/**
+ * Escape the node part (also called local part) of a JID.
  *
- *  Parameters:
- *    (String) node - A node (or local part).
- *
- *  Returns:
- *    An escaped node (or local part).
+ * @method Strophe.escapeNode
+ * @param {String} node - A node (or local part).
+ * @return {string} An escaped node (or local part).
  */
 export function escapeNode(node) {
     if (typeof node !== 'string') {
@@ -535,14 +492,12 @@ export function escapeNode(node) {
         .replace(/@/g, '\\40');
 }
 
-/** Function: Strophe.unescapeNode
- *  Unescape a node part (also called local part) of a JID.
+/**
+ * Unescape a node part (also called local part) of a JID.
  *
- *  Parameters:
- *    (String) node - A node (or local part).
- *
- *  Returns:
- *    An unescaped node (or local part).
+ * @method Strophe.unescapeNode
+ * @param {String} node - A node (or local part).
+ * @return {string} An unescaped node (or local part).
  */
 export function unescapeNode(node) {
     if (typeof node !== 'string') {
@@ -561,14 +516,11 @@ export function unescapeNode(node) {
         .replace(/\\5c/g, '\\');
 }
 
-/** Function: Strophe.getNodeFromJid
- *  Get the node portion of a JID String.
- *
- *  Parameters:
- *    (String) jid - A JID.
- *
- *  Returns:
- *    A String containing the node.
+/**
+ * Get the node portion of a JID String.
+ * @method Strophe.getNodeFromJid
+ * @param {string} jid - A JID.
+ * @return {string} - A String containing the node.
  */
 export function getNodeFromJid(jid) {
     if (jid.indexOf('@') < 0) {
@@ -577,14 +529,11 @@ export function getNodeFromJid(jid) {
     return jid.split('@')[0];
 }
 
-/** Function: Strophe.getDomainFromJid
- *  Get the domain portion of a JID String.
- *
- *  Parameters:
- *    (String) jid - A JID.
- *
- *  Returns:
- *    A String containing the domain.
+/**
+ * Get the domain portion of a JID String.
+ * @method Strophe.getDomainFromJid
+ * @param {String} jid - A JID.
+ * @return {string} - A String containing the domain.
  */
 export function getDomainFromJid(jid) {
     const bare = getBareJidFromJid(jid);
@@ -597,14 +546,11 @@ export function getDomainFromJid(jid) {
     }
 }
 
-/** Function: Strophe.getResourceFromJid
- *  Get the resource portion of a JID String.
- *
- *  Parameters:
- *    (String) jid - A JID.
- *
- *  Returns:
- *    A String containing the resource.
+/**
+ * Get the resource portion of a JID String.
+ * @method Strophe.getResourceFromJid
+ * @param {string} jid - A JID.
+ * @return {string} - A String containing the resource.
  */
 export function getResourceFromJid(jid) {
     if (!jid) {
@@ -618,14 +564,11 @@ export function getResourceFromJid(jid) {
     return s.join('/');
 }
 
-/** Function: Strophe.getBareJidFromJid
- *  Get the bare JID from a JID String.
- *
- *  Parameters:
- *    (String) jid - A JID.
- *
- *  Returns:
- *    A String containing the bare JID.
+/**
+ * Get the bare JID from a JID String.
+ * @method Strophe.getBareJidFromJid
+ * @param {string} jid - A JID.
+ * @return {string} - A String containing the bare JID.
  */
 export function getBareJidFromJid(jid) {
     return jid ? jid.split('/')[0] : null;

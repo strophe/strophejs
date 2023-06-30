@@ -1,9 +1,9 @@
 import SASLMechanism from './sasl.js';
 import scram from './scram.js';
 
-export default class SASLSHA384 extends SASLMechanism {
-    /** PrivateConstructor: SASLSHA384
-     *  SASL SCRAM SHA 384 authentication.
+class SASLSHA384 extends SASLMechanism {
+    /**
+     * SASL SCRAM SHA 384 authentication.
      */
     constructor(mechname = 'SCRAM-SHA-384', isClientFirst = true, priority = 71) {
         super(mechname, isClientFirst, priority);
@@ -24,3 +24,5 @@ export default class SASLSHA384 extends SASLMechanism {
         return scram.clientChallenge(connection, test_cnonce);
     }
 }
+
+export default SASLSHA384;

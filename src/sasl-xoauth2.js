@@ -1,9 +1,9 @@
 import SASLMechanism from './sasl.js';
 import utils from './utils';
 
-export default class SASLXOAuth2 extends SASLMechanism {
-    /** PrivateConstructor: SASLXOAuth2
-     *  SASL X-OAuth2 authentication.
+class SASLXOAuth2 extends SASLMechanism {
+    /**
+     * SASL X-OAuth2 authentication.
      */
     constructor(mechname = 'X-OAUTH2', isClientFirst = true, priority = 30) {
         super(mechname, isClientFirst, priority);
@@ -25,3 +25,5 @@ export default class SASLXOAuth2 extends SASLMechanism {
         return utils.utf16to8(auth_str);
     }
 }
+
+export default SASLXOAuth2;

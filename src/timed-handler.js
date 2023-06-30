@@ -1,27 +1,24 @@
-/** PrivateClass: Strophe.TimedHandler
- *  _Private_ helper class for managing timed handlers.
+/**
+ * _Private_ helper class for managing timed handlers.
  *
- *  A Strophe.TimedHandler encapsulates a user provided callback that
- *  should be called after a certain period of time or at regular
- *  intervals.  The return value of the callback determines whether the
- *  Strophe.TimedHandler will continue to fire.
+ * A Strophe.TimedHandler encapsulates a user provided callback that
+ * should be called after a certain period of time or at regular
+ * intervals.  The return value of the callback determines whether the
+ * Strophe.TimedHandler will continue to fire.
  *
- *  Users will not use Strophe.TimedHandler objects directly, but instead
- *  they will use Strophe.Connection.addTimedHandler() and
- *  Strophe.Connection.deleteTimedHandler().
+ * Users will not use Strophe.TimedHandler objects directly, but instead
+ * they will use {@link Strophe.Connection#addTimedHandler|addTimedHandler()} and
+ * {@link Strophe.Connection#deleteTimedHandler|deleteTimedHandler()}.
+ *
+ * @memberof Strophe
  */
-export default class TimedHandler {
-    /** PrivateConstructor: Strophe.TimedHandler
-     *  Create and initialize a new Strophe.TimedHandler object.
-     *
-     *  Parameters:
-     *    (Integer) period - The number of milliseconds to wait before the
-     *      handler is called.
-     *    (Function) handler - The callback to run when the handler fires.  This
-     *      function should take no arguments.
-     *
-     *  Returns:
-     *    A new Strophe.TimedHandler object.
+class TimedHandler {
+    /**
+     * Create and initialize a new Strophe.TimedHandler object.
+     * @param {number} period - The number of milliseconds to wait before the
+     *     handler is called.
+     * @param {Function} handler - The callback to run when the handler fires.  This
+     *     function should take no arguments.
      */
     constructor(period, handler) {
         this.period = period;
@@ -30,32 +27,32 @@ export default class TimedHandler {
         this.user = true;
     }
 
-    /** PrivateFunction: run
-     *  Run the callback for the Strophe.TimedHandler.
+    /**
+     * Run the callback for the Strophe.TimedHandler.
      *
-     *  Returns:
-     *    true if the Strophe.TimedHandler should be called again, and false
-     *      otherwise.
+     * @return {boolean} Returns the result of running the handler,
+     *  which is `true` if the Strophe.TimedHandler should be called again,
+     *  and `false` otherwise.
      */
     run() {
         this.lastCalled = new Date().getTime();
         return this.handler();
     }
 
-    /** PrivateFunction: reset
-     *  Reset the last called time for the Strophe.TimedHandler.
+    /**
+     * Reset the last called time for the Strophe.TimedHandler.
      */
     reset() {
         this.lastCalled = new Date().getTime();
     }
 
-    /** PrivateFunction: toString
-     *  Get a string representation of the Strophe.TimedHandler object.
-     *
-     *  Returns:
-     *    The string representation.
+    /**
+     * Get a string representation of the Strophe.TimedHandler object.
+     * @return {string}
      */
     toString() {
         return '{TimedHandler: ' + this.handler + '(' + this.period + ')}';
     }
 }
+
+export default TimedHandler;

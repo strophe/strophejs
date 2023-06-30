@@ -1,37 +1,34 @@
 import { Strophe } from './core';
 import { forEachChild, getBareJidFromJid } from './utils';
 
-/** PrivateClass: Strophe.Handler
- *  _Private_ helper class for managing stanza handlers.
+/**
+ * _Private_ helper class for managing stanza handlers.
  *
- *  A Strophe.Handler encapsulates a user provided callback function to be
- *  executed when matching stanzas are received by the connection.
- *  Handlers can be either one-off or persistant depending on their
- *  return value. Returning true will cause a Handler to remain active, and
- *  returning false will remove the Handler.
+ * A Strophe.Handler encapsulates a user provided callback function to be
+ * executed when matching stanzas are received by the connection.
+ * Handlers can be either one-off or persistant depending on their
+ * return value. Returning true will cause a Handler to remain active, and
+ * returning false will remove the Handler.
  *
- *  Users will not use Strophe.Handler objects directly, but instead they
- *  will use Strophe.Connection.addHandler() and
- *  Strophe.Connection.deleteHandler().
+ * Users will not use Strophe.Handler objects directly, but instead they
+ * will use {@link Strophe.Connection.addHandler} and
+ * {@link Strophe.Connection.deleteHandler}.
+ * @memberof Strophe
  */
-
-/** PrivateConstructor: Strophe.Handler
- *  Create and initialize a new Strophe.Handler.
- *
- *  Parameters:
- *    (Function) handler - A function to be executed when the handler is run.
- *    (String) ns - The namespace to match.
- *    (String) name - The element name to match.
- *    (String) type - The element type to match.
- *    (String) id - The element id attribute to match.
- *    (String) from - The element from attribute to match.
- *    (Object) options - Handler options
- *
- *  Returns:
- *    A new Strophe.Handler object.
- */
-
-export default class Handler {
+class Handler {
+    /**
+     * Create and initialize a new Strophe.Handler.
+     *
+     * @param {Function} handler - A function to be executed when the handler is run.
+     * @param {String} ns - The namespace to match.
+     * @param {String} name - The element name to match.
+     * @param {String} type - The element type to match.
+     * @param {String} id - The element id attribute to match.
+     * @param {String} from - The element from attribute to match.
+     * @param {Object} options - Handler options
+     *
+     * @return {Handler}
+     */
     constructor(handler, ns, name, type, id, from, options) {
         this.handler = handler;
         this.ns = ns;
@@ -54,16 +51,12 @@ export default class Handler {
         this.user = true;
     }
 
-    /** PrivateFunction: getNamespace
-     *  Returns the XML namespace attribute on an element.
-     *  If `ignoreNamespaceFragment` was passed in for this handler, then the
-     *  URL fragment will be stripped.
-     *
-     *  Parameters:
-     *    (XMLElement) elem - The XML element with the namespace.
-     *
-     *  Returns:
-     *    The namespace, with optionally the fragment stripped.
+    /**
+     * Returns the XML namespace attribute on an element.
+     * If `ignoreNamespaceFragment` was passed in for this handler, then the
+     * URL fragment will be stripped.
+     * @param {XMLElement} elem - The XML element with the namespace.
+     * @return {string} - The namespace, with optionally the fragment stripped.
      */
     getNamespace(elem) {
         let elNamespace = elem.getAttribute('xmlns');
@@ -73,14 +66,10 @@ export default class Handler {
         return elNamespace;
     }
 
-    /** PrivateFunction: namespaceMatch
-     *  Tests if a stanza matches the namespace set for this Strophe.Handler.
-     *
-     *  Parameters:
-     *    (XMLElement) elem - The XML element to test.
-     *
-     *  Returns:
-     *    true if the stanza matches and false otherwise.
+    /**
+     * Tests if a stanza matches the namespace set for this Strophe.Handler.
+     * @param {XMLElement} elem - The XML element to test.
+     * @return {boolean} - true if the stanza matches and false otherwise.
      */
     namespaceMatch(elem) {
         let nsMatch = false;
@@ -96,14 +85,10 @@ export default class Handler {
         }
     }
 
-    /** PrivateFunction: isMatch
-     *  Tests if a stanza matches the Strophe.Handler.
-     *
-     *  Parameters:
-     *    (XMLElement) elem - The XML element to test.
-     *
-     *  Returns:
-     *    true if the stanza matches and false otherwise.
+    /**
+     * Tests if a stanza matches the Strophe.Handler.
+     * @param {XMLElement} elem - The XML element to test.
+     * @return {boolean} - true if the stanza matches and false otherwise.
      */
     isMatch(elem) {
         let from = elem.getAttribute('from');
@@ -124,15 +109,10 @@ export default class Handler {
         return false;
     }
 
-    /** PrivateFunction: run
-     *  Run the callback on a matching stanza.
-     *
-     *  Parameters:
-     *    (XMLElement) elem - The DOM element that triggered the
-     *      Strophe.Handler.
-     *
-     *  Returns:
-     *    A boolean indicating if the handler should remain active.
+    /**
+     * Run the callback on a matching stanza.
+     * @param {XMLElement} elem - The DOM element that triggered the Strophe.Handler.
+     * @return {boolean} - A boolean indicating if the handler should remain active.
      */
     run(elem) {
         let result = null;
@@ -145,13 +125,13 @@ export default class Handler {
         return result;
     }
 
-    /** PrivateFunction: toString
-     *  Get a String representation of the Strophe.Handler object.
-     *
-     *  Returns:
-     *    A String.
+    /**
+     * Get a String representation of the Strophe.Handler object.
+     * @return {string}
      */
     toString() {
         return '{Handler: ' + this.handler + '(' + this.name + ',' + this.id + ',' + this.ns + ')}';
     }
 }
+
+export default Handler;
