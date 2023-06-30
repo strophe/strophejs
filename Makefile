@@ -8,7 +8,6 @@ SED				?= sed
 SHELL			?= /usr/env/bin/bash
 SRC_DIR			= src
 STROPHE			= dist/strophe.umd.js
-NATURALDOCS		?= $(shell which naturaldocs)
 
 all: doc $(STROPHE)
 
@@ -32,17 +31,8 @@ node_modules: package.json
 
 .PHONY: doc
 doc:
-ifndef NATURALDOCS
-	$(error "Naturaldocs not found: we won't be building the documentation")
-endif
 	@@echo "Building Strophe documentation..."
-	@@if [ ! -d $(NDPROJ_DIR) ]; then mkdir $(NDPROJ_DIR); fi
-	@@cp docs.css $(NDPROJ_DIR);
-	@@if [ ! -d $(DOC_DIR) ]; then mkdir $(DOC_DIR); fi
-	@@if [ ! -d $(DOC_TEMP) ]; then mkdir $(DOC_TEMP); fi
-	@@cp $(STROPHE) $(DOC_TEMP)
-	@@${NATURALDOCS} -r -ro -q -i $(DOC_TEMP) -o html $(DOC_DIR) -p $(NDPROJ_DIR) -s docs
-	@@rm -r $(DOC_TEMP)
+	npx jsdoc -p -d $(DOC_DIR) -c jsdoc.json src/
 	@@echo "Documentation built."
 	@@echo
 

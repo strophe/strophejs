@@ -1,10 +1,8 @@
 import SASLMechanism from './sasl.js';
 
-// Building SASL callbacks
-
-export default class SASLAnonymous extends SASLMechanism {
-    /** PrivateConstructor: SASLAnonymous
-     *  SASL ANONYMOUS authentication.
+class SASLAnonymous extends SASLMechanism {
+    /**
+     * SASL ANONYMOUS authentication.
      */
     constructor(mechname = 'ANONYMOUS', isClientFirst = false, priority = 20) {
         super(mechname, isClientFirst, priority);
@@ -15,3 +13,5 @@ export default class SASLAnonymous extends SASLMechanism {
         return connection.authcid === null;
     }
 }
+
+export default SASLAnonymous;

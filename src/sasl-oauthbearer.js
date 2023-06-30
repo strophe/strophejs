@@ -1,9 +1,9 @@
 import SASLMechanism from './sasl.js';
 import utils from './utils';
 
-export default class SASLOAuthBearer extends SASLMechanism {
-    /** PrivateConstructor: SASLOAuthBearer
-     *  SASL OAuth Bearer authentication.
+class SASLOAuthBearer extends SASLMechanism {
+    /**
+     * SASL OAuth Bearer authentication.
      */
     constructor(mechname = 'OAUTHBEARER', isClientFirst = true, priority = 40) {
         super(mechname, isClientFirst, priority);
@@ -29,3 +29,5 @@ export default class SASLOAuthBearer extends SASLMechanism {
         return utils.utf16to8(auth_str);
     }
 }
+
+export default SASLOAuthBearer;

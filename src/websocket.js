@@ -1,43 +1,36 @@
-/*
-    This program is distributed under the terms of the MIT license.
-    Please see the LICENSE file for details.
-
-    Copyright 2006-2008, OGG, LLC
-*/
+/**
+ * A JavaScript library to enable XMPP over Websocket in Strophejs.
+ *
+ * This file implements XMPP over WebSockets for Strophejs.
+ * If a Connection is established with a Websocket url (ws://...)
+ * Strophe will use WebSockets.
+ * For more information on XMPP-over-WebSocket see RFC 7395:
+ * http://tools.ietf.org/html/rfc7395
+ *
+ * WebSocket support implemented by Andreas Guth (andreas.guth@rwth-aachen.de)
+ * @module websocket
+ */
 
 /* global clearTimeout, location */
 
 import { DOMParser, WebSocket } from './shims';
 import { $build, Strophe } from './core';
 
-/** Class: Strophe.WebSocket
- *  _Private_ helper class that handles WebSocket Connections
+/**
+ * _Private_ helper class that handles WebSocket Connections
  *
- *  The Strophe.WebSocket class is used internally by Strophe.Connection
- *  to encapsulate WebSocket sessions. It is not meant to be used from user's code.
+ * The Strophe.WebSocket class is used internally by Strophe.Connection
+ * to encapsulate WebSocket sessions. It is not meant to be used from user's code.
+ * @memberof Strophe
  */
-
-/** File: websocket.js
- *  A JavaScript library to enable XMPP over Websocket in Strophejs.
- *
- *  This file implements XMPP over WebSockets for Strophejs.
- *  If a Connection is established with a Websocket url (ws://...)
- *  Strophe will use WebSockets.
- *  For more information on XMPP-over-WebSocket see RFC 7395:
- *  http://tools.ietf.org/html/rfc7395
- *
- *  WebSocket support implemented by Andreas Guth (andreas.guth@rwth-aachen.de)
- */
-Strophe.Websocket = class Websocket {
-    /** PrivateConstructor: Strophe.Websocket
-     *  Create and initialize a Strophe.WebSocket object.
-     *  Currently only sets the connection Object.
+class Websocket {
+    /**
+     * PrivateConstructor: Strophe.Websocket
+     * Create and initialize a Strophe.WebSocket object.
+     * Currently only sets the connection Object.
      *
-     *  Parameters:
-     *    (Strophe.Connection) connection - The Strophe.Connection that will use WebSockets.
-     *
-     *  Returns:
-     *    A new Strophe.WebSocket object.
+     * @param {Strophe.Connection} connection - The Strophe.Connection that will use WebSockets.
+     * @return {Strophe.Websocket} - A new Strophe.WebSocket object.
      */
     constructor(connection) {
         this._conn = connection;
@@ -64,11 +57,11 @@ Strophe.Websocket = class Websocket {
         }
     }
 
-    /** PrivateFunction: _buildStream
-     *  _Private_ helper function to generate the <stream> start tag for WebSockets
+    /**
+     * _Private_ helper function to generate the <stream> start tag for WebSockets
+     * @private
      *
-     *  Returns:
-     *    A Strophe.Builder with a <stream> element.
+     * @return {Builder} - A Strophe.Builder with a <stream> element.
      */
     _buildStream() {
         return $build('open', {
@@ -78,14 +71,13 @@ Strophe.Websocket = class Websocket {
         });
     }
 
-    /** PrivateFunction: _checkStreamError
+    /**
      * _Private_ checks a message for stream:error
+     * @private
      *
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
-     *    connectstatus - The ConnectStatus that will be set on error.
-     *  Returns:
-     *     true if there was a streamerror, false otherwise.
+     * @param {Strophe.Request} bodyWrap - The received stanza.
+     *   connectstatus - The ConnectStatus that will be set on error.
+     * @return {boolean} - true if there was a streamerror, false otherwise.
      */
     _checkStreamError(bodyWrap, connectstatus) {
         let errors;
@@ -133,22 +125,24 @@ Strophe.Websocket = class Websocket {
         return true;
     }
 
-    /** PrivateFunction: _reset
-     *  Reset the connection.
+    /**
+     * Reset the connection.
      *
-     *  This function is called by the reset function of the Strophe Connection.
-     *  Is not needed by WebSockets.
+     * This function is called by the reset function of the Strophe Connection.
+     * Is not needed by WebSockets.
+     * @private
      */
     // eslint-disable-next-line class-methods-use-this
     _reset() {
         return;
     }
 
-    /** PrivateFunction: _connect
-     *  _Private_ function called by Strophe.Connection.connect
+    /**
+     * _Private_ function called by Strophe.Connection.connect
      *
-     *  Creates a WebSocket for a connection and assigns Callbacks to it.
-     *  Does nothing if there already is a WebSocket.
+     * Creates a WebSocket for a connection and assigns Callbacks to it.
+     * Does nothing if there already is a WebSocket.
+     * @private
      */
     _connect() {
         // Ensure that there is no open WebSocket from a previous Connection.
@@ -161,13 +155,12 @@ Strophe.Websocket = class Websocket {
         this.socket.onmessage = (message) => this._onInitialMessage(message);
     }
 
-    /** PrivateFunction: _connect_cb
-     *  _Private_ function called by Strophe.Connection._connect_cb
-     *
+    /**
+     * _Private_ function called by Strophe.Connection._connect_cb
      * checks for stream:error
+     * @private
      *
-     *  Parameters:
-     *    (Strophe.Request) bodyWrap - The received stanza.
+     * @param {Strophe.Request} bodyWrap - The received stanza.
      */
     _connect_cb(bodyWrap) {
         const error = this._checkStreamError(bodyWrap, Strophe.Status.CONNFAIL);
@@ -176,13 +169,13 @@ Strophe.Websocket = class Websocket {
         }
     }
 
-    /** PrivateFunction: _handleStreamStart
+    /**
      * _Private_ function that checks the opening <open /> tag for errors.
      *
      * Disconnects if there is an error and returns false, true otherwise.
+     * @private
      *
-     *  Parameters:
-     *    (Node) message - Stanza containing the <open /> tag.
+     * @param {Node} message - Stanza containing the <open /> tag.
      */
     _handleStreamStart(message) {
         let error = false;
@@ -210,11 +203,12 @@ Strophe.Websocket = class Websocket {
         return true;
     }
 
-    /** PrivateFunction: _onInitialMessage
+    /**
      * _Private_ function that handles the first connection messages.
      *
      * On receiving an opening stream tag this callback replaces itself with the real
      * message handler. On receiving a stream error the connection is terminated.
+     * @private
      */
     _onInitialMessage(message) {
         if (message.data.indexOf('<open ') === 0 || message.data.indexOf('<?xml') === 0) {
@@ -265,24 +259,23 @@ Strophe.Websocket = class Websocket {
         }
     }
 
-    /** PrivateFunction: _replaceMessageHandler
-     *
+    /**
      * Called by _onInitialMessage in order to replace itself with the general message handler.
      * This method is overridden by Strophe.WorkerWebsocket, which manages a
      * websocket connection via a service worker and doesn't have direct access
      * to the socket.
+     * @private
      */
     _replaceMessageHandler() {
         this.socket.onmessage = (m) => this._onMessage(m);
     }
 
-    /** PrivateFunction: _disconnect
-     *  _Private_ function called by Strophe.Connection.disconnect
+    /**
+     * _Private_ function called by Strophe.Connection.disconnect
+     * Disconnects and sends a last stanza if one is given
+     * @private
      *
-     *  Disconnects and sends a last stanza if one is given
-     *
-     *  Parameters:
-     *    (Request) pres - This stanza will be sent before disconnecting.
+     * @param {Request} pres - This stanza will be sent before disconnecting.
      */
     _disconnect(pres) {
         if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
@@ -302,29 +295,32 @@ Strophe.Websocket = class Websocket {
         setTimeout(() => this._conn._doDisconnect(), 0);
     }
 
-    /** PrivateFunction: _doDisconnect
-     *  _Private_ function to disconnect.
+    /**
+     * _Private_ function to disconnect.
      *
-     *  Just closes the Socket for WebSockets
+     * Just closes the Socket for WebSockets
+     * @private
      */
     _doDisconnect() {
         Strophe.debug('WebSockets _doDisconnect was called');
         this._closeSocket();
     }
 
-    /** PrivateFunction _streamWrap
-     *  _Private_ helper function to wrap a stanza in a <stream> tag.
-     *  This is used so Strophe can process stanzas from WebSockets like BOSH
+    /**
+     * PrivateFunction _streamWrap
+     * _Private_ helper function to wrap a stanza in a <stream> tag.
+     * This is used so Strophe can process stanzas from WebSockets like BOSH
      */
     // eslint-disable-next-line class-methods-use-this
     _streamWrap(stanza) {
         return '<wrapper>' + stanza + '</wrapper>';
     }
 
-    /** PrivateFunction: _closeSocket
-     *  _Private_ function to close the WebSocket.
+    /**
+     * _Private_ function to close the WebSocket.
      *
-     *  Closes the socket if it is still open and deletes it
+     * Closes the socket if it is still open and deletes it
+     * @private
      */
     _closeSocket() {
         if (this.socket) {
@@ -340,19 +336,20 @@ Strophe.Websocket = class Websocket {
         this.socket = null;
     }
 
-    /** PrivateFunction: _emptyQueue
+    /**
      * _Private_ function to check if the message queue is empty.
+     * @private
      *
-     *  Returns:
-     *    True, because WebSocket messages are send immediately after queueing.
+     * @return {true} - True, because WebSocket messages are send immediately after queueing.
      */
     // eslint-disable-next-line class-methods-use-this
     _emptyQueue() {
         return true;
     }
 
-    /** PrivateFunction: _onClose
+    /**
      * _Private_ function to handle websockets closing.
+     * @private
      */
     _onClose(e) {
         if (this._conn.connected && !this._conn.disconnecting) {
@@ -374,10 +371,10 @@ Strophe.Websocket = class Websocket {
         }
     }
 
-    /** PrivateFunction: _no_auth_received
-     *
+    /**
      * Called on stream start/restart when no stream:features
      * has been received.
+     * @private
      */
     _no_auth_received(callback) {
         Strophe.error('Server did not offer a supported authentication mechanism');
@@ -388,23 +385,25 @@ Strophe.Websocket = class Websocket {
         this._conn._doDisconnect();
     }
 
-    /** PrivateFunction: _onDisconnectTimeout
-     *  _Private_ timeout handler for handling non-graceful disconnection.
+    /**
+     * _Private_ timeout handler for handling non-graceful disconnection.
      *
-     *  This does nothing for WebSockets
+     * This does nothing for WebSockets
+     * @private
      */
     _onDisconnectTimeout() {} // eslint-disable-line class-methods-use-this
 
-    /** PrivateFunction: _abortAllRequests
-     *  _Private_ helper function that makes sure all pending requests are aborted.
+    /**
+     * _Private_ helper function that makes sure all pending requests are aborted.
+     * @private
      */
     _abortAllRequests() {} // eslint-disable-line class-methods-use-this
 
-    /** PrivateFunction: _onError
+    /**
      * _Private_ function to handle websockets errors.
+     * @private
      *
-     * Parameters:
-     * (Object) error - The websocket error.
+     * @param {Object} error - The websocket error.
      */
     _onError(error) {
         Strophe.error('Websocket error ' + JSON.stringify(error));
@@ -415,10 +414,10 @@ Strophe.Websocket = class Websocket {
         this._disconnect();
     }
 
-    /** PrivateFunction: _onIdle
-     *  _Private_ function called by Strophe.Connection._onIdle
-     *
-     *  sends all queued stanzas
+    /**
+     * _Private_ function called by Strophe.Connection._onIdle
+     * sends all queued stanzas
+     * @private
      */
     _onIdle() {
         const data = this._conn._data;
@@ -441,28 +440,28 @@ Strophe.Websocket = class Websocket {
         }
     }
 
-    /** PrivateFunction: _onMessage
+    /**
      * _Private_ function to handle websockets messages.
      *
      * This function parses each of the messages as if they are full documents.
      * [TODO : We may actually want to use a SAX Push parser].
      *
      * Since all XMPP traffic starts with
-     *  <stream:stream version='1.0'
-     *                 xml:lang='en'
-     *                 xmlns='jabber:client'
-     *                 xmlns:stream='http://etherx.jabber.org/streams'
-     *                 id='3697395463'
-     *                 from='SERVER'>
+     * <stream:stream version='1.0'
+     *                xml:lang='en'
+     *                xmlns='jabber:client'
+     *                xmlns:stream='http://etherx.jabber.org/streams'
+     *                id='3697395463'
+     *                from='SERVER'>
      *
      * The first stanza will always fail to be parsed.
      *
      * Additionally, the seconds stanza will always be <stream:features> with
      * the stream NS defined in the previous stanza, so we need to 'force'
      * the inclusion of the NS in this stanza.
+     * @private
      *
-     * Parameters:
-     * (string) message - The websocket message.
+     * @param {string} message - The websocket message.
      */
     _onMessage(message) {
         let elem;
@@ -505,10 +504,10 @@ Strophe.Websocket = class Websocket {
         this._conn._dataRecv(elem, message.data);
     }
 
-    /** PrivateFunction: _onOpen
+    /**
      * _Private_ function to handle websockets connection setup.
-     *
      * The opening stream tag is sent here.
+     * @private
      */
     _onOpen() {
         Strophe.debug('Websocket open');
@@ -520,37 +519,36 @@ Strophe.Websocket = class Websocket {
         this.socket.send(startString);
     }
 
-    /** PrivateFunction: _reqToData
+    /**
      * _Private_ function to get a stanza out of a request.
-     *
      * WebSockets don't use requests, so the passed argument is just returned.
+     * @private
      *
-     *  Parameters:
-     *    (Object) stanza - The stanza.
-     *
-     *  Returns:
-     *    The stanza that was passed.
+     * @param {Object} stanza - The stanza.
+     * @return {Element} - The stanza that was passed.
      */
     // eslint-disable-next-line class-methods-use-this
     _reqToData(stanza) {
         return stanza;
     }
 
-    /** PrivateFunction: _send
-     *  _Private_ part of the Connection.send function for WebSocket
-     *
+    /**
+     * _Private_ part of the Connection.send function for WebSocket
      * Just flushes the messages that are in the queue
+     * @private
      */
     _send() {
         this._conn.flush();
     }
 
-    /** PrivateFunction: _sendRestart
-     *
-     *  Send an xmpp:restart stanza.
+    /**
+     * Send an xmpp:restart stanza.
+     * @private
      */
     _sendRestart() {
         clearTimeout(this._conn._idleTimeout);
         this._conn._onIdle.bind(this._conn)();
     }
-};
+}
+
+Strophe.Websocket = Websocket;

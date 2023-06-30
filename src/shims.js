@@ -1,4 +1,4 @@
-/*
+/**
  * This module provides uniform
  * Shims APIs and globals that are not present in all JS environments,
  * the most common example for Strophe being browser APIs like WebSocket
@@ -6,6 +6,8 @@
  *
  * Usually these will be supplied in nodejs by conditionally requiring a
  * NPM module that provides a compatible implementation.
+ *
+ * @module shims
  */
 
 /* global global */
@@ -62,11 +64,9 @@ export const DOMParser = getDOMParserImplementation();
 
 /**
  *  Gets IE xml doc object. Used by getDummyXMLDocument shim.
- *
- *  Returns:
- *    A Microsoft XML DOM Object
  *  See Also:
  *    http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
+ *  @return {Object} A Microsoft XML DOM Object
  */
 function _getIEXmlDom() {
     const docStrings = [

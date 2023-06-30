@@ -1,9 +1,9 @@
 import SASLMechanism from './sasl.js';
 import utils from './utils';
 
-export default class SASLPlain extends SASLMechanism {
-    /** PrivateConstructor: SASLPlain
-     *  SASL PLAIN authentication.
+class SASLPlain extends SASLMechanism {
+    /**
+     * SASL PLAIN authentication.
      */
     constructor(mechname = 'PLAIN', isClientFirst = true, priority = 50) {
         super(mechname, isClientFirst, priority);
@@ -30,3 +30,5 @@ export default class SASLPlain extends SASLMechanism {
         return utils.utf16to8(auth_str);
     }
 }
+
+export default SASLPlain;

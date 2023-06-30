@@ -1,7 +1,6 @@
 /*
     This program is distributed under the terms of the MIT license.
     Please see the LICENSE file for details.
-
     Copyright 2020, JC Brand
 */
 
@@ -15,18 +14,16 @@ lmap['warn'] = Strophe.LogLevel.WARN;
 lmap['error'] = Strophe.LogLevel.ERROR;
 lmap['fatal'] = Strophe.LogLevel.FATAL;
 
-/** Class: Strophe.WorkerWebsocket
- *  _Private_ helper class that handles a websocket connection inside a shared worker.
+/**
+ * Helper class that handles a websocket connection inside a shared worker.
+ * @memberof Strophe
  */
-Strophe.WorkerWebsocket = class WorkerWebsocket extends Strophe.Websocket {
-    /** PrivateConstructor: Strophe.WorkerWebsocket
-     *  Create and initialize a Strophe.WorkerWebsocket object.
-     *
-     *  Parameters:
-     *    (Strophe.Connection) connection - The Strophe.Connection
-     *
-     *  Returns:
-     *    A new Strophe.WorkerWebsocket object.
+class WorkerWebsocket extends Strophe.Websocket {
+    /**
+     * PrivateConstructor: Strophe.WorkerWebsocket
+     * Create and initialize a Strophe.WorkerWebsocket object.
+     * @param {Strophe.Connection} connection - The Strophe.Connection
+     * @return {WorkerWebsocket} - A new Strophe.WorkerWebsocket object.
      */
     constructor(connection) {
         super(connection);
@@ -108,19 +105,20 @@ Strophe.WorkerWebsocket = class WorkerWebsocket extends Strophe.Websocket {
         this.worker.port.postMessage(['_closeSocket']);
     }
 
-    /** PrivateFunction: _replaceMessageHandler
-     *
+    /**
      * Called by _onInitialMessage in order to replace itself with the general message handler.
      * This method is overridden by Strophe.WorkerWebsocket, which manages a
      * websocket connection via a service worker and doesn't have direct access
      * to the socket.
+     * @private
      */
     _replaceMessageHandler() {
         this._messageHandler = (m) => this._onMessage(m);
     }
 
-    /** PrivateFunction: _onWorkerMessage
-     * _Private_ function that handles messages received from the service worker
+    /**
+     * function that handles messages received from the service worker
+     * @private
      */
     _onWorkerMessage(ev) {
         const { data } = ev;
@@ -141,4 +139,6 @@ Strophe.WorkerWebsocket = class WorkerWebsocket extends Strophe.Websocket {
             Strophe.log(Strophe.LogLevel.ERROR, `Found unhandled service worker message: ${data}`);
         }
     }
-};
+}
+
+Strophe.WorkerWebsocket = WorkerWebsocket;
