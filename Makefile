@@ -48,10 +48,13 @@ release:
 watchjs: node_modules
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
-.PHONY: dist
-dist: $(STROPHE)
+dist/types: src/*
+	npx tsc
 
-$(STROPHE): src rollup.config.js node_modules Makefile
+.PHONY: dist
+dist: $(STROPHE) dist/types
+
+$(STROPHE): src/* rollup.config.js node_modules Makefile
 	npm run build
 
 .PHONY: eslint
