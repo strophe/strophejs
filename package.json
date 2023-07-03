@@ -79,6 +79,7 @@
     "run-headless-chromium": "^0.1.1",
     "sinon": "15.0.4",
     "terser": "^5.10.0",
+    "typescript": "^5.1.6",
     "xhr2": "^0.2.1"
   },
   "dependencies": {
