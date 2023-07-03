@@ -4,135 +4,24 @@
  * this library uses Bidirectional-streams Over Synchronous HTTP (BOSH)
  * to emulate a persistent, stateful, two-way connection to an XMPP server.
  * More information on BOSH can be found in XEP 124.
- * @module bosh
  */
-
-/* global ActiveXObject, XMLHttpRequest, sessionStorage, globalThis */
-
-import { DOMParser } from './shims';
-import { $build, Strophe } from './core';
 
 /**
- * Helper class that provides a cross implementation abstraction
- * for a BOSH related XMLHttpRequest.
- *
- * The Strophe.Request class is used internally to encapsulate BOSH request
- * information.  It is not meant to be used from user's code.
- *
- * @memberof Strophe
+ * @typedef {import("./connection.js").default} Connection
+ * @typedef {import("./request.js").default} Request
  */
-class Request {
-    /**
-     * Create and initialize a new Strophe.Request object.
-     *
-     * @param {XMLElement} elem - The XML data to be sent in the request.
-     * @param {Function} func - The function that will be called when the
-     *     XMLHttpRequest readyState changes.
-     * @param {number} rid - The BOSH rid attribute associated with this request.
-     * @param {number} sends - The number of times this same request has been sent.
-     */
-    constructor(elem, func, rid, sends) {
-        this.id = ++Strophe._requestId;
-        this.xmlData = elem;
-        this.data = Strophe.serialize(elem);
-        // save original function in case we need to make a new request
-        // from this one.
-        this.origFunc = func;
-        this.func = func;
-        this.rid = rid;
-        this.date = NaN;
-        this.sends = sends || 0;
-        this.abort = false;
-        this.dead = null;
 
-        this.age = function () {
-            if (!this.date) {
-                return 0;
-            }
-            const now = new Date();
-            return (now - this.date) / 1000;
-        };
-        this.timeDead = function () {
-            if (!this.dead) {
-                return 0;
-            }
-            const now = new Date();
-            return (now - this.dead) / 1000;
-        };
-        this.xhr = this._newXHR();
-    }
-
-    /**
-     * Get a response from the underlying XMLHttpRequest.
-     * This function attempts to get a response from the request and checks
-     * for errors.
-     * @throws "parsererror" - A parser error occured.
-     * @throws "bad-format" - The entity has sent XML that cannot be processed.
-     * @return {Element} - The DOM element tree of the response.
-     */
-    getResponse() {
-        let node = null;
-        if (this.xhr.responseXML && this.xhr.responseXML.documentElement) {
-            node = this.xhr.responseXML.documentElement;
-            if (node.tagName === 'parsererror') {
-                Strophe.error('invalid response received');
-                Strophe.error('responseText: ' + this.xhr.responseText);
-                Strophe.error('responseXML: ' + Strophe.serialize(this.xhr.responseXML));
-                throw new Error('parsererror');
-            }
-        } else if (this.xhr.responseText) {
-            // In Node (with xhr2) or React Native, we may get responseText but no responseXML.
-            // We can try to parse it manually.
-            Strophe.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
-            node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
-
-            const parserError = node?.querySelector('parsererror');
-            if (!node || parserError) {
-                if (parserError) {
-                    Strophe.error('invalid response received: ' + parserError.textContent);
-                    Strophe.error('responseText: ' + this.xhr.responseText);
-                }
-                const error = new Error();
-                error.name = Strophe.ErrorCondition.BAD_FORMAT;
-                throw error;
-            }
-        }
-        return node;
-    }
-
-    /**
-     * _Private_ helper function to create XMLHttpRequests.
-     * This function creates XMLHttpRequests across all implementations.
-     * @private
-     * @return {XMLHttpRequest}
-     */
-    _newXHR() {
-        let xhr = null;
-        if (globalThis.XMLHttpRequest) {
-            xhr = new XMLHttpRequest();
-            if (xhr.overrideMimeType) {
-                xhr.overrideMimeType('text/xml; charset=utf-8');
-            }
-        } else if (globalThis.ActiveXObject) {
-            xhr = new ActiveXObject('Microsoft.XMLHTTP');
-        }
-        // use Function.bind() to prepend ourselves as an argument
-        xhr.onreadystatechange = this.func.bind(null, this);
-        return xhr;
-    }
-}
+import Strophe from './core.js';
+import Builder, { $build } from './builder.js';
 
 /**
  * _Private_ helper class that handles BOSH Connections
  * The Strophe.Bosh class is used internally by Strophe.Connection
  * to encapsulate BOSH sessions. It is not meant to be used from user's code.
- * @memberof Strophe
  */
 class Bosh {
     /**
-     * Create and initialize a {@link Strophe.Bosh} object.
      * @param {Connection} connection - The Strophe.Connection that will use BOSH.
-     * @return {Bosh}
      */
     constructor(connection) {
         this._conn = connection;
@@ -148,7 +37,27 @@ class Bosh {
         this.errors = 0;
         this.inactivity = null;
 
+        /**
+         * BOSH-Connections will have all stanzas wrapped in a <body> tag when
+         * passed to {@link Strophe.Connection#xmlInput|xmlInput()} or {@link Strophe.Connection#xmlOutput|xmlOutput()}.
+         * To strip this tag, User code can set {@link Strophe.Bosh#strip|strip} to `true`:
+         *
+         * > // You can set `strip` on the prototype
+         * > Strophe.Bosh.prototype.strip = true;
+         *
+         * > // Or you can set it on the Bosh instance (which is `._proto` on the connection instance.
+         * > const conn = new Strophe.Connection();
+         * > conn._proto.strip = true;
+         *
+         * This will enable stripping of the body tag in both
+         * {@link Strophe.Connection#xmlInput|xmlInput} and {@link Strophe.Connection#xmlOutput|xmlOutput}.
+         *
+         * @property {boolean} [strip=false]
+         */
+        this.strip = Bosh.prototype.strip ?? false;
+
         this.lastResponseHeaders = null;
+        /** @type {Request[]} */
         this._requests = [];
     }
 
@@ -174,7 +83,6 @@ class Bosh {
     /**
      * Reset the connection.
      * This function is called by the reset function of the Strophe Connection
-     * @private
      */
     _reset() {
         this.rid = Math.floor(Math.random() * 4294967295);
@@ -190,7 +98,14 @@ class Bosh {
     /**
      * _Private_ function that initializes the BOSH connection.
      * Creates and sends the Request that initializes the BOSH connection.
-     * @private
+     * @param {number} wait - The optional HTTPBIND wait value.  This is the
+     *     time the server will wait before returning an empty result for
+     *     a request.  The default setting of 60 seconds is recommended.
+     *     Other settings will require tweaks to the Strophe.TIMEOUT value.
+     * @param {number} hold - The optional HTTPBIND hold value.  This is the
+     *     number of connections the server will hold at one time.  This
+     *     should almost always be set to 1 (the default).
+     * @param {string} route
      */
     _connect(wait, hold, route) {
         this.wait = wait || this.wait;
@@ -208,7 +123,7 @@ class Bosh {
             'xmlns:xmpp': Strophe.NS.BOSH,
         });
         if (route) {
-            body.attrs({ 'route': route });
+            body.attrs({ route });
         }
 
         const _connect_cb = this._conn._connect_cb;
@@ -216,7 +131,7 @@ class Bosh {
             new Strophe.Request(
                 body.tree(),
                 this._onRequestStateChange.bind(this, _connect_cb.bind(this._conn)),
-                body.tree().getAttribute('rid')
+                Number(body.tree().getAttribute('rid'))
             )
         );
         this._throttledRequestHandler();
@@ -229,11 +144,10 @@ class Bosh {
      * sessions which have been created externally, perhaps by a Web
      * application.  This is often used to support auto-login type features
      * without putting user credentials into the page.
-     * @private
      *
      * @param {string} jid - The full JID that is bound by the session.
      * @param {string} sid - The SID of the BOSH session.
-     * @param {string} rid - The current RID of the BOSH session.  This RID
+     * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
      * @param {Function} callback The connect callback function.
      * @param {number} wait - The optional HTTPBIND wait value.  This is the
@@ -265,7 +179,6 @@ class Bosh {
 
     /**
      * Attempt to restore a cached BOSH session
-     * @private
      *
      * @param {string} jid - The full JID that is bound by the session.
      *     This parameter is optional but recommended, specifically in cases
@@ -310,7 +223,6 @@ class Bosh {
      * _Private_ handler for the beforeunload event.
      * This handler is used to process the Bosh-part of the initial request.
      * @private
-     * @param {Strophe.Request} bodyWrap - The received stanza.
      */
     _cacheSession() {
         if (this._conn.authenticated) {
@@ -332,8 +244,7 @@ class Bosh {
     /**
      * _Private_ handler for initial connection request.
      * This handler is used to process the Bosh-part of the initial request.
-     * @private
-     * @param {Strophe.Request} bodyWrap - The received stanza.
+     * @param {Element} bodyWrap - The received stanza.
      */
     _connect_cb(bodyWrap) {
         const typ = bodyWrap.getAttribute('type');
@@ -379,8 +290,7 @@ class Bosh {
 
     /**
      * _Private_ part of Connection.disconnect for Bosh
-     * @private
-     * @param {Strophe.Request} pres - This stanza will be sent before disconnecting.
+     * @param {Element|Builder} pres - This stanza will be sent before disconnecting.
      */
     _disconnect(pres) {
         this._sendTerminate(pres);
@@ -389,7 +299,6 @@ class Bosh {
     /**
      * _Private_ function to disconnect.
      * Resets the SID and RID.
-     * @private
      */
     _doDisconnect() {
         this.sid = null;
@@ -403,7 +312,6 @@ class Bosh {
 
     /**
      * _Private_ function to check if the Request queue is empty.
-     * @private
      * @return {boolean} - True, if there are no Requests queued, False otherwise.
      */
     _emptyQueue() {
@@ -413,8 +321,7 @@ class Bosh {
     /**
      * _Private_ function to call error handlers registered for HTTP errors.
      * @private
-     *
-     * @param {Strophe.Request} req - The request that is changing readyState.
+     * @param {Request} req - The request that is changing readyState.
      */
     _callProtocolErrorHandlers(req) {
         const reqStatus = Bosh._getRequestStatus(req);
@@ -431,7 +338,6 @@ class Bosh {
      * 5.  Each time an error is encountered, this function is called to
      * increment the count and disconnect if the count is too high.
      * @private
-     *
      * @param {number} reqStatus - The request status.
      */
     _hitError(reqStatus) {
@@ -443,9 +349,14 @@ class Bosh {
     }
 
     /**
+     * @callback connectionCallback
+     * @param {Connection} connection
+     */
+
+    /**
      * Called on stream start/restart when no stream:features
      * has been received and sends a blank poll request.
-     * @private
+     * @param {connectionCallback} callback
      */
     _no_auth_received(callback) {
         Strophe.warn(
@@ -461,7 +372,7 @@ class Bosh {
             new Strophe.Request(
                 body.tree(),
                 this._onRequestStateChange.bind(this, callback),
-                body.tree().getAttribute('rid')
+                Number(body.tree().getAttribute('rid'))
             )
         );
         this._throttledRequestHandler();
@@ -470,7 +381,6 @@ class Bosh {
     /**
      * _Private_ timeout handler for handling non-graceful disconnection.
      * Cancels all remaining Requests and clears the queue.
-     * @private
      */
     _onDisconnectTimeout() {
         this._abortAllRequests();
@@ -478,7 +388,6 @@ class Bosh {
 
     /**
      * _Private_ helper function that makes sure all pending requests are aborted.
-     * @private
      */
     _abortAllRequests() {
         while (this._requests.length > 0) {
@@ -492,7 +401,6 @@ class Bosh {
     /**
      * _Private_ handler called by {@link Strophe.Connection#_onIdle|Strophe.Connection._onIdle()}.
      * Sends all queued Requests or polls with empty Request if there are none.
-     * @private
      */
     _onIdle() {
         const data = this._conn._data;
@@ -518,7 +426,7 @@ class Bosh {
                             'xmlns:xmpp': Strophe.NS.BOSH,
                         });
                     } else {
-                        body.cnode(data[i]).up();
+                        body.cnode(/** @type {Element} */ (data[i])).up();
                     }
                 }
             }
@@ -528,7 +436,7 @@ class Bosh {
                 new Strophe.Request(
                     body.tree(),
                     this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
-                    body.tree().getAttribute('rid')
+                    Number(body.tree().getAttribute('rid'))
                 )
             );
             this._throttledRequestHandler();
@@ -557,10 +465,8 @@ class Bosh {
     /**
      * Returns the HTTP status code from a {@link Strophe.Request}
      * @private
-     *
-     * @param {Strophe.Request} req - The {@link Strophe.Request} instance.
-     * @param {number} def - The default value that should be returned if no
-     *         status value was found.
+     * @param {Request} req - The {@link Strophe.Request} instance.
+     * @param {number} [def] - The default value that should be returned if no status value was found.
      */
     static _getRequestStatus(req, def) {
         let reqStatus;
@@ -589,7 +495,7 @@ class Bosh {
      * @private
      *
      * @param {Function} func - The handler for the request.
-     * @param {Strophe.Request} req - The request that is changing readyState.
+     * @param {Request} req - The request that is changing readyState.
      */
     _onRequestStateChange(func, req) {
         Strophe.debug('request id ' + req.id + '.' + req.sends + ' state changed to ' + req.xhr.readyState);
@@ -634,7 +540,7 @@ class Bosh {
             ) {
                 this._restartRequest(0);
             }
-            this._conn.nextValidRid(Number(req.rid) + 1);
+            this._conn.nextValidRid(req.rid + 1);
             Strophe.debug('request id ' + req.id + '.' + req.sends + ' got 200');
             func(req); // call handler
             this.errors = 0;
@@ -719,7 +625,7 @@ class Bosh {
             // Fires the XHR request -- may be invoked immediately
             // or on a gradually expanding retry window for reconnects
             const sendFunc = () => {
-                req.date = new Date();
+                req.date = new Date().valueOf();
                 if (this._conn.options.customHeaders) {
                     const headers = this._conn.options.customHeaders;
                     for (const header in headers) {
@@ -747,16 +653,12 @@ class Bosh {
 
             req.sends++;
 
-            if (this._conn.xmlOutput !== Strophe.Connection.prototype.xmlOutput) {
-                if (req.xmlData.nodeName === this.strip && req.xmlData.childNodes.length) {
-                    this._conn.xmlOutput(req.xmlData.childNodes[0]);
-                } else {
-                    this._conn.xmlOutput(req.xmlData);
-                }
+            if (this.strip && req.xmlData.nodeName === 'body' && req.xmlData.childNodes.length) {
+                this._conn.xmlOutput?.(req.xmlData.children[0]);
+            } else {
+                this._conn.xmlOutput?.(req.xmlData);
             }
-            if (this._conn.rawOutput !== Strophe.Connection.prototype.rawOutput) {
-                this._conn.rawOutput(req.data);
-            }
+            this._conn.rawOutput?.(req.data);
         } else {
             Strophe.debug(
                 '_processRequest: ' +
@@ -770,8 +672,7 @@ class Bosh {
     /**
      * _Private_ function to remove a request from the queue.
      * @private
-     *
-     * @param {Strophe.Request} req - The request to remove.
+     * @param {Request} req - The request to remove.
      */
     _removeRequest(req) {
         Strophe.debug('removing request');
@@ -803,9 +704,8 @@ class Bosh {
      * _Private_ function to get a stanza out of a request.
      * Tries to extract a stanza out of a Request Object.
      * When this fails the current connection will be disconnected.
-     * @private
      *
-     * @param {Object} req - The Request.
+     * @param {Request} req - The Request.
      * @return {Element} - The stanza that was passed.
      */
     _reqToData(req) {
@@ -826,17 +726,21 @@ class Bosh {
      * the BOSH server a terminate body and includes an unavailable
      * presence if authentication has completed.
      * @private
+     * @param {Element|Builder} [pres]
      */
     _sendTerminate(pres) {
         Strophe.debug('_sendTerminate was called');
         const body = this._buildBody().attrs({ type: 'terminate' });
+
+        const el = pres instanceof Builder ? pres.tree() : pres;
+
         if (pres) {
-            body.cnode(pres.tree());
+            body.cnode(el);
         }
         const req = new Strophe.Request(
             body.tree(),
             this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
-            body.tree().getAttribute('rid')
+            Number(body.tree().getAttribute('rid'))
         );
         this._requests.push(req);
         this._throttledRequestHandler();
@@ -845,7 +749,6 @@ class Bosh {
     /**
      * _Private_ part of the Connection.send function for BOSH
      * Just triggers the RequestHandler to send the messages that are in the queue
-     * @private
      */
     _send() {
         clearTimeout(this._conn._idleTimeout);
@@ -855,7 +758,6 @@ class Bosh {
 
     /**
      * Send an xmpp:restart stanza.
-     * @private
      */
     _sendRestart() {
         this._throttledRequestHandler();
@@ -891,19 +793,4 @@ class Bosh {
     }
 }
 
-Strophe.Bosh = Bosh;
-Strophe.Request = Request;
-
-/**
- * Variable: strip
- *
- * BOSH-Connections will have all stanzas wrapped in a <body> tag when
- * passed to <Strophe.Connection.xmlInput> or <Strophe.Connection.xmlOutput>.
- * To strip this tag, User code can set <Strophe.Bosh.strip> to "body":
- *
- * > Strophe.Bosh.prototype.strip = "body";
- *
- * This will enable stripping of the body tag in both
- * <Strophe.Connection.xmlInput> and <Strophe.Connection.xmlOutput>.
- */
-Strophe.Bosh.prototype.strip = null;
+export default Bosh;

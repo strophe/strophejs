@@ -1,5 +1,8 @@
+/**
+ * @typedef {import("./connection.js").default} Connection
+ */
 import utils from './utils';
-import { Strophe } from './core.js';
+import Strophe from './core.js';
 
 async function scramClientProof(authMessage, clientKey, hashName) {
     const storedKey = await crypto.subtle.importKey(
@@ -14,13 +17,15 @@ async function scramClientProof(authMessage, clientKey, hashName) {
     return utils.xorArrayBuffers(clientKey, clientSignature);
 }
 
-/* This function parses the information in a SASL SCRAM challenge response,
+/**
+ * This function parses the information in a SASL SCRAM challenge response,
  * into an object of the form
  * { nonce: String,
  *   salt:  ArrayBuffer,
  *   iter:  Int
  * }
  * Returns undefined on failure.
+ * @param {string} challenge
  */
 function scramParseChallenge(challenge) {
     let nonce, salt, iter;
@@ -58,7 +63,8 @@ function scramParseChallenge(challenge) {
     return { 'nonce': nonce, 'salt': salt, 'iter': iter };
 }
 
-/* Derive the client and server keys given a string password,
+/**
+ * Derive the client and server keys given a string password,
  * a hash name, and a bit length.
  * Returns an object of the following form:
  * { ck: ArrayBuffer, the client key
@@ -91,7 +97,10 @@ async function scramServerSign(authMessage, sk, hashName) {
     return crypto.subtle.sign('HMAC', serverKey, utils.stringToArrayBuf(authMessage));
 }
 
-// Generate an ASCII nonce (not containing the ',' character)
+/**
+ * Generate an ASCII nonce (not containing the ',' character)
+ * @return {string}
+ */
 function generate_cnonce() {
     // generate 16 random bytes of nonce, base64 encoded
     const bytes = new Uint8Array(16);
@@ -99,7 +108,8 @@ function generate_cnonce() {
 }
 
 const scram = {
-    /* On success, sets
+    /**
+     * On success, sets
      * connection_sasl_data["server-signature"]
      * and
      * connection._sasl_data.keys
@@ -107,6 +117,7 @@ const scram = {
      * The server signature should be verified after this function completes..
      *
      * On failure, returns connection._sasl_failure_cb();
+     * @param {Connection} connection
      */
     async scramResponse(connection, challenge, hashName, hashBits) {
         const cnonce = connection._sasl_data.cnonce;
@@ -165,7 +176,11 @@ const scram = {
         return `${clientFinalMessageBare},p=${utils.arrayBufToBase64(clientProof)}`;
     },
 
-    // Returns a string containing the client first message
+    /**
+     * Returns a string containing the client first message
+     * @param {Connection} connection
+     * @param {string} test_cnonce
+     */
     clientChallenge(connection, test_cnonce) {
         const cnonce = test_cnonce || generate_cnonce();
         const client_first_message_bare = `n=${connection.authcid},r=${cnonce}`;

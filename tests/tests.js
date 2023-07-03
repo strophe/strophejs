@@ -372,8 +372,22 @@ test('XML escaping test', (assert) => {
 });
 
 test('XML element creation', (assert) => {
-    const elem = Strophe.xmlElement('message');
-    assert.equal(elem.tagName, 'message', 'Element name should be the same');
+    let el = Strophe.xmlElement('message');
+    assert.equal(el.tagName, 'message', 'Element name should be the same');
+
+    el = Strophe.xmlElement('message', 'Some text');
+    assert.equal(el.textContent, 'Some text');
+
+    el = Strophe.xmlElement('message', {}, 'Some text');
+    assert.equal(el.textContent, 'Some text');
+
+    el = Strophe.xmlElement('message', { foo: 'bar' }, 'Some text');
+    assert.equal(el.textContent, 'Some text');
+    assert.equal(el.getAttribute('foo'), 'bar');
+
+    el = Strophe.xmlElement('message', [['foo', 'bar']], 'Some text');
+    assert.equal(el.textContent, 'Some text');
+    assert.equal(el.getAttribute('foo'), 'bar');
 });
 
 test('copyElement() double escape bug', function (assert) {

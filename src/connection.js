@@ -1,10 +1,16 @@
-import Handler from './handler';
-import TimedHandler from './timed-handler';
-import { $build, $iq, $pres } from './builder';
-import { Status } from './constants';
-import { Strophe } from './core';
-import { addCookies, getText } from './utils';
+import Handler from './handler.js';
+import TimedHandler from './timed-handler.js';
+import Builder, { $build, $iq, $pres } from './builder.js';
+import { Status } from './constants.js';
+import Strophe from './core.js';
+import { addCookies, getText } from './utils.js';
 import { atob, btoa } from 'abab';
+import { SessionError } from './errors.js';
+
+/**
+ * @typedef {import("./sasl.js").default} SASLMechanism
+ * @typedef {import("./request.js").default} Request
+ */
 
 /**
  * **XMPP Connection manager**
@@ -35,21 +41,8 @@ import { atob, btoa } from 'abab';
  */
 class Connection {
     /**
-     * Create and initialize a {@link Strophe.Connection} object.
-     *
-     * The transport-protocol for this connection will be chosen automatically
-     * based on the given service parameter. URLs starting with "ws://" or
-     * "wss://" will use WebSockets, URLs starting with "http://", "https://"
-     * or without a protocol will use [BOSH](https://xmpp.org/extensions/xep-0124.html).
-     *
-     * To make Strophe connect to the current host you can leave out the protocol
-     * and host part and just pass the path:
-     *
-     *  const conn = new Strophe.Connection("/http-bind/");
-     *
-     * @param {string} service - The BOSH or WebSocket service URL.
-     * @param {Object} options - A object containing configuration options
-     * @param {Object} options.cookies
+     * @typedef {Object} ConnectionOptions
+     * @property {Object} [cookies]
      *  Allows you to pass in cookies that will be included in HTTP requests.
      *  Relevant to both the BOSH and Websocket transports.
      *
@@ -68,7 +61,7 @@ class Connection {
      *  Those cookies need to be set under those domains, for example they can be
      *  set server-side by making a XHR call to that domain to ask it to set any
      *  necessary cookies.
-     * @param {Strophe.SASLMechanism[]} options.mechanisms
+     * @property {SASLMechanism[]} [mechanisms]
      *  Allows you to specify the SASL authentication mechanisms that this
      *  instance of Strophe.Connection (and therefore your XMPP client) will support.
      *
@@ -90,16 +83,16 @@ class Connection {
      *      ANONYMOUS       20
      *      EXTERNAL        10
      *
-     * @param {boolean} options.explicitResourceBinding
+     * @property {boolean} [explicitResourceBinding]
      *  If `explicitResourceBinding` is set to `true`, then the XMPP client
      *  needs to explicitly call {@link Strophe.Connection.bind} once the XMPP
-     *  server has advertised the `urn:ietf:params:xml:ns:xmpp-bind` feature.
+     *  server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
      *
      *  Making this step explicit allows client authors to first finish other
      *  stream related tasks, such as setting up an XEP-0198 Stream Management
      *  session, before binding the JID resource for this session.
      *
-     * @param {'ws'|'wss'} options.protocol
+     * @property {'ws'|'wss'} [protocol]
      *  _Note: This option is only relevant to Websocket connections, and not BOSH_
      *
      *  If you want to connect to the current host with a WebSocket connection you
@@ -119,7 +112,7 @@ class Connection {
      *  relative URLs both BOSH and WebSocket connections will use their secure
      *  variants if the current connection to the site is also secure (https).
      *
-     * @param {string} options.worker
+     * @property {string} [worker]
      *  _Note: This option is only relevant to Websocket connections, and not BOSH_
      *
      *  Set this option to URL from where the shared worker script should be loaded.
@@ -130,7 +123,7 @@ class Connection {
      *
      *  The script to use is the one in `src/shared-connection-worker.js`.
      *
-     * @param {boolean} options.sync
+     * @property {boolean} [sync]
      *  Used to control whether BOSH HTTP requests will be made synchronously or not.
      *  The default behaviour is asynchronous. If you want to make requests
      *  synchronous, make "sync" evaluate to true.
@@ -141,10 +134,10 @@ class Connection {
      *
      *  > conn.options.sync = true;
      *
-     * @param {string[]} options.customHeaders
+     * @property {string[]} [customHeaders]
      *  Used to provide custom HTTP headers to be included in the BOSH HTTP requests.
      *
-     * @param {boolean} options.keepalive
+     * @property {boolean} [keepalive]
      *  Used to instruct Strophe to maintain the current BOSH session across
      *  interruptions such as webpage reloads.
      *
@@ -152,7 +145,7 @@ class Connection {
      *  "restore" is called it will check whether there are cached tokens with
      *  which it can resume an existing session.
      *
-     * @param {boolean} options.withCredentials
+     * @property {boolean} [withCredentials]
      *  Used to indicate wether cookies should be included in HTTP requests (by default
      *  they're not).
      *  Set this value to `true` if you are connecting to a BOSH service
@@ -165,18 +158,33 @@ class Connection {
      *  `Access-Control-Allow-Origin` header can't be set to the wildcard "*", but
      *  instead must be restricted to actual domains.
      *
-     * @param {string} options.contentType
+     * @property {string} [contentType]
      *  Used to change the default Content-Type, which is "text/xml; charset=utf-8".
      *  Can be useful to reduce the amount of CORS preflight requests that are sent
      *  to the server.
-     *
-     * @return {Strophe.Connection} A new Strophe.Connection object.
      */
-    constructor(service, options) {
+
+    /**
+     * Create and initialize a {@link Strophe.Connection} object.
+     *
+     * The transport-protocol for this connection will be chosen automatically
+     * based on the given service parameter. URLs starting with "ws://" or
+     * "wss://" will use WebSockets, URLs starting with "http://", "https://"
+     * or without a protocol will use [BOSH](https://xmpp.org/extensions/xep-0124.html).
+     *
+     * To make Strophe connect to the current host you can leave out the protocol
+     * and host part and just pass the path:
+     *
+     *  const conn = new Strophe.Connection("/http-bind/");
+     *
+     * @param {string} service - The BOSH or WebSocket service URL.
+     * @param {ConnectionOptions} options - A object containing configuration options
+     */
+    constructor(service, options = {}) {
         // The service URL
         this.service = service;
         // Configuration options
-        this.options = options || {};
+        this.options = options;
 
         this.setProtocol();
 
@@ -188,20 +196,41 @@ class Connection {
         this.features = null;
 
         // SASL
+        /**
+         * @typedef {Object.<string, any>} SASLData
+         * @property {Object} [SASLData.keys]
+         */
+
+        /** @type {SASLData} */
         this._sasl_data = {};
         this.do_bind = false;
         this.do_session = false;
+
+        /** @type {Object.<string, SASLMechanism>} */
         this.mechanisms = {};
 
-        // handler lists
+        /** @type {TimedHandler[]} */
         this.timedHandlers = [];
+
+        /** @type {Handler[]} */
         this.handlers = [];
+
+        /** @type {TimedHandler[]} */
         this.removeTimeds = [];
+
+        /** @type {Handler[]} */
         this.removeHandlers = [];
+
+        /** @type {TimedHandler[]} */
         this.addTimeds = [];
+
+        /** @type {Handler[]} */
         this.addHandlers = [];
+
         this.protocolErrorHandlers = {
+            /** @type {Object.<number, Function>} */
             'HTTP': {},
+            /** @type {Object.<number, Function>} */
             'websocket': {},
         };
 
@@ -215,6 +244,7 @@ class Connection {
         this.paused = false;
         this.restored = false;
 
+        /** @type {(Element|'restart')[]} */
         this._data = [];
         this._uniqueId = 0;
 
@@ -237,6 +267,9 @@ class Connection {
         // This is a fallback handler which gets called when no other handler
         // was called for a received IQ "set" or "get".
         this.iqFallbackHandler = new Handler(
+            /**
+             * @param {Element} iq
+             */
             (iq) =>
                 this.send(
                     $iq({ type: 'error', id: iq.getAttribute('id') })
@@ -302,8 +335,8 @@ class Connection {
         this.connected = false;
         this.disconnecting = false;
         this.restored = false;
-
         this._data = [];
+        /** @type {Request[]} */
         this._requests = [];
         this._uniqueId = 0;
     }
@@ -380,7 +413,7 @@ class Connection {
      *  // Triggers HTTP 500 error and onError handler will be called
      *  conn.connect('user_jid@incorrect_jabber_host', 'secret', onConnect);
      *
-     * @param {string} protocol - 'HTTP' or 'websocket'
+     * @param {'HTTP'|'websocket'} protocol - 'HTTP' or 'websocket'
      * @param {number} status_code - Error status code (e.g 500, 400 or 404)
      * @param {Function} callback - Function that will fire on Http error
      */
@@ -416,6 +449,7 @@ class Connection {
      *       ck:   String, the base64 encoding of the SCRAM client key
      *       sk:   String, the base64 encoding of the SCRAM server key
      *     }
+     * @param {string|Object} pass - The user password
      * @param {Function} callback - The connect callback function.
      * @param {number} wait - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
@@ -477,7 +511,7 @@ class Connection {
      *
      * @param {string} jid - The full JID that is bound by the session.
      * @param {string} sid - The SID of the BOSH session.
-     * @param {string} rid - The current RID of the BOSH session.  This RID
+     * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
      * @param {Function} callback The connect callback function.
      * @param {number} wait - The optional HTTPBIND wait value.  This is the
@@ -491,12 +525,10 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     attach(jid, sid, rid, callback, wait, hold, wind) {
-        if (this._proto._attach) {
+        if (this._proto instanceof Strophe.Bosh) {
             return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
         } else {
-            const error = new Error('The "attach" method is not available for your connection protocol');
-            error.name = 'StropheSessionError';
-            throw error;
+            throw new SessionError('The "attach" method is not available for your connection protocol');
         }
     }
 
@@ -527,19 +559,18 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     restore(jid, callback, wait, hold, wind) {
+        if (!(this._proto instanceof Strophe.Bosh) || !this._sessionCachingSupported()) {
+            throw new SessionError('The "restore" method can only be used with a BOSH connection.');
+        }
+
         if (this._sessionCachingSupported()) {
             this._proto._restore(jid, callback, wait, hold, wind);
-        } else {
-            const error = new Error('The "restore" method can only be used with a BOSH connection.');
-            error.name = 'StropheSessionError';
-            throw error;
         }
     }
 
     /**
      * Checks whether sessionStorage and JSON are supported and whether we're
      * using BOSH.
-     * @private
      */
     _sessionCachingSupported() {
         if (this._proto instanceof Strophe.Bosh) {
@@ -572,7 +603,7 @@ class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Strophe.Bosh.strip> if you want to strip this tag.
      *
-     * @param {XMLElement} elem - The XML data received by the connection.
+     * @param {Node|MessageEvent} elem - The XML data received by the connection.
      */
     // eslint-disable-next-line no-unused-vars, class-methods-use-this
     xmlInput(elem) {
@@ -594,7 +625,7 @@ class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Strophe.Bosh.strip> if you want to strip this tag.
      *
-     * @param {XMLElement} elem - The XMLdata sent by the connection.
+     * @param {Element} elem - The XMLdata sent by the connection.
      */
     // eslint-disable-next-line no-unused-vars, class-methods-use-this
     xmlOutput(elem) {
@@ -641,7 +672,7 @@ class Connection {
      * >    (user code)
      * > };
      *
-     * @param {Number} rid - The next valid rid
+     * @param {number} rid - The next valid rid
      */
     // eslint-disable-next-line no-unused-vars, class-methods-use-this
     nextValidRid(rid) {
@@ -655,22 +686,16 @@ class Connection {
      * go out over the wire.  Whenever a request is sent to the BOSH
      * server, all pending data is sent and the queue is flushed.
      *
-     *   (XMLElement |
-     *    [XMLElement] |
-     *    Strophe.Builder) elem - The stanza to send.
+     * @param {Element|Builder|Element[]|Builder[]} stanza - The stanza to send
      */
-    send(elem) {
-        if (elem === null) {
-            return;
-        }
-        if (typeof elem.sort === 'function') {
-            for (let i = 0; i < elem.length; i++) {
-                this._queueData(elem[i]);
-            }
-        } else if (typeof elem.tree === 'function') {
-            this._queueData(elem.tree());
+    send(stanza) {
+        if (stanza === null) return;
+
+        if (Array.isArray(stanza)) {
+            stanza.forEach((s) => this._queueData(s instanceof Builder ? s.tree() : s));
         } else {
-            this._queueData(elem);
+            const el = stanza instanceof Builder ? stanza.tree() : stanza;
+            this._queueData(el);
         }
         this._proto._send();
     }
@@ -695,7 +720,7 @@ class Connection {
      * sending presence stanzas for which you expect a responding presence
      * stanza with the same id (for example when leaving a chat room).
      *
-     * @param {XMLElement} elem - The stanza to send.
+     * @param {Element} stanza - The stanza to send.
      * @param {Function} callback - The callback function for a successful request.
      * @param {Function} errback - The callback function for a failed or timed
      *    out request.  On timeout, the stanza will be null.
@@ -703,20 +728,24 @@ class Connection {
      *    timeout to occur.
      * @return {string} The id used to send the presence.
      */
-    sendPresence(elem, callback, errback, timeout) {
+    sendPresence(stanza, callback, errback, timeout) {
+        /** @type {TimedHandler} */
         let timeoutHandler = null;
-        if (typeof elem.tree === 'function') {
-            elem = elem.tree();
-        }
-        let id = elem.getAttribute('id');
+
+        const el = stanza instanceof Builder ? stanza.tree() : stanza;
+
+        let id = el.getAttribute('id');
         if (!id) {
             // inject id if not found
             id = this.getUniqueId('sendPresence');
-            elem.setAttribute('id', id);
+            el.setAttribute('id', id);
         }
 
         if (typeof callback === 'function' || typeof errback === 'function') {
             const handler = this.addHandler(
+                /**
+                 * @param {Element} stanza
+                 */
                 (stanza) => {
                     // remove timeout handler if there is one
                     if (timeoutHandler) {
@@ -749,14 +778,14 @@ class Connection {
                 });
             }
         }
-        this.send(elem);
+        this.send(el);
         return id;
     }
 
     /**
      * Helper function to send IQ stanzas.
      *
-     * @param {XMLElement} elem - The stanza to send.
+     * @param {Element|Builder} stanza - The stanza to send.
      * @param {Function} callback - The callback function for a successful request.
      * @param {Function} errback - The callback function for a failed or timed
      *     out request.  On timeout, the stanza will be null.
@@ -764,20 +793,24 @@ class Connection {
      *     timeout to occur.
      * @return {string} The id used to send the IQ.
      */
-    sendIQ(elem, callback, errback, timeout) {
+    sendIQ(stanza, callback, errback, timeout) {
+        /** @type {TimedHandler} */
         let timeoutHandler = null;
-        if (typeof elem.tree === 'function') {
-            elem = elem.tree();
-        }
-        let id = elem.getAttribute('id');
+
+        const el = stanza instanceof Builder ? stanza.tree() : stanza;
+
+        let id = el.getAttribute('id');
         if (!id) {
             // inject id if not found
             id = this.getUniqueId('sendIQ');
-            elem.setAttribute('id', id);
+            el.setAttribute('id', id);
         }
 
         if (typeof callback === 'function' || typeof errback === 'function') {
             const handler = this.addHandler(
+                /**
+                 * @param {Element} stanza
+                 */
                 (stanza) => {
                     // remove timeout handler if there is one
                     if (timeoutHandler) {
@@ -817,7 +850,7 @@ class Connection {
                 });
             }
         }
-        this.send(elem);
+        this.send(el);
         return id;
     }
 
@@ -825,6 +858,7 @@ class Connection {
      * Queue outgoing data for later sending.  Also ensures that the data
      * is a DOMElement.
      * @private
+     * @param {Element} element
      */
     _queueData(element) {
         if (element === null || !element.tagName || !element.childNodes) {
@@ -862,7 +896,7 @@ class Connection {
      *
      * @param {number} period - The period of the handler.
      * @param {Function} handler - The callback function.
-     * @return {TimeHandler} A reference to the handler that can be used to remove it.
+     * @return {TimedHandler} A reference to the handler that can be used to remove it.
      */
     addTimedHandler(period, handler) {
         const thand = new Strophe.TimedHandler(period, handler);
@@ -883,6 +917,12 @@ class Connection {
         // the handlers during iteration
         this.removeTimeds.push(handRef);
     }
+
+    /**
+     * @typedef {Object} HandlerOptions
+     * @property {boolean} [HandlerOptions.matchBareFromJid]
+     * @property {boolean} [HandlerOptions.ignoreNamespaceFragment]
+     */
 
     /**
      * Add a stanza handler for the connection.
@@ -940,11 +980,10 @@ class Connection {
      * @param {Function} handler - The user callback.
      * @param {string} ns - The namespace to match.
      * @param {string} name - The stanza name to match.
-     * @param {string|Array} type - The stanza type (or types if an array) to match.
+     * @param {string|string[]} type - The stanza type (or types if an array) to match.
      * @param {string} id - The stanza id attribute to match.
-     * @param {string} from - The stanza from attribute to match.
-     * @param {string} options - The handler options
-     *
+     * @param {string} [from] - The stanza from attribute to match.
+     * @param {HandlerOptions} [options] - The handler options
      * @return {Handler} A reference to the handler that can be used to remove it.
      */
     addHandler(handler, ns, name, type, id, from, options) {
@@ -977,28 +1016,28 @@ class Connection {
     /**
      * Register the SASL mechanisms which will be supported by this instance of
      * Strophe.Connection (i.e. which this XMPP client will support).
-     *
-     * @param {Array} mechanisms - Array of objects with Strophe.SASLMechanism prototypes
+     * @param {SASLMechanism[]} mechanisms - Array of objects with Strophe.SASLMechanism prototypes
      */
     registerSASLMechanisms(mechanisms) {
         this.mechanisms = {};
-        mechanisms = mechanisms || [
-            Strophe.SASLAnonymous,
-            Strophe.SASLExternal,
-            Strophe.SASLOAuthBearer,
-            Strophe.SASLXOAuth2,
-            Strophe.SASLPlain,
-            Strophe.SASLSHA1,
-            Strophe.SASLSHA256,
-            Strophe.SASLSHA384,
-            Strophe.SASLSHA512,
-        ];
-        mechanisms.forEach((m) => this.registerSASLMechanism(m));
+        (
+            mechanisms || [
+                Strophe.SASLAnonymous,
+                Strophe.SASLExternal,
+                Strophe.SASLOAuthBearer,
+                Strophe.SASLXOAuth2,
+                Strophe.SASLPlain,
+                Strophe.SASLSHA1,
+                Strophe.SASLSHA256,
+                Strophe.SASLSHA384,
+                Strophe.SASLSHA512,
+            ]
+        ).forEach((m) => this.registerSASLMechanism(m));
     }
 
     /**
      * Register a single SASL mechanism, to be supported by this client.
-     * @param {Object} mechanism - Object with a Strophe.SASLMechanism prototype
+     * @param {any} Mechanism - Object with a Strophe.SASLMechanism prototype
      */
     registerSASLMechanism(Mechanism) {
         const mechanism = new Mechanism();
@@ -1018,7 +1057,7 @@ class Connection {
      * The user supplied connection callback will be notified of the
      * progress as this process happens.
      *
-     * @param {string} reason - The reason the disconnect is occuring.
+     * @param {string} [reason] - The reason the disconnect is occuring.
      */
     disconnect(reason) {
         this._changeConnectStatus(Status.DISCONNECTING, reason);
@@ -1028,7 +1067,7 @@ class Connection {
             Strophe.info('Disconnect was called');
         }
         if (this.connected) {
-            let pres = false;
+            let pres = null;
             this.disconnecting = true;
             if (this.authenticated) {
                 pres = $pres({
@@ -1052,11 +1091,10 @@ class Connection {
     /**
      * _Private_ helper function that makes sure plugins and the user's
      * callback are notified of connection status changes.
-     * @private
      * @param {number} status - the new connection status, one of the values
      *     in Strophe.Status
-     * @param {string} condition - the error condition or null
-     * @param {XMLElement} elem - The triggering stanza.
+     * @param {string|null} [condition] - the error condition
+     * @param {Element} [elem] - The triggering stanza.
      */
     _changeConnectStatus(status, condition, elem) {
         // notify all plugins listening for status changes
@@ -1088,7 +1126,7 @@ class Connection {
      *
      * This is the last piece of the disconnection logic.  This resets the
      * connection and alerts the user's connection callback.
-     * @private
+     * @param {string|null} [condition] - the error condition
      */
     _doDisconnect(condition) {
         if (typeof this._idleTimeout === 'number') {
@@ -1128,14 +1166,13 @@ class Connection {
      * this function handles the incoming data for all requests.  This
      * function also fires stanza handlers that match each incoming
      * stanza.
-     *
-     * @private
-     *
-     * @param {Strophe.Request} req - The request that has data ready.
-     * @param {string} req - The stanza a raw string (optiona).
+     * @param {Element | Request} req - The request that has data ready.
+     * @param {string} [raw] - The stanza as raw string.
      */
     _dataRecv(req, raw) {
-        const elem = this._proto._reqToData(req);
+        const elem = /** @type {Element} */ (
+            '_reqToData' in this._proto ? this._proto._reqToData(/** @type {Request} */ (req)) : req
+        );
         if (elem === null) {
             return;
         }
@@ -1190,40 +1227,50 @@ class Connection {
                 }
                 this._changeConnectStatus(Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.UNKOWN_REASON);
+                this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.UNKNOWN_REASON);
             }
             this._doDisconnect(cond);
             return;
         }
 
         // send each incoming stanza through the handler chain
-        Strophe.forEachChild(elem, null, (child) => {
-            const matches = [];
-            this.handlers = this.handlers.reduce((handlers, handler) => {
-                try {
-                    if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
-                        if (handler.run(child)) {
+        Strophe.forEachChild(
+            elem,
+            null,
+            /** @param {Element} child */
+            (child) => {
+                const matches = [];
+                this.handlers = this.handlers.reduce((handlers, handler) => {
+                    try {
+                        if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
+                            if (handler.run(child)) {
+                                handlers.push(handler);
+                            }
+                            matches.push(handler);
+                        } else {
                             handlers.push(handler);
                         }
-                        matches.push(handler);
-                    } else {
-                        handlers.push(handler);
+                    } catch (e) {
+                        // if the handler throws an exception, we consider it as false
+                        Strophe.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                     }
-                } catch (e) {
-                    // if the handler throws an exception, we consider it as false
-                    Strophe.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+
+                    return handlers;
+                }, []);
+
+                // If no handler was fired for an incoming IQ with type="set",
+                // then we return an IQ error stanza with service-unavailable.
+                if (!matches.length && this.iqFallbackHandler.isMatch(child)) {
+                    this.iqFallbackHandler.run(child);
                 }
-
-                return handlers;
-            }, []);
-
-            // If no handler was fired for an incoming IQ with type="set",
-            // then we return an IQ error stanza with service-unavailable.
-            if (!matches.length && this.iqFallbackHandler.isMatch(child)) {
-                this.iqFallbackHandler.run(child);
             }
-        });
+        );
     }
+
+    /**
+     * @callback connectionCallback
+     * @param {Connection} connection
+     */
 
     /**
      * _Private_ handler for initial connection request.
@@ -1235,12 +1282,11 @@ class Connection {
      * SASL authentication will be attempted if available, otherwise
      * the code will fall back to legacy authentication.
      *
-     * @private
-     *
-     * @param {Strophe.Request} req - The current request.
-     * @param {Function} _callback - low level (xmpp) connect callback function.
+     * @param {Element | Request} req - The current request.
+     * @param {connectionCallback} _callback - low level (xmpp) connect callback function.
      *     Useful for plugins with their own xmpp connect callback (when they
      *     want to do something special).
+     * @param {string} [raw] - The stanza as raw string.
      */
     _connect_cb(req, _callback, raw) {
         Strophe.debug('_connect_cb was called');
@@ -1248,7 +1294,9 @@ class Connection {
 
         let bodyWrap;
         try {
-            bodyWrap = this._proto._reqToData(req);
+            bodyWrap = /** @type {Element} */ (
+                '_reqToData' in this._proto ? this._proto._reqToData(/** @type {Request} */ (req)) : req
+            );
         } catch (e) {
             if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) {
                 throw e;
@@ -1314,7 +1362,7 @@ class Connection {
     /**
      * Sorts an array of objects with prototype SASLMechanism according to
      * their priorities.
-     * @param {Array} mechanisms - Array of SASL mechanisms.
+     * @param {SASLMechanism[]} mechanisms - Array of SASL mechanisms.
      */
     // eslint-disable-next-line  class-methods-use-this
     sortMechanismsByPriority(mechanisms) {
@@ -1344,7 +1392,7 @@ class Connection {
      * SASL authentication will be attempted if available, otherwise
      * the code will fall back to legacy authentication.
      *
-     * @param {Array} matched - Array of SASL mechanisms supported.
+     * @param {SASLMechanism[]} matched - Array of SASL mechanisms supported.
      */
     authenticate(matched) {
         if (!this._attemptSASLAuth(matched)) {
@@ -1357,7 +1405,7 @@ class Connection {
      * with the highest priority (enabled) mechanism.
      *
      * @private
-     * @param {Array} mechanisms - Array of SASL mechanisms.
+     * @param {SASLMechanism[]} mechanisms - Array of SASL mechanisms.
      * @return {Boolean} mechanism_found - true or false, depending on whether a
      *  valid SASL mechanism was found with which authentication could be started.
      */
@@ -1399,7 +1447,7 @@ class Connection {
             });
             if (this._sasl_mechanism.isClientFirst) {
                 const response = this._sasl_mechanism.clientChallenge(this);
-                request_auth_exchange.t(btoa(response));
+                request_auth_exchange.t(btoa(/** @type {string} */ (response)));
             }
             this.send(request_auth_exchange.tree());
             mechanism_found = true;
@@ -1411,14 +1459,13 @@ class Connection {
     /**
      * _Private_ handler for the SASL challenge
      * @private
+     * @param {Element} elem
      */
     async _sasl_challenge_cb(elem) {
         const challenge = atob(getText(elem));
         const response = await this._sasl_mechanism.onChallenge(this, challenge);
         const stanza = $build('response', { 'xmlns': Strophe.NS.SASL });
-        if (response !== '') {
-            stanza.t(btoa(response));
-        }
+        if (response) stanza.t(btoa(response));
         this.send(stanza.tree());
         return true;
     }
@@ -1460,7 +1507,7 @@ class Connection {
      * handle the result
      * @private
      *
-     * @param {XMLElement} elem - The stanza that triggered the callback.
+     * @param {Element} elem - The stanza that triggered the callback.
      * @return {false} `false` to remove the handler.
      */
     // eslint-disable-next-line no-unused-vars
@@ -1490,7 +1537,7 @@ class Connection {
     /**
      * _Private_ handler for succesful SASL authentication.
      * @private
-     * @param {XMLElement} elem - The matching stanza.
+     * @param {Element} elem - The matching stanza.
      * @return {false} `false` to remove the handler.
      */
     _sasl_success_cb(elem) {
@@ -1530,7 +1577,13 @@ class Connection {
             this.deleteHandler(this._sasl_challenge_handler);
             this._sasl_challenge_handler = null;
         }
+        /** @type {Handler[]} */
         const streamfeature_handlers = [];
+
+        /**
+         * @param {Handler[]} handlers
+         * @param {Element} elem
+         */
         const wrapper = (handlers, elem) => {
             while (handlers.length) {
                 this.deleteHandler(handlers.pop());
@@ -1538,12 +1591,21 @@ class Connection {
             this._onStreamFeaturesAfterSASL(elem);
             return false;
         };
+
         streamfeature_handlers.push(
-            this._addSysHandler((elem) => wrapper(streamfeature_handlers, elem), null, 'stream:features', null, null)
+            this._addSysHandler(
+                /** @param {Element} elem */
+                (elem) => wrapper(streamfeature_handlers, elem),
+                null,
+                'stream:features',
+                null,
+                null
+            )
         );
 
         streamfeature_handlers.push(
             this._addSysHandler(
+                /** @param {Element} elem */
                 (elem) => wrapper(streamfeature_handlers, elem),
                 Strophe.NS.STREAM,
                 'features',
@@ -1559,7 +1621,7 @@ class Connection {
 
     /**
      * @private
-     * @param {XMLElement} elem - The matching stanza.
+     * @param {Element} elem - The matching stanza.
      * @return {false} `false` to remove the handler.
      */
     _onStreamFeaturesAfterSASL(elem) {
@@ -1622,7 +1684,7 @@ class Connection {
     /**
      * _Private_ handler for binding result and session start.
      * @private
-     * @param {XMLElement} elem - The matching stanza.
+     * @param {Element} elem - The matching stanza.
      * @return {false} `false` to remove the handler.
      */
     _onResourceBindResultIQ(elem) {
@@ -1689,7 +1751,7 @@ class Connection {
      * Note: The protocol for session establishment has been determined as
      * unnecessary and removed in RFC-6121.
      * @private
-     * @param {XMLElement} elem - The matching stanza.
+     * @param {Element} elem - The matching stanza.
      * @return {false} `false` to remove the handler.
      */
     _onSessionResultIQ(elem) {
@@ -1707,8 +1769,7 @@ class Connection {
 
     /**
      * _Private_ handler for SASL authentication failure.
-     * @private
-     * @param {XMLElement} elem - The matching stanza.
+     * @param {Element} [elem] - The matching stanza.
      * @return {false} `false` to remove the handler.
      */
     _sasl_failure_cb(elem) {
@@ -1733,7 +1794,7 @@ class Connection {
      * This handler is called when the result from the jabber:iq:auth
      * <iq/> stanza is returned.
      * @private
-     * @param {XMLElement} elem - The stanza that triggered the callback.
+     * @param {Element} elem - The stanza that triggered the callback.
      * @return {false} `false` to remove the handler.
      */
     _auth2_cb(elem) {
@@ -1787,7 +1848,6 @@ class Connection {
      *
      * If the graceful disconnect process does not complete within the
      * time allotted, this handler finishes the disconnect anyway.
-     * @private
      * @return {false} `false` to remove the handler.
      */
     _onDisconnectTimeout() {
@@ -1804,7 +1864,6 @@ class Connection {
      *
      * This handler is called every 100ms to fire timed handlers that
      * are ready and keep poll requests going.
-     * @private
      */
     _onIdle() {
         // add timed handlers scheduled for addition
@@ -1850,5 +1909,4 @@ class Connection {
     }
 }
 
-// Separate `export default` line, otherwise JSDoc doesn't render class members
 export default Connection;

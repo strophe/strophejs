@@ -1,16 +1,12 @@
-/*global global*/
+/*global globalThis*/
 
-import './bosh';
-import './websocket';
-import './worker-websocket';
-import * as strophe from './core';
-import * as shims from './shims';
+import Strophe from './core.js';
+import { $build, $msg, $pres, $iq } from './builder.js';
 
-global.$build = strophe.default.$build;
-global.$iq = strophe.default.$iq;
-global.$msg = strophe.default.$msg;
-global.$pres = strophe.default.$pres;
-global.Strophe = strophe.default.Strophe;
-global.Strophe.shims = shims;
+globalThis.$build = $build;
+globalThis.$iq = $iq;
+globalThis.$msg = $msg;
+globalThis.$pres = $pres;
+globalThis.Strophe = Strophe;
 
-export { Strophe, $build, $iq, $msg, $pres } from './core';
+export { $build, $iq, $msg, $pres, Strophe };

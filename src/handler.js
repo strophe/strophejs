@@ -1,5 +1,5 @@
-import { Strophe } from './core';
-import { forEachChild, getBareJidFromJid } from './utils';
+import Strophe from './core.js';
+import { forEachChild, getBareJidFromJid } from './utils.js';
 
 /**
  * _Private_ helper class for managing stanza handlers.
@@ -13,21 +13,24 @@ import { forEachChild, getBareJidFromJid } from './utils';
  * Users will not use Strophe.Handler objects directly, but instead they
  * will use {@link Strophe.Connection.addHandler} and
  * {@link Strophe.Connection.deleteHandler}.
- * @memberof Strophe
  */
 class Handler {
+    /**
+     * @typedef {Object} HandlerOptions
+     * @property {boolean} [HandlerOptions.matchBareFromJid]
+     * @property {boolean} [HandlerOptions.ignoreNamespaceFragment]
+     */
+
     /**
      * Create and initialize a new Strophe.Handler.
      *
      * @param {Function} handler - A function to be executed when the handler is run.
-     * @param {String} ns - The namespace to match.
-     * @param {String} name - The element name to match.
-     * @param {String} type - The element type to match.
-     * @param {String} id - The element id attribute to match.
-     * @param {String} from - The element from attribute to match.
-     * @param {Object} options - Handler options
-     *
-     * @return {Handler}
+     * @param {string} ns - The namespace to match.
+     * @param {string} name - The element name to match.
+     * @param {string|string[]} type - The stanza type (or types if an array) to match.
+     * @param {string} [id] - The element id attribute to match.
+     * @param {string} [from] - The element from attribute to match.
+     * @param {HandlerOptions} [options] - Handler options
      */
     constructor(handler, ns, name, type, id, from, options) {
         this.handler = handler;
@@ -36,12 +39,6 @@ class Handler {
         this.type = type;
         this.id = id;
         this.options = options || { 'matchBareFromJid': false, 'ignoreNamespaceFragment': false };
-        // BBB: Maintain backward compatibility with old `matchBare` option
-        if (this.options.matchBare) {
-            Strophe.warn('The "matchBare" option is deprecated, use "matchBareFromJid" instead.');
-            this.options.matchBareFromJid = this.options.matchBare;
-            delete this.options.matchBare;
-        }
         if (this.options.matchBareFromJid) {
             this.from = from ? getBareJidFromJid(from) : null;
         } else {
@@ -55,7 +52,7 @@ class Handler {
      * Returns the XML namespace attribute on an element.
      * If `ignoreNamespaceFragment` was passed in for this handler, then the
      * URL fragment will be stripped.
-     * @param {XMLElement} elem - The XML element with the namespace.
+     * @param {Element} elem - The XML element with the namespace.
      * @return {string} - The namespace, with optionally the fragment stripped.
      */
     getNamespace(elem) {
@@ -68,7 +65,7 @@ class Handler {
 
     /**
      * Tests if a stanza matches the namespace set for this Strophe.Handler.
-     * @param {XMLElement} elem - The XML element to test.
+     * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     namespaceMatch(elem) {
@@ -76,18 +73,23 @@ class Handler {
         if (!this.ns) {
             return true;
         } else {
-            forEachChild(elem, null, (elem) => {
-                if (this.getNamespace(elem) === this.ns) {
-                    nsMatch = true;
+            forEachChild(
+                elem,
+                null,
+                /** @param {Element} elem */
+                (elem) => {
+                    if (this.getNamespace(elem) === this.ns) {
+                        nsMatch = true;
+                    }
                 }
-            });
+            );
             return nsMatch || this.getNamespace(elem) === this.ns;
         }
     }
 
     /**
      * Tests if a stanza matches the Strophe.Handler.
-     * @param {XMLElement} elem - The XML element to test.
+     * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     isMatch(elem) {
@@ -111,7 +113,7 @@ class Handler {
 
     /**
      * Run the callback on a matching stanza.
-     * @param {XMLElement} elem - The DOM element that triggered the Strophe.Handler.
+     * @param {Element} elem - The DOM element that triggered the Strophe.Handler.
      * @return {boolean} - A boolean indicating if the handler should remain active.
      */
     run(elem) {

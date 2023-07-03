@@ -1,8 +1,13 @@
 /* global btoa */
-import { Strophe } from './core';
-import * as shims from './shims';
+import Strophe from './core.js';
+import * as shims from './shims.js';
 import { ElementType, XHTML } from './constants.js';
+import Builder from './builder.js';
 
+/**
+ * @param {string} str
+ * @return {string}
+ */
 export function utf16to8(str) {
     let out = '';
     const len = str.length;
@@ -32,6 +37,10 @@ export function xorArrayBuffers(x, y) {
     return zIntArray.buffer;
 }
 
+/**
+ * @param {ArrayBufferLike} buffer
+ * @return {string}
+ */
 export function arrayBufToBase64(buffer) {
     // This function is due to mobz (https://stackoverflow.com/users/1234628/mobz)
     // and Emmanuel (https://stackoverflow.com/users/288564/emmanuel)
@@ -44,23 +53,36 @@ export function arrayBufToBase64(buffer) {
     return btoa(binary);
 }
 
+/**
+ * @param {string} str
+ * @return {ArrayBufferLike}
+ */
 export function base64ToArrayBuf(str) {
     return Uint8Array.from(atob(str), (c) => c.charCodeAt(0))?.buffer;
 }
 
+/**
+ * @param {string} str
+ * @return {ArrayBufferLike}
+ */
 export function stringToArrayBuf(str) {
-    const bytes = new TextEncoder('utf-8').encode(str);
+    const bytes = new TextEncoder().encode(str);
     return bytes.buffer;
 }
 
+/**
+ * @param {Cookies} cookies
+ */
 export function addCookies(cookies) {
     if (typeof document === 'undefined') {
         Strophe.log(Strophe.LogLevel.ERROR, `addCookies: not adding any cookies, since there's no document object`);
     }
 
     /**
-     * (Object) cookies - either a map of cookie names
-     *  to string values or to maps of cookie values.
+     * @typedef {Object.<string, string>} Cookie
+     *
+     * A map of cookie names to string values or to maps of cookie values.
+     * @typedef {Cookie|Object.<string, Cookie>} Cookies
      *
      * For example:
      * { "myCookie": "1234" }
@@ -74,8 +96,7 @@ export function addCookies(cookies) {
      *    }
      * }
      *
-     * These values get passed to Strophe.Connection via
-     * options.cookies
+     * These values get passed to {@link Strophe.Connection} via options.cookies
      */
     cookies = cookies || {};
     for (const cookieName in cookies) {
@@ -112,7 +133,7 @@ export function xmlGenerator() {
 /**
  * Creates an XML DOM text node.
  * Provides a cross implementation version of document.createTextNode.
- * @param {String} text - The content of the text node.
+ * @param {string} text - The content of the text node.
  * @return {Text} - A new XML DOM text node.
  */
 export function xmlTextNode(text) {
@@ -121,8 +142,8 @@ export function xmlTextNode(text) {
 
 /**
  * Creates an XML DOM node.
- * @param {String} html - The content of the html node.
- * @param {XMLDocument}
+ * @param {string} html - The content of the html node.
+ * @return {XMLDocument}
  */
 export function xmlHtmlNode(html) {
     const parser = new shims.DOMParser();
@@ -136,50 +157,47 @@ export function xmlHtmlNode(html) {
  * implementations. Note that these are not HTML DOM elements, which
  * aren't appropriate for XMPP stanzas.
  *
- * @param {String} name - The name for the element.
- * @param {Array|Object} attrs - An optional array or object containing
- *    key/value pairs to use as element attributes. The object should
- *    be in the format `{'key': 'value'}` or `{key: 'value'}`. The array
- *    should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
- * @param {String} text - The text child data for the element.
+ * @param {string} name - The name for the element.
+ * @param {Array<Array<string>>|Object} [attrs] - An optional array or object containing
+ *    key/value pairs to use as element attributes.
+ *    The object should be in the format `{'key': 'value'}`.
+ *    The array should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
+ * @param {string|number} [text] - The text child data for the element.
  *
  * @return {Element} A new XML DOM element.
  */
-export function xmlElement(name) {
-    if (!name) {
-        return null;
-    }
+export function xmlElement(name, attrs, text) {
+    if (!name) return null;
 
     const node = xmlGenerator().createElement(name);
-    // FIXME: this should throw errors if args are the wrong type or
-    // there are more than two optional args
-    for (let a = 1; a < arguments.length; a++) {
-        const arg = arguments[a];
-        if (!arg) {
-            continue;
-        }
-        if (typeof arg === 'string' || typeof arg === 'number') {
-            node.appendChild(xmlTextNode(arg));
-        } else if (typeof arg === 'object' && typeof arg.sort === 'function') {
-            for (let i = 0; i < arg.length; i++) {
-                const attr = arg[i];
-                if (
-                    typeof attr === 'object' &&
-                    typeof attr.sort === 'function' &&
-                    attr[1] !== undefined &&
-                    attr[1] !== null
-                ) {
+
+    if (text && (typeof text === 'string' || typeof text === 'number')) {
+        node.appendChild(xmlTextNode(text.toString()));
+    } else if (typeof attrs === 'string' || typeof attrs === 'number') {
+        node.appendChild(xmlTextNode(attrs.toString()));
+        return node;
+    } else if (!attrs) {
+        return node;
+    }
+
+    if (Array.isArray(attrs)) {
+        for (const attr of attrs) {
+            if (Array.isArray(attr)) {
+                // eslint-disable-next-line no-eq-null
+                if (attr[0] != null && attr[1] != null) {
                     node.setAttribute(attr[0], attr[1]);
                 }
             }
-        } else if (typeof arg === 'object') {
-            for (const k in arg) {
-                if (Object.prototype.hasOwnProperty.call(arg, k) && arg[k] !== undefined && arg[k] !== null) {
-                    node.setAttribute(k, arg[k]);
-                }
+        }
+    } else {
+        for (const k of Object.keys(attrs)) {
+            // eslint-disable-next-line no-eq-null
+            if (k && attrs[k] != null) {
+                node.setAttribute(k, attrs[k]);
             }
         }
     }
+
     return node;
 }
 
@@ -189,6 +207,7 @@ export function xmlElement(name) {
  *
  * XHTML tag names are case sensitive and must be lower case.
  * @method Strophe.XHTML.validTag
+ * @param {string} tag
  */
 export function validTag(tag) {
     for (let i = 0; i < XHTML.tags.length; i++) {
@@ -205,6 +224,8 @@ export function validTag(tag) {
  *
  * XHTML attribute names are case sensitive and must be lower case.
  * @method Strophe.XHTML.validAttribute
+ * @param {string} tag
+ * @param {string} attribute
  */
 export function validAttribute(tag, attribute) {
     if (typeof XHTML.attributes[tag] !== 'undefined' && XHTML.attributes[tag].length > 0) {
@@ -219,6 +240,7 @@ export function validAttribute(tag, attribute) {
 
 /**
  * @method Strophe.XHTML.validCSS
+ * @param {string} style
  */
 export function validCSS(style) {
     for (let i = 0; i < XHTML.css.length; i++) {
@@ -230,77 +252,87 @@ export function validCSS(style) {
 }
 
 /**
- * Copy an HTML DOM element into an XML DOM.
+ * Copy an HTML DOM Element into an XML DOM.
  * This function copies a DOM element and all its descendants and returns
  * the new copy.
  * @method Strophe.createHtml
- * @param {Ement} elem - A DOM element.
- * @return {Element} - A new, copied DOM element tree.
+ * @param {HTMLElement} elem - A DOM element.
+ * @return {Node} - A new, copied DOM element tree.
  */
-export function createHtml(elem) {
+function createFromHtmlElement(elem) {
     let el;
-    if (elem.nodeType === ElementType.NORMAL) {
-        const tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
-        if (validTag(tag)) {
-            try {
-                el = xmlElement(tag);
-                for (let i = 0; i < XHTML.attributes[tag].length; i++) {
-                    const attribute = XHTML.attributes[tag][i];
-                    let value = elem.getAttribute(attribute);
-                    if (
-                        typeof value === 'undefined' ||
-                        value === null ||
-                        value === '' ||
-                        value === false ||
-                        value === 0
-                    ) {
-                        continue;
-                    }
-                    if (attribute === 'style' && typeof value === 'object' && typeof value.cssText !== 'undefined') {
-                        value = value.cssText; // we're dealing with IE, need to get CSS out
-                    }
-                    // filter out invalid css styles
-                    if (attribute === 'style') {
-                        const css = [];
-                        const cssAttrs = value.split(';');
-                        for (let j = 0; j < cssAttrs.length; j++) {
-                            const attr = cssAttrs[j].split(':');
-                            const cssName = attr[0].replace(/^\s*/, '').replace(/\s*$/, '').toLowerCase();
-                            if (validCSS(cssName)) {
-                                const cssValue = attr[1].replace(/^\s*/, '').replace(/\s*$/, '');
-                                css.push(cssName + ': ' + cssValue);
-                            }
+    const tag = elem.nodeName.toLowerCase(); // XHTML tags must be lower case.
+    if (validTag(tag)) {
+        try {
+            el = xmlElement(tag);
+            for (let i = 0; i < XHTML.attributes[tag].length; i++) {
+                const attribute = XHTML.attributes[tag][i];
+                let value = elem.getAttribute(attribute);
+
+                if (typeof value === 'undefined' || value === null || value === '') {
+                    continue;
+                }
+
+                if (attribute === 'style' && typeof value === 'object') {
+                    value = /** @type {Object} */ (value).cssText ?? value; // we're dealing with IE, need to get CSS out
+                }
+
+                // filter out invalid css styles
+                if (attribute === 'style') {
+                    const css = [];
+                    const cssAttrs = value.split(';');
+                    for (let j = 0; j < cssAttrs.length; j++) {
+                        const attr = cssAttrs[j].split(':');
+                        const cssName = attr[0].replace(/^\s*/, '').replace(/\s*$/, '').toLowerCase();
+                        if (validCSS(cssName)) {
+                            const cssValue = attr[1].replace(/^\s*/, '').replace(/\s*$/, '');
+                            css.push(cssName + ': ' + cssValue);
                         }
-                        if (css.length > 0) {
-                            value = css.join('; ');
-                            el.setAttribute(attribute, value);
-                        }
-                    } else {
+                    }
+                    if (css.length > 0) {
+                        value = css.join('; ');
                         el.setAttribute(attribute, value);
                     }
+                } else {
+                    el.setAttribute(attribute, value);
                 }
-                for (let i = 0; i < elem.childNodes.length; i++) {
-                    el.appendChild(createHtml(elem.childNodes[i]));
-                }
-            } catch (e) {
-                // invalid elements
-                el = xmlTextNode('');
             }
-        } else {
-            el = xmlGenerator().createDocumentFragment();
             for (let i = 0; i < elem.childNodes.length; i++) {
                 el.appendChild(createHtml(elem.childNodes[i]));
             }
+        } catch (e) {
+            // invalid elements
+            el = xmlTextNode('');
         }
-    } else if (elem.nodeType === ElementType.FRAGMENT) {
+    } else {
         el = xmlGenerator().createDocumentFragment();
         for (let i = 0; i < elem.childNodes.length; i++) {
             el.appendChild(createHtml(elem.childNodes[i]));
         }
-    } else if (elem.nodeType === ElementType.TEXT) {
-        el = xmlTextNode(elem.nodeValue);
     }
     return el;
+}
+
+/**
+ * Copy an HTML DOM Node into an XML DOM.
+ * This function copies a DOM element and all its descendants and returns
+ * the new copy.
+ * @method Strophe.createHtml
+ * @param {Node} node - A DOM element.
+ * @return {Node} - A new, copied DOM element tree.
+ */
+export function createHtml(node) {
+    if (node.nodeType === ElementType.NORMAL) {
+        return createFromHtmlElement(/** @type {HTMLElement} */ (node));
+    } else if (node.nodeType === ElementType.FRAGMENT) {
+        const el = xmlGenerator().createDocumentFragment();
+        for (let i = 0; i < node.childNodes.length; i++) {
+            el.appendChild(createHtml(node.childNodes[i]));
+        }
+        return el;
+    } else if (node.nodeType === ElementType.TEXT) {
+        return xmlTextNode(node.nodeValue);
+    }
 }
 
 /**
@@ -309,25 +341,26 @@ export function createHtml(elem) {
  * This function copies a DOM element and all its descendants and returns
  * the new copy.
  * @method Strophe.copyElement
- * @param {Element} elem - A DOM element.
- * @return {Element} - A new, copied DOM element tree.
+ * @param {Node} node - A DOM element.
+ * @return {Element|Text} - A new, copied DOM element tree.
  */
-export function copyElement(elem) {
-    let el;
-    if (elem.nodeType === ElementType.NORMAL) {
-        el = xmlElement(elem.tagName);
+export function copyElement(node) {
+    let out;
 
-        for (let i = 0; i < elem.attributes.length; i++) {
-            el.setAttribute(elem.attributes[i].nodeName, elem.attributes[i].value);
-        }
+    if (node.nodeType === ElementType.NORMAL) {
+        const el = /** @type {Element} */ (node);
+        out = xmlElement(el.tagName);
 
-        for (let i = 0; i < elem.childNodes.length; i++) {
-            el.appendChild(copyElement(elem.childNodes[i]));
+        for (let i = 0; i < el.attributes.length; i++) {
+            out.setAttribute(el.attributes[i].nodeName, el.attributes[i].value);
         }
-    } else if (elem.nodeType === ElementType.TEXT) {
-        el = xmlGenerator().createTextNode(elem.nodeValue);
+        for (let i = 0; i < el.childNodes.length; i++) {
+            out.appendChild(copyElement(el.childNodes[i]));
+        }
+    } else if (node.nodeType === ElementType.TEXT) {
+        out = xmlGenerator().createTextNode(node.nodeValue);
     }
-    return el;
+    return out;
 }
 
 /**
@@ -348,7 +381,7 @@ export function xmlescape(text) {
 /**
  * Unexcapes invalid xml characters.
  * @method Strophe.xmlunescape
- * @param {String} text - text to unescape.
+ * @param {string} text - text to unescape.
  * @return {string} - Unescaped text.
  */
 export function xmlunescape(text) {
@@ -363,31 +396,29 @@ export function xmlunescape(text) {
 /**
  * Render a DOM element and all descendants to a String.
  * @method Strophe.serialize
- * @param {XMLElement} elem - A DOM element.
+ * @param {Element|Builder} elem - A DOM element.
  * @return {string} - The serialized element tree as a String.
  */
 export function serialize(elem) {
-    if (!elem) {
-        return null;
-    }
-    if (typeof elem.tree === 'function') {
-        elem = elem.tree();
-    }
-    const names = [...Array(elem.attributes.length).keys()].map((i) => elem.attributes[i].nodeName);
+    if (!elem) return null;
+
+    const el = elem instanceof Builder ? elem.tree() : elem;
+
+    const names = [...Array(el.attributes.length).keys()].map((i) => el.attributes[i].nodeName);
     names.sort();
     let result = names.reduce(
-        (a, n) => `${a} ${n}="${xmlescape(elem.attributes.getNamedItem(n).value)}"`,
-        `<${elem.nodeName}`
+        (a, n) => `${a} ${n}="${xmlescape(el.attributes.getNamedItem(n).value)}"`,
+        `<${el.nodeName}`
     );
 
-    if (elem.childNodes.length > 0) {
+    if (el.childNodes.length > 0) {
         result += '>';
-        for (let i = 0; i < elem.childNodes.length; i++) {
-            const child = elem.childNodes[i];
+        for (let i = 0; i < el.childNodes.length; i++) {
+            const child = el.childNodes[i];
             switch (child.nodeType) {
                 case ElementType.NORMAL:
                     // normal element, so recurse
-                    result += serialize(child);
+                    result += serialize(/** @type {Element} */ (child));
                     break;
                 case ElementType.TEXT:
                     // text element to escape values
@@ -398,7 +429,7 @@ export function serialize(elem) {
                     result += '<![CDATA[' + child.nodeValue + ']]>';
             }
         }
-        result += '</' + elem.nodeName + '>';
+        result += '</' + el.nodeName + '>';
     } else {
         result += '/>';
     }
@@ -414,8 +445,8 @@ export function serialize(elem) {
  * whose tag names match elemName will be passed.
  *
  * @method Strophe.forEachChild
- * @param {XMLElement} elem - The element to operate on.
- * @param {String} elemName - The child element tag name filter.
+ * @param {Element} elem - The element to operate on.
+ * @param {string} elemName - The child element tag name filter.
  * @param {Function} func - The function to apply to each child.  This
  *    function should take a single argument, a DOM element.
  */
@@ -430,11 +461,10 @@ export function forEachChild(elem, elemName, func) {
 
 /**
  * Compare an element's tag name with a string.
- *
  * This function is case sensitive.
  * @method Strophe.isTagEqual
- * @param {XMLElement} el - A DOM element.
- * @param {String} name - The element name.
+ * @param {Element} el - A DOM element.
+ * @param {string} name - The element name.
  * @return {boolean}
  *  true if the element's tag name matches _el_, and false
  *  otherwise.
@@ -445,9 +475,8 @@ export function isTagEqual(el, name) {
 
 /**
  * Get the concatenation of all text children of an element.
- *
  * @method Strophe.getText
- * @param {XMLElement} elem - A DOM element.
+ * @param {Element} elem - A DOM element.
  * @return {string} - A String with the concatenated text of all text element children.
  */
 export function getText(elem) {
@@ -469,9 +498,8 @@ export function getText(elem) {
 
 /**
  * Escape the node part (also called local part) of a JID.
- *
  * @method Strophe.escapeNode
- * @param {String} node - A node (or local part).
+ * @param {string} node - A node (or local part).
  * @return {string} An escaped node (or local part).
  */
 export function escapeNode(node) {
@@ -494,9 +522,8 @@ export function escapeNode(node) {
 
 /**
  * Unescape a node part (also called local part) of a JID.
- *
  * @method Strophe.unescapeNode
- * @param {String} node - A node (or local part).
+ * @param {string} node - A node (or local part).
  * @return {string} An unescaped node (or local part).
  */
 export function unescapeNode(node) {
@@ -532,7 +559,7 @@ export function getNodeFromJid(jid) {
 /**
  * Get the domain portion of a JID String.
  * @method Strophe.getDomainFromJid
- * @param {String} jid - A JID.
+ * @param {string} jid - A JID.
  * @return {string} - A String containing the domain.
  */
 export function getDomainFromJid(jid) {

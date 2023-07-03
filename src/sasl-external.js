@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("./connection.js").default} Connection
+ */
+
 import SASLMechanism from './sasl.js';
 
 class SASLExternal extends SASLMechanism {
@@ -13,6 +17,9 @@ class SASLExternal extends SASLMechanism {
         super(mechname, isClientFirst, priority);
     }
 
+    /**
+     * @param {Connection} connection
+     */
     // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         /* According to XEP-178, an authzid SHOULD NOT be presented when the

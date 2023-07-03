@@ -1,7 +1,7 @@
 {
   "name": "strophe.js",
   "description": "Strophe.js is an XMPP library for JavaScript",
-  "version": "1.6.2",
+  "version": "2.0.0",
   "homepage": "http://strophe.im/strophejs",
   "repository": {
     "type": "git",
@@ -41,12 +41,14 @@
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
   "scripts": {
-    "build": "npx rollup -c",
+    "types": "tsc",
+    "build": "rollup -c",
     "lint": "eslint src/*.js tests/tests.js",
     "clean": "make clean",
     "doc": "make doc",
     "test-node": "qunit --require ./tests/node tests/",
-    "test": "npm run test-node && karma start && npm run lint",
+    "test-browser": "karma start",
+    "test": "npm run test-node && npm run test-browser && npm run lint",
     "prettier": "prettier --write src/*.js"
   },
   "volo": {

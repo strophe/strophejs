@@ -6,8 +6,6 @@
  *
  * Usually these will be supplied in nodejs by conditionally requiring a
  * NPM module that provides a compatible implementation.
- *
- * @module shims
  */
 
 /* global global */
@@ -63,33 +61,6 @@ function getDOMParserImplementation() {
 export const DOMParser = getDOMParserImplementation();
 
 /**
- *  Gets IE xml doc object. Used by getDummyXMLDocument shim.
- *  See Also:
- *    http://msdn.microsoft.com/en-us/library/ms757837%28VS.85%29.aspx
- *  @return {Object} A Microsoft XML DOM Object
- */
-function _getIEXmlDom() {
-    const docStrings = [
-        'Msxml2.DOMDocument.6.0',
-        'Msxml2.DOMDocument.5.0',
-        'Msxml2.DOMDocument.4.0',
-        'MSXML2.DOMDocument.3.0',
-        'MSXML2.DOMDocument',
-        'MSXML.DOMDocument',
-        'Microsoft.XMLDOM',
-    ];
-    for (let d = 0; d < docStrings.length; d++) {
-        try {
-            // eslint-disable-next-line no-undef
-            const doc = new ActiveXObject(docStrings[d]);
-            return doc;
-        } catch (e) {
-            // Try next one
-        }
-    }
-}
-
-/**
  * Creates a dummy XML DOM document to serve as an element and text node generator.
  *
  * Used implementations:
@@ -99,8 +70,8 @@ function _getIEXmlDom() {
  *  - nodejs: use '@xmldom/xmldom'
  */
 export function getDummyXMLDOMDocument() {
-    // nodejs
     if (typeof document === 'undefined') {
+        // NodeJS
         try {
             const DOMImplementation = require('@xmldom/xmldom').DOMImplementation;
             return new DOMImplementation().createDocument('jabber:client', 'strophe', null);
@@ -108,15 +79,5 @@ export function getDummyXMLDOMDocument() {
             throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
         }
     }
-    // IE < 10
-    if (
-        document.implementation.createDocument === undefined ||
-        (document.implementation.createDocument && document.documentMode && document.documentMode < 10)
-    ) {
-        const doc = _getIEXmlDom();
-        doc.appendChild(doc.createElement('strophe'));
-        return doc;
-    }
-    // All other supported browsers
     return document.implementation.createDocument('jabber:client', 'strophe', null);
 }
