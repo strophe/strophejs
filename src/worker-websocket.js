@@ -1,29 +1,24 @@
-/*
-    This program is distributed under the terms of the MIT license.
-    Please see the LICENSE file for details.
-    Copyright 2020, JC Brand
-*/
+/**
+ * @license MIT
+ * @copyright JC Brand
+ */
 
-import './websocket.js';
-import { $build, Strophe } from './core.js';
+/**
+ * @typedef {import("./connection.js").default} Connection
+ * @typedef {import("./builder.js").default} Builder
+ */
 
-const lmap = {};
-lmap['debug'] = Strophe.LogLevel.DEBUG;
-lmap['info'] = Strophe.LogLevel.INFO;
-lmap['warn'] = Strophe.LogLevel.WARN;
-lmap['error'] = Strophe.LogLevel.ERROR;
-lmap['fatal'] = Strophe.LogLevel.FATAL;
+import Websocket from './websocket.js';
+import { $build } from './builder.js';
+import Strophe from './core.js';
 
 /**
  * Helper class that handles a websocket connection inside a shared worker.
- * @memberof Strophe
  */
-class WorkerWebsocket extends Strophe.Websocket {
+class WorkerWebsocket extends Websocket {
     /**
-     * PrivateConstructor: Strophe.WorkerWebsocket
      * Create and initialize a Strophe.WorkerWebsocket object.
-     * @param {Strophe.Connection} connection - The Strophe.Connection
-     * @return {WorkerWebsocket} - A new Strophe.WorkerWebsocket object.
+     * @param {Connection} connection - The Strophe.Connection
      */
     constructor(connection) {
         super(connection);
@@ -35,20 +30,36 @@ class WorkerWebsocket extends Strophe.Websocket {
         };
     }
 
-    get socket() {
-        return {
-            'send': (str) => this.worker.port.postMessage(['send', str]),
+    /**
+     * @private
+     */
+    _setSocket() {
+        this.socket = {
+            /** @param {string} str */
+            send: (str) => this.worker.port.postMessage(['send', str]),
+            close: () => this.worker.port.postMessage(['_closeSocket']),
+            onopen: () => {},
+            onerror: () => (e) => this._onError(e),
+            onclose: () => (e) => this._onClose(e),
+            onmessage: () => {},
+            readyState: null,
         };
     }
 
     _connect() {
+        this._setSocket();
         this._messageHandler = (m) => this._onInitialMessage(m);
         this.worker.port.start();
         this.worker.port.onmessage = (ev) => this._onWorkerMessage(ev);
         this.worker.port.postMessage(['_connect', this._conn.service, this._conn.jid]);
     }
 
+    /**
+     * @param {Function} callback
+     */
     _attach(callback) {
+        this._setSocket();
+
         this._messageHandler = (m) => this._onMessage(m);
         this._conn.connect_callback = callback;
         this.worker.port.start();
@@ -56,6 +67,10 @@ class WorkerWebsocket extends Strophe.Websocket {
         this.worker.port.postMessage(['_attach', this._conn.service]);
     }
 
+    /**
+     * @param {number} status
+     * @param {string} jid
+     */
     _attachCallback(status, jid) {
         if (status === Strophe.Status.ATTACHED) {
             this._conn.jid = jid;
@@ -71,7 +86,10 @@ class WorkerWebsocket extends Strophe.Websocket {
         }
     }
 
-    _disconnect(readyState, pres) {
+    /**
+     * @param {Element|Builder} pres - This stanza will be sent before disconnecting.
+     */
+    _disconnect(pres) {
         pres && this._conn.send(pres);
         const close = $build('close', { 'xmlns': Strophe.NS.FRAMING });
         this._conn.xmlOutput(close.tree());
@@ -81,36 +99,15 @@ class WorkerWebsocket extends Strophe.Websocket {
         this._conn._doDisconnect();
     }
 
-    _onClose(e) {
-        if (this._conn.connected && !this._conn.disconnecting) {
-            Strophe.error('Websocket closed unexpectedly');
-            this._conn._doDisconnect();
-        } else if (e && e.code === 1006 && !this._conn.connected) {
-            // in case the onError callback was not called (Safari 10 does not
-            // call onerror when the initial connection fails) we need to
-            // dispatch a CONNFAIL status update to be consistent with the
-            // behavior on other browsers.
-            Strophe.error('Websocket closed unexcectedly');
-            this._conn._changeConnectStatus(
-                Strophe.Status.CONNFAIL,
-                'The WebSocket connection could not be established or was disconnected.'
-            );
-            this._conn._doDisconnect();
-        } else {
-            Strophe.debug('Websocket closed');
-        }
-    }
-
     _closeSocket() {
-        this.worker.port.postMessage(['_closeSocket']);
+        this.socket.close();
     }
 
     /**
      * Called by _onInitialMessage in order to replace itself with the general message handler.
-     * This method is overridden by Strophe.WorkerWebsocket, which manages a
+     * This method is overridden by WorkerWebsocket, which manages a
      * websocket connection via a service worker and doesn't have direct access
      * to the socket.
-     * @private
      */
     _replaceMessageHandler() {
         this._messageHandler = (m) => this._onMessage(m);
@@ -119,8 +116,17 @@ class WorkerWebsocket extends Strophe.Websocket {
     /**
      * function that handles messages received from the service worker
      * @private
+     * @param {MessageEvent} ev
      */
     _onWorkerMessage(ev) {
+        /** @type {Object.<string, number>} */
+        const lmap = {};
+        lmap['debug'] = Strophe.LogLevel.DEBUG;
+        lmap['info'] = Strophe.LogLevel.INFO;
+        lmap['warn'] = Strophe.LogLevel.WARN;
+        lmap['error'] = Strophe.LogLevel.ERROR;
+        lmap['fatal'] = Strophe.LogLevel.FATAL;
+
         const { data } = ev;
         const method_name = data[0];
         if (method_name === '_onMessage') {
@@ -141,4 +147,4 @@ class WorkerWebsocket extends Strophe.Websocket {
     }
 }
 
-Strophe.WorkerWebsocket = WorkerWebsocket;
+export default WorkerWebsocket;

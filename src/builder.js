@@ -5,7 +5,7 @@ import { copyElement, createHtml, serialize, xmlElement, xmlGenerator, xmlTextNo
  * Create a {@link Strophe.Builder}
  * This is an alias for `new Strophe.Builder(name, attrs)`.
  * @param {string} name - The root element name.
- * @param {Object} attrs - The attributes for the root element in object notation.
+ * @param {Object.<string,string|number>} attrs - The attributes for the root element in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $build(name, attrs) {
@@ -14,7 +14,7 @@ export function $build(name, attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with a `<message/>` element as the root.
- * @param {Object} attrs - The <message/> element attributes in object notation.
+ * @param {Object.<string,string>} attrs - The <message/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $msg(attrs) {
@@ -23,7 +23,7 @@ export function $msg(attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with an `<iq/>` element as the root.
- * @param {Object} attrs - The <iq/> element attributes in object notation.
+ * @param {Object.<string,string>} attrs - The <iq/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $iq(attrs) {
@@ -32,7 +32,7 @@ export function $iq(attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with a `<presence/>` element as the root.
- * @param {Object} attrs - The <presence/> element attributes in object notation.
+ * @param {Object.<string,string>} attrs - The <presence/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $pres(attrs) {
@@ -66,15 +66,17 @@ export function $pres(attrs) {
  *  //      <example/>
  *  //    </query>
  *  //  </iq>
- *
- * @memberof Strophe
  */
 class Builder {
     /**
+     * @typedef {Object.<string, string|number>} StanzaAttrs
+     * @property {string} [StanzaAttrs.xmlns]
+     */
+
+    /**
      * The attributes should be passed in object notation.
      * @param {string} name - The name of the root element.
-     * @param {Object} attrs - The attributes for the root element in object notation.
-     * @return {Builder} A new Strophe.Builder
+     * @param {StanzaAttrs} attrs - The attributes for the root element in object notation.
      * @example const b = new Builder('message', {to: 'you', from: 'me'});
      * @example const b = new Builder('messsage', {'xml:lang': 'en'});
      */
@@ -129,7 +131,7 @@ class Builder {
      * @return {Builder} The Strophe.Builder object.
      */
     up() {
-        this.node = this.node.parentNode;
+        this.node = this.node.parentElement;
         return this;
     }
 
@@ -153,8 +155,7 @@ class Builder {
      * The attributes should be passed in object notation.  This function
      * does not move the current element pointer.
      *
-     * @param {Object} moreattrs - The attributes to add/modify in object notation.
-     *
+     * @param {Object.<string, string|number>} moreattrs - The attributes to add/modify in object notation.
      * @return {Builder} The Strophe.Builder object.
      */
     attrs(moreattrs) {
@@ -163,7 +164,7 @@ class Builder {
                 if (moreattrs[k] === undefined) {
                     this.node.removeAttribute(k);
                 } else {
-                    this.node.setAttribute(k, moreattrs[k]);
+                    this.node.setAttribute(k, moreattrs[k].toString());
                 }
             }
         }
@@ -179,8 +180,8 @@ class Builder {
      * is necessary to use up() to go back to the parent in the tree.
      *
      * @param {string} name - The name of the child.
-     * @param {Object} attrs - The attributes of the child in object notation.
-     * @param {string} text - The text to add to the child.
+     * @param {Object.<string, string>} [attrs] - The attributes of the child in object notation.
+     * @param {string} [text] - The text to add to the child.
      *
      * @return {Builder} The Strophe.Builder object.
      */
@@ -201,8 +202,7 @@ class Builder {
      * name and an attributes object to create the child it uses an
      * existing DOM element object.
      *
-     * @param {XMLElement} elem - A DOM element.
-     *
+     * @param {Element} elem - A DOM element.
      * @return {Builder} The Strophe.Builder object.
      */
     cnode(elem) {
@@ -213,9 +213,10 @@ class Builder {
         } catch (e) {
             impNode = false;
         }
+
         const newElem = impNode ? xmlGen.importNode(elem, true) : copyElement(elem);
         this.node.appendChild(newElem);
-        this.node = newElem;
+        this.node = /** @type {Element} */ (newElem);
         return this;
     }
 

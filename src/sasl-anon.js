@@ -1,3 +1,6 @@
+/**
+ * @typedef {import("./connection.js").default} Connection
+ */
 import SASLMechanism from './sasl.js';
 
 class SASLAnonymous extends SASLMechanism {
@@ -8,6 +11,9 @@ class SASLAnonymous extends SASLMechanism {
         super(mechname, isClientFirst, priority);
     }
 
+    /**
+     * @param {Connection} connection
+     */
     // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.authcid === null;

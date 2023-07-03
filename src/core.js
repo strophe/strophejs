@@ -1,8 +1,6 @@
-/**
- * @module core
- */
-import * as utils from './utils';
-import Builder, { $build, $msg, $pres, $iq } from './builder.js';
+import * as utils from './utils.js';
+import Builder from './builder.js';
+import * as shims from './shims.js';
 import Connection from './connection.js';
 import Handler from './handler.js';
 import SASLAnonymous from './sasl-anon.js';
@@ -17,6 +15,10 @@ import SASLSHA512 from './sasl-sha512.js';
 import SASLXOAuth2 from './sasl-xoauth2.js';
 import TimedHandler from './timed-handler.js';
 import { ElementType, ErrorCondition, LogLevel, NS, Status, XHTML } from './constants.js';
+import Request from './request.js';
+import Bosh from './bosh.js';
+import Websocket from './websocket.js';
+import WorkerWebsocket from './worker-websocket.js';
 
 /**
  * A container for all Strophe library functions.
@@ -26,10 +28,58 @@ import { ElementType, ErrorCondition, LogLevel, NS, Status, XHTML } from './cons
  * provide a namespace for library objects, constants, and functions.
  *
  * @namespace Strophe
+ * @property {Handler} Handler
+ * @property {Builder} Builder
+ * @property {Request} Request Represents HTTP Requests made for a BOSH connection
+ * @property {Bosh} Bosh Support for XMPP-over-HTTP via XEP-0124 (BOSH)
+ * @property {Websocket} Websocket Support for XMPP over websocket
+ * @property {WorkerWebsocket} WorkerWebsocket Support for XMPP over websocket in a shared worker
+ * @property {number} TIMEOUT=1.1 Timeout multiplier. A waiting BOSH HTTP request
+ *  will be considered failed after Math.floor(TIMEOUT * wait) seconds have elapsed.
+ *  This defaults to 1.1, and with default wait, 66 seconds.
+ * @property {number} SECONDARY_TIMEOUT=0.1 Secondary timeout multiplier.
+ *  In cases where Strophe can detect early failure, it will consider the request
+ *  failed if it doesn't return after `Math.floor(SECONDARY_TIMEOUT * wait)`
+ *  seconds have elapsed. This defaults to 0.1, and with default wait, 6 seconds.
+ * @property {SASLAnonymous} SASLAnonymous SASL ANONYMOUS authentication.
+ * @property {SASLPlain} SASLPlain SASL PLAIN authentication
+ * @property {SASLSHA1} SASLSHA1 SASL SCRAM-SHA-1 authentication
+ * @property {SASLSHA256} SASLSHA256 SASL SCRAM-SHA-256 authentication
+ * @property {SASLSHA384} SASLSHA384 SASL SCRAM-SHA-384 authentication
+ * @property {SASLSHA512} SASLSHA512 SASL SCRAM-SHA-512 authentication
+ * @property {SASLOAuthBearer} SASLOAuthBearer SASL OAuth Bearer authentication
+ * @property {SASLExternal} SASLExternal SASL EXTERNAL authentication
+ * @property {SASLXOAuth2} SASLXOAuth2 SASL X-OAuth2 authentication
+ * @property {Status} Status
+ * @property {Object.<string, string>} NS
+ * @property {XHTML} XHTML
  */
 const Strophe = {
     /** @constant: VERSION */
     VERSION: '1.6.1',
+
+    TIMEOUT: 1.1,
+    SECONDARY_TIMEOUT: 0.1,
+
+    shims,
+
+    Request,
+
+    // Transports
+    Bosh,
+    Websocket,
+    WorkerWebsocket,
+
+    // Available authentication mechanisms
+    SASLAnonymous,
+    SASLPlain,
+    SASLSHA1,
+    SASLSHA256,
+    SASLSHA384,
+    SASLSHA512,
+    SASLOAuthBearer,
+    SASLExternal,
+    SASLXOAuth2,
 
     Builder,
     Connection,
@@ -37,8 +87,10 @@ const Strophe = {
     ErrorCondition,
     Handler,
     LogLevel,
+    /** @type {Object.<string, string>} */
     NS,
     SASLMechanism,
+    /** @type {Status} */
     Status,
     TimedHandler,
     ...utils,
@@ -67,22 +119,13 @@ const Strophe = {
     /**
      * _Private_ function that properly logs an error to the console
      * @private
+     * @param {Error} e
      */
     _handleError(e) {
         if (typeof e.stack !== 'undefined') {
             Strophe.fatal(e.stack);
         }
-        if (e.sourceURL) {
-            Strophe.fatal(
-                'error: ' + this.handler + ' ' + e.sourceURL + ':' + e.line + ' - ' + e.name + ': ' + e.message
-            );
-        } else if (e.fileName) {
-            Strophe.fatal(
-                'error: ' + this.handler + ' ' + e.fileName + ':' + e.lineNumber + ' - ' + e.name + ': ' + e.message
-            );
-        } else {
-            Strophe.fatal('error: ' + e.message);
-        }
+        Strophe.fatal('error: ' + e.message);
     },
 
     /**
@@ -170,6 +213,7 @@ const Strophe = {
      * _Private_ variable Used to store plugin names that need
      * initialization on Strophe.Connection construction.
      * @private
+     * @type {Object.<string, Object>}
      */
     _connectionPlugins: {},
 
@@ -183,37 +227,4 @@ const Strophe = {
     },
 };
 
-/**
- * Available authentication mechanisms
- *
- * - Strophe.SASLAnonymous   - SASL ANONYMOUS authentication.
- * - Strophe.SASLPlain       - SASL PLAIN authentication.
- * - Strophe.SASLSHA1        - SASL SCRAM-SHA-1 authentication
- * - Strophe.SASLSHA256      - SASL SCRAM-SHA-256 authentication
- * - Strophe.SASLSHA384      - SASL SCRAM-SHA-384 authentication
- * - Strophe.SASLSHA512      - SASL SCRAM-SHA-512 authentication
- * - Strophe.SASLOAuthBearer - SASL OAuth Bearer authentication
- * - Strophe.SASLExternal    - SASL EXTERNAL authentication
- * - Strophe.SASLXOAuth2     - SASL X-OAuth2 authentication
- */
-Strophe.SASLAnonymous = SASLAnonymous;
-Strophe.SASLPlain = SASLPlain;
-Strophe.SASLSHA1 = SASLSHA1;
-Strophe.SASLSHA256 = SASLSHA256;
-Strophe.SASLSHA384 = SASLSHA384;
-Strophe.SASLSHA512 = SASLSHA512;
-Strophe.SASLOAuthBearer = SASLOAuthBearer;
-Strophe.SASLExternal = SASLExternal;
-Strophe.SASLXOAuth2 = SASLXOAuth2;
-
-export { Strophe };
-
-export { $build, $iq, $msg, $pres } from './builder.js';
-
-export default {
-    'Strophe': Strophe,
-    '$build': $build,
-    '$iq': $iq,
-    '$msg': $msg,
-    '$pres': $pres,
-};
+export default Strophe;

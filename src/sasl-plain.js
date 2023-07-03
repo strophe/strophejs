@@ -1,3 +1,6 @@
+/**
+ * @typedef {import("./connection.js").default} Connection
+ */
 import SASLMechanism from './sasl.js';
 import utils from './utils';
 
@@ -9,11 +12,17 @@ class SASLPlain extends SASLMechanism {
         super(mechname, isClientFirst, priority);
     }
 
+    /**
+     * @param {Connection} connection
+     */
     // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.authcid !== null;
     }
 
+    /**
+     * @param {Connection} connection
+     */
     // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         const { authcid, authzid, domain, pass } = connection;

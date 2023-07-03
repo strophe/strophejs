@@ -1,24 +1,24 @@
 /**
  * Common namespace constants from the XMPP RFCs and XEPs.
  *
- * - Strophe.NS.HTTPBIND - HTTP BIND namespace from XEP 124.
- * - Strophe.NS.BOSH - BOSH namespace from XEP 206.
- * - Strophe.NS.CLIENT - Main XMPP client namespace.
- * - Strophe.NS.AUTH - Legacy authentication namespace.
- * - Strophe.NS.ROSTER - Roster operations namespace.
- * - Strophe.NS.PROFILE - Profile namespace.
- * - Strophe.NS.DISCO_INFO - Service discovery info namespace from XEP 30.
- * - Strophe.NS.DISCO_ITEMS - Service discovery items namespace from XEP 30.
- * - Strophe.NS.MUC - Multi-User Chat namespace from XEP 45.
- * - Strophe.NS.SASL - XMPP SASL namespace from RFC 3920.
- * - Strophe.NS.STREAM - XMPP Streams namespace from RFC 3920.
- * - Strophe.NS.BIND - XMPP Binding namespace from RFC 3920 and RFC 6120.
- * - Strophe.NS.SESSION - XMPP Session namespace from RFC 3920.
- * - Strophe.NS.XHTML_IM - XHTML-IM namespace from XEP 71.
- * - Strophe.NS.XHTML - XHTML body namespace from XEP 71.
- *
- * @namespace NS
- * @memberof Strophe
+ * @typedef { Object } NS
+ * @property {string} NS.HTTPBIND - HTTP BIND namespace from XEP 124.
+ * @property {string} NS.BOSH - BOSH namespace from XEP 206.
+ * @property {string} NS.CLIENT - Main XMPP client namespace.
+ * @property {string} NS.AUTH - Legacy authentication namespace.
+ * @property {string} NS.ROSTER - Roster operations namespace.
+ * @property {string} NS.PROFILE - Profile namespace.
+ * @property {string} NS.DISCO_INFO - Service discovery info namespace from XEP 30.
+ * @property {string} NS.DISCO_ITEMS - Service discovery items namespace from XEP 30.
+ * @property {string} NS.MUC - Multi-User Chat namespace from XEP 45.
+ * @property {string} NS.SASL - XMPP SASL namespace from RFC 3920.
+ * @property {string} NS.STREAM - XMPP Streams namespace from RFC 3920.
+ * @property {string} NS.BIND - XMPP Binding namespace from RFC 3920 and RFC 6120.
+ * @property {string} NS.SESSION - XMPP Session namespace from RFC 3920.
+ * @property {string} NS.XHTML_IM - XHTML-IM namespace from XEP 71.
+ * @property {string} NS.XHTML - XHTML body namespace from XEP 71.
+ * @property {string} NS.STANZAS
+ * @property {string} NS.FRAMING
  */
 export const NS = {
     HTTPBIND: 'http://jabber.org/protocol/httpbind',
@@ -46,8 +46,11 @@ export const NS = {
  * Used in the {@link Strophe.createHtml} function to filter incoming html into the allowed XHTML-IM subset.
  * See [XEP-0071](http://xmpp.org/extensions/xep-0071.html#profile-summary) for the list of recommended
  * allowed tags and their attributes.
- * @namespace XHTML
- * @memberof Strophe
+ *
+ * @typedef {Object} XHTML
+ * @property {Array} XHTML.tags
+ * @property {Object} XHTML.attributes
+ * @property {Array} XHTML.css
  */
 export const XHTML = {
     tags: ['a', 'blockquote', 'br', 'cite', 'em', 'img', 'li', 'ol', 'p', 'span', 'strong', 'ul', 'body'],
@@ -80,24 +83,25 @@ export const XHTML = {
     ],
 };
 
+/** @typedef {number} connstatus */
+
 /**
  * Connection status constants for use by the connection handler
  * callback.
  *
- * - Strophe.Status.ERROR - An error has occurred
- * - Strophe.Status.CONNECTING - The connection is currently being made
- * - Strophe.Status.CONNFAIL - The connection attempt failed
- * - Strophe.Status.AUTHENTICATING - The connection is authenticating
- * - Strophe.Status.AUTHFAIL - The authentication attempt failed
- * - Strophe.Status.CONNECTED - The connection has succeeded
- * - Strophe.Status.DISCONNECTED - The connection has been terminated
- * - Strophe.Status.DISCONNECTING - The connection is currently being terminated
- * - Strophe.Status.ATTACHED - The connection has been attached
- * - Strophe.Status.REDIRECT - The connection has been redirected
- * - Strophe.Status.CONNTIMEOUT - The connection has timed out
- *
- * @namespace NS
- * @memberof Strophe
+ * @typedef {Object} Status
+ * @property {connstatus} Status.ERROR - An error has occurred
+ * @property {connstatus} Status.CONNECTING - The connection is currently being made
+ * @property {connstatus} Status.CONNFAIL - The connection attempt failed
+ * @property {connstatus} Status.AUTHENTICATING - The connection is authenticating
+ * @property {connstatus} Status.AUTHFAIL - The authentication attempt failed
+ * @property {connstatus} Status.CONNECTED - The connection has succeeded
+ * @property {connstatus} Status.DISCONNECTED - The connection has been terminated
+ * @property {connstatus} Status.DISCONNECTING - The connection is currently being terminated
+ * @property {connstatus} Status.ATTACHED - The connection has been attached
+ * @property {connstatus} Status.REDIRECT - The connection has been redirected
+ * @property {connstatus} Status.CONNTIMEOUT - The connection has timed out
+ * @property {connstatus} Status.ATTACHFAIL - The connection has timed out
  */
 export const Status = {
     ERROR: 0,
@@ -162,20 +166,3 @@ export const ElementType = {
     CDATA: 4,
     FRAGMENT: 11,
 };
-
-/**
- * Timeout values for error states.  These values are in seconds.
- * These should not be changed unless you know exactly what you are
- * doing.
- *
- * - TIMEOUT - Timeout multiplier. A waiting request will be considered
- *     failed after Math.floor(TIMEOUT * wait) seconds have elapsed.
- *     This defaults to 1.1, and with default wait, 66 seconds.
- * - SECONDARY_TIMEOUT - Secondary timeout multiplier. In cases where
- *     Strophe can detect early failure, it will consider the request
- *     failed if it doesn't return after
- *     Math.floor(SECONDARY_TIMEOUT * wait) seconds have elapsed.
- *     This defaults to 0.1, and with default wait, 6 seconds.
- */
-export const TIMEOUT = 1.1;
-export const SECONDARY_TIMEOUT = 0.1;

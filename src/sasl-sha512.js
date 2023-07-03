@@ -1,6 +1,10 @@
 import SASLMechanism from './sasl.js';
 import scram from './scram.js';
 
+/**
+ * @typedef {import("./connection.js").default} Connection
+ */
+
 class SASLSHA512 extends SASLMechanism {
     /**
      * SASL SCRAM SHA 512 authentication.
@@ -14,6 +18,10 @@ class SASLSHA512 extends SASLMechanism {
         return connection.authcid !== null;
     }
 
+    /**
+     * @param {Connection} connection
+     * @param {string} [challenge]
+     */
     // eslint-disable-next-line class-methods-use-this
     async onChallenge(connection, challenge) {
         return await scram.scramResponse(connection, challenge, 'SHA-512', 512);

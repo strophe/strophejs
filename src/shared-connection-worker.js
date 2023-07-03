@@ -104,8 +104,11 @@ class ConnectionManager {
     }
 }
 
-// eslint-disable-next-line no-undef
-onconnect = function (e) {
-    manager = manager || new ConnectionManager();
-    manager.addPort(e.ports[0]);
-};
+addEventListener(
+    'connect',
+    /** @param {MessageEvent} e */
+    (e) => {
+        manager = manager || new ConnectionManager();
+        manager.addPort(e.ports[0]);
+    }
+);
