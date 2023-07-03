@@ -20,14 +20,12 @@ class Handler {
      * Create and initialize a new Strophe.Handler.
      *
      * @param {Function} handler - A function to be executed when the handler is run.
-     * @param {String} ns - The namespace to match.
-     * @param {String} name - The element name to match.
-     * @param {String} type - The element type to match.
-     * @param {String} id - The element id attribute to match.
-     * @param {String} from - The element from attribute to match.
-     * @param {Object} options - Handler options
-     *
-     * @return {Handler}
+     * @param {string} ns - The namespace to match.
+     * @param {string} name - The element name to match.
+     * @param {string|Array} type - The stanza type (or types if an array) to match.
+     * @param {string} id - The element id attribute to match.
+     * @param {string} [from] - The element from attribute to match.
+     * @param {Object} [options] - Handler options
      */
     constructor(handler, ns, name, type, id, from, options) {
         this.handler = handler;
@@ -55,7 +53,7 @@ class Handler {
      * Returns the XML namespace attribute on an element.
      * If `ignoreNamespaceFragment` was passed in for this handler, then the
      * URL fragment will be stripped.
-     * @param {XMLElement} elem - The XML element with the namespace.
+     * @param {Element} elem - The XML element with the namespace.
      * @return {string} - The namespace, with optionally the fragment stripped.
      */
     getNamespace(elem) {
@@ -68,7 +66,7 @@ class Handler {
 
     /**
      * Tests if a stanza matches the namespace set for this Strophe.Handler.
-     * @param {XMLElement} elem - The XML element to test.
+     * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     namespaceMatch(elem) {
@@ -87,7 +85,7 @@ class Handler {
 
     /**
      * Tests if a stanza matches the Strophe.Handler.
-     * @param {XMLElement} elem - The XML element to test.
+     * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     isMatch(elem) {
@@ -111,7 +109,7 @@ class Handler {
 
     /**
      * Run the callback on a matching stanza.
-     * @param {XMLElement} elem - The DOM element that triggered the Strophe.Handler.
+     * @param {Element} elem - The DOM element that triggered the Strophe.Handler.
      * @return {boolean} - A boolean indicating if the handler should remain active.
      */
     run(elem) {

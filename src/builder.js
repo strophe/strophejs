@@ -180,7 +180,7 @@ class Builder {
      *
      * @param {string} name - The name of the child.
      * @param {Object} attrs - The attributes of the child in object notation.
-     * @param {string} text - The text to add to the child.
+     * @param {string} [text] - The text to add to the child.
      *
      * @return {Builder} The Strophe.Builder object.
      */

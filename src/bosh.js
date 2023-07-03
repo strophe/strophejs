@@ -12,6 +12,13 @@
 import { DOMParser } from './shims';
 import { $build, Strophe } from './core';
 
+// Needed for TypeScript checking
+//
+// eslint-disable-next-line no-unused-vars
+import Builder from './builder.js';
+// eslint-disable-next-line no-unused-vars
+import Connection from './connection.js';
+
 /**
  * Helper class that provides a cross implementation abstraction
  * for a BOSH related XMLHttpRequest.
@@ -25,13 +32,13 @@ class Request {
     /**
      * Create and initialize a new Strophe.Request object.
      *
-     * @param {XMLElement} elem - The XML data to be sent in the request.
+     * @param {Element} elem - The XML data to be sent in the request.
      * @param {Function} func - The function that will be called when the
      *     XMLHttpRequest readyState changes.
      * @param {number} rid - The BOSH rid attribute associated with this request.
-     * @param {number} sends - The number of times this same request has been sent.
+     * @param {number} [sends=0] - The number of times this same request has been sent.
      */
-    constructor(elem, func, rid, sends) {
+    constructor(elem, func, rid, sends = 0) {
         this.id = ++Strophe._requestId;
         this.xmlData = elem;
         this.data = Strophe.serialize(elem);
@@ -41,24 +48,12 @@ class Request {
         this.func = func;
         this.rid = rid;
         this.date = NaN;
-        this.sends = sends || 0;
+        this.sends = sends;
         this.abort = false;
         this.dead = null;
 
-        this.age = function () {
-            if (!this.date) {
-                return 0;
-            }
-            const now = new Date();
-            return (now - this.date) / 1000;
-        };
-        this.timeDead = function () {
-            if (!this.dead) {
-                return 0;
-            }
-            const now = new Date();
-            return (now - this.dead) / 1000;
-        };
+        this.age = () => (this.date ? (new Date().valueOf() - this.date.valueOf()) / 1000 : 0);
+        this.timeDead = () => (this.dead ? (new Date().valueOf() - this.dead.valueOf()) / 1000 : 0);
         this.xhr = this._newXHR();
     }
 
@@ -132,7 +127,6 @@ class Bosh {
     /**
      * Create and initialize a {@link Strophe.Bosh} object.
      * @param {Connection} connection - The Strophe.Connection that will use BOSH.
-     * @return {Bosh}
      */
     constructor(connection) {
         this._conn = connection;
@@ -147,6 +141,19 @@ class Bosh {
         this.window = 5;
         this.errors = 0;
         this.inactivity = null;
+
+        /**
+         * BOSH-Connections will have all stanzas wrapped in a <body> tag when
+         * passed to <Strophe.Connection.xmlInput> or <Strophe.Connection.xmlOutput>.
+         * To strip this tag, User code can set <Strophe.Bosh.strip> to "body":
+         *
+         * > Strophe.Bosh.prototype.strip = true;
+         *
+         * This will enable stripping of the body tag in both
+         * {@link Strophe.Connection#xmlInput|xmlInput} and {@link Strophe.Connection#xmlOutput|xmlOutput}.
+         * @property {boolean} [strip=false]
+         */
+        this.strip = false;
 
         this.lastResponseHeaders = null;
         this._requests = [];
@@ -216,7 +223,7 @@ class Bosh {
             new Strophe.Request(
                 body.tree(),
                 this._onRequestStateChange.bind(this, _connect_cb.bind(this._conn)),
-                body.tree().getAttribute('rid')
+                Number(body.tree().getAttribute('rid'))
             )
         );
         this._throttledRequestHandler();
@@ -233,7 +240,7 @@ class Bosh {
      *
      * @param {string} jid - The full JID that is bound by the session.
      * @param {string} sid - The SID of the BOSH session.
-     * @param {string} rid - The current RID of the BOSH session.  This RID
+     * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
      * @param {Function} callback The connect callback function.
      * @param {number} wait - The optional HTTPBIND wait value.  This is the
@@ -310,7 +317,6 @@ class Bosh {
      * _Private_ handler for the beforeunload event.
      * This handler is used to process the Bosh-part of the initial request.
      * @private
-     * @param {Strophe.Request} bodyWrap - The received stanza.
      */
     _cacheSession() {
         if (this._conn.authenticated) {
@@ -333,7 +339,7 @@ class Bosh {
      * _Private_ handler for initial connection request.
      * This handler is used to process the Bosh-part of the initial request.
      * @private
-     * @param {Strophe.Request} bodyWrap - The received stanza.
+     * @param {Element} bodyWrap - The received stanza.
      */
     _connect_cb(bodyWrap) {
         const typ = bodyWrap.getAttribute('type');
@@ -380,7 +386,7 @@ class Bosh {
     /**
      * _Private_ part of Connection.disconnect for Bosh
      * @private
-     * @param {Strophe.Request} pres - This stanza will be sent before disconnecting.
+     * @param {Request} pres - This stanza will be sent before disconnecting.
      */
     _disconnect(pres) {
         this._sendTerminate(pres);
@@ -413,8 +419,7 @@ class Bosh {
     /**
      * _Private_ function to call error handlers registered for HTTP errors.
      * @private
-     *
-     * @param {Strophe.Request} req - The request that is changing readyState.
+     * @param {Request} req - The request that is changing readyState.
      */
     _callProtocolErrorHandlers(req) {
         const reqStatus = Bosh._getRequestStatus(req);
@@ -431,7 +436,6 @@ class Bosh {
      * 5.  Each time an error is encountered, this function is called to
      * increment the count and disconnect if the count is too high.
      * @private
-     *
      * @param {number} reqStatus - The request status.
      */
     _hitError(reqStatus) {
@@ -461,7 +465,7 @@ class Bosh {
             new Strophe.Request(
                 body.tree(),
                 this._onRequestStateChange.bind(this, callback),
-                body.tree().getAttribute('rid')
+                Number(body.tree().getAttribute('rid'))
             )
         );
         this._throttledRequestHandler();
@@ -528,7 +532,7 @@ class Bosh {
                 new Strophe.Request(
                     body.tree(),
                     this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
-                    body.tree().getAttribute('rid')
+                    Number(body.tree().getAttribute('rid'))
                 )
             );
             this._throttledRequestHandler();
@@ -558,8 +562,8 @@ class Bosh {
      * Returns the HTTP status code from a {@link Strophe.Request}
      * @private
      *
-     * @param {Strophe.Request} req - The {@link Strophe.Request} instance.
-     * @param {number} def - The default value that should be returned if no
+     * @param {Request} req - The {@link Strophe.Request} instance.
+     * @param {number} [def] - The default value that should be returned if no
      *         status value was found.
      */
     static _getRequestStatus(req, def) {
@@ -589,7 +593,7 @@ class Bosh {
      * @private
      *
      * @param {Function} func - The handler for the request.
-     * @param {Strophe.Request} req - The request that is changing readyState.
+     * @param {Request} req - The request that is changing readyState.
      */
     _onRequestStateChange(func, req) {
         Strophe.debug('request id ' + req.id + '.' + req.sends + ' state changed to ' + req.xhr.readyState);
@@ -634,7 +638,7 @@ class Bosh {
             ) {
                 this._restartRequest(0);
             }
-            this._conn.nextValidRid(Number(req.rid) + 1);
+            this._conn.nextValidRid(req.rid + 1);
             Strophe.debug('request id ' + req.id + '.' + req.sends + ' got 200');
             func(req); // call handler
             this.errors = 0;
@@ -770,8 +774,7 @@ class Bosh {
     /**
      * _Private_ function to remove a request from the queue.
      * @private
-     *
-     * @param {Strophe.Request} req - The request to remove.
+     * @param {Request} req - The request to remove.
      */
     _removeRequest(req) {
         Strophe.debug('removing request');
@@ -836,7 +839,7 @@ class Bosh {
         const req = new Strophe.Request(
             body.tree(),
             this._onRequestStateChange.bind(this, this._conn._dataRecv.bind(this._conn)),
-            body.tree().getAttribute('rid')
+            Number(body.tree().getAttribute('rid'))
         );
         this._requests.push(req);
         this._throttledRequestHandler();
@@ -891,19 +894,4 @@ class Bosh {
     }
 }
 
-Strophe.Bosh = Bosh;
-Strophe.Request = Request;
-
-/**
- * Variable: strip
- *
- * BOSH-Connections will have all stanzas wrapped in a <body> tag when
- * passed to <Strophe.Connection.xmlInput> or <Strophe.Connection.xmlOutput>.
- * To strip this tag, User code can set <Strophe.Bosh.strip> to "body":
- *
- * > Strophe.Bosh.prototype.strip = "body";
- *
- * This will enable stripping of the body tag in both
- * <Strophe.Connection.xmlInput> and <Strophe.Connection.xmlOutput>.
- */
-Strophe.Bosh.prototype.strip = null;
+export { Request, Bosh };

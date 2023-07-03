@@ -25,15 +25,12 @@ class SASLMechanism {
     /**
      * PrivateConstructor: Strophe.SASLMechanism
      * SASL auth mechanism abstraction.
-     *
-     * @param {String} name - SASL Mechanism name.
-     * @param {Boolean} isClientFirst - If client should send response first without challenge.
-     * @param {Number} priority - Priority.
-     *
-     * @return {SASLMechanism}
+     * @param {String} [name] - SASL Mechanism name.
+     * @param {Boolean} [isClientFirst] - If client should send response first without challenge.
+     * @param {Number} [priority] - Priority.
      */
     constructor(name, isClientFirst, priority) {
-        /** PrivateVariable: mechname
+        /**
          * Mechanism name.
          */
         this.mechname = name;
@@ -68,7 +65,7 @@ class SASLMechanism {
      * > }
      *
      * See <SASL mechanisms> for a list of available mechanisms.
-     * @param {Strophe.Connection} connection - Target Connection.
+     * @param {Connection} connection - Target Connection.
      * @return {boolean} If mechanism was able to run.
      */
     // eslint-disable-next-line class-methods-use-this
