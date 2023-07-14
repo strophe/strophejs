@@ -25,7 +25,7 @@ const babelConfig = {
 export default [
     // browser-friendly UMD build
     {
-        input: 'src/strophe.js',
+        input: 'src/index.js',
         output: {
             name: 'strophe',
             file: pkg.browser,
@@ -40,7 +40,7 @@ export default [
     },
     // Minified UMD build
     {
-        input: 'src/strophe.js',
+        input: 'src/index.js',
         output: {
             name: 'strophe',
             file: 'dist/strophe.umd.min.js',
@@ -56,7 +56,7 @@ export default [
     },
     // CommonJS (for Node) and ES module (for bundlers) build.
     {
-        input: 'src/strophe.js',
+        input: 'src/index.js',
         external: ['window', 'abab'],
         output: [
             { file: pkg.main, format: 'cjs' },
