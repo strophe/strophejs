@@ -49,7 +49,7 @@ watchjs: node_modules
 	./node_modules/.bin/npx  webpack --mode=development  --watch
 
 dist/types: src/*
-	npx tsc
+	npm run types
 
 .PHONY: dist
 dist: $(STROPHE) dist/types

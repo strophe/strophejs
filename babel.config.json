@@ -2,9 +2,9 @@
     "presets": [
         ["@babel/preset-env", {
             "targets": {
-                "browsers": [">1%"]
+                "browsers": [">1%", "not dead"]
             }
         }]
     ],
-    "plugins": []
+    "plugins": ["@babel/plugin-proposal-optional-chaining", "@babel/plugin-proposal-nullish-coalescing-operator"]
 }
