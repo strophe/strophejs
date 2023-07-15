@@ -1,18 +1,14 @@
 config.baseUrl = '../';
 require.config(config);
-if (typeof(require) === 'function') {
-    require(["jquery", "strophe", ], function($, wrapper) {
+if (typeof require === 'function') {
+    require(['jquery', 'strophe'], function ($, wrapper) {
         Strophe = wrapper.Strophe;
 
-        var button = document.getElementById("connect");
+        var button = document.getElementById('connect');
         button.addEventListener('click', function () {
             if (button.value == 'connect') {
                 button.value = 'disconnect';
-                connection.connect(
-                    $('#jid').get(0).value,
-                    $('#pass').get(0).value,
-                    onConnect
-                );
+                connection.connect($('#jid').get(0).value, $('#pass').get(0).value, onConnect);
             } else {
                 button.value = 'connect';
                 connection.disconnect();
@@ -57,13 +53,15 @@ if (typeof(require) === 'function') {
         }
 
         $(document).ready(function () {
-            connection = new Strophe.Connection(BOSH_SERVICE, {'keepalive': true});
+            connection = new Strophe.Connection(BOSH_SERVICE, { 'keepalive': true });
             connection.rawInput = rawInput;
             connection.rawOutput = rawOutput;
             try {
                 connection.restore(null, onConnect);
-            } catch(e) {
-                if (e.name !== "StropheSessionError") { throw(e); }
+            } catch (e) {
+                if (e.name !== 'StropheSessionError') {
+                    throw e;
+                }
                 $(button).show();
             }
         });
