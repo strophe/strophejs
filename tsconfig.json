@@ -15,7 +15,7 @@
     "declarationMap": true,
 
     "rootDir": "./src",
-    "outDir": "./dist/types/",
+    "outDir": "./src/types/",
     "baseUrl": "./src/",
 
     "esModuleInterop": true,
