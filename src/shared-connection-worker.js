@@ -1,3 +1,4 @@
+/** @type {ConnectionManager} */
 let manager;
 
 const Status = {
@@ -23,15 +24,17 @@ const Status = {
  */
 class ConnectionManager {
     constructor() {
+        /** @type {MessagePort[]} */
         this.ports = [];
     }
 
+    /** @param {MessagePort} port */
     addPort(port) {
         this.ports.push(port);
         port.addEventListener('message', (e) => {
             const method = e.data[0];
             try {
-                this[method](e.data.splice(1));
+                this[/** @type {'send'|'_closeSocket'}*/ (method)](e.data.splice(1));
             } catch (e) {
                 console?.error(e);
             }
@@ -39,6 +42,9 @@ class ConnectionManager {
         port.start();
     }
 
+    /**
+     * @param {[string,string]} data
+     */
     _connect(data) {
         this.jid = data[1];
         this._closeSocket();
@@ -57,10 +63,12 @@ class ConnectionManager {
         }
     }
 
+    /** @param {string} str */
     send(str) {
         this.socket.send(str);
     }
 
+    /** @param {string} str */
     close(str) {
         if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
             try {
@@ -76,17 +84,20 @@ class ConnectionManager {
         this.ports.forEach((p) => p.postMessage(['_onOpen']));
     }
 
+    /** @param {CloseEvent} e */
     _onClose(e) {
         this.ports.forEach((p) => p.postMessage(['_onClose', e.reason]));
     }
 
+    /** @param {MessageEvent} message */
     _onMessage(message) {
         const o = { 'data': message.data };
         this.ports.forEach((p) => p.postMessage(['_onMessage', o]));
     }
 
+    /** @param {Event} error */
     _onError(error) {
-        this.ports.forEach((p) => p.postMessage(['_onError', error.reason]));
+        this.ports.forEach((p) => p.postMessage(['_onError', error]));
     }
 
     _closeSocket() {

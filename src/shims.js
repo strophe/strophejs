@@ -8,7 +8,7 @@
  * NPM module that provides a compatible implementation.
  */
 
-/* global global */
+/* global globalThis */
 
 /**
  * WHATWG WebSockets API
@@ -23,15 +23,14 @@
  *   https://www.npmjs.com/package/ws
  */
 function getWebSocketImplementation() {
-    let WebSocketImplementation = global.WebSocket;
-    if (typeof WebSocketImplementation === 'undefined') {
+    if (typeof globalThis.WebSocket === 'undefined') {
         try {
-            WebSocketImplementation = require('ws');
+            return require('ws');
         } catch (err) {
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
-    return WebSocketImplementation;
+    return globalThis.WebSocket;
 }
 export const WebSocket = getWebSocketImplementation();
 
@@ -48,7 +47,7 @@ export const WebSocket = getWebSocketImplementation();
  *   https://www.npmjs.com/package/@xmldom/xmldom
  */
 function getDOMParserImplementation() {
-    let DOMParserImplementation = global.DOMParser;
+    let DOMParserImplementation = globalThis.DOMParser;
     if (typeof DOMParserImplementation === 'undefined') {
         try {
             DOMParserImplementation = require('@xmldom/xmldom').DOMParser;

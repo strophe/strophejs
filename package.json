@@ -85,6 +85,7 @@
     "xhr2": "^0.2.1"
   },
   "dependencies": {
+    "@types/ws": "^8.5.5",
     "abab": "^2.0.3"
   },
   "optionalDependencies": {

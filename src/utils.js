@@ -27,6 +27,10 @@ export function utf16to8(str) {
     return out;
 }
 
+/**
+ * @param {ArrayBufferLike} x
+ * @param {ArrayBufferLike} y
+ */
 export function xorArrayBuffers(x, y) {
     const xIntArray = new Uint8Array(x);
     const yIntArray = new Uint8Array(y);
@@ -117,6 +121,7 @@ export function addCookies(cookies) {
     }
 }
 
+/** @type {Document} */
 let _xmlGenerator = null;
 
 /**
@@ -158,7 +163,7 @@ export function xmlHtmlNode(html) {
  * aren't appropriate for XMPP stanzas.
  *
  * @param {string} name - The name for the element.
- * @param {Array<Array<string>>|Object} [attrs] - An optional array or object containing
+ * @param {Array<Array<string>>|Object.<string,string|number>} [attrs] - An optional array or object containing
  *    key/value pairs to use as element attributes.
  *    The object should be in the format `{'key': 'value'}`.
  *    The array should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
@@ -174,7 +179,7 @@ export function xmlElement(name, attrs, text) {
     if (text && (typeof text === 'string' || typeof text === 'number')) {
         node.appendChild(xmlTextNode(text.toString()));
     } else if (typeof attrs === 'string' || typeof attrs === 'number') {
-        node.appendChild(xmlTextNode(attrs.toString()));
+        node.appendChild(xmlTextNode(/** @type {number|string} */ (attrs).toString()));
         return node;
     } else if (!attrs) {
         return node;
@@ -193,7 +198,7 @@ export function xmlElement(name, attrs, text) {
         for (const k of Object.keys(attrs)) {
             // eslint-disable-next-line no-eq-null
             if (k && attrs[k] != null) {
-                node.setAttribute(k, attrs[k]);
+                node.setAttribute(k, attrs[k].toString());
             }
         }
     }
@@ -219,6 +224,10 @@ export function validTag(tag) {
 }
 
 /**
+ * @typedef {'a'|'blockquote'|'br'|'cite'|'em'|'img'|'li'|'ol'|'p'|'span'|'strong'|'ul'|'body'} XHTMLAttrs
+ */
+
+/**
  * Utility method to determine whether an attribute is allowed
  * as recommended per XEP-0071
  *
@@ -228,9 +237,11 @@ export function validTag(tag) {
  * @param {string} attribute
  */
 export function validAttribute(tag, attribute) {
-    if (typeof XHTML.attributes[tag] !== 'undefined' && XHTML.attributes[tag].length > 0) {
-        for (let i = 0; i < XHTML.attributes[tag].length; i++) {
-            if (attribute === XHTML.attributes[tag][i]) {
+    const attrs = XHTML.attributes[/** @type {XHTMLAttrs} */ (tag)];
+
+    if (attrs?.length > 0) {
+        for (let i = 0; i < attrs.length; i++) {
+            if (attribute === attrs[i]) {
                 return true;
             }
         }
@@ -265,40 +276,45 @@ function createFromHtmlElement(elem) {
     if (validTag(tag)) {
         try {
             el = xmlElement(tag);
-            for (let i = 0; i < XHTML.attributes[tag].length; i++) {
-                const attribute = XHTML.attributes[tag][i];
-                let value = elem.getAttribute(attribute);
 
-                if (typeof value === 'undefined' || value === null || value === '') {
-                    continue;
-                }
+            if (tag in XHTML.attributes) {
+                const attrs = XHTML.attributes[/** @type {XHTMLAttrs} */ (tag)];
 
-                if (attribute === 'style' && typeof value === 'object') {
-                    value = /** @type {Object} */ (value).cssText ?? value; // we're dealing with IE, need to get CSS out
-                }
+                for (let i = 0; i < attrs.length; i++) {
+                    const attribute = attrs[i];
+                    let value = elem.getAttribute(attribute);
 
-                // filter out invalid css styles
-                if (attribute === 'style') {
-                    const css = [];
-                    const cssAttrs = value.split(';');
-                    for (let j = 0; j < cssAttrs.length; j++) {
-                        const attr = cssAttrs[j].split(':');
-                        const cssName = attr[0].replace(/^\s*/, '').replace(/\s*$/, '').toLowerCase();
-                        if (validCSS(cssName)) {
-                            const cssValue = attr[1].replace(/^\s*/, '').replace(/\s*$/, '');
-                            css.push(cssName + ': ' + cssValue);
-                        }
+                    if (typeof value === 'undefined' || value === null || value === '') {
+                        continue;
                     }
-                    if (css.length > 0) {
-                        value = css.join('; ');
+
+                    if (attribute === 'style' && typeof value === 'object') {
+                        value = /** @type {Object.<'csstext',string>} */ (value).cssText ?? value; // we're dealing with IE, need to get CSS out
+                    }
+
+                    // filter out invalid css styles
+                    if (attribute === 'style') {
+                        const css = [];
+                        const cssAttrs = value.split(';');
+                        for (let j = 0; j < cssAttrs.length; j++) {
+                            const attr = cssAttrs[j].split(':');
+                            const cssName = attr[0].replace(/^\s*/, '').replace(/\s*$/, '').toLowerCase();
+                            if (validCSS(cssName)) {
+                                const cssValue = attr[1].replace(/^\s*/, '').replace(/\s*$/, '');
+                                css.push(cssName + ': ' + cssValue);
+                            }
+                        }
+                        if (css.length > 0) {
+                            value = css.join('; ');
+                            el.setAttribute(attribute, value);
+                        }
+                    } else {
                         el.setAttribute(attribute, value);
                     }
-                } else {
-                    el.setAttribute(attribute, value);
                 }
-            }
-            for (let i = 0; i < elem.childNodes.length; i++) {
-                el.appendChild(createHtml(elem.childNodes[i]));
+                for (let i = 0; i < elem.childNodes.length; i++) {
+                    el.appendChild(createHtml(elem.childNodes[i]));
+                }
             }
         } catch (e) {
             // invalid elements

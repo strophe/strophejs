@@ -150,18 +150,23 @@ class Websocket {
          * @property {(str: string) => void} WebsocketLike.send
          * @property {function(): void} WebsocketLike.close
          * @property {function(): void} WebsocketLike.onopen
-         * @property {(e: Error) => void} WebsocketLike.onerror
-         * @property {(e: Error) => void} WebsocketLike.onclose
+         * @property {(e: ErrorEvent) => void} WebsocketLike.onerror
+         * @property {(e: CloseEvent) => void} WebsocketLike.onclose
          * @property {(message: MessageEvent) => void} WebsocketLike.onmessage
          * @property {string} WebsocketLike.readyState
          */
 
-        /** @type {WebSocket|WebsocketLike} */
+        /** @type {import('ws')|WebSocket|WebsocketLike} */
         this.socket = new WebSocket(this._conn.service, 'xmpp');
         this.socket.onopen = () => this._onOpen();
+        /** @param {ErrorEvent} e */
         this.socket.onerror = (e) => this._onError(e);
+        /** @param {CloseEvent} e */
         this.socket.onclose = (e) => this._onClose(e);
-        // Gets replaced with this._onMessage once _onInitialMessage is called
+        /**
+         * Gets replaced with this._onMessage once _onInitialMessage is called
+         * @param {MessageEvent} message
+         */
         this.socket.onmessage = (message) => this._onInitialMessage(message);
     }
 
@@ -273,6 +278,7 @@ class Websocket {
      * to the socket.
      */
     _replaceMessageHandler() {
+        /** @param {MessageEvent} m */
         this.socket.onmessage = (m) => this._onMessage(m);
     }
 

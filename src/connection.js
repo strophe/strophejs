@@ -41,8 +41,13 @@ import { SessionError } from './errors.js';
  */
 class Connection {
     /**
+     * @typedef {Object.<string, string>} Cookie
+     * @typedef {Cookie|Object.<string, Cookie>} Cookies
+     */
+
+    /**
      * @typedef {Object} ConnectionOptions
-     * @property {Object} [cookies]
+     * @property {Cookies} [cookies]
      *  Allows you to pass in cookies that will be included in HTTP requests.
      *  Relevant to both the BOSH and Websocket transports.
      *
@@ -286,7 +291,9 @@ class Connection {
             if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
                 const F = function () {};
                 F.prototype = Strophe._connectionPlugins[k];
+                // @ts-ignore
                 this[k] = new F();
+                // @ts-ignore
                 this[k].init(this);
             }
         }
@@ -422,6 +429,15 @@ class Connection {
     }
 
     /**
+     * @typedef {Object} Password
+     * @property {string} Password.name
+     * @property {string} Password.ck
+     * @property {string} Password.sk
+     * @property {number} Password.iter
+     * @property {string} Password.salt
+     */
+
+    /**
      * Starts the connection process.
      *
      * As the connection process proceeds, the user supplied callback will
@@ -449,7 +465,7 @@ class Connection {
      *       ck:   String, the base64 encoding of the SCRAM client key
      *       sk:   String, the base64 encoding of the SCRAM server key
      *     }
-     * @param {string|Object} pass - The user password
+     * @param {string|Password} pass - The user password
      * @param {Function} callback - The connect callback function.
      * @param {number} wait - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
@@ -1100,6 +1116,7 @@ class Connection {
         // notify all plugins listening for status changes
         for (const k in Strophe._connectionPlugins) {
             if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
+                // @ts-ignore
                 const plugin = this[k];
                 if (plugin.statusChanged) {
                     try {
@@ -1506,12 +1523,13 @@ class Connection {
      * sends it, creating a handler (calling back to _auth2_cb()) to
      * handle the result
      * @private
-     *
-     * @param {Element} elem - The stanza that triggered the callback.
      * @return {false} `false` to remove the handler.
      */
     // eslint-disable-next-line no-unused-vars
-    _onLegacyAuthIQResult(elem) {
+    //
+    _onLegacyAuthIQResult() {
+        const pass = typeof this.pass === 'string' ? this.pass : '';
+
         // build plaintext auth iq
         const iq = $iq({ type: 'set', id: '_auth_2' })
             .c('query', { xmlns: Strophe.NS.AUTH })
@@ -1519,7 +1537,7 @@ class Connection {
             .t(Strophe.getNodeFromJid(this.jid))
             .up()
             .c('password')
-            .t(this.pass);
+            .t(pass);
 
         if (!Strophe.getResourceFromJid(this.jid)) {
             // since the user has not supplied a resource, we pick

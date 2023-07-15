@@ -4,6 +4,11 @@
 import utils from './utils';
 import Strophe from './core.js';
 
+/**
+ * @param {string} authMessage
+ * @param {ArrayBufferLike} clientKey
+ * @param {string} hashName
+ */
 async function scramClientProof(authMessage, clientKey, hashName) {
     const storedKey = await crypto.subtle.importKey(
         'raw',
@@ -70,6 +75,11 @@ function scramParseChallenge(challenge) {
  * { ck: ArrayBuffer, the client key
  *   sk: ArrayBuffer, the server key
  * }
+ * @param {string} password
+ * @param {BufferSource} salt
+ * @param {number} iter
+ * @param {string} hashName
+ * @param {number} hashBits
  */
 async function scramDeriveKeys(password, salt, iter, hashName, hashBits) {
     const saltedPasswordBits = await crypto.subtle.deriveBits(
@@ -91,6 +101,11 @@ async function scramDeriveKeys(password, salt, iter, hashName, hashBits) {
     };
 }
 
+/**
+ * @param {string} authMessage
+ * @param {BufferSource} sk
+ * @param {string} hashName
+ */
 async function scramServerSign(authMessage, sk, hashName) {
     const serverKey = await crypto.subtle.importKey('raw', sk, { 'name': 'HMAC', 'hash': hashName }, false, ['sign']);
 
@@ -107,6 +122,15 @@ function generate_cnonce() {
     return utils.arrayBufToBase64(crypto.getRandomValues(bytes).buffer);
 }
 
+/**
+ * @typedef {Object} Password
+ * @property {string} Password.name
+ * @property {string} Password.ck
+ * @property {string} Password.sk
+ * @property {number} Password.iter
+ * @property {string} salt
+ */
+
 const scram = {
     /**
      * On success, sets
@@ -118,6 +142,9 @@ const scram = {
      *
      * On failure, returns connection._sasl_failure_cb();
      * @param {Connection} connection
+     * @param {string} challenge
+     * @param {string} hashName
+     * @param {number} hashBits
      */
     async scramResponse(connection, challenge, hashName, hashBits) {
         const cnonce = connection._sasl_data.cnonce;
@@ -133,17 +160,11 @@ const scram = {
 
         let clientKey, serverKey;
 
-        // Either restore the client key and server key passed in, or derive new ones
-        if (
-            connection.pass?.name === hashName &&
-            connection.pass?.salt === utils.arrayBufToBase64(challengeData.salt) &&
-            connection.pass?.iter === challengeData.iter
-        ) {
-            clientKey = utils.base64ToArrayBuf(connection.pass.ck);
-            serverKey = utils.base64ToArrayBuf(connection.pass.sk);
-        } else if (typeof connection.pass === 'string' || connection.pass instanceof String) {
+        const { pass } = connection;
+
+        if (typeof connection.pass === 'string' || connection.pass instanceof String) {
             const keys = await scramDeriveKeys(
-                connection.pass,
+                /** @type {string} */ (pass),
                 challengeData.salt,
                 challengeData.iter,
                 hashName,
@@ -151,6 +172,15 @@ const scram = {
             );
             clientKey = keys.ck;
             serverKey = keys.sk;
+        } else if (
+            // Either restore the client key and server key passed in, or derive new ones
+            /** @type {Password} */ (pass)?.name === hashName &&
+            /** @type {Password} */ (pass)?.salt === utils.arrayBufToBase64(challengeData.salt) &&
+            /** @type {Password} */ (pass)?.iter === challengeData.iter
+        ) {
+            const { ck, sk } = /** @type {Password} */ (pass);
+            clientKey = utils.base64ToArrayBuf(ck);
+            serverKey = utils.base64ToArrayBuf(sk);
         } else {
             return connection._sasl_failure_cb();
         }

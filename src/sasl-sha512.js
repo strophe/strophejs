@@ -1,9 +1,8 @@
-import SASLMechanism from './sasl.js';
-import scram from './scram.js';
-
 /**
  * @typedef {import("./connection.js").default} Connection
  */
+import SASLMechanism from './sasl.js';
+import scram from './scram.js';
 
 class SASLSHA512 extends SASLMechanism {
     /**
@@ -13,6 +12,9 @@ class SASLSHA512 extends SASLMechanism {
         super(mechname, isClientFirst, priority);
     }
 
+    /**
+     * @param {Connection} connection
+     */
     // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.authcid !== null;
@@ -27,6 +29,10 @@ class SASLSHA512 extends SASLMechanism {
         return await scram.scramResponse(connection, challenge, 'SHA-512', 512);
     }
 
+    /**
+     * @param {Connection} connection
+     * @param {string} [test_cnonce]
+     */
     // eslint-disable-next-line class-methods-use-this
     clientChallenge(connection, test_cnonce) {
         return scram.clientChallenge(connection, test_cnonce);

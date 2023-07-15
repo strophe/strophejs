@@ -39,8 +39,10 @@ class WorkerWebsocket extends Websocket {
             send: (str) => this.worker.port.postMessage(['send', str]),
             close: () => this.worker.port.postMessage(['_closeSocket']),
             onopen: () => {},
-            onerror: () => (e) => this._onError(e),
-            onclose: () => (e) => this._onClose(e),
+            /** @param {ErrorEvent} e */
+            onerror: (e) => this._onError(e),
+            /** @param {CloseEvent} e */
+            onclose: (e) => this._onClose(e),
             onmessage: () => {},
             readyState: null,
         };
@@ -48,6 +50,7 @@ class WorkerWebsocket extends Websocket {
 
     _connect() {
         this._setSocket();
+        /** @param {MessageEvent} m */
         this._messageHandler = (m) => this._onInitialMessage(m);
         this.worker.port.start();
         this.worker.port.onmessage = (ev) => this._onWorkerMessage(ev);
@@ -59,7 +62,7 @@ class WorkerWebsocket extends Websocket {
      */
     _attach(callback) {
         this._setSocket();
-
+        /** @param {MessageEvent} m */
         this._messageHandler = (m) => this._onMessage(m);
         this._conn.connect_callback = callback;
         this.worker.port.start();
@@ -110,6 +113,7 @@ class WorkerWebsocket extends Websocket {
      * to the socket.
      */
     _replaceMessageHandler() {
+        /** @param {MessageEvent} m */
         this._messageHandler = (m) => this._onMessage(m);
     }
 
@@ -133,7 +137,10 @@ class WorkerWebsocket extends Websocket {
             this._messageHandler(data[1]);
         } else if (method_name in this) {
             try {
-                this[method_name].apply(this, ev.data.slice(1));
+                this[
+                    /** @type {'_attachCallback'|'_onOpen'|'_onClose'|'_onError'} */
+                    (method_name)
+                ].apply(this, ev.data.slice(1));
             } catch (e) {
                 Strophe.log(Strophe.LogLevel.ERROR, e);
             }

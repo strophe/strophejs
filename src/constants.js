@@ -46,27 +46,26 @@ export const NS = {
  * Used in the {@link Strophe.createHtml} function to filter incoming html into the allowed XHTML-IM subset.
  * See [XEP-0071](http://xmpp.org/extensions/xep-0071.html#profile-summary) for the list of recommended
  * allowed tags and their attributes.
- *
- * @typedef {Object} XHTML
- * @property {Array} XHTML.tags
- * @property {Object} XHTML.attributes
- * @property {Array} XHTML.css
  */
 export const XHTML = {
     tags: ['a', 'blockquote', 'br', 'cite', 'em', 'img', 'li', 'ol', 'p', 'span', 'strong', 'ul', 'body'],
     attributes: {
         'a': ['href'],
         'blockquote': ['style'],
+        /** @type {never[]} */
         'br': [],
         'cite': ['style'],
+        /** @type {never[]} */
         'em': [],
         'img': ['src', 'alt', 'style', 'height', 'width'],
         'li': ['style'],
         'ol': ['style'],
         'p': ['style'],
         'span': ['style'],
+        /** @type {never[]} */
         'strong': [],
         'ul': ['style'],
+        /** @type {never[]} */
         'body': [],
     },
     css: [

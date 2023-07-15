@@ -22,7 +22,7 @@
     "forceConsistentCasingInFileNames": true,
 
     "strict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
 
     "skipLibCheck": true,
 
