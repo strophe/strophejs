@@ -32,7 +32,7 @@ export default [
         input: 'src/index.js',
         external: ['window', 'abab'],
         output: [
-            { file: pkg.main, format: 'cjs' },
+            { file: 'dist/strophe.common.js', format: 'cjs' },
             { file: pkg.module, format: 'es' },
         ],
         plugins: [babel(babelConfig), globals()],
