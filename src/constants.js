@@ -100,7 +100,8 @@ export const XHTML = {
  * @property {connstatus} Status.ATTACHED - The connection has been attached
  * @property {connstatus} Status.REDIRECT - The connection has been redirected
  * @property {connstatus} Status.CONNTIMEOUT - The connection has timed out
- * @property {connstatus} Status.ATTACHFAIL - The connection has timed out
+ * @property {connstatus} Status.ATTACHFAIL - Failed to attach to a pre-existing session
+ * @property {connstatus} Status.RECONNECTING - Not used by Strophe, but added for integrators
  */
 export const Status = {
     ERROR: 0,
@@ -116,6 +117,7 @@ export const Status = {
     CONNTIMEOUT: 10,
     BINDREQUIRED: 11,
     ATTACHFAIL: 12,
+    RECONNECTING: 13,
 };
 
 export const ErrorCondition = {
