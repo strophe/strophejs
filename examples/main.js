@@ -1,7 +1,7 @@
 config.baseUrl = '../';
 require.config(config);
-if (typeof(require) === 'function') {
-    require(["jquery", "strophe", ], function($, wrapper) {
+if (typeof require === 'function') {
+    require(['jquery', 'strophe'], function ($, wrapper) {
         Strophe = wrapper.Strophe;
 
         var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind';
@@ -44,11 +44,7 @@ if (typeof(require) === 'function') {
                 var button = $('#connect').get(0);
                 if (button.value == 'connect') {
                     button.value = 'disconnect';
-                    connection.connect(
-                        $('#jid').get(0).value,
-                        $('#pass').get(0).value,
-                        onConnect
-                    );
+                    connection.connect($('#jid').get(0).value, $('#pass').get(0).value, onConnect);
                 } else {
                     button.value = 'connect';
                     connection.disconnect();
