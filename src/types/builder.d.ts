@@ -121,14 +121,14 @@ declare class Builder {
     /**
      * Add or modify attributes of the current element.
      *
-     * The attributes should be passed in object notation.  This function
-     * does not move the current element pointer.
-     *
-     * @param {Object.<string, string|number>} moreattrs - The attributes to add/modify in object notation.
+     * The attributes should be passed in object notation.
+     * This function does not move the current element pointer.
+     * @param {Object.<string, string|number|null>} moreattrs - The attributes to add/modify in object notation.
+     *  If an attribute is set to `null` or `undefined`, it will be removed.
      * @return {Builder} The Strophe.Builder object.
      */
     attrs(moreattrs: {
-        [x: string]: string | number;
+        [x: string]: string | number | null;
     }): Builder;
     /**
      * Add a child to the current element and make it the new current

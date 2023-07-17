@@ -152,19 +152,20 @@ class Builder {
     /**
      * Add or modify attributes of the current element.
      *
-     * The attributes should be passed in object notation.  This function
-     * does not move the current element pointer.
-     *
-     * @param {Object.<string, string|number>} moreattrs - The attributes to add/modify in object notation.
+     * The attributes should be passed in object notation.
+     * This function does not move the current element pointer.
+     * @param {Object.<string, string|number|null>} moreattrs - The attributes to add/modify in object notation.
+     *  If an attribute is set to `null` or `undefined`, it will be removed.
      * @return {Builder} The Strophe.Builder object.
      */
     attrs(moreattrs) {
         for (const k in moreattrs) {
             if (Object.prototype.hasOwnProperty.call(moreattrs, k)) {
-                if (moreattrs[k] === undefined) {
-                    this.node.removeAttribute(k);
-                } else {
+                // eslint-disable-next-line no-eq-null
+                if (moreattrs[k] != null) {
                     this.node.setAttribute(k, moreattrs[k].toString());
+                } else {
+                    this.node.removeAttribute(k);
                 }
             }
         }
