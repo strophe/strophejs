@@ -86,10 +86,10 @@
     "xhr2": "^0.2.1"
   },
   "dependencies": {
-    "@types/ws": "^8.5.5",
     "abab": "^2.0.3"
   },
   "optionalDependencies": {
+    "@types/ws": "^8.5.5",
     "@xmldom/xmldom": "0.8.8",
     "ws": "^8.5.0"
   }
