@@ -90,7 +90,7 @@
   },
   "optionalDependencies": {
     "@types/ws": "^8.5.5",
-    "@xmldom/xmldom": "0.8.8",
+    "@xmldom/xmldom": "0.8.9",
     "ws": "^8.5.0"
   }
 }
