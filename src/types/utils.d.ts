@@ -59,7 +59,8 @@ export function xmlHtmlNode(html: string): XMLDocument;
  * aren't appropriate for XMPP stanzas.
  *
  * @param {string} name - The name for the element.
- * @param {Array<Array<string>>|Object.<string,string|number>} [attrs] - An optional array or object containing
+ * @param {Array<Array<string>>|Object.<string,string|number>|string|number} [attrs]
+ *    An optional array or object containing
  *    key/value pairs to use as element attributes.
  *    The object should be in the format `{'key': 'value'}`.
  *    The array should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
@@ -69,7 +70,7 @@ export function xmlHtmlNode(html: string): XMLDocument;
  */
 export function xmlElement(name: string, attrs?: Array<Array<string>> | {
     [x: string]: string | number;
-}, text?: string | number): Element;
+} | string | number, text?: string | number): Element;
 /**
  * Utility method to determine whether a tag is allowed
  * in the XHTML_IM namespace.

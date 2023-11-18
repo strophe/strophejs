@@ -164,7 +164,7 @@ declare const Strophe: {
     xmlGenerator(): Document;
     xmlTextNode(text: string): Text;
     xmlHtmlNode(html: string): XMLDocument;
-    xmlElement(name: string, attrs?: string[][] | {
+    xmlElement(name: string, attrs?: string | number | string[][] | {
         [x: string]: string | number;
     }, text?: string | number): Element;
     validTag(tag: string): boolean;

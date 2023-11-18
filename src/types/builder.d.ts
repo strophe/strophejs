@@ -139,14 +139,14 @@ declare class Builder {
      * is necessary to use up() to go back to the parent in the tree.
      *
      * @param {string} name - The name of the child.
-     * @param {Object.<string, string>} [attrs] - The attributes of the child in object notation.
+     * @param {Object.<string, string>|string} [attrs] - The attributes of the child in object notation.
      * @param {string} [text] - The text to add to the child.
      *
      * @return {Builder} The Strophe.Builder object.
      */
     c(name: string, attrs?: {
         [x: string]: string;
-    }, text?: string): Builder;
+    } | string, text?: string): Builder;
     /**
      * Add a child to the current element and make it the new current
      * element.

@@ -163,7 +163,8 @@ export function xmlHtmlNode(html) {
  * aren't appropriate for XMPP stanzas.
  *
  * @param {string} name - The name for the element.
- * @param {Array<Array<string>>|Object.<string,string|number>} [attrs] - An optional array or object containing
+ * @param {Array<Array<string>>|Object.<string,string|number>|string|number} [attrs]
+ *    An optional array or object containing
  *    key/value pairs to use as element attributes.
  *    The object should be in the format `{'key': 'value'}`.
  *    The array should have the format `[['key1', 'value1'], ['key2', 'value2']]`.
@@ -194,7 +195,7 @@ export function xmlElement(name, attrs, text) {
                 }
             }
         }
-    } else {
+    } else if (typeof attrs === 'object') {
         for (const k of Object.keys(attrs)) {
             // eslint-disable-next-line no-eq-null
             if (k && attrs[k] != null) {

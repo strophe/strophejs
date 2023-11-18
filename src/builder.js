@@ -181,7 +181,7 @@ class Builder {
      * is necessary to use up() to go back to the parent in the tree.
      *
      * @param {string} name - The name of the child.
-     * @param {Object.<string, string>} [attrs] - The attributes of the child in object notation.
+     * @param {Object.<string, string>|string} [attrs] - The attributes of the child in object notation.
      * @param {string} [text] - The text to add to the child.
      *
      * @return {Builder} The Strophe.Builder object.
