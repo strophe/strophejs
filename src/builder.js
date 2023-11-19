@@ -5,7 +5,7 @@ import { copyElement, createHtml, serialize, xmlElement, xmlGenerator, xmlTextNo
  * Create a {@link Strophe.Builder}
  * This is an alias for `new Strophe.Builder(name, attrs)`.
  * @param {string} name - The root element name.
- * @param {Object.<string,string|number>} attrs - The attributes for the root element in object notation.
+ * @param {Object.<string,string|number>} [attrs] - The attributes for the root element in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $build(name, attrs) {
@@ -14,7 +14,7 @@ export function $build(name, attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with a `<message/>` element as the root.
- * @param {Object.<string,string>} attrs - The <message/> element attributes in object notation.
+ * @param {Object.<string,string>} [attrs] - The <message/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $msg(attrs) {
@@ -23,7 +23,7 @@ export function $msg(attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with an `<iq/>` element as the root.
- * @param {Object.<string,string>} attrs - The <iq/> element attributes in object notation.
+ * @param {Object.<string,string>} [attrs] - The <iq/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $iq(attrs) {
@@ -32,7 +32,7 @@ export function $iq(attrs) {
 
 /**
  * Create a {@link Strophe.Builder} with a `<presence/>` element as the root.
- * @param {Object.<string,string>} attrs - The <presence/> element attributes in object notation.
+ * @param {Object.<string,string>} [attrs] - The <presence/> element attributes in object notation.
  * @return {Builder} A new Strophe.Builder object.
  */
 export function $pres(attrs) {
@@ -76,7 +76,7 @@ class Builder {
     /**
      * The attributes should be passed in object notation.
      * @param {string} name - The name of the root element.
-     * @param {StanzaAttrs} attrs - The attributes for the root element in object notation.
+     * @param {StanzaAttrs} [attrs] - The attributes for the root element in object notation.
      * @example const b = new Builder('message', {to: 'you', from: 'me'});
      * @example const b = new Builder('messsage', {'xml:lang': 'en'});
      */
