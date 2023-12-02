@@ -525,7 +525,7 @@ class Connection {
      * application.  This is often used to support auto-login type features
      * without putting user credentials into the page.
      *
-     * @param {string} jid - The full JID that is bound by the session.
+     * @param {string|Function} jid - The full JID that is bound by the session.
      * @param {string} sid - The SID of the BOSH session.
      * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
@@ -541,8 +541,11 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     attach(jid, sid, rid, callback, wait, hold, wind) {
-        if (this._proto instanceof Strophe.Bosh) {
+        if (this._proto instanceof Strophe.Bosh && typeof jid === 'string') {
             return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
+        } else if (this._proto instanceof Strophe.WorkerWebsocket && typeof jid === 'function') {
+            const callback = jid;
+            return this._proto._attach(callback);
         } else {
             throw new SessionError('The "attach" method is not available for your connection protocol');
         }

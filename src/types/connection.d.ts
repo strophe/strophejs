@@ -674,7 +674,7 @@ declare class Connection {
      * application.  This is often used to support auto-login type features
      * without putting user credentials into the page.
      *
-     * @param {string} jid - The full JID that is bound by the session.
+     * @param {string|Function} jid - The full JID that is bound by the session.
      * @param {string} sid - The SID of the BOSH session.
      * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
@@ -689,7 +689,7 @@ declare class Connection {
      * @param {number} [wind] - The optional HTTBIND window value.  This is the
      *     allowed range of request ids that are valid.  The default is 5.
      */
-    attach(jid: string, sid: string, rid: number, callback: Function, wait?: number, hold?: number, wind?: number): void;
+    attach(jid: string | Function, sid: string, rid: number, callback: Function, wait?: number, hold?: number, wind?: number): void;
     /**
      * Attempt to restore a cached BOSH session.
      *

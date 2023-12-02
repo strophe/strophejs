@@ -154,6 +154,10 @@ export type Status = {
      */
     CONNTIMEOUT: connstatus;
     /**
+     * - The JID resource needs to be bound for this session
+     */
+    BINDREQUIRED: connstatus;
+    /**
      * - Failed to attach to a pre-existing session
      */
     ATTACHFAIL: connstatus;

@@ -100,6 +100,7 @@ export const XHTML = {
  * @property {connstatus} Status.ATTACHED - The connection has been attached
  * @property {connstatus} Status.REDIRECT - The connection has been redirected
  * @property {connstatus} Status.CONNTIMEOUT - The connection has timed out
+ * @property {connstatus} Status.BINDREQUIRED - The JID resource needs to be bound for this session
  * @property {connstatus} Status.ATTACHFAIL - Failed to attach to a pre-existing session
  * @property {connstatus} Status.RECONNECTING - Not used by Strophe, but added for integrators
  */
