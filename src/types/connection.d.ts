@@ -557,7 +557,7 @@ declare class Connection {
      * automated testing as well.
      *
      * @param {string} suffix - A optional suffix to append to the id.
-     * @return {string} A unique string to be used for the id attribute.
+     * @returns {string} A unique string to be used for the id attribute.
      */
     getUniqueId(suffix: string): string;
     /**
@@ -620,14 +620,14 @@ declare class Connection {
      *     }
      * @param {string|Password} pass - The user password
      * @param {Function} callback - The connect callback function.
-     * @param {number} wait - The optional HTTPBIND wait value.  This is the
+     * @param {number} [wait] - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
      *     a request.  The default setting of 60 seconds is recommended.
-     * @param {number} hold - The optional HTTPBIND hold value.  This is the
+     * @param {number} [hold] - The optional HTTPBIND hold value.  This is the
      *     number of connections the server will hold at one time.  This
      *     should almost always be set to 1 (the default).
-     * @param {string} route - The optional route value.
-     * @param {string} authcid - The optional alternative authentication identity
+     * @param {string} [route] - The optional route value.
+     * @param {string} [authcid] - The optional alternative authentication identity
      *     (username) if intending to impersonate another user.
      *     When using the SASL-EXTERNAL authentication mechanism, for example
      *     with client certificates, then the authcid value is used to
@@ -637,7 +637,7 @@ declare class Connection {
      *     (for example when the JID is already contained in the client
      *     certificate), set authcid to that same JID. See XEP-178 for more
      *     details.
-     *  @param {number} disconnection_timeout - The optional disconnection timeout
+     *  @param {number} [disconnection_timeout=3000] - The optional disconnection timeout
      *     in milliseconds before _doDisconnect will be called.
      */
     connect(jid: string, pass: string | {
@@ -646,7 +646,7 @@ declare class Connection {
         sk: string;
         iter: number;
         salt: string;
-    }, callback: Function, wait: number, hold: number, route: string, authcid: string, disconnection_timeout?: number): void;
+    }, callback: Function, wait?: number, hold?: number, route?: string, authcid?: string, disconnection_timeout?: number): void;
     /** Authorization identity */
     authzid: string;
     /** Authentication identity (User name) */
@@ -679,17 +679,17 @@ declare class Connection {
      * @param {number} rid - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
      * @param {Function} callback The connect callback function.
-     * @param {number} wait - The optional HTTPBIND wait value.  This is the
+     * @param {number} [wait] - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
      *     a request.  The default setting of 60 seconds is recommended.
      *     Other settings will require tweaks to the Strophe.TIMEOUT value.
-     * @param {number} hold - The optional HTTPBIND hold value.  This is the
+     * @param {number} [hold] - The optional HTTPBIND hold value.  This is the
      *     number of connections the server will hold at one time.  This
      *     should almost always be set to 1 (the default).
-     * @param {number} wind - The optional HTTBIND window value.  This is the
+     * @param {number} [wind] - The optional HTTBIND window value.  This is the
      *     allowed range of request ids that are valid.  The default is 5.
      */
-    attach(jid: string, sid: string, rid: number, callback: Function, wait: number, hold: number, wind: number): void;
+    attach(jid: string, sid: string, rid: number, callback: Function, wait?: number, hold?: number, wind?: number): void;
     /**
      * Attempt to restore a cached BOSH session.
      *
@@ -707,16 +707,16 @@ declare class Connection {
      *
      * @param {string} jid - The user's JID.  This may be a bare JID or a full JID.
      * @param {Function} callback - The connect callback function.
-     * @param {number} wait - The optional HTTPBIND wait value.  This is the
+     * @param {number} [wait] - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
      *     a request.  The default setting of 60 seconds is recommended.
-     * @param {number} hold - The optional HTTPBIND hold value.  This is the
+     * @param {number} [hold] - The optional HTTPBIND hold value.  This is the
      *     number of connections the server will hold at one time.  This
      *     should almost always be set to 1 (the default).
-     * @param {number} wind - The optional HTTBIND window value.  This is the
+     * @param {number} [wind] - The optional HTTBIND window value.  This is the
      *     allowed range of request ids that are valid.  The default is 5.
      */
-    restore(jid: string, callback: Function, wait: number, hold: number, wind: number): void;
+    restore(jid: string, callback: Function, wait?: number, hold?: number, wind?: number): void;
     /**
      * Checks whether sessionStorage and JSON are supported and whether we're
      * using BOSH.
