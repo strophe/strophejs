@@ -737,10 +737,10 @@ class Connection {
      * stanza with the same id (for example when leaving a chat room).
      *
      * @param {Element} stanza - The stanza to send.
-     * @param {Function} callback - The callback function for a successful request.
-     * @param {Function} errback - The callback function for a failed or timed
+     * @param {Function} [callback] - The callback function for a successful request.
+     * @param {Function} [errback] - The callback function for a failed or timed
      *    out request.  On timeout, the stanza will be null.
-     * @param {number} timeout - The time specified in milliseconds for a
+     * @param {number} [timeout] - The time specified in milliseconds for a
      *    timeout to occur.
      * @return {string} The id used to send the presence.
      */
@@ -759,18 +759,13 @@ class Connection {
 
         if (typeof callback === 'function' || typeof errback === 'function') {
             const handler = this.addHandler(
-                /**
-                 * @param {Element} stanza
-                 */
+                /** @param {Element} stanza */
                 (stanza) => {
                     // remove timeout handler if there is one
-                    if (timeoutHandler) {
-                        this.deleteTimedHandler(timeoutHandler);
-                    }
+                    if (timeoutHandler) this.deleteTimedHandler(timeoutHandler);
+
                     if (stanza.getAttribute('type') === 'error') {
-                        if (errback) {
-                            errback(stanza);
-                        }
+                        errback?.(stanza);
                     } else if (callback) {
                         callback(stanza);
                     }
@@ -787,9 +782,7 @@ class Connection {
                     // get rid of normal handler
                     this.deleteHandler(handler);
                     // call errback on timeout with null stanza
-                    if (errback) {
-                        errback(null);
-                    }
+                    errback?.(null);
                     return false;
                 });
             }
@@ -802,10 +795,10 @@ class Connection {
      * Helper function to send IQ stanzas.
      *
      * @param {Element|Builder} stanza - The stanza to send.
-     * @param {Function} callback - The callback function for a successful request.
-     * @param {Function} errback - The callback function for a failed or timed
+     * @param {Function} [callback] - The callback function for a successful request.
+     * @param {Function} [errback] - The callback function for a failed or timed
      *     out request.  On timeout, the stanza will be null.
-     * @param {number} timeout - The time specified in milliseconds for a
+     * @param {number} [timeout] - The time specified in milliseconds for a
      *     timeout to occur.
      * @return {string} The id used to send the IQ.
      */
@@ -824,23 +817,16 @@ class Connection {
 
         if (typeof callback === 'function' || typeof errback === 'function') {
             const handler = this.addHandler(
-                /**
-                 * @param {Element} stanza
-                 */
+                /** @param {Element} stanza */
                 (stanza) => {
                     // remove timeout handler if there is one
-                    if (timeoutHandler) {
-                        this.deleteTimedHandler(timeoutHandler);
-                    }
+                    if (timeoutHandler) this.deleteTimedHandler(timeoutHandler);
+
                     const iqtype = stanza.getAttribute('type');
                     if (iqtype === 'result') {
-                        if (callback) {
-                            callback(stanza);
-                        }
+                        callback?.(stanza);
                     } else if (iqtype === 'error') {
-                        if (errback) {
-                            errback(stanza);
-                        }
+                        errback?.(stanza);
                     } else {
                         const error = new Error(`Got bad IQ type of ${iqtype}`);
                         error.name = 'StropheError';
@@ -859,9 +845,7 @@ class Connection {
                     // get rid of normal handler
                     this.deleteHandler(handler);
                     // call errback on timeout with null stanza
-                    if (errback) {
-                        errback(null);
-                    }
+                    errback?.(null);
                     return false;
                 });
             }

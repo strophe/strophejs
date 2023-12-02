@@ -818,26 +818,26 @@ declare class Connection {
      * stanza with the same id (for example when leaving a chat room).
      *
      * @param {Element} stanza - The stanza to send.
-     * @param {Function} callback - The callback function for a successful request.
-     * @param {Function} errback - The callback function for a failed or timed
+     * @param {Function} [callback] - The callback function for a successful request.
+     * @param {Function} [errback] - The callback function for a failed or timed
      *    out request.  On timeout, the stanza will be null.
-     * @param {number} timeout - The time specified in milliseconds for a
+     * @param {number} [timeout] - The time specified in milliseconds for a
      *    timeout to occur.
      * @return {string} The id used to send the presence.
      */
-    sendPresence(stanza: Element, callback: Function, errback: Function, timeout: number): string;
+    sendPresence(stanza: Element, callback?: Function, errback?: Function, timeout?: number): string;
     /**
      * Helper function to send IQ stanzas.
      *
      * @param {Element|Builder} stanza - The stanza to send.
-     * @param {Function} callback - The callback function for a successful request.
-     * @param {Function} errback - The callback function for a failed or timed
+     * @param {Function} [callback] - The callback function for a successful request.
+     * @param {Function} [errback] - The callback function for a failed or timed
      *     out request.  On timeout, the stanza will be null.
-     * @param {number} timeout - The time specified in milliseconds for a
+     * @param {number} [timeout] - The time specified in milliseconds for a
      *     timeout to occur.
      * @return {string} The id used to send the IQ.
      */
-    sendIQ(stanza: Element | Builder, callback: Function, errback: Function, timeout: number): string;
+    sendIQ(stanza: Element | Builder, callback?: Function, errback?: Function, timeout?: number): string;
     /**
      * Queue outgoing data for later sending.  Also ensures that the data
      * is a DOMElement.
