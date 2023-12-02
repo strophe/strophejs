@@ -526,10 +526,10 @@ class Connection {
      * without putting user credentials into the page.
      *
      * @param {string|Function} jid - The full JID that is bound by the session.
-     * @param {string} sid - The SID of the BOSH session.
-     * @param {number} rid - The current RID of the BOSH session.  This RID
+     * @param {string} [sid] - The SID of the BOSH session.
+     * @param {number} [rid] - The current RID of the BOSH session.  This RID
      *     will be used by the next request.
-     * @param {Function} callback The connect callback function.
+     * @param {Function} [callback] - The connect callback function.
      * @param {number} [wait] - The optional HTTPBIND wait value.  This is the
      *     time the server will wait before returning an empty result for
      *     a request.  The default setting of 60 seconds is recommended.
