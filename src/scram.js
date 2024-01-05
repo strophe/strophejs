@@ -48,8 +48,12 @@ function scramParseChallenge(challenge) {
             case 'i':
                 iter = parseInt(matches[2], 10);
                 break;
-            default:
+            case 'm':
+                // Mandatory but unknown extension, per RFC 5802 we should abort
                 return undefined;
+            default:
+                // Non-mandatory extension, per RFC 5802 we should ignore it
+                break;
         }
     }
 
