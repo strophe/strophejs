@@ -42,7 +42,6 @@ release:
 	$(SED) -i 's/VERSION:\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/VERSION:\ \"$(VERSION)\"/' src/core.js
 	$(SED)  -i "s/Unreleased/`date +%Y-%m-%d`/" CHANGELOG.md
 	make dist
-	make doc
 
 .PHONY: watchjs
 watchjs: node_modules

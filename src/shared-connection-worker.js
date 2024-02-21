@@ -43,7 +43,7 @@ class ConnectionManager {
     }
 
     /**
-     * @param {[string,string]} data
+     * @param {[string, string]} data
      */
     _connect(data) {
         this.jid = data[1];

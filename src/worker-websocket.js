@@ -1,9 +1,7 @@
 /**
  * @license MIT
  * @copyright JC Brand
- */
-
-/**
+ *
  * @typedef {import("./connection.js").default} Connection
  * @typedef {import("./builder.js").default} Builder
  */

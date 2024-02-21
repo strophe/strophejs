@@ -26,7 +26,7 @@ declare class ConnectionManager {
     /** @param {MessagePort} port */
     addPort(port: MessagePort): void;
     /**
-     * @param {[string,string]} data
+     * @param {[string, string]} data
      */
     _connect(data: [string, string]): void;
     jid: string;

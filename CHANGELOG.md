@@ -1,11 +1,12 @@
 # Strophe.js Change Log
 
-## Version 2.0.0 - (Unreleased)
+## Version 2.0.0 - (2024-02-21)
 
 * Type checking via TypeScript and JSDoc typing annotations
-  Types definitions are now generated and placed in `./dist/types/`.
+* Types definitions are now generated and placed in `./dist/types/`.
 * Remove the deprecated `matchBare` option for `Strophe.Handler`. Use `matchBareFromJid` instead.
 * Add the ability to create stanzas via a tagged template literal (`stx`).
+* Bugfix: Ignore unknown SCRAM attributes instead of aborting the connection
 
 ## Version 1.6.2 - (2023-06-23)
 
