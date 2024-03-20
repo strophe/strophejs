@@ -1,4 +1,9 @@
 /**
+ * Properly logs an error to the console
+ * @param {Error} e
+ */
+export function handleError(e: Error): void;
+/**
  * @param {string} str
  * @return {string}
  */
@@ -132,13 +137,6 @@ export function xmlescape(text: string): string;
  */
 export function xmlunescape(text: string): string;
 /**
- * Render a DOM element and all descendants to a String.
- * @method Strophe.serialize
- * @param {Element|Builder} elem - A DOM element.
- * @return {string} - The serialized element tree as a String.
- */
-export function serialize(elem: Element | Builder): string;
-/**
  * Map a function over some or all child elements of a given element.
  *
  * This is a small convenience function for mapping a function over
@@ -215,7 +213,6 @@ export function getResourceFromJid(jid: string): string;
 export function getBareJidFromJid(jid: string): string;
 export { utils as default };
 export type XHTMLAttrs = 'a' | 'blockquote' | 'br' | 'cite' | 'em' | 'img' | 'li' | 'ol' | 'p' | 'span' | 'strong' | 'ul' | 'body';
-import Builder from './builder.js';
 declare namespace utils {
     export { utf16to8 };
     export { xorArrayBuffers };

@@ -1,14 +1,15 @@
-import Strophe from './core.js';
+import log from './log.js';
+import { xmlHtmlNode } from './utils.js';
 
 const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
 
 /**
- * @param { string } string
- * @param { boolean } [throwErrorIfInvalidNS]
- * @return { Element }
+ * @param {string} string
+ * @param {boolean} [throwErrorIfInvalidNS]
+ * @return {Element}
  */
-export function toStanza (string, throwErrorIfInvalidNS) {
-    const doc = Strophe.xmlHtmlNode(string);
+export function toStanza(string, throwErrorIfInvalidNS) {
+    const doc = xmlHtmlNode(string);
 
     if (doc.getElementsByTagNameNS(PARSE_ERROR_NS, 'parsererror').length) {
         throw new Error(`Parser Error: ${string}`);
@@ -25,7 +26,7 @@ export function toStanza (string, throwErrorIfInvalidNS) {
         if (throwErrorIfInvalidNS) {
             throw new Error(err_msg);
         } else {
-            Strophe.log(Strophe.LogLevel.ERROR, err_msg);
+            log.error(err_msg);
         }
     }
     return node;
@@ -36,12 +37,11 @@ export function toStanza (string, throwErrorIfInvalidNS) {
  * stanzas).
  */
 class Stanza {
-
-   /**
-    * @param { string[] } strings
-    * @param { any[] } values
-    */
-    constructor (strings, values) {
+    /**
+     * @param { string[] } strings
+     * @param { any[] } values
+     */
+    constructor(strings, values) {
         this.strings = strings;
         this.values = values;
     }
@@ -49,9 +49,10 @@ class Stanza {
     /**
      * @return { string }
      */
-    toString () {
-        this.string = this.string ||
-             this.strings.reduce((acc, str) => {
+    toString() {
+        this.string =
+            this.string ||
+            this.strings.reduce((acc, str) => {
                 const idx = this.strings.indexOf(str);
                 const value = this.values.length > idx ? this.values[idx].toString() : '';
                 return acc + str + value;
@@ -62,7 +63,7 @@ class Stanza {
     /**
      * @return { Element }
      */
-    tree () {
+    tree() {
         this.node = this.node ?? toStanza(this.toString(), true);
         return this.node;
     }
@@ -75,6 +76,6 @@ class Stanza {
  * @param { string[] } strings
  * @param { ...any } values
  */
-export function stx (strings, ...values) {
+export function stx(strings, ...values) {
     return new Stanza(strings, values);
 }

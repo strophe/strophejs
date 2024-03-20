@@ -1,8 +1,18 @@
 /* global btoa */
-import Strophe from './core.js';
+import log from './log.js';
 import * as shims from './shims.js';
 import { ElementType, XHTML } from './constants.js';
-import Builder from './builder.js';
+
+/**
+ * Properly logs an error to the console
+ * @param {Error} e
+ */
+export function handleError(e) {
+    if (typeof e.stack !== 'undefined') {
+        log.fatal(e.stack);
+    }
+    log.fatal('error: ' + e.message);
+}
 
 /**
  * @param {string} str
@@ -79,7 +89,7 @@ export function stringToArrayBuf(str) {
  */
 export function addCookies(cookies) {
     if (typeof document === 'undefined') {
-        Strophe.log(Strophe.LogLevel.ERROR, `addCookies: not adding any cookies, since there's no document object`);
+        log.error(`addCookies: not adding any cookies, since there's no document object`);
     }
 
     /**
@@ -408,49 +418,6 @@ export function xmlunescape(text) {
     text = text.replace(/&apos;/g, "'");
     text = text.replace(/&quot;/g, '"');
     return text;
-}
-
-/**
- * Render a DOM element and all descendants to a String.
- * @method Strophe.serialize
- * @param {Element|Builder} elem - A DOM element.
- * @return {string} - The serialized element tree as a String.
- */
-export function serialize(elem) {
-    if (!elem) return null;
-
-    const el = elem instanceof Builder ? elem.tree() : elem;
-
-    const names = [...Array(el.attributes.length).keys()].map((i) => el.attributes[i].nodeName);
-    names.sort();
-    let result = names.reduce(
-        (a, n) => `${a} ${n}="${xmlescape(el.attributes.getNamedItem(n).value)}"`,
-        `<${el.nodeName}`
-    );
-
-    if (el.childNodes.length > 0) {
-        result += '>';
-        for (let i = 0; i < el.childNodes.length; i++) {
-            const child = el.childNodes[i];
-            switch (child.nodeType) {
-                case ElementType.NORMAL:
-                    // normal element, so recurse
-                    result += serialize(/** @type {Element} */ (child));
-                    break;
-                case ElementType.TEXT:
-                    // text element to escape values
-                    result += xmlescape(child.nodeValue);
-                    break;
-                case ElementType.CDATA:
-                    // cdata section so don't escape values
-                    result += '<![CDATA[' + child.nodeValue + ']]>';
-            }
-        }
-        result += '</' + el.nodeName + '>';
-    } else {
-        result += '/>';
-    }
-    return result;
 }
 
 /**

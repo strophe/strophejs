@@ -1,11 +1,39 @@
+import { atob, btoa } from 'abab';
 import Handler from './handler.js';
 import TimedHandler from './timed-handler.js';
 import Builder, { $build, $iq, $pres } from './builder.js';
-import { Status } from './constants.js';
-import Strophe from './core.js';
-import { addCookies, getText } from './utils.js';
-import { atob, btoa } from 'abab';
+import log from './log.js';
+import { ErrorCondition, NS, Status } from './constants.js';
+import SASLAnonymous from './sasl-anon.js';
+import SASLExternal from './sasl-external.js';
+import SASLOAuthBearer from './sasl-oauthbearer.js';
+import SASLPlain from './sasl-plain.js';
+import SASLSHA1 from './sasl-sha1.js';
+import SASLSHA256 from './sasl-sha256.js';
+import SASLSHA384 from './sasl-sha384.js';
+import SASLSHA512 from './sasl-sha512.js';
+import SASLXOAuth2 from './sasl-xoauth2.js';
+import {
+    addCookies,
+    forEachChild,
+    getBareJidFromJid,
+    getDomainFromJid,
+    getNodeFromJid,
+    getResourceFromJid,
+    getText,
+    handleError,
+} from './utils.js';
 import { SessionError } from './errors.js';
+import Bosh from './bosh.js';
+import WorkerWebsocket from './worker-websocket.js';
+import Websocket from './websocket.js';
+
+/**
+ * _Private_ variable Used to store plugin names that need
+ * initialization during Connection construction.
+ * @type {Object.<string, Object>}
+ */
+const connectionPlugins = {};
 
 /**
  * @typedef {import("./sasl.js").default} SASLMechanism
@@ -21,21 +49,21 @@ import { SessionError } from './errors.js';
  *
  * It supports various authentication mechanisms (e.g. SASL PLAIN, SASL SCRAM),
  * and more can be added via
- * {@link Strophe.Connection#registerSASLMechanisms|registerSASLMechanisms()}.
+ * {@link Connection#registerSASLMechanisms|registerSASLMechanisms()}.
  *
- * After creating a Strophe.Connection object, the user will typically
- * call {@link Strophe.Connection#connect|connect()} with a user supplied callback
+ * After creating a Connection object, the user will typically
+ * call {@link Connection#connect|connect()} with a user supplied callback
  * to handle connection level events like authentication failure,
  * disconnection, or connection complete.
  *
  * The user will also have several event handlers defined by using
- * {@link Strophe.Connection#addHandler|addHandler()} and
- * {@link Strophe.Connection#addTimedHandler|addTimedHandler()}.
+ * {@link Connection#addHandler|addHandler()} and
+ * {@link Connection#addTimedHandler|addTimedHandler()}.
  * These will allow the user code to respond to interesting stanzas or do
  * something periodically with the connection. These handlers will be active
  * once authentication is finished.
  *
- * To send data to the connection, use {@link Strophe.Connection#send|send()}.
+ * To send data to the connection, use {@link Connection#send|send()}.
  *
  * @memberof Strophe
  */
@@ -68,9 +96,9 @@ class Connection {
      *  necessary cookies.
      * @property {SASLMechanism[]} [mechanisms]
      *  Allows you to specify the SASL authentication mechanisms that this
-     *  instance of Strophe.Connection (and therefore your XMPP client) will support.
+     *  instance of Connection (and therefore your XMPP client) will support.
      *
-     *  The value must be an array of objects with {@link Strophe.SASLMechanism}
+     *  The value must be an array of objects with {@link SASLMechanism}
      *  prototypes.
      *
      *  If nothing is specified, then the following mechanisms (and their
@@ -90,7 +118,7 @@ class Connection {
      *
      * @property {boolean} [explicitResourceBinding]
      *  If `explicitResourceBinding` is set to `true`, then the XMPP client
-     *  needs to explicitly call {@link Strophe.Connection.bind} once the XMPP
+     *  needs to explicitly call {@link Connection.bind} once the XMPP
      *  server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
      *
      *  Making this step explicit allows client authors to first finish other
@@ -124,7 +152,7 @@ class Connection {
      *
      *  To run the websocket connection inside a shared worker.
      *  This allows you to share a single websocket-based connection between
-     *  multiple Strophe.Connection instances, for example one per browser tab.
+     *  multiple Connection instances, for example one per browser tab.
      *
      *  The script to use is the one in `src/shared-connection-worker.js`.
      *
@@ -170,7 +198,7 @@ class Connection {
      */
 
     /**
-     * Create and initialize a {@link Strophe.Connection} object.
+     * Create and initialize a {@link Connection} object.
      *
      * The transport-protocol for this connection will be chosen automatically
      * based on the given service parameter. URLs starting with "ws://" or
@@ -279,7 +307,7 @@ class Connection {
                 this.send(
                     $iq({ type: 'error', id: iq.getAttribute('id') })
                         .c('error', { 'type': 'cancel' })
-                        .c('service-unavailable', { 'xmlns': Strophe.NS.STANZAS })
+                        .c('service-unavailable', { 'xmlns': NS.STANZAS })
                 ),
             null,
             'iq',
@@ -287,10 +315,10 @@ class Connection {
         );
 
         // initialize plugins
-        for (const k in Strophe._connectionPlugins) {
-            if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
+        for (const k in connectionPlugins) {
+            if (Object.prototype.hasOwnProperty.call(connectionPlugins, k)) {
                 const F = function () {};
-                F.prototype = Strophe._connectionPlugins[k];
+                F.prototype = connectionPlugins[k];
                 // @ts-ignore
                 this[k] = new F();
                 // @ts-ignore
@@ -300,20 +328,29 @@ class Connection {
     }
 
     /**
+     * Extends the Connection object with the given plugin.
+     * @param {string} name - The name of the extension.
+     * @param {Object} ptype - The plugin's prototype.
+     */
+    static addConnectionPlugin(name, ptype) {
+        connectionPlugins[name] = ptype;
+    }
+
+    /**
      * Select protocal based on this.options or this.service
      */
     setProtocol() {
         const proto = this.options.protocol || '';
         if (this.options.worker) {
-            this._proto = new Strophe.WorkerWebsocket(this);
+            this._proto = new WorkerWebsocket(this);
         } else if (
             this.service.indexOf('ws:') === 0 ||
             this.service.indexOf('wss:') === 0 ||
             proto.indexOf('ws') === 0
         ) {
-            this._proto = new Strophe.Websocket(this);
+            this._proto = new Websocket(this);
         } else {
-            this._proto = new Strophe.Bosh(this);
+            this._proto = new Bosh(this);
         }
     }
 
@@ -490,9 +527,9 @@ class Connection {
     connect(jid, pass, callback, wait, hold, route, authcid, disconnection_timeout = 3000) {
         this.jid = jid;
         /** Authorization identity */
-        this.authzid = Strophe.getBareJidFromJid(this.jid);
+        this.authzid = getBareJidFromJid(this.jid);
         /** Authentication identity (User name) */
-        this.authcid = authcid || Strophe.getNodeFromJid(this.jid);
+        this.authcid = authcid || getNodeFromJid(this.jid);
         /** Authentication identity (User password) */
         this.pass = pass;
 
@@ -510,7 +547,7 @@ class Connection {
         this.disconnection_timeout = disconnection_timeout;
 
         // parse jid for domain
-        this.domain = Strophe.getDomainFromJid(this.jid);
+        this.domain = getDomainFromJid(this.jid);
 
         this._changeConnectStatus(Status.CONNECTING, null);
 
@@ -541,9 +578,9 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     attach(jid, sid, rid, callback, wait, hold, wind) {
-        if (this._proto instanceof Strophe.Bosh && typeof jid === 'string') {
+        if (this._proto instanceof Bosh && typeof jid === 'string') {
             return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
-        } else if (this._proto instanceof Strophe.WorkerWebsocket && typeof jid === 'function') {
+        } else if (this._proto instanceof WorkerWebsocket && typeof jid === 'function') {
             const callback = jid;
             return this._proto._attach(callback);
         } else {
@@ -555,7 +592,7 @@ class Connection {
      * Attempt to restore a cached BOSH session.
      *
      * This function is only useful in conjunction with providing the
-     * "keepalive":true option when instantiating a new {@link Strophe.Connection}.
+     * "keepalive":true option when instantiating a new {@link Connection}.
      *
      * When "keepalive" is set to true, Strophe will cache the BOSH tokens
      * RID (Request ID) and SID (Session ID) and then when this function is
@@ -578,7 +615,7 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     restore(jid, callback, wait, hold, wind) {
-        if (!(this._proto instanceof Strophe.Bosh) || !this._sessionCachingSupported()) {
+        if (!(this._proto instanceof Bosh) || !this._sessionCachingSupported()) {
             throw new SessionError('The "restore" method can only be used with a BOSH connection.');
         }
 
@@ -592,7 +629,7 @@ class Connection {
      * using BOSH.
      */
     _sessionCachingSupported() {
-        if (this._proto instanceof Strophe.Bosh) {
+        if (this._proto instanceof Bosh) {
             if (!JSON) {
                 return false;
             }
@@ -612,7 +649,7 @@ class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.xmlInput = function (elem) {
+     * > Connection.xmlInput = function (elem) {
      * >   (user code)
      * > };
      *
@@ -620,7 +657,7 @@ class Connection {
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
      *
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
-     * <Strophe.Bosh.strip> if you want to strip this tag.
+     * <Bosh.strip> if you want to strip this tag.
      *
      * @param {Node|MessageEvent} elem - The XML data received by the connection.
      */
@@ -634,7 +671,7 @@ class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.xmlOutput = function (elem) {
+     * > Connection.xmlOutput = function (elem) {
      * >   (user code)
      * > };
      *
@@ -642,7 +679,7 @@ class Connection {
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
      *
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
-     * <Strophe.Bosh.strip> if you want to strip this tag.
+     * <Bosh.strip> if you want to strip this tag.
      *
      * @param {Element} elem - The XMLdata sent by the connection.
      */
@@ -656,7 +693,7 @@ class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.rawInput = function (data) {
+     * > Connection.rawInput = function (data) {
      * >   (user code)
      * > };
      *
@@ -672,7 +709,7 @@ class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.rawOutput = function (data) {
+     * > Connection.rawOutput = function (data) {
      * >   (user code)
      * > };
      *
@@ -687,7 +724,7 @@ class Connection {
      * User overrideable function that receives the new valid rid.
      *
      * The default function does nothing. User code can override this with
-     * > Strophe.Connection.nextValidRid = function (rid) {
+     * > Connection.nextValidRid = function (rid) {
      * >    (user code)
      * > };
      *
@@ -902,7 +939,7 @@ class Connection {
      * @return {TimedHandler} A reference to the handler that can be used to remove it.
      */
     addTimedHandler(period, handler) {
-        const thand = new Strophe.TimedHandler(period, handler);
+        const thand = new TimedHandler(period, handler);
         this.addTimeds.push(thand);
         return thand;
     }
@@ -1018,22 +1055,22 @@ class Connection {
 
     /**
      * Register the SASL mechanisms which will be supported by this instance of
-     * Strophe.Connection (i.e. which this XMPP client will support).
-     * @param {SASLMechanism[]} mechanisms - Array of objects with Strophe.SASLMechanism prototypes
+     * Connection (i.e. which this XMPP client will support).
+     * @param {SASLMechanism[]} mechanisms - Array of objects with SASLMechanism prototypes
      */
     registerSASLMechanisms(mechanisms) {
         this.mechanisms = {};
         (
             mechanisms || [
-                Strophe.SASLAnonymous,
-                Strophe.SASLExternal,
-                Strophe.SASLOAuthBearer,
-                Strophe.SASLXOAuth2,
-                Strophe.SASLPlain,
-                Strophe.SASLSHA1,
-                Strophe.SASLSHA256,
-                Strophe.SASLSHA384,
-                Strophe.SASLSHA512,
+                SASLAnonymous,
+                SASLExternal,
+                SASLOAuthBearer,
+                SASLXOAuth2,
+                SASLPlain,
+                SASLSHA1,
+                SASLSHA256,
+                SASLSHA384,
+                SASLSHA512,
             ]
         ).forEach((m) => this.registerSASLMechanism(m));
     }
@@ -1065,16 +1102,16 @@ class Connection {
     disconnect(reason) {
         this._changeConnectStatus(Status.DISCONNECTING, reason);
         if (reason) {
-            Strophe.warn('Disconnect was called because: ' + reason);
+            log.warn('Disconnect was called because: ' + reason);
         } else {
-            Strophe.info('Disconnect was called');
+            log.info('Disconnect was called');
         }
         if (this.connected) {
             let pres = null;
             this.disconnecting = true;
             if (this.authenticated) {
                 pres = $pres({
-                    'xmlns': Strophe.NS.CLIENT,
+                    'xmlns': NS.CLIENT,
                     'type': 'unavailable',
                 });
             }
@@ -1085,7 +1122,7 @@ class Connection {
             );
             this._proto._disconnect(pres);
         } else {
-            Strophe.warn('Disconnect was called before Strophe connected to the server');
+            log.warn('Disconnect was called before Strophe connected to the server');
             this._proto._abortAllRequests();
             this._doDisconnect();
         }
@@ -1101,15 +1138,15 @@ class Connection {
      */
     _changeConnectStatus(status, condition, elem) {
         // notify all plugins listening for status changes
-        for (const k in Strophe._connectionPlugins) {
-            if (Object.prototype.hasOwnProperty.call(Strophe._connectionPlugins, k)) {
+        for (const k in connectionPlugins) {
+            if (Object.prototype.hasOwnProperty.call(connectionPlugins, k)) {
                 // @ts-ignore
                 const plugin = this[k];
                 if (plugin.statusChanged) {
                     try {
                         plugin.statusChanged(status, condition);
                     } catch (err) {
-                        Strophe.error(`${k} plugin caused an exception changing status: ${err}`);
+                        log.error(`${k} plugin caused an exception changing status: ${err}`);
                     }
                 }
             }
@@ -1119,8 +1156,8 @@ class Connection {
             try {
                 this.connect_callback(status, condition, elem);
             } catch (e) {
-                Strophe._handleError(e);
-                Strophe.error(`User connection callback caused an exception: ${e}`);
+                handleError(e);
+                log.error(`User connection callback caused an exception: ${e}`);
             }
         }
     }
@@ -1143,7 +1180,7 @@ class Connection {
             this._disconnectTimeout = null;
         }
 
-        Strophe.debug('_doDisconnect was called');
+        log.debug('_doDisconnect was called');
         this._proto._doDisconnect();
 
         this.authenticated = false;
@@ -1181,18 +1218,18 @@ class Connection {
             return;
         }
 
-        if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
+        if (this.xmlInput !== Connection.prototype.xmlInput) {
             if (elem.nodeName === this._proto.strip && elem.childNodes.length) {
                 this.xmlInput(elem.childNodes[0]);
             } else {
                 this.xmlInput(elem);
             }
         }
-        if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
+        if (this.rawInput !== Connection.prototype.rawInput) {
             if (raw) {
                 this.rawInput(raw);
             } else {
-                this.rawInput(Strophe.serialize(elem));
+                this.rawInput(Builder.serialize(elem));
             }
         }
 
@@ -1231,14 +1268,14 @@ class Connection {
                 }
                 this._changeConnectStatus(Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.UNKNOWN_REASON);
+                this._changeConnectStatus(Status.CONNFAIL, ErrorCondition.UNKNOWN_REASON);
             }
             this._doDisconnect(cond);
             return;
         }
 
         // send each incoming stanza through the handler chain
-        Strophe.forEachChild(
+        forEachChild(
             elem,
             null,
             /** @param {Element} child */
@@ -1256,7 +1293,7 @@ class Connection {
                         }
                     } catch (e) {
                         // if the handler throws an exception, we consider it as false
-                        Strophe.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+                        log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                     }
 
                     return handlers;
@@ -1293,7 +1330,7 @@ class Connection {
      * @param {string} [raw] - The stanza as raw string.
      */
     _connect_cb(req, _callback, raw) {
-        Strophe.debug('_connect_cb was called');
+        log.debug('_connect_cb was called');
         this.connected = true;
 
         let bodyWrap;
@@ -1302,28 +1339,28 @@ class Connection {
                 '_reqToData' in this._proto ? this._proto._reqToData(/** @type {Request} */ (req)) : req
             );
         } catch (e) {
-            if (e.name !== Strophe.ErrorCondition.BAD_FORMAT) {
+            if (e.name !== ErrorCondition.BAD_FORMAT) {
                 throw e;
             }
-            this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.BAD_FORMAT);
-            this._doDisconnect(Strophe.ErrorCondition.BAD_FORMAT);
+            this._changeConnectStatus(Status.CONNFAIL, ErrorCondition.BAD_FORMAT);
+            this._doDisconnect(ErrorCondition.BAD_FORMAT);
         }
         if (!bodyWrap) {
             return;
         }
 
-        if (this.xmlInput !== Strophe.Connection.prototype.xmlInput) {
+        if (this.xmlInput !== Connection.prototype.xmlInput) {
             if (bodyWrap.nodeName === this._proto.strip && bodyWrap.childNodes.length) {
                 this.xmlInput(bodyWrap.childNodes[0]);
             } else {
                 this.xmlInput(bodyWrap);
             }
         }
-        if (this.rawInput !== Strophe.Connection.prototype.rawInput) {
+        if (this.rawInput !== Connection.prototype.rawInput) {
             if (raw) {
                 this.rawInput(raw);
             } else {
-                this.rawInput(Strophe.serialize(bodyWrap));
+                this.rawInput(Builder.serialize(bodyWrap));
             }
         }
 
@@ -1335,7 +1372,7 @@ class Connection {
         // Check for the stream:features tag
         let hasFeatures;
         if (bodyWrap.getElementsByTagNameNS) {
-            hasFeatures = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, 'features').length > 0;
+            hasFeatures = bodyWrap.getElementsByTagNameNS(NS.STREAM, 'features').length > 0;
         } else {
             hasFeatures =
                 bodyWrap.getElementsByTagName('stream:features').length > 0 ||
@@ -1446,7 +1483,7 @@ class Connection {
             this._sasl_mechanism.onStart(this);
 
             const request_auth_exchange = $build('auth', {
-                'xmlns': Strophe.NS.SASL,
+                'xmlns': NS.SASL,
                 'mechanism': this._sasl_mechanism.mechname,
             });
             if (this._sasl_mechanism.isClientFirst) {
@@ -1468,7 +1505,7 @@ class Connection {
     async _sasl_challenge_cb(elem) {
         const challenge = atob(getText(elem));
         const response = await this._sasl_mechanism.onChallenge(this, challenge);
-        const stanza = $build('response', { 'xmlns': Strophe.NS.SASL });
+        const stanza = $build('response', { 'xmlns': NS.SASL });
         if (response) stanza.t(btoa(response));
         this.send(stanza.tree());
         return true;
@@ -1479,11 +1516,11 @@ class Connection {
      * @private
      */
     _attemptLegacyAuth() {
-        if (Strophe.getNodeFromJid(this.jid) === null) {
+        if (getNodeFromJid(this.jid) === null) {
             // we don't have a node, which is required for non-anonymous
             // client connections
-            this._changeConnectStatus(Status.CONNFAIL, Strophe.ErrorCondition.MISSING_JID_NODE);
-            this.disconnect(Strophe.ErrorCondition.MISSING_JID_NODE);
+            this._changeConnectStatus(Status.CONNFAIL, ErrorCondition.MISSING_JID_NODE);
+            this.disconnect(ErrorCondition.MISSING_JID_NODE);
         } else {
             // Fall back to legacy authentication
             this._changeConnectStatus(Status.AUTHENTICATING, null);
@@ -1494,9 +1531,9 @@ class Connection {
                     'to': this.domain,
                     'id': '_auth_1',
                 })
-                    .c('query', { xmlns: Strophe.NS.AUTH })
+                    .c('query', { xmlns: NS.AUTH })
                     .c('username', {})
-                    .t(Strophe.getNodeFromJid(this.jid))
+                    .t(getNodeFromJid(this.jid))
                     .tree()
             );
         }
@@ -1519,20 +1556,20 @@ class Connection {
 
         // build plaintext auth iq
         const iq = $iq({ type: 'set', id: '_auth_2' })
-            .c('query', { xmlns: Strophe.NS.AUTH })
+            .c('query', { xmlns: NS.AUTH })
             .c('username', {})
-            .t(Strophe.getNodeFromJid(this.jid))
+            .t(getNodeFromJid(this.jid))
             .up()
             .c('password')
             .t(pass);
 
-        if (!Strophe.getResourceFromJid(this.jid)) {
+        if (!getResourceFromJid(this.jid)) {
             // since the user has not supplied a resource, we pick
             // a default one here.  unlike other auth methods, the server
             // cannot do this for us.
-            this.jid = Strophe.getBareJidFromJid(this.jid) + '/strophe';
+            this.jid = getBareJidFromJid(this.jid) + '/strophe';
         }
-        iq.up().c('resource', {}).t(Strophe.getResourceFromJid(this.jid));
+        iq.up().c('resource', {}).t(getResourceFromJid(this.jid));
 
         this._addSysHandler(this._auth2_cb.bind(this), null, null, null, '_auth_2');
         this.send(iq.tree());
@@ -1566,7 +1603,7 @@ class Connection {
                 return this._sasl_failure_cb(null);
             }
         }
-        Strophe.info('SASL authentication succeeded.');
+        log.info('SASL authentication succeeded.');
 
         if (this._sasl_data.keys) {
             this.scram_keys = this._sasl_data.keys;
@@ -1612,7 +1649,7 @@ class Connection {
             this._addSysHandler(
                 /** @param {Element} elem */
                 (elem) => wrapper(streamfeature_handlers, elem),
-                Strophe.NS.STREAM,
+                NS.STREAM,
                 'features',
                 null,
                 null
@@ -1659,7 +1696,7 @@ class Connection {
      * https://tools.ietf.org/html/rfc6120#section-7.5
      *
      * If `explicitResourceBinding` was set to a truthy value in the options
-     * passed to the Strophe.Connection constructor, then this function needs
+     * passed to the Connection constructor, then this function needs
      * to be called explicitly by the client author.
      *
      * Otherwise it'll be called automatically as soon as the XMPP server
@@ -1667,22 +1704,22 @@ class Connection {
      */
     bind() {
         if (!this.do_bind) {
-            Strophe.log(Strophe.LogLevel.INFO, `Strophe.Connection.prototype.bind called but "do_bind" is false`);
+            log.info(`Connection.prototype.bind called but "do_bind" is false`);
             return;
         }
         this._addSysHandler(this._onResourceBindResultIQ.bind(this), null, null, null, '_bind_auth_2');
 
-        const resource = Strophe.getResourceFromJid(this.jid);
+        const resource = getResourceFromJid(this.jid);
         if (resource) {
             this.send(
                 $iq({ type: 'set', id: '_bind_auth_2' })
-                    .c('bind', { xmlns: Strophe.NS.BIND })
+                    .c('bind', { xmlns: NS.BIND })
                     .c('resource', {})
                     .t(resource)
                     .tree()
             );
         } else {
-            this.send($iq({ type: 'set', id: '_bind_auth_2' }).c('bind', { xmlns: Strophe.NS.BIND }).tree());
+            this.send($iq({ type: 'set', id: '_bind_auth_2' }).c('bind', { xmlns: NS.BIND }).tree());
         }
     }
 
@@ -1694,11 +1731,11 @@ class Connection {
      */
     _onResourceBindResultIQ(elem) {
         if (elem.getAttribute('type') === 'error') {
-            Strophe.warn('Resource binding failed.');
+            log.warn('Resource binding failed.');
             const conflict = elem.getElementsByTagName('conflict');
             let condition;
             if (conflict.length > 0) {
-                condition = Strophe.ErrorCondition.CONFLICT;
+                condition = ErrorCondition.CONFLICT;
             }
             this._changeConnectStatus(Status.AUTHFAIL, condition, elem);
             return false;
@@ -1717,7 +1754,7 @@ class Connection {
                 }
             }
         } else {
-            Strophe.warn('Resource binding failed.');
+            log.warn('Resource binding failed.');
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -1735,13 +1772,13 @@ class Connection {
     _establishSession() {
         if (!this.do_session) {
             throw new Error(
-                `Strophe.Connection.prototype._establishSession ` +
-                    `called but apparently ${Strophe.NS.SESSION} wasn't advertised by the server`
+                `Connection.prototype._establishSession ` +
+                    `called but apparently ${NS.SESSION} wasn't advertised by the server`
             );
         }
         this._addSysHandler(this._onSessionResultIQ.bind(this), null, null, null, '_session_auth_2');
 
-        this.send($iq({ type: 'set', id: '_session_auth_2' }).c('session', { xmlns: Strophe.NS.SESSION }).tree());
+        this.send($iq({ type: 'set', id: '_session_auth_2' }).c('session', { xmlns: NS.SESSION }).tree());
     }
 
     /**
@@ -1765,7 +1802,7 @@ class Connection {
             this._changeConnectStatus(Status.CONNECTED, null);
         } else if (elem.getAttribute('type') === 'error') {
             this.authenticated = false;
-            Strophe.warn('Session creation failed.');
+            log.warn('Session creation failed.');
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);
             return false;
         }
@@ -1816,7 +1853,7 @@ class Connection {
     /**
      * _Private_ function to add a system level timed handler.
      *
-     * This function is used to add a Strophe.TimedHandler for the
+     * This function is used to add a TimedHandler for the
      * library code.  System timed handlers are allowed to run before
      * authentication is complete.
      * @param {number} period - The period of the handler.
@@ -1856,7 +1893,7 @@ class Connection {
      * @return {false} `false` to remove the handler.
      */
     _onDisconnectTimeout() {
-        Strophe.debug('_onDisconnectTimeout was called');
+        log.debug('_onDisconnectTimeout was called');
         this._changeConnectStatus(Status.CONNTIMEOUT, null);
         this._proto._onDisconnectTimeout();
         // actually disconnect

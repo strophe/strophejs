@@ -1,5 +1,5 @@
-import { NS } from './constants.js';
-import { copyElement, createHtml, serialize, xmlElement, xmlGenerator, xmlTextNode } from './utils.js';
+import { ElementType, NS } from './constants.js';
+import { copyElement, createHtml, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils.js';
 
 /**
  * Create a {@link Strophe.Builder}
@@ -96,6 +96,48 @@ class Builder {
     }
 
     /**
+     * Render a DOM element and all descendants to a String.
+     * @param {Element|Builder} elem - A DOM element.
+     * @return {string} - The serialized element tree as a String.
+     */
+    static serialize(elem) {
+        if (!elem) return null;
+
+        const el = elem instanceof Builder ? elem.tree() : elem;
+
+        const names = [...Array(el.attributes.length).keys()].map((i) => el.attributes[i].nodeName);
+        names.sort();
+        let result = names.reduce(
+            (a, n) => `${a} ${n}="${xmlescape(el.attributes.getNamedItem(n).value)}"`,
+            `<${el.nodeName}`
+        );
+
+        if (el.childNodes.length > 0) {
+            result += '>';
+            for (let i = 0; i < el.childNodes.length; i++) {
+                const child = el.childNodes[i];
+                switch (child.nodeType) {
+                    case ElementType.NORMAL:
+                        // normal element, so recurse
+                        result += Builder.serialize(/** @type {Element} */ (child));
+                        break;
+                    case ElementType.TEXT:
+                        // text element to escape values
+                        result += xmlescape(child.nodeValue);
+                        break;
+                    case ElementType.CDATA:
+                        // cdata section so don't escape values
+                        result += '<![CDATA[' + child.nodeValue + ']]>';
+                }
+            }
+            result += '</' + el.nodeName + '>';
+        } else {
+            result += '/>';
+        }
+        return result;
+    }
+
+    /**
      * Return the DOM tree.
      *
      * This function returns the current DOM tree as an element object.  This
@@ -117,7 +159,7 @@ class Builder {
      * @return {string} The serialized DOM tree in a String.
      */
     toString() {
-        return serialize(this.nodeTree);
+        return Builder.serialize(this.nodeTree);
     }
 
     /**

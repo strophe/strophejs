@@ -130,24 +130,12 @@ export const ErrorCondition = {
 };
 
 /**
- * @typedef {Object} LogLevel
- * @property {string} DEBUG
- * @property {string} INFO
- * @property {string} WARN
- * @property {string} ERROR
- * @property {string} FATAL
- */
-
-/**
  * Logging level indicators.
- *
- * - Strophe.LogLevel.DEBUG - Debug output
- * - Strophe.LogLevel.INFO - Informational output
- * - Strophe.LogLevel.WARN - Warnings
- * - Strophe.LogLevel.ERROR - Errors
- * - Strophe.LogLevel.FATAL - Fatal errors
+ * @typedef {0|1|2|3|4} LogLevel
+ * @typedef {'DEBUG'|'INFO'|'WARN'|'ERROR'|'FATAL'} LogLevelName
+ * @typedef {Record<LogLevelName, LogLevel>} LogLevels
  */
-export const LogLevel = {
+export const LOG_LEVELS = {
     DEBUG: 0,
     INFO: 1,
     WARN: 2,
