@@ -189,14 +189,7 @@ export namespace ErrorCondition {
     let NO_AUTH_MECH: string;
     let UNKNOWN_REASON: string;
 }
-export type LogLevel = {
-    DEBUG: string;
-    INFO: string;
-    WARN: string;
-    ERROR: string;
-    FATAL: string;
-};
-export namespace LogLevel {
+export namespace LOG_LEVELS {
     export let DEBUG: number;
     export let INFO: number;
     export let WARN: number;
@@ -211,4 +204,16 @@ export namespace ElementType {
     let FRAGMENT: number;
 }
 export type connstatus = number;
+/**
+ * Logging level indicators.
+ */
+export type LogLevel = 0 | 1 | 2 | 3 | 4;
+/**
+ * Logging level indicators.
+ */
+export type LogLevelName = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+/**
+ * Logging level indicators.
+ */
+export type LogLevels = Record<LogLevelName, LogLevel>;
 //# sourceMappingURL=constants.d.ts.map

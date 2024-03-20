@@ -1,7 +1,7 @@
 /**
- * @param { string } string
- * @param { boolean } [throwErrorIfInvalidNS]
- * @return { Element }
+ * @param {string} string
+ * @param {boolean} [throwErrorIfInvalidNS]
+ * @return {Element}
  */
 export function toStanza(string: string, throwErrorIfInvalidNS?: boolean): Element;
 /**

@@ -1,6 +1,4 @@
 export default WorkerWebsocket;
-export type Connection = import("./connection.js").default;
-export type Builder = import("./builder.js").default;
 /**
  * Helper class that handles a websocket connection inside a shared worker.
  */
@@ -33,4 +31,5 @@ declare class WorkerWebsocket extends Websocket {
     private _onWorkerMessage;
 }
 import Websocket from './websocket.js';
+import Builder from './builder.js';
 //# sourceMappingURL=worker-websocket.d.ts.map

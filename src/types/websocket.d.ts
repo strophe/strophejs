@@ -1,17 +1,16 @@
 export default Websocket;
-export type Builder = import("./builder.js").default;
 export type Connection = import("./connection.js").default;
 /**
  * Helper class that handles WebSocket Connections
  *
- * The Strophe.WebSocket class is used internally by Strophe.Connection
+ * The WebSocket class is used internally by Connection
  * to encapsulate WebSocket sessions. It is not meant to be used from user's code.
  */
 declare class Websocket {
     /**
-     * Create and initialize a Strophe.WebSocket object.
+     * Create and initialize a WebSocket object.
      * Currently only sets the connection Object.
-     * @param {Connection} connection - The Strophe.Connection that will use WebSockets.
+     * @param {Connection} connection - The Connection that will use WebSockets.
      */
     constructor(connection: Connection);
     _conn: import("./connection.js").default;
@@ -19,7 +18,7 @@ declare class Websocket {
     /**
      * _Private_ helper function to generate the <stream> start tag for WebSockets
      * @private
-     * @return {Builder} - A Strophe.Builder with a <stream> element.
+     * @return {Builder} - A Builder with a <stream> element.
      */
     private _buildStream;
     /**
@@ -38,7 +37,7 @@ declare class Websocket {
      */
     _reset(): void;
     /**
-     * _Private_ function called by Strophe.Connection.connect
+     * _Private_ function called by Connection.connect
      *
      * Creates a WebSocket for a connection and assigns Callbacks to it.
      * Does nothing if there already is a WebSocket.
@@ -65,7 +64,7 @@ declare class Websocket {
         readyState: string;
     };
     /**
-     * _Private_ function called by Strophe.Connection._connect_cb
+     * _Private_ function called by Connection._connect_cb
      * checks for stream:error
      * @param {Element} bodyWrap - The received stanza.
      */
@@ -88,13 +87,13 @@ declare class Websocket {
     _onInitialMessage(message: MessageEvent): void;
     /**
      * Called by _onInitialMessage in order to replace itself with the general message handler.
-     * This method is overridden by Strophe.WorkerWebsocket, which manages a
+     * This method is overridden by WorkerWebsocket, which manages a
      * websocket connection via a service worker and doesn't have direct access
      * to the socket.
      */
     _replaceMessageHandler(): void;
     /**
-     * _Private_ function called by Strophe.Connection.disconnect
+     * _Private_ function called by Connection.disconnect
      * Disconnects and sends a last stanza if one is given
      * @param {Element|Builder} [pres] - This stanza will be sent before disconnecting.
      */
@@ -153,7 +152,7 @@ declare class Websocket {
      */
     _onError(error: Object): void;
     /**
-     * _Private_ function called by Strophe.Connection._onIdle
+     * _Private_ function called by Connection._onIdle
      * sends all queued stanzas
      */
     _onIdle(): void;
@@ -197,4 +196,5 @@ declare class Websocket {
     _sendRestart(): void;
 }
 import { WebSocket } from './shims';
+import Builder from './builder.js';
 //# sourceMappingURL=websocket.d.ts.map

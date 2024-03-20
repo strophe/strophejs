@@ -1,22 +1,23 @@
 /**
  * @license MIT
  * @copyright JC Brand
- *
- * @typedef {import("./connection.js").default} Connection
- * @typedef {import("./builder.js").default} Builder
  */
-
 import Websocket from './websocket.js';
-import { $build } from './builder.js';
-import Strophe from './core.js';
+import log from './log.js';
+import Builder, { $build } from './builder.js';
+import { LOG_LEVELS, NS, Status } from './constants.js';
 
 /**
  * Helper class that handles a websocket connection inside a shared worker.
  */
 class WorkerWebsocket extends Websocket {
     /**
-     * Create and initialize a Strophe.WorkerWebsocket object.
-     * @param {Connection} connection - The Strophe.Connection
+     * @typedef {import("./connection.js").default} Connection
+     */
+
+    /**
+     * Create and initialize a WorkerWebsocket object.
+     * @param {Connection} connection - The Connection
      */
     constructor(connection) {
         super(connection);
@@ -24,7 +25,7 @@ class WorkerWebsocket extends Websocket {
         this.worker = new SharedWorker(this._conn.options.worker, 'Strophe XMPP Connection');
         this.worker.onerror = (e) => {
             console?.error(e);
-            Strophe.log(Strophe.LogLevel.ERROR, `Shared Worker Error: ${e}`);
+            log.error(`Shared Worker Error: ${e}`);
         };
     }
 
@@ -73,17 +74,17 @@ class WorkerWebsocket extends Websocket {
      * @param {string} jid
      */
     _attachCallback(status, jid) {
-        if (status === Strophe.Status.ATTACHED) {
+        if (status === Status.ATTACHED) {
             this._conn.jid = jid;
             this._conn.authenticated = true;
             this._conn.connected = true;
             this._conn.restored = true;
-            this._conn._changeConnectStatus(Strophe.Status.ATTACHED);
-        } else if (status === Strophe.Status.ATTACHFAIL) {
+            this._conn._changeConnectStatus(Status.ATTACHED);
+        } else if (status === Status.ATTACHFAIL) {
             this._conn.authenticated = false;
             this._conn.connected = false;
             this._conn.restored = false;
-            this._conn._changeConnectStatus(Strophe.Status.ATTACHFAIL);
+            this._conn._changeConnectStatus(Status.ATTACHFAIL);
         }
     }
 
@@ -92,9 +93,9 @@ class WorkerWebsocket extends Websocket {
      */
     _disconnect(pres) {
         pres && this._conn.send(pres);
-        const close = $build('close', { 'xmlns': Strophe.NS.FRAMING });
+        const close = $build('close', { 'xmlns': NS.FRAMING });
         this._conn.xmlOutput(close.tree());
-        const closeString = Strophe.serialize(close);
+        const closeString = Builder.serialize(close);
         this._conn.rawOutput(closeString);
         this.worker.port.postMessage(['send', closeString]);
         this._conn._doDisconnect();
@@ -121,14 +122,6 @@ class WorkerWebsocket extends Websocket {
      * @param {MessageEvent} ev
      */
     _onWorkerMessage(ev) {
-        /** @type {Object.<string, number>} */
-        const lmap = {};
-        lmap['debug'] = Strophe.LogLevel.DEBUG;
-        lmap['info'] = Strophe.LogLevel.INFO;
-        lmap['warn'] = Strophe.LogLevel.WARN;
-        lmap['error'] = Strophe.LogLevel.ERROR;
-        lmap['fatal'] = Strophe.LogLevel.FATAL;
-
         const { data } = ev;
         const method_name = data[0];
         if (method_name === '_onMessage') {
@@ -140,14 +133,22 @@ class WorkerWebsocket extends Websocket {
                     (method_name)
                 ].apply(this, ev.data.slice(1));
             } catch (e) {
-                Strophe.log(Strophe.LogLevel.ERROR, e);
+                log.error(e);
             }
         } else if (method_name === 'log') {
+            /** @type {Object.<string, number>} */
+            const lmap = {
+                debug: LOG_LEVELS.DEBUG,
+                info: LOG_LEVELS.INFO,
+                warn: LOG_LEVELS.WARN,
+                error: LOG_LEVELS.ERROR,
+                fatal: LOG_LEVELS.FATAL,
+            };
             const level = data[1];
             const msg = data[2];
-            Strophe.log(lmap[level], msg);
+            log.log(lmap[level], msg);
         } else {
-            Strophe.log(Strophe.LogLevel.ERROR, `Found unhandled service worker message: ${data}`);
+            log.error(`Found unhandled service worker message: ${data}`);
         }
     }
 }

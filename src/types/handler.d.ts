@@ -2,15 +2,15 @@ export default Handler;
 /**
  * _Private_ helper class for managing stanza handlers.
  *
- * A Strophe.Handler encapsulates a user provided callback function to be
+ * A Handler encapsulates a user provided callback function to be
  * executed when matching stanzas are received by the connection.
  * Handlers can be either one-off or persistant depending on their
  * return value. Returning true will cause a Handler to remain active, and
  * returning false will remove the Handler.
  *
- * Users will not use Strophe.Handler objects directly, but instead they
- * will use {@link Strophe.Connection.addHandler} and
- * {@link Strophe.Connection.deleteHandler}.
+ * Users will not use Handler objects directly, but instead they
+ * will use {@link Connection.addHandler} and
+ * {@link Connection.deleteHandler}.
  */
 declare class Handler {
     /**
@@ -19,7 +19,7 @@ declare class Handler {
      * @property {boolean} [HandlerOptions.ignoreNamespaceFragment]
      */
     /**
-     * Create and initialize a new Strophe.Handler.
+     * Create and initialize a new Handler.
      *
      * @param {Function} handler - A function to be executed when the handler is run.
      * @param {string} ns - The namespace to match.
@@ -53,25 +53,25 @@ declare class Handler {
      */
     getNamespace(elem: Element): string;
     /**
-     * Tests if a stanza matches the namespace set for this Strophe.Handler.
+     * Tests if a stanza matches the namespace set for this Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     namespaceMatch(elem: Element): boolean;
     /**
-     * Tests if a stanza matches the Strophe.Handler.
+     * Tests if a stanza matches the Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     isMatch(elem: Element): boolean;
     /**
      * Run the callback on a matching stanza.
-     * @param {Element} elem - The DOM element that triggered the Strophe.Handler.
+     * @param {Element} elem - The DOM element that triggered the Handler.
      * @return {boolean} - A boolean indicating if the handler should remain active.
      */
     run(elem: Element): boolean;
     /**
-     * Get a String representation of the Strophe.Handler object.
+     * Get a String representation of the Handler object.
      * @return {string}
      */
     toString(): string;

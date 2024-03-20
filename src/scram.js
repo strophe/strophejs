@@ -2,7 +2,7 @@
  * @typedef {import("./connection.js").default} Connection
  */
 import utils from './utils';
-import Strophe from './core.js';
+import log from './log.js';
 
 /**
  * @param {string} authMessage
@@ -60,12 +60,12 @@ function scramParseChallenge(challenge) {
     // Consider iteration counts less than 4096 insecure, as reccommended by
     // RFC 5802
     if (isNaN(iter) || iter < 4096) {
-        Strophe.warn('Failing SCRAM authentication because server supplied iteration count < 4096.');
+        log.warn('Failing SCRAM authentication because server supplied iteration count < 4096.');
         return undefined;
     }
 
     if (!salt) {
-        Strophe.warn('Failing SCRAM authentication because server supplied incorrect salt.');
+        log.warn('Failing SCRAM authentication because server supplied incorrect salt.');
         return undefined;
     }
 
@@ -157,7 +157,7 @@ const scram = {
         // The RFC requires that we verify the (server) nonce has the client
         // nonce as an initial substring.
         if (!challengeData && challengeData?.nonce.slice(0, cnonce.length) !== cnonce) {
-            Strophe.warn('Failing SCRAM authentication because server supplied incorrect nonce.');
+            log.warn('Failing SCRAM authentication because server supplied incorrect nonce.');
             connection._sasl_data = {};
             return connection._sasl_failure_cb();
         }

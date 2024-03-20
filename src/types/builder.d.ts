@@ -63,6 +63,12 @@ export default Builder;
  */
 declare class Builder {
     /**
+     * Render a DOM element and all descendants to a String.
+     * @param {Element|Builder} elem - A DOM element.
+     * @return {string} - The serialized element tree as a String.
+     */
+    static serialize(elem: Element | Builder): string;
+    /**
      * @typedef {Object.<string, string|number>} StanzaAttrs
      * @property {string} [StanzaAttrs.xmlns]
      */

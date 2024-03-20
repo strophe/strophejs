@@ -13,25 +13,25 @@
 /* global clearTimeout, location */
 
 /**
- * @typedef {import("./builder.js").default} Builder
  * @typedef {import("./connection.js").default} Connection
  */
 
 import { DOMParser, WebSocket } from './shims';
-import { $build } from './builder.js';
-import Strophe from './core';
+import Builder, { $build } from './builder.js';
+import log from './log.js';
+import { NS, ErrorCondition, Status } from './constants.js';
 
 /**
  * Helper class that handles WebSocket Connections
  *
- * The Strophe.WebSocket class is used internally by Strophe.Connection
+ * The WebSocket class is used internally by Connection
  * to encapsulate WebSocket sessions. It is not meant to be used from user's code.
  */
 class Websocket {
     /**
-     * Create and initialize a Strophe.WebSocket object.
+     * Create and initialize a WebSocket object.
      * Currently only sets the connection Object.
-     * @param {Connection} connection - The Strophe.Connection that will use WebSockets.
+     * @param {Connection} connection - The Connection that will use WebSockets.
      */
     constructor(connection) {
         this._conn = connection;
@@ -61,11 +61,11 @@ class Websocket {
     /**
      * _Private_ helper function to generate the <stream> start tag for WebSockets
      * @private
-     * @return {Builder} - A Strophe.Builder with a <stream> element.
+     * @return {Builder} - A Builder with a <stream> element.
      */
     _buildStream() {
         return $build('open', {
-            'xmlns': Strophe.NS.FRAMING,
+            'xmlns': NS.FRAMING,
             'to': this._conn.domain,
             'version': '1.0',
         });
@@ -81,7 +81,7 @@ class Websocket {
     _checkStreamError(bodyWrap, connectstatus) {
         let errors;
         if (bodyWrap.getElementsByTagNameNS) {
-            errors = bodyWrap.getElementsByTagNameNS(Strophe.NS.STREAM, 'error');
+            errors = bodyWrap.getElementsByTagNameNS(NS.STREAM, 'error');
         } else {
             errors = bodyWrap.getElementsByTagName('stream:error');
         }
@@ -116,7 +116,7 @@ class Websocket {
         if (text) {
             errorString += ' - ' + text;
         }
-        Strophe.error(errorString);
+        log.error(errorString);
 
         // close the connection on stream_error
         this._conn._changeConnectStatus(connectstatus, condition);
@@ -136,7 +136,7 @@ class Websocket {
     }
 
     /**
-     * _Private_ function called by Strophe.Connection.connect
+     * _Private_ function called by Connection.connect
      *
      * Creates a WebSocket for a connection and assigns Callbacks to it.
      * Does nothing if there already is a WebSocket.
@@ -171,14 +171,14 @@ class Websocket {
     }
 
     /**
-     * _Private_ function called by Strophe.Connection._connect_cb
+     * _Private_ function called by Connection._connect_cb
      * checks for stream:error
      * @param {Element} bodyWrap - The received stanza.
      */
     _connect_cb(bodyWrap) {
-        const error = this._checkStreamError(bodyWrap, Strophe.Status.CONNFAIL);
+        const error = this._checkStreamError(bodyWrap, Status.CONNFAIL);
         if (error) {
-            return Strophe.Status.CONNFAIL;
+            return Status.CONNFAIL;
         }
     }
 
@@ -196,7 +196,7 @@ class Websocket {
         const ns = message.getAttribute('xmlns');
         if (typeof ns !== 'string') {
             error = 'Missing xmlns in <open />';
-        } else if (ns !== Strophe.NS.FRAMING) {
+        } else if (ns !== NS.FRAMING) {
             error = 'Wrong xmlns in <open />: ' + ns;
         }
 
@@ -208,7 +208,7 @@ class Websocket {
         }
 
         if (error) {
-            this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, error);
+            this._conn._changeConnectStatus(Status.CONNFAIL, error);
             this._conn._doDisconnect();
             return false;
         }
@@ -252,7 +252,7 @@ class Websocket {
                     (service.indexOf('wss:') >= 0 && see_uri.indexOf('wss:') >= 0) || service.indexOf('ws:') >= 0;
                 if (isSecureRedirect) {
                     this._conn._changeConnectStatus(
-                        Strophe.Status.REDIRECT,
+                        Status.REDIRECT,
                         'Received see-other-uri, resetting connection'
                     );
                     this._conn.reset();
@@ -260,7 +260,7 @@ class Websocket {
                     this._connect();
                 }
             } else {
-                this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, 'Received closing stream');
+                this._conn._changeConnectStatus(Status.CONNFAIL, 'Received closing stream');
                 this._conn._doDisconnect();
             }
         } else {
@@ -273,7 +273,7 @@ class Websocket {
 
     /**
      * Called by _onInitialMessage in order to replace itself with the general message handler.
-     * This method is overridden by Strophe.WorkerWebsocket, which manages a
+     * This method is overridden by WorkerWebsocket, which manages a
      * websocket connection via a service worker and doesn't have direct access
      * to the socket.
      */
@@ -283,7 +283,7 @@ class Websocket {
     }
 
     /**
-     * _Private_ function called by Strophe.Connection.disconnect
+     * _Private_ function called by Connection.disconnect
      * Disconnects and sends a last stanza if one is given
      * @param {Element|Builder} [pres] - This stanza will be sent before disconnecting.
      */
@@ -292,14 +292,14 @@ class Websocket {
             if (pres) {
                 this._conn.send(pres);
             }
-            const close = $build('close', { 'xmlns': Strophe.NS.FRAMING });
+            const close = $build('close', { 'xmlns': NS.FRAMING });
             this._conn.xmlOutput(close.tree());
-            const closeString = Strophe.serialize(close);
+            const closeString = Builder.serialize(close);
             this._conn.rawOutput(closeString);
             try {
                 this.socket.send(closeString);
             } catch (e) {
-                Strophe.warn("Couldn't send <close /> tag.");
+                log.warn("Couldn't send <close /> tag.");
             }
         }
         setTimeout(() => this._conn._doDisconnect(), 0);
@@ -310,7 +310,7 @@ class Websocket {
      * Just closes the Socket for WebSockets
      */
     _doDisconnect() {
-        Strophe.debug('WebSockets _doDisconnect was called');
+        log.debug('WebSockets _doDisconnect was called');
         this._closeSocket();
     }
 
@@ -338,7 +338,7 @@ class Websocket {
                 this.socket.onmessage = null;
                 this.socket.close();
             } catch (e) {
-                Strophe.debug(e.message);
+                log.debug(e.message);
             }
         }
         this.socket = null;
@@ -359,21 +359,21 @@ class Websocket {
      */
     _onClose(e) {
         if (this._conn.connected && !this._conn.disconnecting) {
-            Strophe.error('Websocket closed unexpectedly');
+            log.error('Websocket closed unexpectedly');
             this._conn._doDisconnect();
         } else if (e && e.code === 1006 && !this._conn.connected && this.socket) {
             // in case the onError callback was not called (Safari 10 does not
             // call onerror when the initial connection fails) we need to
             // dispatch a CONNFAIL status update to be consistent with the
             // behavior on other browsers.
-            Strophe.error('Websocket closed unexcectedly');
+            log.error('Websocket closed unexcectedly');
             this._conn._changeConnectStatus(
-                Strophe.Status.CONNFAIL,
+                Status.CONNFAIL,
                 'The WebSocket connection could not be established or was disconnected.'
             );
             this._conn._doDisconnect();
         } else {
-            Strophe.debug('Websocket closed');
+            log.debug('Websocket closed');
         }
     }
 
@@ -388,8 +388,8 @@ class Websocket {
      * @param {connectionCallback} callback
      */
     _no_auth_received(callback) {
-        Strophe.error('Server did not offer a supported authentication mechanism');
-        this._conn._changeConnectStatus(Strophe.Status.CONNFAIL, Strophe.ErrorCondition.NO_AUTH_MECH);
+        log.error('Server did not offer a supported authentication mechanism');
+        this._conn._changeConnectStatus(Status.CONNFAIL, ErrorCondition.NO_AUTH_MECH);
         callback?.call(this._conn);
         this._conn._doDisconnect();
     }
@@ -411,16 +411,16 @@ class Websocket {
      * @param {Object} error - The websocket error.
      */
     _onError(error) {
-        Strophe.error('Websocket error ' + JSON.stringify(error));
+        log.error('Websocket error ' + JSON.stringify(error));
         this._conn._changeConnectStatus(
-            Strophe.Status.CONNFAIL,
+            Status.CONNFAIL,
             'The WebSocket connection could not be established or was disconnected.'
         );
         this._disconnect();
     }
 
     /**
-     * _Private_ function called by Strophe.Connection._onIdle
+     * _Private_ function called by Connection._onIdle
      * sends all queued stanzas
      */
     _onIdle() {
@@ -430,7 +430,7 @@ class Websocket {
                 if (data[i] !== null) {
                     const stanza = data[i] === 'restart' ? this._buildStream().tree() : data[i];
                     if (stanza === 'restart') throw new Error('Wrong type for stanza'); // Shut up tsc
-                    const rawStanza = Strophe.serialize(stanza);
+                    const rawStanza = Builder.serialize(stanza);
                     this._conn.xmlOutput(stanza);
                     this._conn.rawOutput(rawStanza);
                     this.socket.send(rawStanza);
@@ -484,7 +484,7 @@ class Websocket {
             elem = new DOMParser().parseFromString(data, 'text/xml').documentElement;
         }
 
-        if (this._checkStreamError(elem, Strophe.Status.ERROR)) {
+        if (this._checkStreamError(elem, Status.ERROR)) {
             return;
         }
 
@@ -495,7 +495,7 @@ class Websocket {
             elem.firstElementChild.getAttribute('type') === 'unavailable'
         ) {
             this._conn.xmlInput(elem);
-            this._conn.rawInput(Strophe.serialize(elem));
+            this._conn.rawInput(Builder.serialize(elem));
             // if we are already disconnecting we will ignore the unavailable stanza and
             // wait for the </stream:stream> tag before we close the connection
             return;
@@ -509,11 +509,11 @@ class Websocket {
      * @private
      */
     _onOpen() {
-        Strophe.debug('Websocket open');
+        log.debug('Websocket open');
         const start = this._buildStream();
         this._conn.xmlOutput(start.tree());
 
-        const startString = Strophe.serialize(start);
+        const startString = Builder.serialize(start);
         this._conn.rawOutput(startString);
         this.socket.send(startString);
     }

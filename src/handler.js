@@ -1,18 +1,17 @@
-import Strophe from './core.js';
-import { forEachChild, getBareJidFromJid } from './utils.js';
+import { forEachChild, getBareJidFromJid, handleError, isTagEqual } from './utils.js';
 
 /**
  * _Private_ helper class for managing stanza handlers.
  *
- * A Strophe.Handler encapsulates a user provided callback function to be
+ * A Handler encapsulates a user provided callback function to be
  * executed when matching stanzas are received by the connection.
  * Handlers can be either one-off or persistant depending on their
  * return value. Returning true will cause a Handler to remain active, and
  * returning false will remove the Handler.
  *
- * Users will not use Strophe.Handler objects directly, but instead they
- * will use {@link Strophe.Connection.addHandler} and
- * {@link Strophe.Connection.deleteHandler}.
+ * Users will not use Handler objects directly, but instead they
+ * will use {@link Connection.addHandler} and
+ * {@link Connection.deleteHandler}.
  */
 class Handler {
     /**
@@ -22,7 +21,7 @@ class Handler {
      */
 
     /**
-     * Create and initialize a new Strophe.Handler.
+     * Create and initialize a new Handler.
      *
      * @param {Function} handler - A function to be executed when the handler is run.
      * @param {string} ns - The namespace to match.
@@ -64,7 +63,7 @@ class Handler {
     }
 
     /**
-     * Tests if a stanza matches the namespace set for this Strophe.Handler.
+     * Tests if a stanza matches the namespace set for this Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
@@ -88,7 +87,7 @@ class Handler {
     }
 
     /**
-     * Tests if a stanza matches the Strophe.Handler.
+     * Tests if a stanza matches the Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
@@ -100,7 +99,7 @@ class Handler {
         const elem_type = elem.getAttribute('type');
         if (
             this.namespaceMatch(elem) &&
-            (!this.name || Strophe.isTagEqual(elem, this.name)) &&
+            (!this.name || isTagEqual(elem, this.name)) &&
             (!this.type ||
                 (Array.isArray(this.type) ? this.type.indexOf(elem_type) !== -1 : elem_type === this.type)) &&
             (!this.id || elem.getAttribute('id') === this.id) &&
@@ -113,7 +112,7 @@ class Handler {
 
     /**
      * Run the callback on a matching stanza.
-     * @param {Element} elem - The DOM element that triggered the Strophe.Handler.
+     * @param {Element} elem - The DOM element that triggered the Handler.
      * @return {boolean} - A boolean indicating if the handler should remain active.
      */
     run(elem) {
@@ -121,14 +120,14 @@ class Handler {
         try {
             result = this.handler(elem);
         } catch (e) {
-            Strophe._handleError(e);
+            handleError(e);
             throw e;
         }
         return result;
     }
 
     /**
-     * Get a String representation of the Strophe.Handler object.
+     * Get a String representation of the Handler object.
      * @return {string}
      */
     toString() {

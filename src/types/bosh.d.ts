@@ -1,21 +1,36 @@
 export default Bosh;
 export type Connection = import("./connection.js").default;
-export type Request = import("./request.js").default;
 /**
  * _Private_ helper class that handles BOSH Connections
- * The Strophe.Bosh class is used internally by Strophe.Connection
+ * The Bosh class is used internally by Connection
  * to encapsulate BOSH sessions. It is not meant to be used from user's code.
  */
 declare class Bosh {
     /**
-     * Returns the HTTP status code from a {@link Strophe.Request}
+     * @param {number} m
+     */
+    static setTimeoutMultiplier(m: number): void;
+    /**
+     * @returns {number}
+     */
+    static getTimeoutMultplier(): number;
+    /**
+     * @param {number} m
+     */
+    static setSecondaryTimeoutMultiplier(m: number): void;
+    /**
+     * @returns {number}
+     */
+    static getSecondaryTimeoutMultplier(): number;
+    /**
+     * Returns the HTTP status code from a {@link Request}
      * @private
-     * @param {Request} req - The {@link Strophe.Request} instance.
+     * @param {Request} req - The {@link Request} instance.
      * @param {number} [def] - The default value that should be returned if no status value was found.
      */
     private static _getRequestStatus;
     /**
-     * @param {Connection} connection - The Strophe.Connection that will use BOSH.
+     * @param {Connection} connection - The Connection that will use BOSH.
      */
     constructor(connection: Connection);
     _conn: import("./connection.js").default;
@@ -28,18 +43,18 @@ declare class Bosh {
     inactivity: number;
     /**
      * BOSH-Connections will have all stanzas wrapped in a <body> tag when
-     * passed to {@link Strophe.Connection#xmlInput|xmlInput()} or {@link Strophe.Connection#xmlOutput|xmlOutput()}.
-     * To strip this tag, User code can set {@link Strophe.Bosh#strip|strip} to `true`:
+     * passed to {@link Connection#xmlInput|xmlInput()} or {@link Connection#xmlOutput|xmlOutput()}.
+     * To strip this tag, User code can set {@link Bosh#strip|strip} to `true`:
      *
      * > // You can set `strip` on the prototype
-     * > Strophe.Bosh.prototype.strip = true;
+     * > Bosh.prototype.strip = true;
      *
      * > // Or you can set it on the Bosh instance (which is `._proto` on the connection instance.
-     * > const conn = new Strophe.Connection();
+     * > const conn = new Connection();
      * > conn._proto.strip = true;
      *
      * This will enable stripping of the body tag in both
-     * {@link Strophe.Connection#xmlInput|xmlInput} and {@link Strophe.Connection#xmlOutput|xmlOutput}.
+     * {@link Connection#xmlInput|xmlInput} and {@link Connection#xmlOutput|xmlOutput}.
      *
      * @property {boolean} [strip=false]
      */
@@ -50,12 +65,12 @@ declare class Bosh {
     /**
      * _Private_ helper function to generate the <body/> wrapper for BOSH.
      * @private
-     * @return {Builder} - A Strophe.Builder with a <body/> element.
+     * @return {Builder} - A Builder with a <body/> element.
      */
     private _buildBody;
     /**
      * Reset the connection.
-     * This function is called by the reset function of the Strophe Connection
+     * This function is called by the reset function of the Connection
      */
     _reset(): void;
     /**
@@ -177,12 +192,12 @@ declare class Bosh {
      */
     _abortAllRequests(): void;
     /**
-     * _Private_ handler called by {@link Strophe.Connection#_onIdle|Strophe.Connection._onIdle()}.
+     * _Private_ handler called by {@link Connection#_onIdle|Connection._onIdle()}.
      * Sends all queued Requests or polls with empty Request if there are none.
      */
     _onIdle(): void;
     /**
-     * _Private_ handler for {@link Strophe.Request} state changes.
+     * _Private_ handler for {@link Request} state changes.
      *
      * This function is called when the XMLHttpRequest readyState changes.
      * It contains a lot of error handling logic for the many ways that
@@ -255,5 +270,6 @@ declare class Bosh {
      */
     private _throttledRequestHandler;
 }
+import Request from './request.js';
 import Builder from './builder.js';
 //# sourceMappingURL=bosh.d.ts.map

@@ -3,7 +3,7 @@ export default Request;
  * Helper class that provides a cross implementation abstraction
  * for a BOSH related XMLHttpRequest.
  *
- * The Strophe.Request class is used internally to encapsulate BOSH request
+ * The Request class is used internally to encapsulate BOSH request
  * information.  It is not meant to be used from user's code.
  *
  * @property {number} id
@@ -12,7 +12,7 @@ export default Request;
  */
 declare class Request {
     /**
-     * Create and initialize a new Strophe.Request object.
+     * Create and initialize a new Request object.
      *
      * @param {Element} elem - The XML data to be sent in the request.
      * @param {Function} func - The function that will be called when the

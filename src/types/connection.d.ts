@@ -14,25 +14,31 @@ export type Request = import("./request.js").default;
  *
  * It supports various authentication mechanisms (e.g. SASL PLAIN, SASL SCRAM),
  * and more can be added via
- * {@link Strophe.Connection#registerSASLMechanisms|registerSASLMechanisms()}.
+ * {@link Connection#registerSASLMechanisms|registerSASLMechanisms()}.
  *
- * After creating a Strophe.Connection object, the user will typically
- * call {@link Strophe.Connection#connect|connect()} with a user supplied callback
+ * After creating a Connection object, the user will typically
+ * call {@link Connection#connect|connect()} with a user supplied callback
  * to handle connection level events like authentication failure,
  * disconnection, or connection complete.
  *
  * The user will also have several event handlers defined by using
- * {@link Strophe.Connection#addHandler|addHandler()} and
- * {@link Strophe.Connection#addTimedHandler|addTimedHandler()}.
+ * {@link Connection#addHandler|addHandler()} and
+ * {@link Connection#addTimedHandler|addTimedHandler()}.
  * These will allow the user code to respond to interesting stanzas or do
  * something periodically with the connection. These handlers will be active
  * once authentication is finished.
  *
- * To send data to the connection, use {@link Strophe.Connection#send|send()}.
+ * To send data to the connection, use {@link Connection#send|send()}.
  *
  * @memberof Strophe
  */
 declare class Connection {
+    /**
+     * Extends the Connection object with the given plugin.
+     * @param {string} name - The name of the extension.
+     * @param {Object} ptype - The plugin's prototype.
+     */
+    static addConnectionPlugin(name: string, ptype: Object): void;
     /**
      * @typedef {Object.<string, string>} Cookie
      * @typedef {Cookie|Object.<string, Cookie>} Cookies
@@ -60,9 +66,9 @@ declare class Connection {
      *  necessary cookies.
      * @property {SASLMechanism[]} [mechanisms]
      *  Allows you to specify the SASL authentication mechanisms that this
-     *  instance of Strophe.Connection (and therefore your XMPP client) will support.
+     *  instance of Connection (and therefore your XMPP client) will support.
      *
-     *  The value must be an array of objects with {@link Strophe.SASLMechanism}
+     *  The value must be an array of objects with {@link SASLMechanism}
      *  prototypes.
      *
      *  If nothing is specified, then the following mechanisms (and their
@@ -82,7 +88,7 @@ declare class Connection {
      *
      * @property {boolean} [explicitResourceBinding]
      *  If `explicitResourceBinding` is set to `true`, then the XMPP client
-     *  needs to explicitly call {@link Strophe.Connection.bind} once the XMPP
+     *  needs to explicitly call {@link Connection.bind} once the XMPP
      *  server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
      *
      *  Making this step explicit allows client authors to first finish other
@@ -116,7 +122,7 @@ declare class Connection {
      *
      *  To run the websocket connection inside a shared worker.
      *  This allows you to share a single websocket-based connection between
-     *  multiple Strophe.Connection instances, for example one per browser tab.
+     *  multiple Connection instances, for example one per browser tab.
      *
      *  The script to use is the one in `src/shared-connection-worker.js`.
      *
@@ -161,7 +167,7 @@ declare class Connection {
      *  to the server.
      */
     /**
-     * Create and initialize a {@link Strophe.Connection} object.
+     * Create and initialize a {@link Connection} object.
      *
      * The transport-protocol for this connection will be chosen automatically
      * based on the given service parameter. URLs starting with "ws://" or
@@ -206,9 +212,9 @@ declare class Connection {
         };
         /**
          * Allows you to specify the SASL authentication mechanisms that this
-         * instance of Strophe.Connection (and therefore your XMPP client) will support.
+         * instance of Connection (and therefore your XMPP client) will support.
          *
-         * The value must be an array of objects with {@link Strophe.SASLMechanism }prototypes.
+         * The value must be an array of objects with {@link SASLMechanism }prototypes.
          *
          * If nothing is specified, then the following mechanisms (and their
          * priorities) are registered:
@@ -228,7 +234,7 @@ declare class Connection {
         mechanisms?: SASLMechanism[];
         /**
          * If `explicitResourceBinding` is set to `true`, then the XMPP client
-         * needs to explicitly call {@link Strophe.Connection.bind } once the XMPP
+         * needs to explicitly call {@link Connection.bind } once the XMPP
          * server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
          *
          * Making this step explicit allows client authors to first finish other
@@ -264,7 +270,7 @@ declare class Connection {
          *
          * To run the websocket connection inside a shared worker.
          * This allows you to share a single websocket-based connection between
-         * multiple Strophe.Connection instances, for example one per browser tab.
+         * multiple Connection instances, for example one per browser tab.
          *
          * The script to use is the one in `src/shared-connection-worker.js`.
          */
@@ -346,9 +352,9 @@ declare class Connection {
         };
         /**
          * Allows you to specify the SASL authentication mechanisms that this
-         * instance of Strophe.Connection (and therefore your XMPP client) will support.
+         * instance of Connection (and therefore your XMPP client) will support.
          *
-         * The value must be an array of objects with {@link Strophe.SASLMechanism }prototypes.
+         * The value must be an array of objects with {@link SASLMechanism }prototypes.
          *
          * If nothing is specified, then the following mechanisms (and their
          * priorities) are registered:
@@ -368,7 +374,7 @@ declare class Connection {
         mechanisms?: SASLMechanism[];
         /**
          * If `explicitResourceBinding` is set to `true`, then the XMPP client
-         * needs to explicitly call {@link Strophe.Connection.bind } once the XMPP
+         * needs to explicitly call {@link Connection.bind } once the XMPP
          * server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
          *
          * Making this step explicit allows client authors to first finish other
@@ -404,7 +410,7 @@ declare class Connection {
          *
          * To run the websocket connection inside a shared worker.
          * This allows you to share a single websocket-based connection between
-         * multiple Strophe.Connection instances, for example one per browser tab.
+         * multiple Connection instances, for example one per browser tab.
          *
          * The script to use is the one in `src/shared-connection-worker.js`.
          */
@@ -514,7 +520,7 @@ declare class Connection {
      * Select protocal based on this.options or this.service
      */
     setProtocol(): void;
-    _proto: import("./bosh.js").default | import("./websocket.js").default | import("./worker-websocket.js").default;
+    _proto: Bosh | Websocket | WorkerWebsocket;
     /**
      * Reset the connection.
      *
@@ -694,7 +700,7 @@ declare class Connection {
      * Attempt to restore a cached BOSH session.
      *
      * This function is only useful in conjunction with providing the
-     * "keepalive":true option when instantiating a new {@link Strophe.Connection}.
+     * "keepalive":true option when instantiating a new {@link Connection}.
      *
      * When "keepalive" is set to true, Strophe will cache the BOSH tokens
      * RID (Request ID) and SID (Session ID) and then when this function is
@@ -727,7 +733,7 @@ declare class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.xmlInput = function (elem) {
+     * > Connection.xmlInput = function (elem) {
      * >   (user code)
      * > };
      *
@@ -735,7 +741,7 @@ declare class Connection {
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
      *
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
-     * <Strophe.Bosh.strip> if you want to strip this tag.
+     * <Bosh.strip> if you want to strip this tag.
      *
      * @param {Node|MessageEvent} elem - The XML data received by the connection.
      */
@@ -745,7 +751,7 @@ declare class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.xmlOutput = function (elem) {
+     * > Connection.xmlOutput = function (elem) {
      * >   (user code)
      * > };
      *
@@ -753,7 +759,7 @@ declare class Connection {
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
      *
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
-     * <Strophe.Bosh.strip> if you want to strip this tag.
+     * <Bosh.strip> if you want to strip this tag.
      *
      * @param {Element} elem - The XMLdata sent by the connection.
      */
@@ -763,7 +769,7 @@ declare class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.rawInput = function (data) {
+     * > Connection.rawInput = function (data) {
      * >   (user code)
      * > };
      *
@@ -775,7 +781,7 @@ declare class Connection {
      * connection.
      *
      * The default function does nothing.  User code can override this with
-     * > Strophe.Connection.rawOutput = function (data) {
+     * > Connection.rawOutput = function (data) {
      * >   (user code)
      * > };
      *
@@ -786,7 +792,7 @@ declare class Connection {
      * User overrideable function that receives the new valid rid.
      *
      * The default function does nothing. User code can override this with
-     * > Strophe.Connection.nextValidRid = function (rid) {
+     * > Connection.nextValidRid = function (rid) {
      * >    (user code)
      * > };
      *
@@ -962,8 +968,8 @@ declare class Connection {
     deleteHandler(handRef: Handler): void;
     /**
      * Register the SASL mechanisms which will be supported by this instance of
-     * Strophe.Connection (i.e. which this XMPP client will support).
-     * @param {SASLMechanism[]} mechanisms - Array of objects with Strophe.SASLMechanism prototypes
+     * Connection (i.e. which this XMPP client will support).
+     * @param {SASLMechanism[]} mechanisms - Array of objects with SASLMechanism prototypes
      */
     registerSASLMechanisms(mechanisms: SASLMechanism[]): void;
     /**
@@ -1106,7 +1112,7 @@ declare class Connection {
      * https://tools.ietf.org/html/rfc6120#section-7.5
      *
      * If `explicitResourceBinding` was set to a truthy value in the options
-     * passed to the Strophe.Connection constructor, then this function needs
+     * passed to the Connection constructor, then this function needs
      * to be called explicitly by the client author.
      *
      * Otherwise it'll be called automatically as soon as the XMPP server
@@ -1165,7 +1171,7 @@ declare class Connection {
     /**
      * _Private_ function to add a system level timed handler.
      *
-     * This function is used to add a Strophe.TimedHandler for the
+     * This function is used to add a TimedHandler for the
      * library code.  System timed handlers are allowed to run before
      * authentication is complete.
      * @param {number} period - The period of the handler.
@@ -1203,5 +1209,8 @@ declare class Connection {
 }
 import TimedHandler from './timed-handler.js';
 import Handler from './handler.js';
+import Bosh from './bosh.js';
+import Websocket from './websocket.js';
+import WorkerWebsocket from './worker-websocket.js';
 import Builder from './builder.js';
 //# sourceMappingURL=connection.d.ts.map

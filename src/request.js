@@ -1,11 +1,18 @@
 import { DOMParser } from './shims';
-import Strophe from './core';
+import log from './log.js';
+import Builder from './builder.js';
+import { ErrorCondition } from './constants.js';
+
+/**
+ * _Private_ variable that keeps track of the request ids for connections.
+ */
+let _requestId = 0;
 
 /**
  * Helper class that provides a cross implementation abstraction
  * for a BOSH related XMLHttpRequest.
  *
- * The Strophe.Request class is used internally to encapsulate BOSH request
+ * The Request class is used internally to encapsulate BOSH request
  * information.  It is not meant to be used from user's code.
  *
  * @property {number} id
@@ -14,7 +21,7 @@ import Strophe from './core';
  */
 class Request {
     /**
-     * Create and initialize a new Strophe.Request object.
+     * Create and initialize a new Request object.
      *
      * @param {Element} elem - The XML data to be sent in the request.
      * @param {Function} func - The function that will be called when the
@@ -23,9 +30,9 @@ class Request {
      * @param {number} [sends=0] - The number of times this same request has been sent.
      */
     constructor(elem, func, rid, sends = 0) {
-        this.id = ++Strophe._requestId;
+        this.id = ++_requestId;
         this.xmlData = elem;
-        this.data = Strophe.serialize(elem);
+        this.data = Builder.serialize(elem);
         // save original function in case we need to make a new request
         // from this one.
         this.origFunc = func;
@@ -53,25 +60,25 @@ class Request {
         let node = this.xhr.responseXML?.documentElement;
         if (node) {
             if (node.tagName === 'parsererror') {
-                Strophe.error('invalid response received');
-                Strophe.error('responseText: ' + this.xhr.responseText);
-                Strophe.error('responseXML: ' + Strophe.serialize(node));
+                log.error('invalid response received');
+                log.error('responseText: ' + this.xhr.responseText);
+                log.error('responseXML: ' + Builder.serialize(node));
                 throw new Error('parsererror');
             }
         } else if (this.xhr.responseText) {
             // In Node (with xhr2) or React Native, we may get responseText but no responseXML.
             // We can try to parse it manually.
-            Strophe.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
+            log.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
             node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
 
             const parserError = node?.querySelector('parsererror');
             if (!node || parserError) {
                 if (parserError) {
-                    Strophe.error('invalid response received: ' + parserError.textContent);
-                    Strophe.error('responseText: ' + this.xhr.responseText);
+                    log.error('invalid response received: ' + parserError.textContent);
+                    log.error('responseText: ' + this.xhr.responseText);
                 }
                 const error = new Error();
-                error.name = Strophe.ErrorCondition.BAD_FORMAT;
+                error.name = ErrorCondition.BAD_FORMAT;
                 throw error;
             }
         }
