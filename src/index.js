@@ -91,6 +91,7 @@ const Strophe = {
     },
 
     ...utils,
+    ...log,
 
     shims,
 

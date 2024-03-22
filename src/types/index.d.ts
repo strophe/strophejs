@@ -63,16 +63,7 @@ export const Strophe: {
     };
     ErrorCondition: {
         BAD_FORMAT: string;
-        CONFLICT: string; /**
-         * This function is used to extend the current namespaces in
-         * Strophe.NS. It takes a key and a value with the key being the
-         * name of the new namespace, with its actual value.
-         * @example: Strophe.addNamespace('PUBSUB', "http://jabber.org/protocol/pubsub");
-         *
-         * @param {string} name - The name under which the namespace will be
-         *     referenced under Strophe.NS
-         * @param {string} value - The actual namespace.
-         */
+        CONFLICT: string;
         MISSING_JID_NODE: string;
         NO_AUTH_MECH: string;
         UNKNOWN_REASON: string;
@@ -147,6 +138,12 @@ export const Strophe: {
      * @param {Object} ptype - The plugin's prototype.
      */
     addConnectionPlugin(name: string, ptype: Object): void;
+    log(level: number, msg: string): void;
+    debug(msg: string): void;
+    info(msg: string): void;
+    warn(msg: string): void;
+    error(msg: string): void;
+    fatal(msg: string): void;
     handleError(e: Error): void;
     utf16to8(str: string): string;
     xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBufferLike;
