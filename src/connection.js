@@ -1102,9 +1102,9 @@ class Connection {
     disconnect(reason) {
         this._changeConnectStatus(Status.DISCONNECTING, reason);
         if (reason) {
-            log.warn('Disconnect was called because: ' + reason);
+            log.info('Disconnect was called because: ' + reason);
         } else {
-            log.info('Disconnect was called');
+            log.debug('Disconnect was called');
         }
         if (this.connected) {
             let pres = null;
@@ -1122,7 +1122,7 @@ class Connection {
             );
             this._proto._disconnect(pres);
         } else {
-            log.warn('Disconnect was called before Strophe connected to the server');
+            log.debug('Disconnect was called before Strophe connected to the server');
             this._proto._abortAllRequests();
             this._doDisconnect();
         }
