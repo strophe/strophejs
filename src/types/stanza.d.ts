@@ -16,7 +16,7 @@ export function stx(strings: string[], ...values: any[]): Stanza;
  * A Stanza represents a XML element used in XMPP (commonly referred to as
  * stanzas).
  */
-declare class Stanza {
+export class Stanza {
     /**
      * @param { string[] } strings
      * @param { any[] } values
@@ -35,5 +35,4 @@ declare class Stanza {
     tree(): Element;
     node: any;
 }
-export {};
 //# sourceMappingURL=stanza.d.ts.map

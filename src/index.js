@@ -22,7 +22,7 @@ import Websocket from './websocket.js';
 import WorkerWebsocket from './worker-websocket.js';
 import log from './log.js';
 import { ElementType, ErrorCondition, LOG_LEVELS, NS, Status, XHTML } from './constants.js';
-import { stx, toStanza } from './stanza.js';
+import { stx, toStanza, Stanza } from './stanza.js';
 
 /**
  * A container for all Strophe library functions.
@@ -185,4 +185,4 @@ globalThis.$msg = $msg;
 globalThis.$pres = $pres;
 globalThis.Strophe = Strophe;
 
-export { Builder, $build, $iq, $msg, $pres, Strophe, stx, toStanza };
+export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza };

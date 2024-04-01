@@ -36,7 +36,7 @@ export function toStanza(string, throwErrorIfInvalidNS) {
  * A Stanza represents a XML element used in XMPP (commonly referred to as
  * stanzas).
  */
-class Stanza {
+export class Stanza {
     /**
      * @param { string[] } strings
      * @param { any[] } values

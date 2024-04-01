@@ -198,6 +198,7 @@ export const Strophe: {
      */
     SECONDARY_TIMEOUT: number;
 };
+import { Stanza } from './stanza.js';
 import { stx } from './stanza.js';
 import { toStanza } from './stanza.js';
 import * as shims from './shims.js';
@@ -220,5 +221,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, stx, toStanza };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza };
 //# sourceMappingURL=index.d.ts.map
