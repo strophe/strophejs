@@ -201,8 +201,8 @@ export const Strophe: {
 import { Stanza } from './stanza.js';
 import { stx } from './stanza.js';
 import { toStanza } from './stanza.js';
-import * as shims from './shims.js';
 import Request from './request.js';
+import * as shims from './shims.js';
 import Bosh from './bosh.js';
 import Websocket from './websocket.js';
 import WorkerWebsocket from './worker-websocket.js';
@@ -221,5 +221,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request };
 //# sourceMappingURL=index.d.ts.map

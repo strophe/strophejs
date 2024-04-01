@@ -185,4 +185,4 @@ globalThis.$msg = $msg;
 globalThis.$pres = $pres;
 globalThis.Strophe = Strophe;
 
-export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza };
+export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza, Request };
