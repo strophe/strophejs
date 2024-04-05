@@ -41,6 +41,12 @@
   "browser": "dist/strophe.umd.js",
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
+  "exports": {
+    "node": {
+      "import": "./dist/strophe.esm.js",
+      "require": "./dist/strophe.common.js"
+    }
+  },
   "scripts": {
     "types": "tsc",
     "build": "rollup -c",
