@@ -71,7 +71,7 @@ class Request {
             log.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
             node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
 
-            const parserError = node?.querySelector('parsererror');
+            const parserError = node?.getElementsByTagName('parsererror').item(0);
             if (!node || parserError) {
                 if (parserError) {
                     log.error('invalid response received: ' + parserError.textContent);
