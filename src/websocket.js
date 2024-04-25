@@ -96,9 +96,13 @@ class Websocket {
 
         const ns = 'urn:ietf:params:xml:ns:xmpp-streams';
         for (let i = 0; i < error.childNodes.length; i++) {
-            const e = error.children[i];
-            if (e.getAttribute('xmlns') !== ns) {
-                break;
+            const e = error.childNodes[i];
+            if (e.nodeType === e.ELEMENT_NODE) {
+                /** @type {Element} */
+                const el = /** @type {any} */ (e);
+                if (el.getAttribute('xmlns') !== ns) {
+                    break;
+                }
             }
             if (e.nodeName === 'text') {
                 text = e.textContent;
