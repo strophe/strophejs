@@ -39,7 +39,7 @@ doc:
 .PHONY: release
 release:
 	$(SED) -i 's/\"version\":\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\":\ \"$(VERSION)\"/' package.json
-	$(SED) -i 's/VERSION:\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/VERSION:\ \"$(VERSION)\"/' src/core.js
+	$(SED) -i 's/VERSION:\ \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/VERSION:\ \"$(VERSION)\"/' src/index.js
 	$(SED)  -i "s/Unreleased/`date +%Y-%m-%d`/" CHANGELOG.md
 	make dist
 

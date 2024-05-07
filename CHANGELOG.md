@@ -1,5 +1,20 @@
 # Strophe.js Change Log
 
+## Version 3.0.0 - (2024-05-07)
+
+* #704 Cannot use with NodeJS
+* #706 TypeError when receiving a `stream:error` IQ message
+
+Out of an abundance of caution, making a major version bump, since there was
+some internal refactoring of the Strophe files to remove circular
+dependencies. So certain deep imports used by integrators might no longer work.
+Instead of deep imports, everything should be imported from `strophe.js`.
+
+For example:
+```
+import { Strophe, $build, stx } from strophe.js;
+```
+
 ## Version 2.0.0 - (2024-02-21)
 
 * Type checking via TypeScript and JSDoc typing annotations
