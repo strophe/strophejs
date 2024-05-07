@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 3.0.1 - (Unreleased)
+
+* Bugfix: `Package path . is not exported from package`
+
 ## Version 3.0.0 - (2024-05-07)
 
 * #704 Cannot use with NodeJS
