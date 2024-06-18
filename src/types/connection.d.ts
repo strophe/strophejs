@@ -947,12 +947,12 @@ declare class Connection {
      * @param {string} ns - The namespace to match.
      * @param {string} name - The stanza name to match.
      * @param {string|string[]} type - The stanza type (or types if an array) to match.
-     * @param {string} id - The stanza id attribute to match.
+     * @param {string} [id] - The stanza id attribute to match.
      * @param {string} [from] - The stanza from attribute to match.
      * @param {HandlerOptions} [options] - The handler options
      * @return {Handler} A reference to the handler that can be used to remove it.
      */
-    addHandler(handler: Function, ns: string, name: string, type: string | string[], id: string, from?: string, options?: {
+    addHandler(handler: Function, ns: string, name: string, type: string | string[], id?: string, from?: string, options?: {
         matchBareFromJid?: boolean;
         ignoreNamespaceFragment?: boolean;
     }): Handler;
