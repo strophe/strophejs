@@ -37,7 +37,7 @@ import { $pres } from './builder.js';
  * @property {Object.<string, string>} NS
  * @property {XHTML} XHTML
  */
-export const Strophe: {
+declare const Strophe: {
     shims: typeof shims;
     Request: typeof Request;
     Bosh: typeof Bosh;
@@ -221,5 +221,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request, Strophe, Connection };
 //# sourceMappingURL=index.d.ts.map
