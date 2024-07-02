@@ -42,7 +42,11 @@
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
   "exports": {
-    ".": "./src/index.js"
+    "node": {
+      "import": "./dist/strophe.esm.js",
+      "require": "./dist/strophe.common.js"
+    },
+    "default": "./src/index.js"
   },
   "scripts": {
     "types": "tsc",
