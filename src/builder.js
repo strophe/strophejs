@@ -173,7 +173,8 @@ class Builder {
      * @return {Builder} The Strophe.Builder object.
      */
     up() {
-        this.node = this.node.parentElement;
+        // Depending on context, parentElement is not always available
+        this.node = this.node.parentElement ? this.node.parentElement : /** @type {Element} */ (this.node.parentNode);
         return this;
     }
 
