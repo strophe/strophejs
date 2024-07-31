@@ -192,11 +192,11 @@ export function xmlElement(name, attrs, text) {
     } else if (typeof attrs === 'string' || typeof attrs === 'number') {
         node.appendChild(xmlTextNode(/** @type {number|string} */ (attrs).toString()));
         return node;
-    } else if (!attrs) {
-        return node;
     }
 
-    if (Array.isArray(attrs)) {
+    if (!attrs) {
+        return node;
+    } else if (Array.isArray(attrs)) {
         for (const attr of attrs) {
             if (Array.isArray(attr)) {
                 // eslint-disable-next-line no-eq-null
