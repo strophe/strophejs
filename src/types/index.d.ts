@@ -221,5 +221,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request, Connection };
 //# sourceMappingURL=index.d.ts.map
