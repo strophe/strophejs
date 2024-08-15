@@ -212,7 +212,7 @@ export function getResourceFromJid(jid: string): string;
  */
 export function getBareJidFromJid(jid: string): string;
 export { utils as default };
-export type XHTMLAttrs = 'a' | 'blockquote' | 'br' | 'cite' | 'em' | 'img' | 'li' | 'ol' | 'p' | 'span' | 'strong' | 'ul' | 'body';
+export type XHTMLAttrs = "a" | "blockquote" | "br" | "cite" | "em" | "img" | "li" | "ol" | "p" | "span" | "strong" | "ul" | "body";
 declare namespace utils {
     export { utf16to8 };
     export { xorArrayBuffers };

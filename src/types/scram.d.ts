@@ -22,12 +22,12 @@ declare namespace scram {
      * @param {string} hashName
      * @param {number} hashBits
      */
-    function scramResponse(connection: import("./connection.js").default, challenge: string, hashName: string, hashBits: number): Promise<string | false>;
+    function scramResponse(connection: Connection, challenge: string, hashName: string, hashBits: number): Promise<string | false>;
     /**
      * Returns a string containing the client first message
      * @param {Connection} connection
      * @param {string} test_cnonce
      */
-    function clientChallenge(connection: import("./connection.js").default, test_cnonce: string): string;
+    function clientChallenge(connection: Connection, test_cnonce: string): string;
 }
 //# sourceMappingURL=scram.d.ts.map

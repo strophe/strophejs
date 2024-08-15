@@ -1,5 +1,5 @@
 export default log;
-export type LogLevel = import('./constants').LogLevel;
+export type LogLevel = import("./constants").LogLevel;
 declare namespace log {
     /**
      * Library consumers can use this function to set the log level of Strophe.
@@ -7,7 +7,7 @@ declare namespace log {
      * @param {LogLevel} level
      * @example Strophe.setLogLevel(Strophe.LogLevel.DEBUG);
      */
-    function setLogLevel(level: import("./constants.js").LogLevel): void;
+    function setLogLevel(level: LogLevel): void;
     /**
      *
      * Please note that data sent and received over the wire is logged

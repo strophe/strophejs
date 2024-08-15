@@ -214,7 +214,7 @@ declare class Connection {
          * Allows you to specify the SASL authentication mechanisms that this
          * instance of Connection (and therefore your XMPP client) will support.
          *
-         * The value must be an array of objects with {@link SASLMechanism }prototypes.
+         * The value must be an array of objects with {@link SASLMechanism}prototypes.
          *
          * If nothing is specified, then the following mechanisms (and their
          * priorities) are registered:
@@ -234,7 +234,7 @@ declare class Connection {
         mechanisms?: SASLMechanism[];
         /**
          * If `explicitResourceBinding` is set to `true`, then the XMPP client
-         * needs to explicitly call {@link Connection.bind } once the XMPP
+         * needs to explicitly call {@link Connection.bind} once the XMPP
          * server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
          *
          * Making this step explicit allows client authors to first finish other
@@ -262,7 +262,7 @@ declare class Connection {
          * relative URLs both BOSH and WebSocket connections will use their secure
          * variants if the current connection to the site is also secure (https).
          */
-        protocol?: 'ws' | 'wss';
+        protocol?: "ws" | "wss";
         /**
          * _Note: This option is only relevant to Websocket connections, and not BOSH_
          *
@@ -354,7 +354,7 @@ declare class Connection {
          * Allows you to specify the SASL authentication mechanisms that this
          * instance of Connection (and therefore your XMPP client) will support.
          *
-         * The value must be an array of objects with {@link SASLMechanism }prototypes.
+         * The value must be an array of objects with {@link SASLMechanism}prototypes.
          *
          * If nothing is specified, then the following mechanisms (and their
          * priorities) are registered:
@@ -374,7 +374,7 @@ declare class Connection {
         mechanisms?: SASLMechanism[];
         /**
          * If `explicitResourceBinding` is set to `true`, then the XMPP client
-         * needs to explicitly call {@link Connection.bind } once the XMPP
+         * needs to explicitly call {@link Connection.bind} once the XMPP
          * server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
          *
          * Making this step explicit allows client authors to first finish other
@@ -402,7 +402,7 @@ declare class Connection {
          * relative URLs both BOSH and WebSocket connections will use their secure
          * variants if the current connection to the site is also secure (https).
          */
-        protocol?: 'ws' | 'wss';
+        protocol?: "ws" | "wss";
         /**
          * _Note: This option is only relevant to Websocket connections, and not BOSH_
          *
@@ -509,7 +509,7 @@ declare class Connection {
     paused: boolean;
     restored: boolean;
     /** @type {(Element|'restart')[]} */
-    _data: (Element | 'restart')[];
+    _data: (Element | "restart")[];
     _uniqueId: number;
     _sasl_success_handler: Handler;
     _sasl_failure_handler: Handler;
@@ -587,7 +587,7 @@ declare class Connection {
      * @param {number} status_code - Error status code (e.g 500, 400 or 404)
      * @param {Function} callback - Function that will fire on Http error
      */
-    addProtocolErrorHandler(protocol: 'HTTP' | 'websocket', status_code: number, callback: Function): void;
+    addProtocolErrorHandler(protocol: "HTTP" | "websocket", status_code: number, callback: Function): void;
     /**
      * @typedef {Object} Password
      * @property {string} Password.name

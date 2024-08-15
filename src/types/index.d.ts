@@ -160,9 +160,9 @@ export const Strophe: {
     xmlGenerator(): Document;
     xmlTextNode(text: string): Text;
     xmlHtmlNode(html: string): XMLDocument;
-    xmlElement(name: string, attrs?: string | number | string[][] | {
+    xmlElement(name: string, attrs?: Array<Array<string>> | {
         [x: string]: string | number;
-    }, text?: string | number): Element;
+    } | string | number, text?: string | number): Element;
     validTag(tag: string): boolean;
     validAttribute(tag: string, attribute: string): boolean;
     validCSS(style: string): boolean;
@@ -221,5 +221,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request, Connection };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request };
 //# sourceMappingURL=index.d.ts.map

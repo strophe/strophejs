@@ -211,7 +211,7 @@ export type LogLevel = 0 | 1 | 2 | 3 | 4;
 /**
  * Logging level indicators.
  */
-export type LogLevelName = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+export type LogLevelName = "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
 /**
  * Logging level indicators.
  */

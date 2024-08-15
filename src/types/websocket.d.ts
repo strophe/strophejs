@@ -195,6 +195,5 @@ declare class Websocket {
      */
     _sendRestart(): void;
 }
-import { WebSocket } from './shims';
 import Builder from './builder.js';
 //# sourceMappingURL=websocket.d.ts.map
