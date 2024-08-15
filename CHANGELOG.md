@@ -1,8 +1,19 @@
 # Strophe.js Change Log
 
-## Version 3.0.1 - (Unreleased)
+## Version 3.0.1 - (2024-08-15)
 
 * Bugfix: `Package path . is not exported from package`
+* #708 Properly set exports value in package.json
+* #710 Fix types minor errors
+* #711 Error with Builder.up depending on context
+* #712 fix: export node and default modules
+* #715 Fix the error when the attrs field is null
+
+Dependency updates:
+* Bump @rollup/plugin-commonjs from 24.1.0 to 26.0.1
+* Bump @xmldom/xmldom from 0.8.8 to 0.8.10
+* Bump prettier from 2.8.8 to 3.3.3
+* Bump sinon from 15.0.4 to 18.0.0
 
 ## Version 3.0.0 - (2024-05-07)
 
