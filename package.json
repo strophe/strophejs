@@ -74,7 +74,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "almond": "~0.3.0",
     "es6-promise": "^4.2.8",
-    "eslint": "^8.31.0",
+    "eslint": "^9.9.1",
     "http-server": "^14.1.0",
     "jsdoc": "^4.0.2",
     "karma": "^6.3.17",
