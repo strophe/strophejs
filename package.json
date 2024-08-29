@@ -46,8 +46,8 @@
       "import": "./dist/strophe.esm.js",
       "require": "./dist/strophe.common.js"
     },
-    "default": "./src/index.js",
-    "types": "./src/types/index.d.ts"
+    "types": "./src/types/index.d.ts",
+    "default": "./src/index.js"
   },
   "scripts": {
     "types": "tsc",
