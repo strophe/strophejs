@@ -157,12 +157,12 @@ export function xmlTextNode(text) {
 
 /**
  * Creates an XML DOM node.
- * @param {string} html - The content of the html node.
+ * @param {string} text - The contents of the XML element.
  * @return {XMLDocument}
  */
-export function xmlHtmlNode(html) {
+export function xmlHtmlNode(text) {
     const parser = new shims.DOMParser();
-    return parser.parseFromString(html, 'text/xml');
+    return parser.parseFromString(text, 'text/xml');
 }
 
 /**

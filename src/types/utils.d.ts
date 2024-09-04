@@ -52,10 +52,10 @@ export function xmlGenerator(): Document;
 export function xmlTextNode(text: string): Text;
 /**
  * Creates an XML DOM node.
- * @param {string} html - The content of the html node.
+ * @param {string} text - The contents of the XML element.
  * @return {XMLDocument}
  */
-export function xmlHtmlNode(html: string): XMLDocument;
+export function xmlHtmlNode(text: string): XMLDocument;
 /**
  * Create an XML DOM element.
  *

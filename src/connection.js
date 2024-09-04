@@ -29,16 +29,139 @@ import WorkerWebsocket from './worker-websocket.js';
 import Websocket from './websocket.js';
 
 /**
+ * @typedef {import("./sasl.js").default} SASLMechanism
+ * @typedef {import("./request.js").default} Request
+ *
+ * @typedef {Object} ConnectionOptions
+ * @property {Cookies} [cookies]
+ *  Allows you to pass in cookies that will be included in HTTP requests.
+ *  Relevant to both the BOSH and Websocket transports.
+ *
+ *  The passed in value must be a map of cookie names and string values.
+ *
+ *  > { "myCookie": {
+ *  >     "value": "1234",
+ *  >     "domain": ".example.org",
+ *  >     "path": "/",
+ *  >     "expires": expirationDate
+ *  >     }
+ *  > }
+ *
+ *  Note that cookies can't be set in this way for domains other than the one
+ *  that's hosting Strophe (i.e. cross-domain).
+ *  Those cookies need to be set under those domains, for example they can be
+ *  set server-side by making a XHR call to that domain to ask it to set any
+ *  necessary cookies.
+ * @property {SASLMechanism[]} [mechanisms]
+ *  Allows you to specify the SASL authentication mechanisms that this
+ *  instance of Connection (and therefore your XMPP client) will support.
+ *
+ *  The value must be an array of objects with {@link SASLMechanism}
+ *  prototypes.
+ *
+ *  If nothing is specified, then the following mechanisms (and their
+ *  priorities) are registered:
+ *
+ *      Mechanism       Priority
+ *      ------------------------
+ *      SCRAM-SHA-512   72
+ *      SCRAM-SHA-384   71
+ *      SCRAM-SHA-256   70
+ *      SCRAM-SHA-1     60
+ *      PLAIN           50
+ *      OAUTHBEARER     40
+ *      X-OAUTH2        30
+ *      ANONYMOUS       20
+ *      EXTERNAL        10
+ *
+ * @property {boolean} [explicitResourceBinding]
+ *  If `explicitResourceBinding` is set to `true`, then the XMPP client
+ *  needs to explicitly call {@link Connection.bind} once the XMPP
+ *  server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
+ *
+ *  Making this step explicit allows client authors to first finish other
+ *  stream related tasks, such as setting up an XEP-0198 Stream Management
+ *  session, before binding the JID resource for this session.
+ *
+ * @property {'ws'|'wss'} [protocol]
+ *  _Note: This option is only relevant to Websocket connections, and not BOSH_
+ *
+ *  If you want to connect to the current host with a WebSocket connection you
+ *  can tell Strophe to use WebSockets through the "protocol" option.
+ *  Valid values are `ws` for WebSocket and `wss` for Secure WebSocket.
+ *  So to connect to "wss://CURRENT_HOSTNAME/xmpp-websocket" you would call
+ *
+ *      const conn = new Strophe.Connection(
+ *          "/xmpp-websocket/",
+ *          {protocol: "wss"}
+ *      );
+ *
+ *  Note that relative URLs _NOT_ starting with a "/" will also include the path
+ *  of the current site.
+ *
+ *  Also because downgrading security is not permitted by browsers, when using
+ *  relative URLs both BOSH and WebSocket connections will use their secure
+ *  variants if the current connection to the site is also secure (https).
+ *
+ * @property {string} [worker]
+ *  _Note: This option is only relevant to Websocket connections, and not BOSH_
+ *
+ *  Set this option to URL from where the shared worker script should be loaded.
+ *
+ *  To run the websocket connection inside a shared worker.
+ *  This allows you to share a single websocket-based connection between
+ *  multiple Connection instances, for example one per browser tab.
+ *
+ *  The script to use is the one in `src/shared-connection-worker.js`.
+ *
+ * @property {boolean} [sync]
+ *  Used to control whether BOSH HTTP requests will be made synchronously or not.
+ *  The default behaviour is asynchronous. If you want to make requests
+ *  synchronous, make "sync" evaluate to true.
+ *
+ *  > const conn = new Strophe.Connection("/http-bind/", {sync: true});
+ *
+ *  You can also toggle this on an already established connection.
+ *
+ *  > conn.options.sync = true;
+ *
+ * @property {string[]} [customHeaders]
+ *  Used to provide custom HTTP headers to be included in the BOSH HTTP requests.
+ *
+ * @property {boolean} [keepalive]
+ *  Used to instruct Strophe to maintain the current BOSH session across
+ *  interruptions such as webpage reloads.
+ *
+ *  It will do this by caching the sessions tokens in sessionStorage, and when
+ *  "restore" is called it will check whether there are cached tokens with
+ *  which it can resume an existing session.
+ *
+ * @property {boolean} [withCredentials]
+ *  Used to indicate wether cookies should be included in HTTP requests (by default
+ *  they're not).
+ *  Set this value to `true` if you are connecting to a BOSH service
+ *  and for some reason need to send cookies to it.
+ *  In order for this to work cross-domain, the server must also enable
+ *  credentials by setting the `Access-Control-Allow-Credentials` response header
+ *  to "true". For most usecases however this setting should be false (which
+ *  is the default).
+ *  Additionally, when using `Access-Control-Allow-Credentials`, the
+ *  `Access-Control-Allow-Origin` header can't be set to the wildcard "*", but
+ *  instead must be restricted to actual domains.
+ *
+ * @property {string} [contentType]
+ *  Used to change the default Content-Type, which is "text/xml; charset=utf-8".
+ *  Can be useful to reduce the amount of CORS preflight requests that are sent
+ *  to the server.
+ */
+
+
+/**
  * _Private_ variable Used to store plugin names that need
  * initialization during Connection construction.
  * @type {Object.<string, Object>}
  */
 const connectionPlugins = {};
-
-/**
- * @typedef {import("./sasl.js").default} SASLMechanism
- * @typedef {import("./request.js").default} Request
- */
 
 /**
  * **XMPP Connection manager**
@@ -73,129 +196,6 @@ class Connection {
      * @typedef {Cookie|Object.<string, Cookie>} Cookies
      */
 
-    /**
-     * @typedef {Object} ConnectionOptions
-     * @property {Cookies} [cookies]
-     *  Allows you to pass in cookies that will be included in HTTP requests.
-     *  Relevant to both the BOSH and Websocket transports.
-     *
-     *  The passed in value must be a map of cookie names and string values.
-     *
-     *  > { "myCookie": {
-     *  >     "value": "1234",
-     *  >     "domain": ".example.org",
-     *  >     "path": "/",
-     *  >     "expires": expirationDate
-     *  >     }
-     *  > }
-     *
-     *  Note that cookies can't be set in this way for domains other than the one
-     *  that's hosting Strophe (i.e. cross-domain).
-     *  Those cookies need to be set under those domains, for example they can be
-     *  set server-side by making a XHR call to that domain to ask it to set any
-     *  necessary cookies.
-     * @property {SASLMechanism[]} [mechanisms]
-     *  Allows you to specify the SASL authentication mechanisms that this
-     *  instance of Connection (and therefore your XMPP client) will support.
-     *
-     *  The value must be an array of objects with {@link SASLMechanism}
-     *  prototypes.
-     *
-     *  If nothing is specified, then the following mechanisms (and their
-     *  priorities) are registered:
-     *
-     *      Mechanism       Priority
-     *      ------------------------
-     *      SCRAM-SHA-512   72
-     *      SCRAM-SHA-384   71
-     *      SCRAM-SHA-256   70
-     *      SCRAM-SHA-1     60
-     *      PLAIN           50
-     *      OAUTHBEARER     40
-     *      X-OAUTH2        30
-     *      ANONYMOUS       20
-     *      EXTERNAL        10
-     *
-     * @property {boolean} [explicitResourceBinding]
-     *  If `explicitResourceBinding` is set to `true`, then the XMPP client
-     *  needs to explicitly call {@link Connection.bind} once the XMPP
-     *  server has advertised the `urn:ietf:propertys:xml:ns:xmpp-bind` feature.
-     *
-     *  Making this step explicit allows client authors to first finish other
-     *  stream related tasks, such as setting up an XEP-0198 Stream Management
-     *  session, before binding the JID resource for this session.
-     *
-     * @property {'ws'|'wss'} [protocol]
-     *  _Note: This option is only relevant to Websocket connections, and not BOSH_
-     *
-     *  If you want to connect to the current host with a WebSocket connection you
-     *  can tell Strophe to use WebSockets through the "protocol" option.
-     *  Valid values are `ws` for WebSocket and `wss` for Secure WebSocket.
-     *  So to connect to "wss://CURRENT_HOSTNAME/xmpp-websocket" you would call
-     *
-     *      const conn = new Strophe.Connection(
-     *          "/xmpp-websocket/",
-     *          {protocol: "wss"}
-     *      );
-     *
-     *  Note that relative URLs _NOT_ starting with a "/" will also include the path
-     *  of the current site.
-     *
-     *  Also because downgrading security is not permitted by browsers, when using
-     *  relative URLs both BOSH and WebSocket connections will use their secure
-     *  variants if the current connection to the site is also secure (https).
-     *
-     * @property {string} [worker]
-     *  _Note: This option is only relevant to Websocket connections, and not BOSH_
-     *
-     *  Set this option to URL from where the shared worker script should be loaded.
-     *
-     *  To run the websocket connection inside a shared worker.
-     *  This allows you to share a single websocket-based connection between
-     *  multiple Connection instances, for example one per browser tab.
-     *
-     *  The script to use is the one in `src/shared-connection-worker.js`.
-     *
-     * @property {boolean} [sync]
-     *  Used to control whether BOSH HTTP requests will be made synchronously or not.
-     *  The default behaviour is asynchronous. If you want to make requests
-     *  synchronous, make "sync" evaluate to true.
-     *
-     *  > const conn = new Strophe.Connection("/http-bind/", {sync: true});
-     *
-     *  You can also toggle this on an already established connection.
-     *
-     *  > conn.options.sync = true;
-     *
-     * @property {string[]} [customHeaders]
-     *  Used to provide custom HTTP headers to be included in the BOSH HTTP requests.
-     *
-     * @property {boolean} [keepalive]
-     *  Used to instruct Strophe to maintain the current BOSH session across
-     *  interruptions such as webpage reloads.
-     *
-     *  It will do this by caching the sessions tokens in sessionStorage, and when
-     *  "restore" is called it will check whether there are cached tokens with
-     *  which it can resume an existing session.
-     *
-     * @property {boolean} [withCredentials]
-     *  Used to indicate wether cookies should be included in HTTP requests (by default
-     *  they're not).
-     *  Set this value to `true` if you are connecting to a BOSH service
-     *  and for some reason need to send cookies to it.
-     *  In order for this to work cross-domain, the server must also enable
-     *  credentials by setting the `Access-Control-Allow-Credentials` response header
-     *  to "true". For most usecases however this setting should be false (which
-     *  is the default).
-     *  Additionally, when using `Access-Control-Allow-Credentials`, the
-     *  `Access-Control-Allow-Origin` header can't be set to the wildcard "*", but
-     *  instead must be restricted to actual domains.
-     *
-     * @property {string} [contentType]
-     *  Used to change the default Content-Type, which is "text/xml; charset=utf-8".
-     *  Can be useful to reduce the amount of CORS preflight requests that are sent
-     *  to the server.
-     */
 
     /**
      * Create and initialize a {@link Connection} object.

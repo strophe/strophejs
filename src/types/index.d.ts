@@ -159,7 +159,7 @@ export const Strophe: {
     }): void;
     xmlGenerator(): Document;
     xmlTextNode(text: string): Text;
-    xmlHtmlNode(html: string): XMLDocument;
+    xmlHtmlNode(text: string): XMLDocument;
     xmlElement(name: string, attrs?: Array<Array<string>> | {
         [x: string]: string | number;
     } | string | number, text?: string | number): Element;

@@ -16,7 +16,6 @@ export function toStanza(string, throwErrorIfInvalidNS) {
     }
 
     const node = doc.firstElementChild;
-
     if (
         ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
         node.namespaceURI !== 'jabber:client' &&
@@ -33,13 +32,12 @@ export function toStanza(string, throwErrorIfInvalidNS) {
 }
 
 /**
- * A Stanza represents a XML element used in XMPP (commonly referred to as
- * stanzas).
+ * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
 export class Stanza {
     /**
-     * @param { string[] } strings
-     * @param { any[] } values
+     * @param {string[]} strings
+     * @param {any[]} values
      */
     constructor(strings, values) {
         this.strings = strings;
@@ -47,7 +45,7 @@ export class Stanza {
     }
 
     /**
-     * @return { string }
+     * @return {string}
      */
     toString() {
         this.string =
@@ -61,7 +59,7 @@ export class Stanza {
     }
 
     /**
-     * @return { Element }
+     * @return {Element}
      */
     tree() {
         this.node = this.node ?? toStanza(this.toString(), true);
@@ -73,8 +71,8 @@ export class Stanza {
  * Tagged template literal function which generates {@link Stanza } objects
  * @example stx`<presence type="${type}" xmlns="jabber:client"><show>${show}</show></presence>`
  *
- * @param { string[] } strings
- * @param { ...any } values
+ * @param {string[]} strings
+ * @param {...any} values
  */
 export function stx(strings, ...values) {
     return new Stanza(strings, values);
