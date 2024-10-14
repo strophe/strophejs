@@ -121,7 +121,7 @@ class Websocket {
             errorString += ' - ' + text;
         }
         log.error(errorString);
-        // The error is returned to the Strophe error method, allowing it to be handled.
+        // The stream error is sent to the Strophe error method, allowing it to be handled.
         Strophe.error(errorString);
 
         // close the connection on stream_error
