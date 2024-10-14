@@ -121,6 +121,8 @@ class Websocket {
             errorString += ' - ' + text;
         }
         log.error(errorString);
+        // Call error handler
+        Strophe.error(errorString);
 
         // close the connection on stream_error
         this._conn._changeConnectStatus(connectstatus, condition);
