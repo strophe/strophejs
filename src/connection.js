@@ -772,6 +772,63 @@ class Connection {
     }
 
     /**
+     * Helper function to send stanzas. The main benefit is for sending
+     * stanzas for which you expect a responding stanza with the same id.
+     *
+     * @param {Element} stanza - The stanza to send.
+     * @param {number} [timeout=3000] - The time specified in milliseconds for a
+     *    timeout to occur, the default is 3000.
+     * @return {Promise<Element|null>} A Promise that resolves to:
+     *   - If the request is successful, it resolves to the response stanza.
+     *   - If the server returns an error, it rejects with the error stanza.
+     *   - If the request times out, it rejects with null.
+     */
+    sendAsync(stanza, timeout = 3000) {
+        const el = stanza instanceof Builder ? stanza.tree() : stanza;
+
+        let id = el.getAttribute('id');
+        if (!id) {
+            // inject id if not found
+            id = this.getUniqueId('sendStanza');
+            el.setAttribute('id', id);
+        }
+        return new Promise((resolve, reject) => {
+            /** @type {TimedHandler} */
+            let timeoutHandler = null;
+            
+            const handler = this.addHandler(
+                /** @param {Element} responseStanza */
+                (responseStanza) => {
+                    // remove timeout handler if there is one
+                    if (timeoutHandler) this.deleteTimedHandler(timeoutHandler);
+
+                    if (responseStanza.getAttribute('type') === 'error') {
+                        reject(responseStanza);
+                    } else {
+                        resolve(responseStanza);
+                    }
+                    return false;
+                },
+                null,
+                null,
+                null,
+                id
+            );
+
+            // if timeout specified, set up a timeout handler.
+            if (timeout) {
+                timeoutHandler = this.addTimedHandler(timeout, () => {
+                    // get rid of normal handler
+                    this.deleteHandler(handler);
+                    resolve(null);
+                    return false;
+                });
+            }
+            this.send(el);
+        })
+    }
+
+    /**
      * Helper function to send presence stanzas. The main benefit is for
      * sending presence stanzas for which you expect a responding presence
      * stanza with the same id (for example when leaving a chat room).
@@ -1773,7 +1830,7 @@ class Connection {
         if (!this.do_session) {
             throw new Error(
                 `Connection.prototype._establishSession ` +
-                    `called but apparently ${NS.SESSION} wasn't advertised by the server`
+                `called but apparently ${NS.SESSION} wasn't advertised by the server`
             );
         }
         this._addSysHandler(this._onSessionResultIQ.bind(this), null, null, null, '_session_auth_2');
