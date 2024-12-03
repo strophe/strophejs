@@ -99,6 +99,6 @@
   "optionalDependencies": {
     "@types/ws": "^8.5.5",
     "@xmldom/xmldom": "0.8.10",
-    "ws": "^8.5.0"
+    "ws": "^8.18.0"
   }
 }
