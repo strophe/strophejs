@@ -93,9 +93,6 @@
     "typescript": "^5.1.6",
     "xhr2": "^0.2.1"
   },
-  "dependencies": {
-    "abab": "^2.0.3"
-  },
   "optionalDependencies": {
     "@types/ws": "^8.5.5",
     "@xmldom/xmldom": "0.8.10",

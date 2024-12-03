@@ -1,4 +1,3 @@
-import { atob, btoa } from 'abab';
 import Handler from './handler.js';
 import TimedHandler from './timed-handler.js';
 import Builder, { $build, $iq, $pres } from './builder.js';
