@@ -30,7 +30,7 @@ export default [
     // CommonJS (for Node) and ES module (for bundlers) build.
     {
         input: 'src/index.js',
-        external: ['window', 'abab'],
+        external: ['window'],
         output: [
             { file: 'dist/strophe.common.js', format: 'cjs' },
             { file: pkg.module, format: 'es' },
