@@ -9,7 +9,12 @@ module.exports = function (config) {
         frameworks: ['qunit'],
 
         // list of files / patterns to load in the browser
-        files: ['node_modules/sinon/pkg/sinon.js', 'dist/strophe.umd.js', 'tests/tests.js'],
+        files: [
+            'node_modules/sinon/pkg/sinon.js',
+            'dist/strophe.umd.js',
+            'tests/tests.js',
+            'tests/stx.js'
+        ],
 
         // list of files to exclude
         exclude: [],

@@ -29,7 +29,9 @@ Since version 1.3.0, support for IE < 11 has been dropped.
 ### React Native
 
 Since version 1.6.0 the [WebCrypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
-API (included by default in Browsers and NodeJS) is used for crypto primitives such as hashing and signatures.
+API (included by default in Browsers and NodeJS) is used for crypto primitives
+such as hashing and signatures.
+
 Unfortunately this API is not available in React Native, and integrators will
 need to look for a 3rd party implementations of this API if they want to use
 Strophe there.

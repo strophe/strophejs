@@ -1,15 +1,31 @@
 /**
  * @param {string} string
  * @param {boolean} [throwErrorIfInvalidNS]
- * @return {Element}
+ * @returns {Element}
  */
-export function toStanza(string: string, throwErrorIfInvalidNS?: boolean): Element;
+export function toStanzaElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
 /**
- * Tagged template literal function which generates {@link Stanza } objects
- * @example stx`<presence type="${type}" xmlns="jabber:client"><show>${show}</show></presence>`
+ * Tagged template literal function which generates {@link Stanza} objects
+ *
+ * @example
+ *      const pres = stx`<presence type="${type}" xmlns="jabber:client"><show>${show}</show></presence>`
+ *
+ *      connection.send(msg);
+ *
+ * @example
+ *      const msg = stx`<message
+ *          from='sender@example.org'
+ *          id='hgn27af1'
+ *          to='recipient@example.org'
+ *          type='chat'>
+ *          <body>Hello world</body>
+ *      </message>`;
+ *
+ *      connection.send(msg);
  *
  * @param {string[]} strings
  * @param {...any} values
+ * @returns {Stanza}
  */
 export function stx(strings: string[], ...values: any[]): Stanza;
 /**

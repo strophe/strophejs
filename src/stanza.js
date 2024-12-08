@@ -6,9 +6,9 @@ const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
 /**
  * @param {string} string
  * @param {boolean} [throwErrorIfInvalidNS]
- * @return {Element}
+ * @returns {Element}
  */
-export function toStanza(string, throwErrorIfInvalidNS) {
+export function toStanzaElement(string, throwErrorIfInvalidNS) {
     const doc = xmlHtmlNode(string);
 
     if (doc.getElementsByTagNameNS(PARSE_ERROR_NS, 'parsererror').length) {
@@ -52,8 +52,8 @@ export class Stanza {
             this.string ||
             this.strings.reduce((acc, str) => {
                 const idx = this.strings.indexOf(str);
-                const value = this.values.length > idx ? this.values[idx].toString() : '';
-                return acc + str + value;
+                const value = this.values.length > idx ? this.values[idx] : '';
+                return acc + str + (Array.isArray(value) ? value.join('') : value.toString());
             }, '');
         return this.string;
     }
@@ -62,17 +62,33 @@ export class Stanza {
      * @return {Element}
      */
     tree() {
-        this.node = this.node ?? toStanza(this.toString(), true);
+        this.node = this.node ?? toStanzaElement(this.toString(), true);
         return this.node;
     }
 }
 
 /**
- * Tagged template literal function which generates {@link Stanza } objects
- * @example stx`<presence type="${type}" xmlns="jabber:client"><show>${show}</show></presence>`
+ * Tagged template literal function which generates {@link Stanza} objects
+ *
+ * @example
+ *      const pres = stx`<presence type="${type}" xmlns="jabber:client"><show>${show}</show></presence>`
+ *
+ *      connection.send(msg);
+ *
+ * @example
+ *      const msg = stx`<message
+ *          from='sender@example.org'
+ *          id='hgn27af1'
+ *          to='recipient@example.org'
+ *          type='chat'>
+ *          <body>Hello world</body>
+ *      </message>`;
+ *
+ *      connection.send(msg);
  *
  * @param {string[]} strings
  * @param {...any} values
+ * @returns {Stanza}
  */
 export function stx(strings, ...values) {
     return new Stanza(strings, values);

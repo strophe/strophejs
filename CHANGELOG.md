@@ -1,5 +1,12 @@
 # Strophe.js Change Log
 
+## Version 3.0.2 - (Unreleased)
+
+- Avoid inserting commas when nesting lists of `stx` templates.
+- Remove deprecated `abab` package
+- Make sure `ConnectionOptions` type is exportable
+- fix: invert default and types exports
+
 ## Version 3.0.1 - (2024-08-15)
 
 * Bugfix: `Package path . is not exported from package`

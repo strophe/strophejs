@@ -54,6 +54,7 @@ export const Strophe: {
     SASLOAuthBearer: typeof SASLOAuthBearer;
     SASLExternal: typeof SASLExternal;
     SASLXOAuth2: typeof SASLXOAuth2;
+    Stanza: typeof Stanza;
     Builder: typeof Builder;
     ElementType: {
         NORMAL: number;
@@ -200,7 +201,7 @@ export const Strophe: {
 };
 import { Stanza } from './stanza.js';
 import { stx } from './stanza.js';
-import { toStanza } from './stanza.js';
+import { toStanzaElement } from './stanza.js';
 import Request from './request.js';
 import * as shims from './shims.js';
 import Bosh from './bosh.js';
@@ -221,5 +222,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanza, Request };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanzaElement, Request, toStanzaElement as toStanza };
 //# sourceMappingURL=index.d.ts.map

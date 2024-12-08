@@ -22,7 +22,7 @@ import Websocket from './websocket.js';
 import WorkerWebsocket from './worker-websocket.js';
 import log from './log.js';
 import { ElementType, ErrorCondition, LOG_LEVELS, NS, Status, XHTML } from './constants.js';
-import { stx, toStanza, Stanza } from './stanza.js';
+import { stx, toStanzaElement, Stanza } from './stanza.js';
 
 /**
  * A container for all Strophe library functions.
@@ -115,6 +115,7 @@ const Strophe = {
     SASLExternal,
     SASLXOAuth2,
 
+    Stanza,
     Builder,
     ElementType,
     ErrorCondition,
@@ -140,7 +141,7 @@ const Strophe = {
      * @return {string} - The serialized element tree as a String.
      */
     serialize(elem) {
-        return Builder.serialize(elem)
+        return Builder.serialize(elem);
     },
 
     /**
@@ -184,6 +185,10 @@ globalThis.$iq = $iq;
 globalThis.$msg = $msg;
 globalThis.$pres = $pres;
 globalThis.Strophe = Strophe;
-globalThis.toStanza = toStanza;
+globalThis.toStanzaElement = toStanzaElement;
+globalThis.stx = stx;
 
-export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza, Request };
+globalThis.toStanza = toStanzaElement; // Deprecated
+
+export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanzaElement, Request };
+export { toStanzaElement as toStanza }
