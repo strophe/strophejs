@@ -2,6 +2,7 @@
 
 ## Version 3.0.2 - (Unreleased)
 
+- Replace [xmldom](https://github.com/xmldom/xmldom) with [jsdom](https://github.com/jsdom/jsdom).
 - Avoid inserting commas when nesting lists of `stx` templates.
 - Remove deprecated `abab` package
 - Make sure `ConnectionOptions` type is exportable

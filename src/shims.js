@@ -43,17 +43,20 @@ export const WebSocket = getWebSocketImplementation();
  * Used implementations:
  * - supported browsers: built-in in DOMParser global
  *   https://developer.mozilla.org/en-US/docs/Web/API/DOMParser#Browser_compatibility
- * - nodejs: use '@xmldom/xmldom' module
- *   https://www.npmjs.com/package/@xmldom/xmldom
+ * - nodejs: use 'jsdom' https://www.npmjs.com/package/jsdom
  */
 function getDOMParserImplementation() {
-    let DOMParserImplementation = globalThis.DOMParser;
+    const DOMParserImplementation = globalThis.DOMParser;
     if (typeof DOMParserImplementation === 'undefined') {
+        // NodeJS
+        let JSDOM;
         try {
-            DOMParserImplementation = require('@xmldom/xmldom').DOMParser;
+            JSDOM = require('jsdom').JSDOM;
         } catch (err) {
-            throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
+            throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
+        const dom = new JSDOM('');
+        return dom.window.DOMParser;
     }
     return DOMParserImplementation;
 }
@@ -63,20 +66,20 @@ export const DOMParser = getDOMParserImplementation();
  * Creates a dummy XML DOM document to serve as an element and text node generator.
  *
  * Used implementations:
- *  - IE < 10: avoid using createDocument() due to a memory leak, use ie-specific
- *    workaround
- *  - other supported browsers: use document's createDocument
- *  - nodejs: use '@xmldom/xmldom'
+ *  - browser: use document's createDocument
+ * - nodejs: use 'jsdom' https://www.npmjs.com/package/jsdom
  */
 export function getDummyXMLDOMDocument() {
     if (typeof document === 'undefined') {
         // NodeJS
+        let JSDOM;
         try {
-            const DOMImplementation = require('@xmldom/xmldom').DOMImplementation;
-            return new DOMImplementation().createDocument('jabber:client', 'strophe', null);
+            JSDOM = require('jsdom').JSDOM;
         } catch (err) {
-            throw new Error('You must install the "@xmldom/xmldom" package to use Strophe in nodejs.');
+            throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
+        const dom = new JSDOM('');
+        return dom.window.document.implementation.createDocument('jabber:client', 'strophe', null);
     }
     return document.implementation.createDocument('jabber:client', 'strophe', null);
 }

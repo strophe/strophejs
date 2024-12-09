@@ -1,7 +1,5 @@
 import log from './log.js';
-import { xmlHtmlNode } from './utils.js';
-
-const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
+import { getFirstElementChild, getParserError, xmlHtmlNode } from './utils.js';
 
 /**
  * @param {string} string
@@ -10,12 +8,12 @@ const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
  */
 export function toStanzaElement(string, throwErrorIfInvalidNS) {
     const doc = xmlHtmlNode(string);
-
-    if (doc.getElementsByTagNameNS(PARSE_ERROR_NS, 'parsererror').length) {
-        throw new Error(`Parser Error: ${string}`);
+    const parserError = getParserError(doc);
+    if (parserError) {
+        throw new Error(`Parser Error: ${parserError}`);
     }
 
-    const node = doc.firstElementChild;
+    const node = getFirstElementChild(doc);
     if (
         ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
         node.namespaceURI !== 'jabber:client' &&

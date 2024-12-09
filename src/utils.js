@@ -1,7 +1,7 @@
 /* global btoa */
 import log from './log.js';
 import * as shims from './shims.js';
-import { ElementType, XHTML } from './constants.js';
+import { ElementType, PARSE_ERROR_NS, XHTML } from './constants.js';
 
 /**
  * Properly logs an error to the console
@@ -166,6 +166,35 @@ export function xmlHtmlNode(text) {
 }
 
 /**
+ * @param {XMLDocument} doc
+ * @returns {string|null}
+ */
+export function getParserError(doc) {
+    const el =
+        doc.firstElementChild?.nodeName === 'parsererror'
+            ? doc.firstElementChild
+            : doc.getElementsByTagNameNS(PARSE_ERROR_NS, 'parsererror')[0];
+
+    return el?.nodeName === 'parsererror' ? el?.textContent : null;
+}
+
+/**
+ * @param {XMLDocument} el
+ * @returns {Element}
+ */
+export function getFirstElementChild(el) {
+    if (el.firstElementChild) return el.firstElementChild;
+    let node,
+        i = 0;
+    const nodes = el.childNodes;
+
+    while ((node = nodes[i++])) {
+        if (node.nodeType === 1) return /** @type {Element} */ (node);
+    }
+    return null;
+}
+
+/**
  * Create an XML DOM element.
  *
  * This function creates an XML DOM element correctly across all
@@ -277,7 +306,6 @@ export function validCSS(style) {
  * Copy an HTML DOM Element into an XML DOM.
  * This function copies a DOM element and all its descendants and returns
  * the new copy.
- * @method Strophe.createHtml
  * @param {HTMLElement} elem - A DOM element.
  * @return {Node} - A new, copied DOM element tree.
  */

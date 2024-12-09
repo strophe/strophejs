@@ -1,4 +1,4 @@
-import { forEachChild, getBareJidFromJid, handleError, isTagEqual } from './utils.js';
+import { getBareJidFromJid, handleError, isTagEqual } from './utils.js';
 
 /**
  * _Private_ helper class for managing stanza handlers.
@@ -63,27 +63,23 @@ class Handler {
     }
 
     /**
-     * Tests if a stanza matches the namespace set for this Handler.
+     * Tests if a stanza element (or any of its children) matches the
+     * namespace set for this Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */
     namespaceMatch(elem) {
-        let nsMatch = false;
-        if (!this.ns) {
+        if (!this.ns || this.getNamespace(elem) === this.ns) {
             return true;
-        } else {
-            forEachChild(
-                elem,
-                null,
-                /** @param {Element} elem */
-                (elem) => {
-                    if (this.getNamespace(elem) === this.ns) {
-                        nsMatch = true;
-                    }
-                }
-            );
-            return nsMatch || this.getNamespace(elem) === this.ns;
         }
+        for (const child of elem.children ?? []) {
+            if (this.getNamespace(child) === this.ns) {
+                return true;
+            } else if (this.namespaceMatch(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

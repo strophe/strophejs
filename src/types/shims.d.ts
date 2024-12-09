@@ -2,10 +2,8 @@
  * Creates a dummy XML DOM document to serve as an element and text node generator.
  *
  * Used implementations:
- *  - IE < 10: avoid using createDocument() due to a memory leak, use ie-specific
- *    workaround
- *  - other supported browsers: use document's createDocument
- *  - nodejs: use '@xmldom/xmldom'
+ *  - browser: use document's createDocument
+ * - nodejs: use 'jsdom' https://www.npmjs.com/package/jsdom
  */
 export function getDummyXMLDOMDocument(): XMLDocument;
 export const WebSocket: {

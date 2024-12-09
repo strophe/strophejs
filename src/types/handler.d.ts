@@ -53,7 +53,8 @@ declare class Handler {
      */
     getNamespace(elem: Element): string;
     /**
-     * Tests if a stanza matches the namespace set for this Handler.
+     * Tests if a stanza element (or any of its children) matches the
+     * namespace set for this Handler.
      * @param {Element} elem - The XML element to test.
      * @return {boolean} - true if the stanza matches and false otherwise.
      */

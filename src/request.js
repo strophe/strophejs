@@ -1,7 +1,7 @@
-import { DOMParser } from './shims';
 import log from './log.js';
 import Builder from './builder.js';
 import { ErrorCondition } from './constants.js';
+import { getParserError, xmlHtmlNode } from './utils.js';
 
 /**
  * _Private_ variable that keeps track of the request ids for connections.
@@ -57,7 +57,7 @@ class Request {
      * @return {Element} - The DOM element tree of the response.
      */
     getResponse() {
-        let node = this.xhr.responseXML?.documentElement;
+        const node = this.xhr.responseXML?.documentElement;
         if (node) {
             if (node.tagName === 'parsererror') {
                 log.error('invalid response received');
@@ -69,12 +69,13 @@ class Request {
             // In Node (with xhr2) or React Native, we may get responseText but no responseXML.
             // We can try to parse it manually.
             log.debug('Got responseText but no responseXML; attempting to parse it with DOMParser...');
-            node = new DOMParser().parseFromString(this.xhr.responseText, 'application/xml').documentElement;
 
-            const parserError = node?.getElementsByTagName('parsererror').item(0);
-            if (!node || parserError) {
+            const doc = xmlHtmlNode(this.xhr.responseText);
+            const parserError = getParserError(doc);
+
+            if (!doc || parserError) {
                 if (parserError) {
-                    log.error('invalid response received: ' + parserError.textContent);
+                    log.error('invalid response received: ' + parserError);
                     log.error('responseText: ' + this.xhr.responseText);
                 }
                 const error = new Error();

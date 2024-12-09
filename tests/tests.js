@@ -1,4 +1,4 @@
-/*global globalThis, Strophe, $iq, $msg, $build, $pres, QUnit */
+/*global globalThis, Strophe, $iq, $msg, $build, $pres, QUnit, stx */
 
 /**
  * Mock xhr, provides getAllResponseHeaders function.
@@ -539,9 +539,25 @@ test('Bare JID matching', (assert) => {
 test('Namespace matching', (assert) => {
     const elemNoFrag = $msg({ xmlns: 'http://jabber.org/protocol/muc' }).tree();
     const elemWithFrag = $msg({ xmlns: 'http://jabber.org/protocol/muc#user' }).tree();
+
     let hand = new Strophe.Handler(null, 'http://jabber.org/protocol/muc', null, null, null, null);
     assert.equal(hand.isMatch(elemNoFrag), true, 'The handler should match on stanza namespace');
     assert.equal(hand.isMatch(elemWithFrag), false, 'The handler should not match on stanza namespace with fragment');
+
+    const elemNested = stx`
+        <iq type="error"
+                xmlns="jabber:client"
+                from="plays.shakespeare.lit"
+                to="romeo@montague.net/orchard"
+                id="info1">
+            <query xmlns="http://jabber.org/protocol/disco#info"/>
+            <error type="cancel">
+                <item-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>
+            </error>
+        </iq>`.tree();
+    hand = new Strophe.Handler(null, 'urn:ietf:params:xml:ns:xmpp-stanzas');
+    assert.equal(hand.isMatch(elemNested), true, 'The handler should match on a nested namespace');
+    assert.equal(hand.isMatch(elemNoFrag), false, 'The handler should not match on a non-existing namespace');
 
     hand = new Strophe.Handler(null, 'http://jabber.org/protocol/muc', null, null, null, null, {
         'ignoreNamespaceFragment': true,

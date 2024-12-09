@@ -57,6 +57,16 @@ export function xmlTextNode(text: string): Text;
  */
 export function xmlHtmlNode(text: string): XMLDocument;
 /**
+ * @param {XMLDocument} doc
+ * @returns {string|null}
+ */
+export function getParserError(doc: XMLDocument): string | null;
+/**
+ * @param {XMLDocument} el
+ * @returns {Element}
+ */
+export function getFirstElementChild(el: XMLDocument): Element;
+/**
  * Create an XML DOM element.
  *
  * This function creates an XML DOM element correctly across all

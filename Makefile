@@ -66,7 +66,7 @@ prettier: node_modules
 
 .PHONY: check
 check:: node_modules eslint dist
-	npm run test
+	npm ci && npm run test
 
 .PHONY: serve
 serve: node_modules

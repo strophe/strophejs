@@ -24,6 +24,7 @@ export const NS = {
     HTTPBIND: 'http://jabber.org/protocol/httpbind',
     BOSH: 'urn:xmpp:xbosh',
     CLIENT: 'jabber:client',
+    SERVER: 'jabber:server',
     AUTH: 'jabber:iq:auth',
     ROSTER: 'jabber:iq:roster',
     PROFILE: 'jabber:iq:profile',
@@ -40,6 +41,8 @@ export const NS = {
     XHTML_IM: 'http://jabber.org/protocol/xhtml-im',
     XHTML: 'http://www.w3.org/1999/xhtml',
 };
+
+export const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
 
 /**
  * Contains allowed tags, tag attributes, and css properties.

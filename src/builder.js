@@ -159,7 +159,7 @@ class Builder {
      * @return {string} The serialized DOM tree in a String.
      */
     toString() {
-        return Builder.serialize(this.nodeTree);
+        return Builder.serialize(this.tree());
     }
 
     /**
@@ -188,7 +188,7 @@ class Builder {
      * @return {Builder} The Strophe.Builder object.
      */
     root() {
-        this.node = this.nodeTree;
+        this.node = this.tree();
         return this;
     }
 

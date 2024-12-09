@@ -95,8 +95,9 @@
     "xhr2": "^0.2.1"
   },
   "optionalDependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/ws": "^8.5.5",
-    "@xmldom/xmldom": "0.8.10",
+    "jsdom": "^25.0.1",
     "ws": "^8.5.0"
   }
 }

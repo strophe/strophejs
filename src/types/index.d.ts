@@ -161,6 +161,8 @@ export const Strophe: {
     xmlGenerator(): Document;
     xmlTextNode(text: string): Text;
     xmlHtmlNode(text: string): XMLDocument;
+    getParserError(doc: XMLDocument): string | null;
+    getFirstElementChild(el: XMLDocument): Element;
     xmlElement(name: string, attrs?: Array<Array<string>> | {
         [x: string]: string | number;
     } | string | number, text?: string | number): Element;

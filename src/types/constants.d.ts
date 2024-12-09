@@ -69,6 +69,7 @@ export namespace NS {
     let HTTPBIND: string;
     let BOSH: string;
     let CLIENT: string;
+    let SERVER: string;
     let AUTH: string;
     let ROSTER: string;
     let PROFILE: string;
@@ -85,6 +86,7 @@ export namespace NS {
     let XHTML_IM: string;
     let XHTML: string;
 }
+export const PARSE_ERROR_NS: "http://www.w3.org/1999/xhtml";
 export namespace XHTML {
     let tags: string[];
     namespace attributes {
