@@ -1,3 +1,4 @@
+import Builder from './builder.js';
 import log from './log.js';
 import { getFirstElementChild, getParserError, xmlHtmlNode } from './utils.js';
 
@@ -32,36 +33,41 @@ export function toStanzaElement(string, throwErrorIfInvalidNS) {
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
-export class Stanza {
+export class Stanza extends Builder {
+
+    /** @type {string} */
+    #string;
+    /** @type {Array<string>} */
+    #strings;
+    /** @type {Array<string|Stanza>} */
+    #values;
+
     /**
      * @param {string[]} strings
      * @param {any[]} values
      */
     constructor(strings, values) {
-        this.strings = strings;
-        this.values = values;
+        super('stanza');
+        this.#strings = strings;
+        this.#values = values;
+    }
+
+    buildTree() {
+        return toStanzaElement(this.toString(), true);
     }
 
     /**
      * @return {string}
      */
     toString() {
-        this.string =
-            this.string ||
-            this.strings.reduce((acc, str) => {
-                const idx = this.strings.indexOf(str);
-                const value = this.values.length > idx ? this.values[idx] : '';
+        this.#string =
+            this.#string ||
+            this.#strings.reduce((acc, str) => {
+                const idx = this.#strings.indexOf(str);
+                const value = this.#values.length > idx ? this.#values[idx] : '';
                 return acc + str + (Array.isArray(value) ? value.join('') : value.toString());
             }, '');
-        return this.string;
-    }
-
-    /**
-     * @return {Element}
-     */
-    tree() {
-        this.node = this.node ?? toStanzaElement(this.toString(), true);
-        return this.node;
+        return this.#string;
     }
 }
 
