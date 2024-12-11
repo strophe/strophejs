@@ -31,23 +31,13 @@ export function stx(strings: string[], ...values: any[]): Stanza;
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
-export class Stanza {
+export class Stanza extends Builder {
     /**
      * @param {string[]} strings
      * @param {any[]} values
      */
     constructor(strings: string[], values: any[]);
-    strings: string[];
-    values: any[];
-    /**
-     * @return {string}
-     */
-    toString(): string;
-    string: any;
-    /**
-     * @return {Element}
-     */
-    tree(): Element;
-    node: any;
+    #private;
 }
+import Builder from './builder.js';
 //# sourceMappingURL=stanza.d.ts.map

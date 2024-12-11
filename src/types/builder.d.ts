@@ -69,10 +69,6 @@ declare class Builder {
      */
     static serialize(elem: Element | Builder): string;
     /**
-     * @typedef {Object.<string, string|number>} StanzaAttrs
-     * @property {string} [StanzaAttrs.xmlns]
-     */
-    /**
      * The attributes should be passed in object notation.
      * @param {string} name - The name of the root element.
      * @param {StanzaAttrs} [attrs] - The attributes for the root element in object notation.
@@ -82,8 +78,13 @@ declare class Builder {
     constructor(name: string, attrs?: {
         [x: string]: string | number;
     });
-    nodeTree: Element;
-    node: Element;
+    buildTree(): Element;
+    /** @return {Element} */
+    get nodeTree(): Element;
+    /** @param {Element} el */
+    set node(el: Element);
+    /** @return {Element} */
+    get node(): Element;
     /**
      * Return the DOM tree.
      *
@@ -184,5 +185,6 @@ declare class Builder {
      * @return {Builder} The Strophe.Builder object.
      */
     h(html: string): Builder;
+    #private;
 }
 //# sourceMappingURL=builder.d.ts.map
