@@ -55,6 +55,7 @@
     "lint": "eslint src/*.js tests/tests.js",
     "clean": "make clean",
     "doc": "make doc",
+    "debug-node": "NODE_OPTIONS='--inspect-wait' qunit -w --require ./tests/node tests/tests.js",
     "test-node": "qunit --require ./tests/node tests/tests.js",
     "test-browser": "karma start",
     "test": "npm run test-node && npm run test-browser && npm run lint",
