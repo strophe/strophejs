@@ -73,6 +73,15 @@ class Builder {
      * @property {string} [StanzaAttrs.xmlns]
      */
 
+    /** @type {Element} */
+    #nodeTree;
+    /** @type {Element} */
+    #node;
+    /** @type {string} */
+    #name;
+    /** @type {StanzaAttrs} */
+    #attrs;
+
     /**
      * The attributes should be passed in object notation.
      * @param {string} name - The name of the root element.
@@ -89,10 +98,35 @@ class Builder {
                 attrs = { xmlns: NS.CLIENT };
             }
         }
-        // Holds the tree being built.
-        this.nodeTree = xmlElement(name, attrs);
-        // Points to the current operation node.
-        this.node = this.nodeTree;
+
+        this.#name = name;
+        this.#attrs = attrs;
+    }
+
+    buildTree() {
+        return xmlElement(this.#name, this.#attrs);
+    }
+
+    /** @return {Element} */
+    get nodeTree() {
+        if (!this.#nodeTree) {
+            // Holds the tree being built.
+            this.#nodeTree = this.buildTree();
+        }
+        return this.#nodeTree;
+    }
+
+    /** @return {Element} */
+    get node() {
+        if (!this.#node) {
+            this.#node = this.tree();
+        }
+        return this.#node;
+    }
+
+    /** @param {Element} el */
+    set node(el) {
+        this.#node = el;
     }
 
     /**
