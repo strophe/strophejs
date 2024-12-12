@@ -212,7 +212,7 @@ declare class Connection {
     do_session: boolean;
     /** @type {Object.<string, SASLMechanism>} */
     mechanisms: {
-        [x: string]: SASLMechanism;
+        [x: string]: import("./sasl.js").default;
     };
     /** @type {TimedHandler[]} */
     timedHandlers: TimedHandler[];

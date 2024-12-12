@@ -12,7 +12,7 @@ export function utf16to8(str: string): string;
  * @param {ArrayBufferLike} x
  * @param {ArrayBufferLike} y
  */
-export function xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBufferLike;
+export function xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBuffer;
 /**
  * @param {ArrayBufferLike} buffer
  * @return {string}

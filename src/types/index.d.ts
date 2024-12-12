@@ -147,7 +147,7 @@ export const Strophe: {
     fatal(msg: string): void;
     handleError(e: Error): void;
     utf16to8(str: string): string;
-    xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBufferLike;
+    xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBuffer;
     arrayBufToBase64(buffer: ArrayBufferLike): string;
     base64ToArrayBuf(str: string): ArrayBufferLike;
     stringToArrayBuf(str: string): ArrayBufferLike;

@@ -134,7 +134,7 @@ declare class Builder {
      * @return {Builder} The Strophe.Builder object.
      */
     attrs(moreattrs: {
-        [x: string]: string | number | null;
+        [x: string]: string | number;
     }): Builder;
     /**
      * Add a child to the current element and make it the new current

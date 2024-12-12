@@ -492,17 +492,16 @@ export function isTagEqual(el, name) {
  * @return {string} - A String with the concatenated text of all text element children.
  */
 export function getText(elem) {
-    if (!elem) {
-        return null;
-    }
+    if (!elem) return null;
 
     let str = '';
-    if (!elem.childNodes?.length && elem.nodeType === ElementType.TEXT) {
+    if (!elem.childNodes.length && elem.nodeType === ElementType.TEXT) {
         str += elem.nodeValue;
     }
-    for (let i = 0; i < elem.childNodes?.length ?? 0; i++) {
-        if (elem.childNodes[i].nodeType === ElementType.TEXT) {
-            str += elem.childNodes[i].nodeValue;
+
+    for (const child of elem.childNodes) {
+        if (child.nodeType === ElementType.TEXT) {
+            str += child.nodeValue;
         }
     }
     return xmlescape(str);
