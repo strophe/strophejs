@@ -87,7 +87,7 @@
     "karma-rollup-preprocessor": "^7.0.8",
     "minimist": "^1.2.5",
     "prettier": "^3.3.3",
-    "qunit": "2.19.4",
+    "qunit": "2.23.1",
     "rollup": "^2.32.1",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
