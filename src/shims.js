@@ -26,7 +26,7 @@ function getWebSocketImplementation() {
     if (typeof globalThis.WebSocket === 'undefined') {
         try {
             return require('ws');
-        } catch (err) {
+        } catch (e) { // eslint-disable-line no-unused-vars
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
@@ -52,7 +52,7 @@ function getDOMParserImplementation() {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-        } catch (err) {
+        } catch (e) { // eslint-disable-line no-unused-vars
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
@@ -75,7 +75,7 @@ export function getDummyXMLDOMDocument() {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-        } catch (err) {
+        } catch (e) { // eslint-disable-line no-unused-vars
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');

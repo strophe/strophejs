@@ -12,7 +12,7 @@
 import log from './log.js';
 import Builder, { $build } from './builder.js';
 import Request from './request.js';
-import {getBareJidFromJid, getDomainFromJid, getNodeFromJid} from './utils.js';
+import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from './utils.js';
 import { Status, NS } from './constants.js';
 
 let timeoutMultiplier = 1.1;
@@ -391,9 +391,7 @@ class Bosh {
      * @param {connectionCallback} callback
      */
     _no_auth_received(callback) {
-        log.warn(
-            'Server did not yet offer a supported authentication ' + 'mechanism. Sending a blank poll request.'
-        );
+        log.warn('Server did not yet offer a supported authentication ' + 'mechanism. Sending a blank poll request.');
         if (callback) {
             callback = callback.bind(this._conn);
         } else {
@@ -508,7 +506,9 @@ class Bosh {
             } catch (e) {
                 // ignore errors from undefined status attribute. Works
                 // around a browser bug
-                log.error("Caught an error while retrieving a request's status, " + 'reqStatus: ' + reqStatus);
+                log.error(
+                    `Caught an error while retrieving a request's status, reqStatus: ${reqStatus}, message: ${e.message}`
+                );
             }
         }
         if (typeof reqStatus === 'undefined') {

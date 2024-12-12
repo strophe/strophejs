@@ -1,24 +1,40 @@
-{
-    "parser": "@babel/eslint-parser",
-    "parserOptions": {
-        "ecmaVersion": 2017,
-        "sourceType": "module",
-        "allowImportExportEverywhere": true
+import globals from "globals";
+import babelParser from "@babel/eslint-parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import js from "@eslint/js";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all
+});
+
+export default [...compat.extends("eslint:recommended"), {
+    languageOptions: {
+        globals: {
+            ...globals.browser,
+            Uint8Array: true,
+            Promise: true,
+            define: true,
+            require: true,
+            sinon: true,
+            window: true,
+        },
+
+        parser: babelParser,
+        ecmaVersion: 2017,
+        sourceType: "module",
+
+        parserOptions: {
+            allowImportExportEverywhere: true,
+        },
     },
-    "env": {
-        "browser": true,
-        "es6": true
-    },
-    "extends": ["eslint:recommended"],
-    "globals": {
-        "Uint8Array": true,
-        "Promise": true,
-        "define": true,
-        "require": true,
-        "sinon": true,
-        "window": true
-    },
-    "rules": {
+
+    rules: {
         "accessor-pairs": "error",
         "array-bracket-spacing": "off",
         "array-callback-return": "error",
@@ -29,33 +45,26 @@
         "block-spacing": "off",
         "brace-style": "off",
         "callback-return": "off",
-        "camelcase": "off",
+        camelcase: "off",
         "capitalized-comments": "off",
         "class-methods-use-this": "error",
         "comma-dangle": "off",
         "comma-spacing": "off",
         "comma-style": "off",
-        "complexity": "off",
-        "computed-property-spacing": [
-            "error",
-            "never"
-        ],
+        complexity: "off",
+        "computed-property-spacing": ["error", "never"],
         "consistent-return": "off",
         "consistent-this": "off",
-        "curly": "off",
+        curly: "off",
         "default-case": "off",
-        "dot-location": [
-            "error",
-            "property"
-        ],
-        "dot-notation": [
-            "off",
-            {
-                "allowKeywords": true
-            }
-        ],
+        "dot-location": ["error", "property"],
+
+        "dot-notation": ["off", {
+            allowKeywords: true,
+        }],
+
         "eol-last": "error",
-        "eqeqeq": "off",
+        eqeqeq: "off",
         "func-call-spacing": "off",
         "no-spaced-func": "off",
         "no-redeclare": "off",
@@ -69,16 +78,13 @@
         "id-blacklist": "error",
         "id-length": "off",
         "id-match": "error",
-        "indent": "off",
+        indent: "off",
         "init-declarations": "off",
         "jsx-quotes": "error",
         "key-spacing": "off",
         "keyword-spacing": "off",
         "line-comment-position": "off",
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
+        "linebreak-style": ["error", "unix"],
         "lines-around-comment": "off",
         "lines-around-directive": "off",
         "max-depth": "off",
@@ -100,10 +106,7 @@
         "no-caller": "error",
         "no-console": "off",
         "no-catch-shadow": "off",
-        "no-cond-assign": [
-            "off",
-            "except-parens"
-        ],
+        "no-cond-assign": ["off", "except-parens"],
         "no-confusing-arrow": "off",
         "no-continue": "off",
         "no-div-regex": "error",
@@ -120,10 +123,7 @@
         "no-implicit-globals": "off",
         "no-implied-eval": "error",
         "no-inline-comments": "off",
-        "no-inner-declarations": [
-            "error",
-            "functions"
-        ],
+        "no-inner-declarations": ["error", "functions"],
         "no-invalid-this": "off",
         "no-iterator": "error",
         "no-label-var": "error",
@@ -196,12 +196,11 @@
         "no-with": "error",
         "object-curly-newline": "off",
         "object-curly-spacing": "off",
-        "object-property-newline": [
-            "off",
-            {
-                "allowMultiplePropertiesPerLine": true
-            }
-        ],
+
+        "object-property-newline": ["off", {
+            allowMultiplePropertiesPerLine: true,
+        }],
+
         "object-shorthand": "off",
         "one-var": "off",
         "one-var-declaration-per-line": "off",
@@ -210,13 +209,12 @@
         "padded-blocks": "off",
         "prefer-arrow-callback": "off",
         "prefer-const": "error",
-        "prefer-destructuring": [
-            "error",
-            {
-                "array": false,
-                "object": false
-            }
-        ],
+
+        "prefer-destructuring": ["error", {
+            array: false,
+            object: false,
+        }],
+
         "prefer-numeric-literals": "error",
         "prefer-promise-reject-errors": "off",
         "prefer-reflect": "off",
@@ -224,16 +222,13 @@
         "prefer-spread": "off",
         "prefer-template": "off",
         "quote-props": "off",
-        "quotes": "off",
-        "radix": [
-            "error",
-            "always"
-        ],
+        quotes: "off",
+        radix: ["error", "always"],
         "require-atomic-updates": "off",
         "require-await": "error",
         "require-jsdoc": "off",
         "rest-spread-spacing": "error",
-        "semi": "off",
+        semi: "off",
         "semi-spacing": "off",
         "sort-imports": "off",
         "sort-keys": "off",
@@ -244,21 +239,15 @@
         "space-infix-ops": "off",
         "space-unary-ops": "off",
         "spaced-comment": "off",
-        "strict": "off",
+        strict: "off",
         "symbol-description": "error",
         "template-curly-spacing": "off",
-        "unicode-bom": [
-            "error",
-            "never"
-        ],
+        "unicode-bom": ["error", "never"],
         "valid-jsdoc": "off",
         "vars-on-top": "off",
-        "wrap-iife": [
-            "error",
-            "any"
-        ],
+        "wrap-iife": ["error", "any"],
         "wrap-regex": "error",
         "yield-star-spacing": "error",
-        "yoda": "off"
-    }
-}
+        yoda: "off",
+    },
+}];

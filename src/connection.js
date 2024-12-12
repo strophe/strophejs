@@ -635,7 +635,7 @@ class Connection {
             try {
                 sessionStorage.setItem('_strophe_', '_strophe_');
                 sessionStorage.removeItem('_strophe_');
-            } catch (e) {
+            } catch (e) { // eslint-disable-line no-unused-vars
                 return false;
             }
             return true;
@@ -1548,8 +1548,6 @@ class Connection {
      * @private
      * @return {false} `false` to remove the handler.
      */
-    // eslint-disable-next-line no-unused-vars
-    //
     _onLegacyAuthIQResult() {
         const pass = typeof this.pass === 'string' ? this.pass : '';
 

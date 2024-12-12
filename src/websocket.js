@@ -303,7 +303,7 @@ class Websocket {
             try {
                 this.socket.send(closeString);
             } catch (e) {
-                log.warn("Couldn't send <close /> tag.");
+                log.warn(`Couldn't send <close /> tag. "${e.message}"`);
             }
         }
         setTimeout(() => this._conn._doDisconnect(), 0);
