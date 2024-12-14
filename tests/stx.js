@@ -29,6 +29,7 @@ test('can be used to create Stanza objects that are equivalent to Builder object
             </pubsub>
         </iq>`;
 
+    // prettier-ignore
     let builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
         .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
             .c("items", { node: "urn:xmpp:bookmarks:1" })
@@ -62,15 +63,14 @@ test('can be used to create Stanza objects that are equivalent to Builder object
                 stamp="2002-10-13T23:58:37Z"/>
         </message>`;
 
-    builderStanza =
-        $msg({ from: 'coven@chat.shakespeare.lit/firstwitch',
-            id: '162BEBB1-F6DB-4D9A-9BD8-CFDCC801A0B2',
-            to: 'hecate@shakespeare.lit/broom',
-            type: 'groupchat' })
-        .c('body').t('Thrice the brinded cat hath mew\'d.').up()
-        .c('delay', { xmlns: 'urn:xmpp:delay',
-            from: 'coven@chat.shakespeare.lit',
-            stamp: '2002-10-13T23:58:37Z' });
+    // prettier-ignore
+    builderStanza = $msg({
+        from: 'coven@chat.shakespeare.lit/firstwitch',
+        id: '162BEBB1-F6DB-4D9A-9BD8-CFDCC801A0B2',
+        to: 'hecate@shakespeare.lit/broom',
+        type: 'groupchat',
+    }).c('body').t("Thrice the brinded cat hath mew'd.").up()
+    .c('delay', { xmlns: 'urn:xmpp:delay', from: 'coven@chat.shakespeare.lit', stamp: '2002-10-13T23:58:37Z' });
 
     assert.equal(isEqualNode(templateStanza, builderStanza), true);
 
@@ -84,19 +84,18 @@ test('can be used to create Stanza objects that are equivalent to Builder object
             </x>
         </presence>`;
 
-    builderStanza =
-        $pres({ from: 'hag66@shakespeare.lit/pda',
-            id: 'n13mt3l',
-            to: 'coven@chat.shakespeare.lit/thirdwitch' })
-        .c('x', { xmlns: 'http://jabber.org/protocol/muc' })
-            .c('history', { maxchars: '65000' });
+    // prettier-ignore
+    builderStanza = $pres({
+        from: 'hag66@shakespeare.lit/pda',
+        id: 'n13mt3l',
+        to: 'coven@chat.shakespeare.lit/thirdwitch',
+    }).c('x', { xmlns: 'http://jabber.org/protocol/muc' })
+        .c('history', { maxchars: '65000' });
 
     assert.equal(isEqualNode(templateStanza, builderStanza), true);
 });
 
-
 test('can be nested recursively', (assert) => {
-
     let templateStanza = stx`
         <iq type="result"
             to="juliet@capulet.lit/balcony"
@@ -127,6 +126,7 @@ test('can be nested recursively', (assert) => {
             </pubsub>
         </iq>`;
 
+    // prettier-ignore
     let builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
         .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
             .c("items", { node: "urn:xmpp:bookmarks:1" })
@@ -149,13 +149,29 @@ test('can be nested recursively', (assert) => {
     assert.equal(isEqualNode(templateStanza, builderStanza), true);
 });
 
+test('escape the values passed in to them', (assert) => {
+    const status = '<script>alert("p0wned")</script>';
+    const templateStanza = stx`
+        <presence from="wiccarocks@shakespeare.lit/laptop"
+                to="coven@chat.shakespeare.lit/oldhag"
+                type="unavailable"
+                xmlns="jabber:client">
+            <status>${status}</status>
+        </presence>`;
+
+    assert.equal(
+        templateStanza.tree().querySelector('status').innerHTML,
+        '&lt;script&gt;alert("p0wned")&lt;/script&gt;'
+    );
+});
+
 const EMPTY_TEXT_REGEX = /\s*\n\s*/;
 const serializer = new XMLSerializer();
 
 /**
  * @param {Element|Builder|Stanza} el
  */
-function stripEmptyTextNodes (el) {
+function stripEmptyTextNodes(el) {
     if (el instanceof Strophe.Builder || el instanceof Strophe.Stanza) {
         el = el.tree();
     }
@@ -168,8 +184,8 @@ function stripEmptyTextNodes (el) {
         }
         return NodeFilter.FILTER_ACCEPT;
     });
-    while (n = walker.nextNode()) text_nodes.push(n);
-    text_nodes.forEach((n) => EMPTY_TEXT_REGEX.test(/** @type {Text} */(n).data) && n.parentElement.removeChild(n))
+    while ((n = walker.nextNode())) text_nodes.push(n);
+    text_nodes.forEach((n) => EMPTY_TEXT_REGEX.test(/** @type {Text} */ (n).data) && n.parentElement.removeChild(n));
 
     return el;
 }
@@ -180,7 +196,7 @@ function stripEmptyTextNodes (el) {
  * @param {Element} expected
  * @returns {Boolean}
  */
-function isEqualNode (actual, expected) {
+function isEqualNode(actual, expected) {
     actual = stripEmptyTextNodes(actual);
     expected = stripEmptyTextNodes(expected);
 

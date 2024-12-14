@@ -2,6 +2,7 @@
 
 ## Version 3.0.2 - (Unreleased)
 
+- **Security Fix**: Escape values passed to the stx tagged template literal
 - Replace [xmldom](https://github.com/xmldom/xmldom) with [jsdom](https://github.com/jsdom/jsdom).
 - Avoid inserting commas when nesting lists of `stx` templates.
 - Remove deprecated `abab` package
@@ -300,8 +301,7 @@ import { Strophe, $build, stx } from strophe.js;
 
 ## Version 1.0.2 - 2011-06-19
 
-* Fix security bug where DIGEST-MD5 client nonce was not properly
-  randomized.
+* Fix security bug where DIGEST-MD5 client nonce was not properly randomized.
 * Fix double escaping in copyElement.
 * Fix IE errors related to importNode.
 * Add ability to pass text into Builder.c().
