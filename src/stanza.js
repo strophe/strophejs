@@ -1,6 +1,6 @@
 import Builder from './builder.js';
 import log from './log.js';
-import { getFirstElementChild, getParserError, xmlHtmlNode } from './utils.js';
+import { getFirstElementChild, getParserError, xmlHtmlNode, xmlescape } from './utils.js';
 
 /**
  * @param {string} string
@@ -34,7 +34,6 @@ export function toStanzaElement(string, throwErrorIfInvalidNS) {
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
 export class Stanza extends Builder {
-
     /** @type {string} */
     #string;
     /** @type {Array<string>} */
@@ -65,8 +64,17 @@ export class Stanza extends Builder {
             this.#strings.reduce((acc, str) => {
                 const idx = this.#strings.indexOf(str);
                 const value = this.#values.length > idx ? this.#values[idx] : '';
-                return acc + str + (Array.isArray(value) ? value.join('') : value.toString());
-            }, '');
+                return (
+                    acc +
+                    str +
+                    (Array.isArray(value)
+                        ? value.map((v) => (v instanceof Stanza ? v : xmlescape(v.toString()))).join('')
+                        : value instanceof Stanza
+                          ? value
+                          : xmlescape(value.toString()))
+                );
+            }, '').trim();
+
         return this.#string;
     }
 }
