@@ -1,10 +1,4 @@
 /**
- * @param {string} string
- * @param {boolean} [throwErrorIfInvalidNS]
- * @returns {Element}
- */
-export function toStanzaElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
-/**
  * Tagged template literal function which generates {@link Stanza} objects
  *
  * @example
@@ -32,6 +26,12 @@ export function stx(strings: string[], ...values: any[]): Stanza;
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
 export class Stanza extends Builder {
+    /**
+     * @param {string} string
+     * @param {boolean} [throwErrorIfInvalidNS]
+     * @returns {Element}
+     */
+    static toElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
     /**
      * @param {string[]} strings
      * @param {any[]} values

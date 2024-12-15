@@ -203,7 +203,7 @@ export const Strophe: {
 };
 import { Stanza } from './stanza.js';
 import { stx } from './stanza.js';
-import { toStanzaElement } from './stanza.js';
+export const toStanza: typeof Stanza.toElement;
 import Request from './request.js';
 import * as shims from './shims.js';
 import Bosh from './bosh.js';
@@ -224,5 +224,5 @@ import SASLMechanism from './sasl.js';
 import { Status } from './constants.js';
 import TimedHandler from './timed-handler.js';
 import * as utils from './utils.js';
-export { Builder, $build, $iq, $msg, $pres, Stanza, stx, toStanzaElement, Request, toStanzaElement as toStanza };
+export { Builder, $build, $iq, $msg, $pres, Stanza, stx, Request };
 //# sourceMappingURL=index.d.ts.map
