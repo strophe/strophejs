@@ -1,5 +1,5 @@
 import { ElementType, NS } from './constants.js';
-import { copyElement, createHtml, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils.js';
+import { copyElement, createHtml, toElement, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils.js';
 
 /**
  * Create a {@link Strophe.Builder}
@@ -101,6 +101,19 @@ class Builder {
 
         this.#name = name;
         this.#attrs = attrs;
+    }
+
+    /**
+     * Creates a new Builder object from an XML string.
+     * @param {string} str
+     * @returns {Builder}
+     * @example const stanza = Builder.fromString('<presence from="juliet@example.com/chamber"></presence>');
+     */
+    static fromString(str) {
+        const el = toElement(str);
+        const b = new Builder('');
+        b.#nodeTree = el;
+        return b;
     }
 
     buildTree() {
@@ -288,7 +301,8 @@ class Builder {
         const xmlGen = xmlGenerator();
         try {
             impNode = xmlGen.importNode !== undefined;
-        } catch (e) { // eslint-disable-line no-unused-vars
+            // eslint-disable-next-line no-unused-vars
+        } catch (e) {
             impNode = false;
         }
 

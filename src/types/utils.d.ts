@@ -1,4 +1,11 @@
 /**
+ * Takes a string and turns it into an XML Element.
+ * @param {string} string
+ * @param {boolean} [throwErrorIfInvalidNS]
+ * @returns {Element}
+ */
+export function toElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
+/**
  * Properly logs an error to the console
  * @param {Error} e
  */

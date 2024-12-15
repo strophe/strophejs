@@ -2,7 +2,6 @@ import Builder from './builder.js';
 import log from './log.js';
 import { getFirstElementChild, getParserError, xmlHtmlNode, xmlescape } from './utils.js';
 
-
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
@@ -28,6 +27,29 @@ export class Stanza extends Builder {
     }
 
     /**
+     * A directive which can be used to pass a string of XML as a value to the
+     * stx tagged template literal.
+     *
+     * It's considered "unsafe" because it can pose a security risk if used with
+     * untrusted input.
+     *
+     * @param {string} string
+     * @returns {Builder}
+     * @example
+     *    const status = '<status>I am busy!</status>';
+     *    const pres = stx`
+     *       <presence from='juliet@example.com/chamber' id='pres1'>
+     *           <show>dnd</show>
+     *           ${unsafeXML(status)}
+     *       </presence>`;
+     *    connection.send(pres);
+     */
+    static unsafeXML(string) {
+        return Builder.fromString(string);
+    }
+
+    /**
+     * Turns the passed-in string into an XML Element.
      * @param {string} string
      * @param {boolean} [throwErrorIfInvalidNS]
      * @returns {Element}
