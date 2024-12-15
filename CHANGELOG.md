@@ -2,9 +2,10 @@
 
 ## Version 3.0.2 - (Unreleased)
 
-- **Security Fix**: Escape values passed to the stx tagged template literal
+- **Security Fix**: Escape values passed to the `stx` tagged template literal
+- Allow `Stanza` and `Builder` objects to be passed as values the `stx`.
+- Avoid inserting commas when nesting array values in `stx` templates.
 - Replace [xmldom](https://github.com/xmldom/xmldom) with [jsdom](https://github.com/jsdom/jsdom).
-- Avoid inserting commas when nesting lists of `stx` templates.
 - Remove deprecated `abab` package
 - Make sure `ConnectionOptions` type is exportable
 - fix: invert default and types exports
