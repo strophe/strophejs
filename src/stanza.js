@@ -38,7 +38,10 @@ export class Stanza extends Builder {
     #string;
     /** @type {Array<string>} */
     #strings;
-    /** @type {Array<string|Stanza>} */
+    /**
+     * @typedef {Array<string|Stanza|Builder>} StanzaValue
+     * @type {StanzaValue|Array<StanzaValue>}
+     */
     #values;
 
     /**
@@ -61,19 +64,25 @@ export class Stanza extends Builder {
     toString() {
         this.#string =
             this.#string ||
-            this.#strings.reduce((acc, str) => {
-                const idx = this.#strings.indexOf(str);
-                const value = this.#values.length > idx ? this.#values[idx] : '';
-                return (
-                    acc +
-                    str +
-                    (Array.isArray(value)
-                        ? value.map((v) => (v instanceof Stanza ? v : xmlescape(v.toString()))).join('')
-                        : value instanceof Stanza
-                          ? value
-                          : xmlescape(value.toString()))
-                );
-            }, '').trim();
+            this.#strings
+                .reduce((acc, str) => {
+                    const idx = this.#strings.indexOf(str);
+                    const value = this.#values.length > idx ? this.#values[idx] : '';
+                    return (
+                        acc +
+                        str +
+                        (Array.isArray(value)
+                            ? value
+                                  .map((v) =>
+                                      v instanceof Stanza || v instanceof Builder ? v : xmlescape(v.toString())
+                                  )
+                                  .join('')
+                            : value instanceof Stanza || value instanceof Builder
+                              ? value
+                              : xmlescape(value.toString()))
+                    );
+                }, '')
+                .trim();
 
         return this.#string;
     }

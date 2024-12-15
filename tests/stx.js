@@ -149,6 +149,52 @@ test('can be nested recursively', (assert) => {
     assert.equal(isEqualNode(templateStanza, builderStanza), true);
 });
 
+test('can have nested Builder objects', (assert) => {
+    // prettier-ignore
+    let templateStanza = stx`
+        <iq type="result"
+            to="juliet@capulet.lit/balcony"
+            id="retrieve1"
+            xmlns="jabber:client">
+            <pubsub xmlns="http://jabber.org/protocol/pubsub">
+                <items node="urn:xmpp:bookmarks:1">
+                ${[
+                    new Strophe.Builder('item', { id: "theplay@conference.shakespeare.lit" })
+                        .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                            .c("nick").t("JC"),
+                    new Strophe.Builder('item', { id: "orchard@conference.shakespeare.lit" })
+                        .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                            .c("nick").t("JC").up()
+                            .c("extensions")
+                                .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" }),
+                ]}
+                </items>
+            </pubsub>
+        </iq>`;
+
+    // prettier-ignore
+    let builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
+        .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
+            .c("items", { node: "urn:xmpp:bookmarks:1" })
+                .c("item", { id: "theplay@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                        .c("nick").t("JC").up()
+                    .up()
+                .up()
+                .c("item", { id: "orchard@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                        .c("nick").t("JC").up()
+                        .c("extensions")
+                            .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" })
+                        .up()
+                    .up()
+                .up()
+            .up()
+        .up();
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+});
+
 test('escape the values passed in to them', (assert) => {
     const status = '<script>alert("p0wned")</script>';
     const templateStanza = stx`
