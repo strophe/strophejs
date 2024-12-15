@@ -4,6 +4,35 @@ import * as shims from './shims.js';
 import { ElementType, PARSE_ERROR_NS, XHTML } from './constants.js';
 
 /**
+ * Takes a string and turns it into an XML Element.
+ * @param {string} string
+ * @param {boolean} [throwErrorIfInvalidNS]
+ * @returns {Element}
+ */
+export function toElement(string, throwErrorIfInvalidNS) {
+    const doc = xmlHtmlNode(string);
+    const parserError = getParserError(doc);
+    if (parserError) {
+        throw new Error(`Parser Error: ${parserError}`);
+    }
+
+    const node = getFirstElementChild(doc);
+    if (
+        ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
+        node.namespaceURI !== 'jabber:client' &&
+        node.namespaceURI !== 'jabber:server'
+    ) {
+        const err_msg = `Invalid namespaceURI ${node.namespaceURI}`;
+        if (throwErrorIfInvalidNS) {
+            throw new Error(err_msg);
+        } else {
+            log.error(err_msg);
+        }
+    }
+    return node;
+}
+
+/**
  * Properly logs an error to the console
  * @param {Error} e
  */

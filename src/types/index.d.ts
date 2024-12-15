@@ -145,6 +145,7 @@ export const Strophe: {
     warn(msg: string): void;
     error(msg: string): void;
     fatal(msg: string): void;
+    toElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
     handleError(e: Error): void;
     utf16to8(str: string): string;
     xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBuffer;

@@ -63,6 +63,13 @@ export default Builder;
  */
 declare class Builder {
     /**
+     * Creates a new Builder object from an XML string.
+     * @param {string} str
+     * @returns {Builder}
+     * @example const stanza = Builder.fromString('<presence from='juliet@example.com/chamber'></presence>');
+     */
+    static fromString(str: string): Builder;
+    /**
      * Render a DOM element and all descendants to a String.
      * @param {Element|Builder} elem - A DOM element.
      * @return {string} - The serialized element tree as a String.
