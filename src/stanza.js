@@ -2,33 +2,6 @@ import Builder from './builder.js';
 import log from './log.js';
 import { getFirstElementChild, getParserError, xmlHtmlNode, xmlescape } from './utils.js';
 
-/**
- * @param {string} string
- * @param {boolean} [throwErrorIfInvalidNS]
- * @returns {Element}
- */
-export function toStanzaElement(string, throwErrorIfInvalidNS) {
-    const doc = xmlHtmlNode(string);
-    const parserError = getParserError(doc);
-    if (parserError) {
-        throw new Error(`Parser Error: ${parserError}`);
-    }
-
-    const node = getFirstElementChild(doc);
-    if (
-        ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
-        node.namespaceURI !== 'jabber:client' &&
-        node.namespaceURI !== 'jabber:server'
-    ) {
-        const err_msg = `Invalid namespaceURI ${node.namespaceURI}`;
-        if (throwErrorIfInvalidNS) {
-            throw new Error(err_msg);
-        } else {
-            log.error(err_msg);
-        }
-    }
-    return node;
-}
 
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
@@ -54,8 +27,36 @@ export class Stanza extends Builder {
         this.#values = values;
     }
 
+    /**
+     * @param {string} string
+     * @param {boolean} [throwErrorIfInvalidNS]
+     * @returns {Element}
+     */
+    static toElement(string, throwErrorIfInvalidNS) {
+        const doc = xmlHtmlNode(string);
+        const parserError = getParserError(doc);
+        if (parserError) {
+            throw new Error(`Parser Error: ${parserError}`);
+        }
+
+        const node = getFirstElementChild(doc);
+        if (
+            ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
+            node.namespaceURI !== 'jabber:client' &&
+            node.namespaceURI !== 'jabber:server'
+        ) {
+            const err_msg = `Invalid namespaceURI ${node.namespaceURI}`;
+            if (throwErrorIfInvalidNS) {
+                throw new Error(err_msg);
+            } else {
+                log.error(err_msg);
+            }
+        }
+        return node;
+    }
+
     buildTree() {
-        return toStanzaElement(this.toString(), true);
+        return Stanza.toElement(this.toString(), true);
     }
 
     /**
