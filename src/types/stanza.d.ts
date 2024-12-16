@@ -40,7 +40,7 @@ export class Stanza extends Builder {
      *    const pres = stx`
      *       <presence from='juliet@example.com/chamber' id='pres1'>
      *           <show>dnd</show>
-     *           ${unsafeXML(status)
+     *           ${unsafeXML(status)}
      *       </presence>`;
      *    connection.send(pres);
      */

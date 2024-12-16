@@ -14,6 +14,10 @@ export const WebSocket: {
     readonly CLOSING: 2;
     readonly CLOSED: 3;
 } | typeof import("ws");
+export const XMLSerializer: {
+    new (): XMLSerializer;
+    prototype: XMLSerializer;
+};
 export const DOMParser: {
     new (): DOMParser;
     prototype: DOMParser;
