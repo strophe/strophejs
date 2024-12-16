@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 3.0.2 - (Unreleased)
+## Version 3.1.0 - (2024-12-16)
 
 - **Security Fix**: Escape values passed to the `stx` tagged template literal
 - Allow `Stanza` and `Builder` objects to be passed as values the `stx`.
