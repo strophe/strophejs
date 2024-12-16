@@ -150,7 +150,9 @@ test('Strophe.Connection.prototype.send() accepts Builders (#27)', (assert) => {
 });
 
 test('The fromString static method', (assert) => {
-    const stanza = Strophe.Builder.fromString('<presence from="juliet@example.com/chamber" xmlns="jabber:client"></presence>');
+    const stanza = Strophe.Builder.fromString(
+        '<presence from="juliet@example.com/chamber" xmlns="jabber:client"></presence>'
+    );
     assert.equal(isEqualNode(stanza, $pres({ from: 'juliet@example.com/chamber' })), true);
 });
 
@@ -1218,11 +1220,24 @@ test('escape the values passed in to them', (assert) => {
     );
 });
 
+test('The unsafeXML directive', (assert) => {
+    const templateStanza = stx`
+        <presence from="juliet@example.com/chamber"
+                xmlns="jabber:client">
+                ${Strophe.Stanza.unsafeXML(`<status>I'm busy!</status>`)}
+        </presence>`;
+
+    assert.equal(
+        isEqualNode(templateStanza, $pres({ from: 'juliet@example.com/chamber' }).c('status').t("I'm busy!")),
+        true
+    );
+});
+
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
 function stripEmptyTextNodes(element) {
-    const childNodes = Array.from(element.childNodes ??  []);
+    const childNodes = Array.from(element.childNodes ?? []);
     childNodes.forEach((node) => {
         if (node.nodeType === TEXT_NODE && !node.nodeValue.trim()) {
             element.removeChild(node);
