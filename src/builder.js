@@ -110,7 +110,7 @@ class Builder {
      * @example const stanza = Builder.fromString('<presence from="juliet@example.com/chamber"></presence>');
      */
     static fromString(str) {
-        const el = toElement(str);
+        const el = toElement(str, true);
         const b = new Builder('');
         b.#nodeTree = el;
         return b;

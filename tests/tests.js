@@ -1,49 +1,5 @@
 /*global globalThis, Strophe, $iq, $msg, $build, $pres, QUnit, stx */
-
-/**
- * Mock xhr, provides getAllResponseHeaders function.
- * @param status
- * @param readyState
- * @param responseText
- */
-function XHR(status, readyState, responseText) {
-    this.status = status;
-    this.readyState = readyState;
-    this.responseText = responseText;
-    this.getAllResponseHeaders = () => null;
-}
-
-class SASLFoo extends Strophe.SASLMechanism {
-    constructor() {
-        super('FOO', false, 10);
-    }
-
-    static get name() {
-        return 'FOO';
-    }
-}
-
-function makeRequest(stanza) {
-    const req = new Strophe.Request(stanza, () => {});
-    req.getResponse = function () {
-        const env = new Strophe.Builder('env', { type: 'mock' }).tree();
-        env.appendChild(stanza);
-        return env;
-    };
-    return req;
-}
-
-const _sessionStorage = {};
-
-if (!globalThis.sessionStorage) {
-    Object.defineProperty(globalThis, 'sessionStorage', {
-        value: {
-            setItem: (key, value) => (_sessionStorage[key] = value),
-            getItem: (key) => _sessionStorage[key] ?? null,
-            removeItem: (key) => delete _sessionStorage[key],
-        },
-    });
-}
+const serializer = new Strophe.shims.XMLSerializer();
 
 const { test } = QUnit;
 
@@ -191,6 +147,11 @@ test('Strophe.Connection.prototype.send() accepts Builders (#27)', (assert) => {
     assert.equal(sendStub.called, true, 'XMLHttpRequest.send was called');
     sendStub.restore();
     timeoutStub.restore();
+});
+
+test('The fromString static method', (assert) => {
+    const stanza = Strophe.Builder.fromString('<presence from="juliet@example.com/chamber" xmlns="jabber:client"></presence>');
+    assert.equal(isEqualNode(stanza, $pres({ from: 'juliet@example.com/chamber' })), true);
 });
 
 QUnit.module('Strophe.Connection options');
@@ -1043,3 +1004,315 @@ test('nextValidRid is called after connection reset', (assert) => {
     assert.equal(spy.calledWith(4294967295), true, 'The RID was valid');
     Math.random.restore();
 });
+
+QUnit.module('The stx tagged template literal');
+
+test('can be used to create Stanza objects that are equivalent to Builder objects', (assert) => {
+    let templateStanza = stx`
+        <iq type="result"
+            to="juliet@capulet.lit/balcony"
+            id="retrieve1"
+            xmlns="jabber:client">
+            <pubsub xmlns="http://jabber.org/protocol/pubsub">
+                <items node="urn:xmpp:bookmarks:1">
+                <item id="theplay@conference.shakespeare.lit">
+                    <conference xmlns="urn:xmpp:bookmarks:1"
+                                name="The Play&apos;s the Thing"
+                                autojoin="true">
+                        <nick>JC</nick>
+                    </conference>
+                </item>
+                <item id="orchard@conference.shakespeare.lit">
+                    <conference xmlns="urn:xmpp:bookmarks:1"
+                                name="The Orcard"
+                                autojoin="1">
+                        <nick>JC</nick>
+                        <extensions>
+                            <state xmlns="http://myclient.example/bookmark/state" minimized="true"/>
+                        </extensions>
+                    </conference>
+                </item>
+                </items>
+            </pubsub>
+        </iq>`;
+
+    // prettier-ignore
+    let builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
+        .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
+            .c("items", { node: "urn:xmpp:bookmarks:1" })
+                .c("item", { id: "theplay@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                        .c("nick").t("JC").up()
+                    .up()
+                .up()
+                .c("item", { id: "orchard@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                        .c("nick").t("JC").up()
+                        .c("extensions")
+                            .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" })
+                        .up()
+                    .up()
+                .up()
+            .up()
+        .up();
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+
+    templateStanza = stx`
+        <message xmlns="jabber:client"
+                from="coven@chat.shakespeare.lit/firstwitch"
+                id="162BEBB1-F6DB-4D9A-9BD8-CFDCC801A0B2"
+                to="hecate@shakespeare.lit/broom"
+                type="groupchat">
+            <body>Thrice the brinded cat hath mew'd.</body>
+            <delay xmlns="urn:xmpp:delay"
+                from="coven@chat.shakespeare.lit"
+                stamp="2002-10-13T23:58:37Z"/>
+        </message>`;
+
+    // prettier-ignore
+    builderStanza = $msg({
+        from: 'coven@chat.shakespeare.lit/firstwitch',
+        id: '162BEBB1-F6DB-4D9A-9BD8-CFDCC801A0B2',
+        to: 'hecate@shakespeare.lit/broom',
+        type: 'groupchat',
+    }).c('body').t("Thrice the brinded cat hath mew'd.").up()
+    .c('delay', { xmlns: 'urn:xmpp:delay', from: 'coven@chat.shakespeare.lit', stamp: '2002-10-13T23:58:37Z' });
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+
+    templateStanza = stx`
+        <presence xmlns="jabber:client"
+                from="hag66@shakespeare.lit/pda"
+                id="n13mt3l"
+                to="coven@chat.shakespeare.lit/thirdwitch">
+            <x xmlns="http://jabber.org/protocol/muc">
+                <history maxchars="65000"/>
+            </x>
+        </presence>`;
+
+    // prettier-ignore
+    builderStanza = $pres({
+        from: 'hag66@shakespeare.lit/pda',
+        id: 'n13mt3l',
+        to: 'coven@chat.shakespeare.lit/thirdwitch',
+    }).c('x', { xmlns: 'http://jabber.org/protocol/muc' })
+        .c('history', { maxchars: '65000' });
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+});
+
+test('can be nested recursively', (assert) => {
+    const templateStanza = stx`
+        <iq type="result"
+            to="juliet@capulet.lit/balcony"
+            id="retrieve1"
+            xmlns="jabber:client">
+            <pubsub xmlns="http://jabber.org/protocol/pubsub">
+                <items node="urn:xmpp:bookmarks:1">
+                ${[
+                    stx`<item id="theplay@conference.shakespeare.lit">
+                        <conference xmlns="urn:xmpp:bookmarks:1"
+                                    name="The Play&apos;s the Thing"
+                                    autojoin="true">
+                            <nick>JC</nick>
+                        </conference>
+                    </item>`,
+                    stx`<item id="orchard@conference.shakespeare.lit">
+                        <conference xmlns="urn:xmpp:bookmarks:1"
+                                    name="The Orcard"
+                                    autojoin="1">
+                            <nick>JC</nick>
+                            <extensions>
+                                <state xmlns="http://myclient.example/bookmark/state" minimized="true"/>
+                            </extensions>
+                        </conference>
+                    </item>`,
+                ]}
+                </items>
+            </pubsub>
+        </iq>`;
+
+    // prettier-ignore
+    const builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
+        .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
+            .c("items", { node: "urn:xmpp:bookmarks:1" })
+                .c("item", { id: "theplay@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                        .c("nick").t("JC").up()
+                    .up()
+                .up()
+                .c("item", { id: "orchard@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                        .c("nick").t("JC").up()
+                        .c("extensions")
+                            .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" })
+                        .up()
+                    .up()
+                .up()
+            .up()
+        .up();
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+});
+
+test('can have nested Builder objects', (assert) => {
+    // prettier-ignore
+    const templateStanza = stx`
+        <iq type="result"
+            to="juliet@capulet.lit/balcony"
+            id="retrieve1"
+            xmlns="jabber:client">
+            <pubsub xmlns="http://jabber.org/protocol/pubsub">
+                <items node="urn:xmpp:bookmarks:1">
+                ${[
+                    new Strophe.Builder('item', { id: "theplay@conference.shakespeare.lit" })
+                        .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                            .c("nick").t("JC"),
+                    new Strophe.Builder('item', { id: "orchard@conference.shakespeare.lit" })
+                        .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                            .c("nick").t("JC").up()
+                            .c("extensions")
+                                .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" }),
+                ]}
+                </items>
+            </pubsub>
+        </iq>`;
+
+    // prettier-ignore
+    const builderStanza = $iq({ type: "result", to: "juliet@capulet.lit/balcony", id: "retrieve1" })
+        .c("pubsub", { xmlns: "http://jabber.org/protocol/pubsub" })
+            .c("items", { node: "urn:xmpp:bookmarks:1" })
+                .c("item", { id: "theplay@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Play's the Thing", autojoin: "true" })
+                        .c("nick").t("JC").up()
+                    .up()
+                .up()
+                .c("item", { id: "orchard@conference.shakespeare.lit" })
+                    .c("conference", { xmlns: "urn:xmpp:bookmarks:1", name: "The Orcard", autojoin: "1" })
+                        .c("nick").t("JC").up()
+                        .c("extensions")
+                            .c("state", { xmlns: "http://myclient.example/bookmark/state", minimized: "true" })
+                        .up()
+                    .up()
+                .up()
+            .up()
+        .up();
+
+    assert.equal(isEqualNode(templateStanza, builderStanza), true);
+});
+
+test('escape the values passed in to them', (assert) => {
+    const status = '<script>alert("p0wned")</script>';
+    const templateStanza = stx`
+        <presence from="wiccarocks@shakespeare.lit/laptop"
+                to="coven@chat.shakespeare.lit/oldhag"
+                type="unavailable"
+                xmlns="jabber:client">
+            <status>${status}</status>
+        </presence>`;
+
+    assert.equal(
+        templateStanza.tree().querySelector('status').innerHTML,
+        '&lt;script&gt;alert("p0wned")&lt;/script&gt;'
+    );
+});
+
+const TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
+
+function stripEmptyTextNodes(element) {
+    const childNodes = Array.from(element.childNodes ??  []);
+    childNodes.forEach((node) => {
+        if (node.nodeType === TEXT_NODE && !node.nodeValue.trim()) {
+            element.removeChild(node);
+        } else if (node.nodeType === ELEMENT_NODE) {
+            stripEmptyTextNodes(node); // Recursively call for child elements
+        }
+    });
+    return element;
+}
+
+/**
+ * Given two XML or HTML elements, determine if they're equal
+ * @param {Strophe.Stanza|Strophe.Builder} actual
+ * @param {Strophe.Stanza|Strophe.Builder} expected
+ * @returns {Boolean}
+ */
+function isEqualNode(actual, expected) {
+    actual = stripEmptyTextNodes(actual.tree());
+    expected = stripEmptyTextNodes(expected.tree());
+
+    let isEqual = actual.isEqualNode(expected);
+
+    if (!isEqual) {
+        // XXX: This is a hack.
+        // When creating two XML elements, one via DOMParser, and one via
+        // createElementNS (or createElement), then "isEqualNode" doesn't match.
+        //
+        // For example, in the following code `isEqual` is false:
+        // ------------------------------------------------------
+        // const a = document.createElementNS('foo', 'div');
+        // a.setAttribute('xmlns', 'foo');
+        //
+        // const b = (new DOMParser()).parseFromString('<div xmlns="foo"></div>', 'text/xml').firstElementChild;
+        // const isEqual = a.isEqualNode(div); //  false
+        //
+        // The workaround here is to serialize both elements to string and then use
+        // DOMParser again for both (via xmlHtmlNode).
+        //
+        // This is not efficient, but currently this is only being used in tests.
+        //
+        const { xmlHtmlNode } = Strophe;
+        const actual_string = serializer.serializeToString(actual);
+        const expected_string = serializer.serializeToString(expected);
+        isEqual =
+            actual_string === expected_string || xmlHtmlNode(actual_string).isEqualNode(xmlHtmlNode(expected_string));
+    }
+    return isEqual;
+}
+
+/**
+ * Mock xhr, provides getAllResponseHeaders function.
+ * @param status
+ * @param readyState
+ * @param responseText
+ */
+function XHR(status, readyState, responseText) {
+    this.status = status;
+    this.readyState = readyState;
+    this.responseText = responseText;
+    this.getAllResponseHeaders = () => null;
+}
+
+class SASLFoo extends Strophe.SASLMechanism {
+    constructor() {
+        super('FOO', false, 10);
+    }
+
+    static get name() {
+        return 'FOO';
+    }
+}
+
+function makeRequest(stanza) {
+    const req = new Strophe.Request(stanza, () => {});
+    req.getResponse = function () {
+        const env = new Strophe.Builder('env', { type: 'mock' }).tree();
+        env.appendChild(stanza);
+        return env;
+    };
+    return req;
+}
+
+const _sessionStorage = {};
+
+if (!globalThis.sessionStorage) {
+    Object.defineProperty(globalThis, 'sessionStorage', {
+        value: {
+            setItem: (key, value) => (_sessionStorage[key] = value),
+            getItem: (key) => _sessionStorage[key] ?? null,
+            removeItem: (key) => delete _sessionStorage[key],
+        },
+    });
+}

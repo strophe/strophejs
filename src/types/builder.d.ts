@@ -66,7 +66,7 @@ declare class Builder {
      * Creates a new Builder object from an XML string.
      * @param {string} str
      * @returns {Builder}
-     * @example const stanza = Builder.fromString('<presence from='juliet@example.com/chamber'></presence>');
+     * @example const stanza = Builder.fromString('<presence from="juliet@example.com/chamber"></presence>');
      */
     static fromString(str: string): Builder;
     /**

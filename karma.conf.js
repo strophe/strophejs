@@ -13,7 +13,6 @@ module.exports = function (config) {
             'node_modules/sinon/pkg/sinon.js',
             'dist/strophe.umd.js',
             'tests/tests.js',
-            'tests/stx.js'
         ],
 
         // list of files to exclude

@@ -26,13 +26,37 @@ function getWebSocketImplementation() {
     if (typeof globalThis.WebSocket === 'undefined') {
         try {
             return require('ws');
-        } catch (e) { // eslint-disable-line no-unused-vars
+            // eslint-disable-next-line no-unused-vars
+        } catch (e) {
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
     return globalThis.WebSocket;
 }
 export const WebSocket = getWebSocketImplementation();
+
+/**
+ * Retrieves the XMLSerializer implementation for the current environment.
+ *
+ * In browser environments, it uses the built-in XMLSerializer.
+ * In Node.js environments, it attempts to load the 'jsdom' package
+ * to create a compatible XMLSerializer.
+ */
+function getXMLSerializerImplementation() {
+    if (typeof globalThis.XMLSerializer === 'undefined') {
+        let JSDOM;
+        try {
+            JSDOM = require('jsdom').JSDOM;
+            // eslint-disable-next-line no-unused-vars
+        } catch (e) {
+            throw new Error('You must install the "ws" package to use Strophe in nodejs.');
+        }
+        const dom = new JSDOM('');
+        return dom.window.XMLSerializer;
+    }
+    return globalThis.XMLSerializer;
+}
+export const XMLSerializer = getXMLSerializerImplementation();
 
 /**
  * DOMParser
@@ -52,7 +76,8 @@ function getDOMParserImplementation() {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-        } catch (e) { // eslint-disable-line no-unused-vars
+            // eslint-disable-next-line no-unused-vars
+        } catch (e) {
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
@@ -75,7 +100,8 @@ export function getDummyXMLDOMDocument() {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-        } catch (e) { // eslint-disable-line no-unused-vars
+            // eslint-disable-next-line no-unused-vars
+        } catch (e) {
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
