@@ -102,7 +102,7 @@ export class Stanza extends Builder {
                                   .join('')
                             : value instanceof Stanza || value instanceof Builder
                               ? value
-                              : xmlescape(value.toString()))
+                              : xmlescape((value ?? '').toString()))
                     );
                 }, '')
                 .trim();
