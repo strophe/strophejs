@@ -161,6 +161,7 @@ export const Strophe: {
     }): void;
     xmlGenerator(): Document;
     xmlTextNode(text: string): Text;
+    stripWhitespace(stanza: Element): Element;
     xmlHtmlNode(text: string): XMLDocument;
     getParserError(doc: XMLDocument): string | null;
     getFirstElementChild(el: XMLDocument): Element;

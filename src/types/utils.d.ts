@@ -58,6 +58,11 @@ export function xmlGenerator(): Document;
  */
 export function xmlTextNode(text: string): Text;
 /**
+ * @param {Element} stanza
+ * @return {Element}
+ */
+export function stripWhitespace(stanza: Element): Element;
+/**
  * Creates an XML DOM node.
  * @param {string} text - The contents of the XML element.
  * @return {XMLDocument}

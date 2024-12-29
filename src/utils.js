@@ -185,6 +185,31 @@ export function xmlTextNode(text) {
 }
 
 /**
+ * @param {Element} stanza
+ * @return {Element}
+ */
+export function stripWhitespace(stanza) {
+    const childNodes = Array.from(stanza.childNodes);
+    if (childNodes.length === 1 && childNodes[0].nodeType === ElementType.TEXT) {
+        // If the element has only one child and it's a text node, we assume
+        // it's significant and don't remove it, even if it's only whitespace.
+        return stanza;
+    }
+    childNodes.forEach((node) => {
+        if (node.nodeName.toLowerCase() === 'body') {
+            // We don't remove anything inside <body> elements
+            return;
+        }
+        if (node.nodeType === ElementType.TEXT && !(/\S/).test(node.nodeValue)) {
+            stanza.removeChild(node);
+        } else if (node.nodeType === ElementType.NORMAL) {
+            stripWhitespace(/** @type {Element} */ (node));
+        }
+    });
+    return stanza;
+}
+
+/**
  * Creates an XML DOM node.
  * @param {string} text - The contents of the XML element.
  * @return {XMLDocument}

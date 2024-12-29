@@ -1,5 +1,10 @@
 # Strophe.js Change Log
 
+## Version 3.1.1 - (Unreleased)
+
+- Strip unnecessary whitespace from `Stanza` elements
+- Bugfix. Handle `null` and `undefined` values inside `stx` tagged template literals.
+
 ## Version 3.1.0 - (2024-12-16)
 
 - **Security Fix**: Escape values passed to the `stx` tagged template literal

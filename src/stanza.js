@@ -1,6 +1,6 @@
 import Builder from './builder.js';
 import log from './log.js';
-import { getFirstElementChild, getParserError, xmlHtmlNode, xmlescape } from './utils.js';
+import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils.js';
 
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
@@ -61,7 +61,7 @@ export class Stanza extends Builder {
             throw new Error(`Parser Error: ${parserError}`);
         }
 
-        const node = getFirstElementChild(doc);
+        const node = stripWhitespace(getFirstElementChild(doc));
         if (
             ['message', 'iq', 'presence'].includes(node.nodeName.toLowerCase()) &&
             node.namespaceURI !== 'jabber:client' &&
