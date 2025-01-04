@@ -88,8 +88,7 @@ export class Stanza extends Builder {
         this.#string =
             this.#string ||
             this.#strings
-                .reduce((acc, str) => {
-                    const idx = this.#strings.indexOf(str);
+                .reduce((acc, str, idx) => {
                     const value = this.#values.length > idx ? this.#values[idx] : '';
                     return (
                         acc +
