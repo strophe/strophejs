@@ -3,6 +3,7 @@
 ## Version 3.1.1 - (Unreleased)
 
 - Strip unnecessary whitespace from `Stanza` elements
+- Allow `Builder` instances to be passed into the `cnode` function
 - Bugfix. Handle `null` and `undefined` values inside `stx` tagged template literals.
 
 ## Version 3.1.0 - (2024-12-16)

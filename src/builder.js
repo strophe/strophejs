@@ -293,10 +293,13 @@ class Builder {
      * name and an attributes object to create the child it uses an
      * existing DOM element object.
      *
-     * @param {Element} elem - A DOM element.
+     * @param {Element|Builder} elem - A DOM element.
      * @return {Builder} The Strophe.Builder object.
      */
     cnode(elem) {
+        if (elem instanceof Builder) {
+            elem = elem.tree();
+        }
         let impNode;
         const xmlGen = xmlGenerator();
         try {
