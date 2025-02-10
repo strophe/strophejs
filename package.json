@@ -88,7 +88,7 @@
     "minimist": "^1.2.5",
     "prettier": "^3.3.3",
     "qunit": "2.23.1",
-    "rollup": "^2.32.1",
+    "rollup": "^4.34.6",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
     "run-headless-chromium": "^0.1.1",
