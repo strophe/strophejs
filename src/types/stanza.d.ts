@@ -34,7 +34,7 @@ export class Stanza extends Builder {
      * untrusted input.
      *
      * @param {string} string
-     * @returns {Builder}
+     * @returns {UnsafeXML}
      * @example
      *    const status = '<status>I am busy!</status>';
      *    const pres = stx`
@@ -44,7 +44,7 @@ export class Stanza extends Builder {
      *       </presence>`;
      *    connection.send(pres);
      */
-    static unsafeXML(string: string): Builder;
+    static unsafeXML(string: string): UnsafeXML;
     /**
      * Turns the passed-in string into an XML Element.
      * @param {string} string
@@ -60,4 +60,7 @@ export class Stanza extends Builder {
     #private;
 }
 import Builder from './builder.js';
+declare class UnsafeXML extends String {
+}
+export {};
 //# sourceMappingURL=stanza.d.ts.map

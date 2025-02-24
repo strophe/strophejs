@@ -2,6 +2,8 @@ import Builder from './builder.js';
 import log from './log.js';
 import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils.js';
 
+class UnsafeXML extends String {}
+
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
  */
@@ -34,7 +36,7 @@ export class Stanza extends Builder {
      * untrusted input.
      *
      * @param {string} string
-     * @returns {Builder}
+     * @returns {UnsafeXML}
      * @example
      *    const status = '<status>I am busy!</status>';
      *    const pres = stx`
@@ -45,7 +47,7 @@ export class Stanza extends Builder {
      *    connection.send(pres);
      */
     static unsafeXML(string) {
-        return Builder.fromString(string);
+        return new UnsafeXML(string);
     }
 
     /**
@@ -94,12 +96,8 @@ export class Stanza extends Builder {
                         acc +
                         str +
                         (Array.isArray(value)
-                            ? value
-                                  .map((v) =>
-                                      v instanceof Stanza || v instanceof Builder ? v : xmlescape(v.toString())
-                                  )
-                                  .join('')
-                            : value instanceof Stanza || value instanceof Builder
+                            ? value.map((v) => (v instanceof Builder ? v : xmlescape(v.toString()))).join('')
+                            : value instanceof UnsafeXML || value instanceof Builder
                               ? value
                               : xmlescape((value ?? '').toString()))
                     );
