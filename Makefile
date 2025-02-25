@@ -68,6 +68,10 @@ prettier: node_modules
 check:: node_modules eslint dist
 	npm ci && npm run test
 
+.PHONY: test
+test:
+	make check
+
 .PHONY: serve
 serve: node_modules
 	$(HTTPSERVE) -p $(HTTPSERVE_PORT)
