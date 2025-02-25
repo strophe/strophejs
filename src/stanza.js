@@ -96,7 +96,13 @@ export class Stanza extends Builder {
                         acc +
                         str +
                         (Array.isArray(value)
-                            ? value.map((v) => (v instanceof Builder ? v : xmlescape(v.toString()))).join('')
+                            ? value
+                                  .map((v) =>
+                                      v instanceof UnsafeXML || v instanceof Builder
+                                          ? v
+                                          : xmlescape(v.toString())
+                                  )
+                                  .join('')
                             : value instanceof UnsafeXML || value instanceof Builder
                               ? value
                               : xmlescape((value ?? '').toString()))
