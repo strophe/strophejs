@@ -100,7 +100,7 @@
   "optionalDependencies": {
     "@types/jsdom": "^21.1.7",
     "@types/ws": "^8.5.5",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.1.0",
     "ws": "^8.18.0"
   }
 }
