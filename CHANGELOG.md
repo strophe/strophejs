@@ -1,10 +1,12 @@
 # Strophe.js Change Log
 
-## Version 3.1.1 - (Unreleased)
+## Version 3.1.1 - (2025-05-20)
 
 - Strip unnecessary whitespace from `Stanza` elements
 - Allow `Builder` instances to be passed into the `cnode` function
 - Bugfix. Handle `null` and `undefined` values inside `stx` tagged template literals.
+- Allow arrays of `UnsafeXML` instances when using `stx`
+- Bump 3rd party dependencies
 
 ## Version 3.1.0 - (2024-12-16)
 
