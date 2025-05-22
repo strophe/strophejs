@@ -121,6 +121,8 @@ class Websocket {
             errorString += ' - ' + text;
         }
         log.error(errorString);
+        // The stream error is sent to the Strophe error method, allowing it to be handled.
+        Strophe.error(errorString);
 
         // close the connection on stream_error
         this._conn._changeConnectStatus(connectstatus, condition);
