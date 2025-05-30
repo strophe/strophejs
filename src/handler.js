@@ -13,7 +13,43 @@ import { getBareJidFromJid, handleError, isTagEqual } from './utils.js';
  * will use {@link Connection.addHandler} and
  * {@link Connection.deleteHandler}.
  */
-class Handler {
+
+export class NSHandler {
+
+    /**
+     * Create and initialize a new NSHandler.
+     *
+     * @param {Function} handler - A function to be executed when the handler is run.
+     * @param {string} ns - The namespace to match.
+     * @param {string} name - The element name to match.
+     */
+    constructor(handler, ns, name) {
+        this.handler = handler;
+        this.ns = ns;
+        this.name = name;
+        // whether the handler is a user handler or a system handler
+        this.user = true;
+    }
+
+
+    /**
+     * Run the callback on a matching stanza.
+     * @param {Element} elem - The DOM element that triggered the Handler.
+     * @return {boolean} - A boolean indicating if the handler should remain active.
+     */
+    run(elem) {
+        let result = null;
+        try {
+            result = this.handler(elem);
+        } catch (e) {
+            handleError(e);
+            throw e;
+        }
+        return result;
+    }
+}
+
+export class Handler {
     /**
      * @typedef {Object} HandlerOptions
      * @property {boolean} [HandlerOptions.matchBareFromJid]
@@ -131,4 +167,4 @@ class Handler {
     }
 }
 
-export default Handler;
+export default { Handler, NSHandler };

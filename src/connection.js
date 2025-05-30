@@ -1,4 +1,4 @@
-import Handler from './handler.js';
+import { Handler, NSHandler } from './handler.js';
 import TimedHandler from './timed-handler.js';
 import Builder, { $build, $iq, $pres } from './builder.js';
 import log from './log.js';
@@ -11,6 +11,7 @@ import SASLSHA1 from './sasl-sha1.js';
 import SASLSHA256 from './sasl-sha256.js';
 import SASLSHA384 from './sasl-sha384.js';
 import SASLSHA512 from './sasl-sha512.js';
+import SASLHTSHA256NONE from './sasl-ht-sha256-none.js';
 import SASLXOAuth2 from './sasl-xoauth2.js';
 import {
     addCookies,
@@ -1070,6 +1071,7 @@ class Connection {
                 SASLSHA256,
                 SASLSHA384,
                 SASLSHA512,
+                SASLHTSHA256NONE,
             ]
         ).forEach((m) => this.registerSASLMechanism(m));
     }
@@ -1274,6 +1276,47 @@ class Connection {
         }
 
         // send each incoming stanza through the handler chain
+
+        // nested-depth handlers, but they only support searching by ns and tagname
+        this.handlers = this.handlers.reduce((handlers, handler) => {
+
+            if (handler instanceof NSHandler) {
+                //console.log("Checking NSHandler", handler)
+
+                let keep = true;
+
+                try {
+                    if (handler.ns && handler.name) {
+                        for (const _elem of elem.getElementsByTagNameNS(handler.ns, handler.name)) {
+                            if (handler.run(_elem)) {
+                                keep = false
+                                break
+                            }
+                        }
+                    } else if (handler.name) {
+                        for (const _elem of elem.getElementsByTagNameNS(handler.ns, handler.name)) {
+                            if (!handler.run(_elem)) {
+                                keep = false;
+                                break
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // if the handler throws an exception, we consider it as false
+                    keep = false;
+                    log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+                }
+
+                if (keep) { handlers.push(handler); }
+            } else {
+                handlers.push(handler)
+            }
+
+            return handlers;
+        }, []);
+
+        // single-depth handlers, but they support searching by others
+
         forEachChild(
             elem,
             null,
@@ -1281,18 +1324,23 @@ class Connection {
             (child) => {
                 const matches = [];
                 this.handlers = this.handlers.reduce((handlers, handler) => {
-                    try {
-                        if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
-                            if (handler.run(child)) {
+                    if (handler instanceof Handler) {
+                        try {
+                            //console.log("Checking", child, "against", handler)
+                            if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
+                                if (handler.run(child)) {
+                                    handlers.push(handler);
+                                }
+                                matches.push(handler);
+                            } else {
                                 handlers.push(handler);
                             }
-                            matches.push(handler);
-                        } else {
-                            handlers.push(handler);
+                        } catch (e) {
+                            // if the handler throws an exception, we consider it as false
+                            log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                         }
-                    } catch (e) {
-                        // if the handler throws an exception, we consider it as false
-                        log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+                    } else {
+                        handlers.push(handler);
                     }
 
                     return handlers;
@@ -1305,6 +1353,8 @@ class Connection {
                 }
             }
         );
+
+        return elem;
     }
 
     /**
@@ -1334,33 +1384,17 @@ class Connection {
 
         let bodyWrap;
         try {
-            bodyWrap = /** @type {Element} */ (
-                '_reqToData' in this._proto ? this._proto._reqToData(/** @type {Request} */ (req)) : req
-            );
+            bodyWrap = this._dataRecv(req, raw)
+            if (!bodyWrap) {
+                throw new Error("Failed to parse opening stanza?");
+            }
         } catch (e) {
-            if (e.name !== ErrorCondition.BAD_FORMAT) {
-                throw e;
+            if (e.name === ErrorCondition.BAD_FORMAT) {
+                this._changeConnectStatus(Status.CONNFAIL, ErrorCondition.BAD_FORMAT);
+                this._doDisconnect(ErrorCondition.BAD_FORMAT);
+                return
             }
-            this._changeConnectStatus(Status.CONNFAIL, ErrorCondition.BAD_FORMAT);
-            this._doDisconnect(ErrorCondition.BAD_FORMAT);
-        }
-        if (!bodyWrap) {
-            return;
-        }
-
-        if (this.xmlInput !== Connection.prototype.xmlInput) {
-            if (bodyWrap.nodeName === this._proto.strip && bodyWrap.childNodes.length) {
-                this.xmlInput(bodyWrap.childNodes[0]);
-            } else {
-                this.xmlInput(bodyWrap);
-            }
-        }
-        if (this.rawInput !== Connection.prototype.rawInput) {
-            if (raw) {
-                this.rawInput(raw);
-            } else {
-                this.rawInput(Builder.serialize(bodyWrap));
-            }
+            throw e;
         }
 
         const conncheck = this._proto._connect_cb(bodyWrap);
@@ -1368,34 +1402,8 @@ class Connection {
             return;
         }
 
-        // Check for the stream:features tag
-        let hasFeatures;
-        if (bodyWrap.getElementsByTagNameNS) {
-            hasFeatures = bodyWrap.getElementsByTagNameNS(NS.STREAM, 'features').length > 0;
-        } else {
-            hasFeatures =
-                bodyWrap.getElementsByTagName('stream:features').length > 0 ||
-                bodyWrap.getElementsByTagName('features').length > 0;
-        }
-        if (!hasFeatures) {
-            this._proto._no_auth_received(_callback);
-            return;
-        }
-
-        const matched = Array.from(bodyWrap.getElementsByTagName('mechanism'))
-            .map((m) => this.mechanisms[m.textContent])
-            .filter((m) => m);
-
-        if (matched.length === 0) {
-            if (bodyWrap.getElementsByTagName('auth').length === 0) {
-                // There are no matching SASL mechanisms and also no legacy
-                // auth available.
-                this._proto._no_auth_received(_callback);
-                return;
-            }
-        }
         if (this.do_authentication !== false) {
-            this.authenticate(matched);
+            this.authenticate(bodyWrap, _callback)
         }
     }
 
@@ -1429,15 +1437,245 @@ class Connection {
      * Continues the initial connection request by setting up authentication
      * handlers and starting the authentication process.
      *
-     * SASL authentication will be attempted if available, otherwise
+     * SASL2 and SASL authentication will be attempted if available, otherwise
      * the code will fall back to legacy authentication.
      *
-     * @param {SASLMechanism[]} matched - Array of SASL mechanisms supported.
+     * @param {Element} bodyWrap
+     * @param {function} _callback
      */
-    authenticate(matched) {
-        if (!this._attemptSASLAuth(matched)) {
-            this._attemptLegacyAuth();
+    authenticate(bodyWrap, _callback) {
+
+        // server-advertised features, including, especially, auth methods
+        let features =
+            bodyWrap.getElementsByTagNameNS(NS.STREAM, 'features')[0] ??
+            bodyWrap.getElementsByTagName('stream:features')[0] ??
+            bodyWrap.getElementsByTagName('features')[0];
+
+        /* SASL2 */
+        // xmpp.js does something similar: https://github.com/xmppjs/xmpp.js/pull/1030/files#diff-9c5bec6cda48a980004e01658b0215b0987650c8112b813dec10639f49e0a475R10
+        const sasl2_header = features.getElementsByTagNameNS(NS.SASL2, 'authentication')[0];
+
+        const sasl2_offers =
+            [...sasl2_header?.children ?? []]
+                .filter((e) => e.tagName == 'mechanism')
+                .map((m) => m.textContent);
+
+        console.debug("Server advertised these SASL2 auth methods:", sasl2_offers);
+        let sasl2_matched = sasl2_offers
+            .map((m) => this.mechanisms[m])
+            .filter((m) => m);
+        console.debug("Of those, these are available:", sasl2_matched);
+
+        /* SASL */
+        const sasl_header = features.getElementsByTagNameNS(NS.SASL, 'mechanisms')[0]
+        const sasl_offers =
+            [...sasl_header.children ?? []]
+                .filter((e) => e.tagName == 'mechanism')
+                .map((m) => m.textContent);
+        console.debug("Server advertised these SASL auth methods:", sasl_offers);
+
+        let sasl_matched = sasl_offers
+            .map((m) => this.mechanisms[m])
+            .filter((m) => m);
+        console.info("Of those, these are available:", sasl_matched);
+
+
+        // Start sending authentication
+
+        this._changeConnectStatus(Status.AUTHENTICATING, null);
+
+        // different solution: all we do it try fast
+        // and if it fails, we forget the token
+
+        if (this.fast?.test()) {
+
+
+
+            /*** these guys are to handle the <stream:features> triggered */
+            /** @type {Handler[]} */
+            const streamfeature_handlers = [];
+
+            /**
+             * @param {Handler[]} handlers
+             * @param {Element} elem
+             */
+            const wrapper = (handlers, elem) => {
+                while (handlers.length) {
+                    this.deleteHandler(handlers.pop());
+                }
+                this._onStreamFeaturesAfterSASL(elem);
+                return false;
+            };
+
+            streamfeature_handlers.push(
+                this._addSysHandler(
+                    /** @param {Element} elem */
+                    (elem) => wrapper(streamfeature_handlers, elem),
+                    null,
+                    'stream:features',
+                    null,
+                    null
+                )
+            );
+
+            streamfeature_handlers.push(
+                this._addSysHandler(
+                    /** @param {Element} elem */
+                    (elem) => wrapper(streamfeature_handlers, elem),
+                    NS.STREAM,
+                    'features',
+                    null,
+                    null
+                )
+            );
+
+            this.fast._auth().then((elem) => {
+                console.log(":tada: FAST logged us in")
+                this._sasl_success_cb.bind(this)(elem)
+            }).catch((elem) => {
+                console.warn("FAST failed")
+                this._sasl_failure_cb.bind(this)(elem)
+                // invalidate creds?
+            })
+            return true; // true because we found a method
         }
+
+        if (this._attemptSASL2Auth(sasl2_matched)) {
+            return true;
+        }
+
+        if (this._attemptSASLAuth(sasl_matched)) {
+            return true;
+        }
+
+        if (bodyWrap.getElementsByTagName('auth').length > 0) {
+            this._attemptLegacyAuth();
+            return true;
+        }
+
+        this._proto._no_auth_received(_callback);
+    }
+
+    /**
+     * Iterate through an array of SASL mechanisms and attempt authentication
+     * with the highest priority (enabled) mechanism.
+     *
+     * @private
+     * @param {SASLMechanism[]} mechanisms - Array of SASL mechanisms.
+     * @return {Boolean} mechanism_found - true or false, depending on whether a
+     *  valid SASL mechanism was found with which authentication could be started.
+     */
+    _attemptSASL2Auth(mechanisms) {
+        mechanisms = this.sortMechanismsByPriority(mechanisms || []);
+
+        for (let i = 0; i < mechanisms.length; ++i) {
+            console.debug("Trying SASL 2 mechanism", mechanisms[i])
+            if (!mechanisms[i].test(this)) {
+                continue;
+            }
+
+            this._sasl_success_handler = this._addSysHandler(
+                this._sasl_success_cb.bind(this),
+                null,
+                'success',
+                null,
+                null
+            );
+            this._sasl_failure_handler = this._addSysHandler(
+                this._sasl_failure_cb.bind(this),
+                NS.SASL2,
+                'failure',
+                null,
+                null
+            );
+            this._sasl_challenge_handler = this._addSysHandler(
+                this._sasl_challenge_cb.bind(this),
+                NS.SASL2,
+                'challenge',
+                null,
+                null
+            );
+
+
+            /*** these guys are to handle the <stream:features> triggered */
+            /** @type {Handler[]} */
+            const streamfeature_handlers = [];
+
+            /**
+             * @param {Handler[]} handlers
+             * @param {Element} elem
+             */
+            const wrapper = (handlers, elem) => {
+                while (handlers.length) {
+                    this.deleteHandler(handlers.pop());
+                }
+                this._onStreamFeaturesAfterSASL(elem);
+                return false;
+            };
+
+            streamfeature_handlers.push(
+                this._addSysHandler(
+                    /** @param {Element} elem */
+                    (elem) => wrapper(streamfeature_handlers, elem),
+                    null,
+                    'stream:features',
+                    null,
+                    null
+                )
+            );
+
+            streamfeature_handlers.push(
+                this._addSysHandler(
+                    /** @param {Element} elem */
+                    (elem) => wrapper(streamfeature_handlers, elem),
+                    NS.STREAM,
+                    'features',
+                    null,
+                    null
+                )
+            );
+
+            this._sasl_mechanism = mechanisms[i];
+            this._sasl_mechanism.onStart(this);
+
+            const authenticate = $build('authenticate', {
+                'xmlns': NS.SASL2,
+                'mechanism': this._sasl_mechanism.mechname,
+            });
+            if (this._sasl_mechanism.isClientFirst) {
+                const response = this._sasl_mechanism.clientChallenge(this);
+                authenticate
+                    .c('initial-response',
+                        null,
+                        btoa(/** @type {string} */(response)))
+                    .up();
+            }
+
+            // FAST <request-token>
+            // XXX can this code live in fast.js, somehow?
+            // I don't see how without an *outgoing* stanza hook,
+            // which Strophe doesn't seem to have
+            if (this.fast?.mechname) {
+                authenticate
+                    .c('request-token', {
+                        'xmlns': NS.FAST,
+                        'mechanism': this.fast.mechname
+                    }).up()
+                    // > MUST also provide the a SASL2 <user-agent> element with an 'id' attribute
+                    // > (both of these values are discussed in more detail in XEP-0388).
+                    // - https://xmpp.org/extensions/xep-0484.html#rules-clients
+                    .c('user-agent', {
+                        // TODO: *this should be cached* in browser storage; else it will appear like hundreds of devices are connected to one's account
+                        'id': "111222333444" //this.getUniqueId("useragent")
+                    })
+                    .c("software", "Strophe.js").up()
+                    .c("device", "MacBook").up();
+            }
+
+            this.send(authenticate.tree());
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1450,29 +1688,33 @@ class Connection {
      *  valid SASL mechanism was found with which authentication could be started.
      */
     _attemptSASLAuth(mechanisms) {
+
+        // okay somewhere in there
+
         mechanisms = this.sortMechanismsByPriority(mechanisms || []);
         let mechanism_found = false;
         for (let i = 0; i < mechanisms.length; ++i) {
+            console.debug("Trying SASL 1 mechanism", mechanisms[i])
             if (!mechanisms[i].test(this)) {
                 continue;
             }
             this._sasl_success_handler = this._addSysHandler(
                 this._sasl_success_cb.bind(this),
-                null,
+                NS.SASL,
                 'success',
                 null,
                 null
             );
             this._sasl_failure_handler = this._addSysHandler(
                 this._sasl_failure_cb.bind(this),
-                null,
+                NS.SASL,
                 'failure',
                 null,
                 null
             );
             this._sasl_challenge_handler = this._addSysHandler(
                 this._sasl_challenge_cb.bind(this),
-                null,
+                NS.SASL,
                 'challenge',
                 null,
                 null
@@ -1504,7 +1746,7 @@ class Connection {
     async _sasl_challenge_cb(elem) {
         const challenge = atob(getText(elem));
         const response = await this._sasl_mechanism.onChallenge(this, challenge);
-        const stanza = $build('response', { 'xmlns': NS.SASL });
+        const stanza = $build('response', { 'xmlns': elem.namespaceURI });
         if (response) stanza.t(btoa(response));
         this.send(stanza.tree());
         return true;
@@ -1522,7 +1764,6 @@ class Connection {
             this.disconnect(ErrorCondition.MISSING_JID_NODE);
         } else {
             // Fall back to legacy authentication
-            this._changeConnectStatus(Status.AUTHENTICATING, null);
             this._addSysHandler(this._onLegacyAuthIQResult.bind(this), null, null, null, '_auth_1');
             this.send(
                 $iq({
@@ -1580,15 +1821,28 @@ class Connection {
      * @return {false} `false` to remove the handler.
      */
     _sasl_success_cb(elem) {
+
         if (this._sasl_data['server-signature']) {
-            let serverSignature;
-            const success = atob(getText(elem));
+
+            console.debug("sasl success: checking final signature")
+            let success;
+            if (elem.namespaceURI == NS.SASL2) {
+                success = elem.querySelector('additional-data')
+            } else if (elem.namespaceURI == NS.SASL) {
+                success = elem;
+            } else {
+                console.error("Unsupported namespace ${elem.namespaceURI}, cannot authenticate server.")
+                return this._sasl_failure_cb(elem);
+            }
+            success = atob(getText(success))
+            console.debug("sasl success: final signature is", success)
+
             const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
             const matches = success.match(attribMatch);
-            if (matches[1] === 'v') {
-                serverSignature = matches[2];
-            }
-            if (serverSignature !== this._sasl_data['server-signature']) {
+            if (!(matches
+                && matches.length > 2
+                && matches[1] === 'v'
+                && matches[2] === this._sasl_data['server-signature'])) {
                 // remove old handlers
                 this.deleteHandler(this._sasl_failure_handler);
                 this._sasl_failure_handler = null;
@@ -1597,10 +1851,15 @@ class Connection {
                     this._sasl_challenge_handler = null;
                 }
                 this._sasl_data = {};
-                return this._sasl_failure_cb(null);
+                return this._sasl_failure_cb(elem);
             }
         }
-        log.info('SASL authentication succeeded.');
+        console.log('SASL authentication succeeded.');
+
+        if (elem.namespaceURI == NS.SASL2) {
+            // TODO: do something useful with this?
+            console.log("SASL2 authorized us as ", getText(elem.querySelector('authorization-identifier')))
+        }
 
         if (this._sasl_data.keys) {
             this.scram_keys = this._sasl_data.keys;
@@ -1616,45 +1875,7 @@ class Connection {
             this.deleteHandler(this._sasl_challenge_handler);
             this._sasl_challenge_handler = null;
         }
-        /** @type {Handler[]} */
-        const streamfeature_handlers = [];
 
-        /**
-         * @param {Handler[]} handlers
-         * @param {Element} elem
-         */
-        const wrapper = (handlers, elem) => {
-            while (handlers.length) {
-                this.deleteHandler(handlers.pop());
-            }
-            this._onStreamFeaturesAfterSASL(elem);
-            return false;
-        };
-
-        streamfeature_handlers.push(
-            this._addSysHandler(
-                /** @param {Element} elem */
-                (elem) => wrapper(streamfeature_handlers, elem),
-                null,
-                'stream:features',
-                null,
-                null
-            )
-        );
-
-        streamfeature_handlers.push(
-            this._addSysHandler(
-                /** @param {Element} elem */
-                (elem) => wrapper(streamfeature_handlers, elem),
-                NS.STREAM,
-                'features',
-                null,
-                null
-            )
-        );
-
-        // we must send an xmpp:restart now
-        this._sendRestart();
         return false;
     }
 
@@ -1877,6 +2098,13 @@ class Connection {
      */
     _addSysHandler(handler, ns, name, type, id) {
         const hand = new Handler(handler, ns, name, type, id);
+        hand.user = false;
+        this.addHandlers.push(hand);
+        return hand;
+    }
+
+    _addSysNSHandler(handler, ns, name) {
+        const hand = new NSHandler(handler, ns, name);
         hand.user = false;
         this.addHandlers.push(hand);
         return hand;

@@ -32,6 +32,7 @@ export const NS = {
     DISCO_ITEMS: 'http://jabber.org/protocol/disco#items',
     MUC: 'http://jabber.org/protocol/muc',
     SASL: 'urn:ietf:params:xml:ns:xmpp-sasl',
+    SASL2: 'urn:xmpp:sasl:2',
     STREAM: 'http://etherx.jabber.org/streams',
     FRAMING: 'urn:ietf:params:xml:ns:xmpp-framing',
     BIND: 'urn:ietf:params:xml:ns:xmpp-bind',

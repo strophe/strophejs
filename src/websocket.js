@@ -67,6 +67,7 @@ class Websocket {
         return $build('open', {
             'xmlns': NS.FRAMING,
             'to': this._conn.domain,
+            ...((this._conn.service.startsWith("wss") || this._conn.service.startsWith("ws://localhost")) ? { 'from': this._conn.jid } : {}),
             'version': '1.0',
         });
     }
