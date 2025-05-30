@@ -127,15 +127,24 @@ function generate_cnonce() {
 }
 
 /**
- * @typedef {Object} Password
- * @property {string} Password.name
- * @property {string} Password.ck
- * @property {string} Password.sk
- * @property {number} Password.iter
- * @property {string} salt
+ * @typedef {Object} SCRAMKey
+ * @property {string} SCRAMKey.name
+ * @property {string} SCRAMKey.ck
+ * @property {string} SCRAMKey.sk
+ * @property {number} SCRAMKeyiter
+ * @property {string} SCRAMKey.salt
  */
 
 const scram = {
+    test: function (connection, hashName, hashBits) {
+        return true; // XXX debug
+        return connection.authcid !== null
+            && (
+                (typeof connection.pass === 'string' || connection.pass instanceof String)
+                || (connection.pass?.name === hashName)
+            );
+    },
+
     /**
      * On success, sets
      * connection_sasl_data["server-signature"]
@@ -178,9 +187,9 @@ const scram = {
             serverKey = keys.sk;
         } else if (
             // Either restore the client key and server key passed in, or derive new ones
-            /** @type {Password} */ (pass)?.name === hashName &&
-            /** @type {Password} */ (pass)?.salt === utils.arrayBufToBase64(challengeData.salt) &&
-            /** @type {Password} */ (pass)?.iter === challengeData.iter
+            /** @type {SCRAMKey} */ (pass)?.name === hashName &&
+            /** @type {SCRAMKey} */ (pass)?.salt === utils.arrayBufToBase64(challengeData.salt) &&
+            /** @type {SCRAMKey} */ (pass)?.iter === challengeData.iter
         ) {
             const { ck, sk } = /** @type {Password} */ (pass);
             clientKey = utils.base64ToArrayBuf(ck);

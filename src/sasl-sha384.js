@@ -17,7 +17,7 @@ class SASLSHA384 extends SASLMechanism {
      */
     // eslint-disable-next-line class-methods-use-this
     test(connection) {
-        return connection.authcid !== null;
+        return scram.test(connection, 'SHA-384', 384);
     }
 
     /**
