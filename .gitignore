@@ -16,3 +16,4 @@ doc
 doc-tmp
 tags.lock
 tags.temp
+.aider*

@@ -8,7 +8,7 @@
  * NPM module that provides a compatible implementation.
  */
 
-/* global globalThis */
+/* global globalThis, process */
 
 /**
  * WHATWG WebSockets API
@@ -23,15 +23,22 @@
  *   https://www.npmjs.com/package/ws
  */
 function getWebSocketImplementation() {
-    if (typeof globalThis.WebSocket === 'undefined') {
+    if (typeof globalThis.WebSocket !== 'undefined') {
+        return globalThis.WebSocket;
+    }
+
+    // Only try to require ws if we're in Node.js
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
         try {
             return require('ws');
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
+        } catch {
             throw new Error('You must install the "ws" package to use Strophe in nodejs.');
         }
     }
-    return globalThis.WebSocket;
+
+    throw new Error(
+        'WebSocket implementation not found. In browsers, WebSocket should be available globally. In Node.js, you need to install the "ws" package.'
+    );
 }
 export const WebSocket = getWebSocketImplementation();
 
@@ -43,18 +50,25 @@ export const WebSocket = getWebSocketImplementation();
  * to create a compatible XMLSerializer.
  */
 function getXMLSerializerImplementation() {
-    if (typeof globalThis.XMLSerializer === 'undefined') {
+    if (typeof globalThis.XMLSerializer !== 'undefined') {
+        return globalThis.XMLSerializer;
+    }
+
+    // Only try to require jsdom if we're in Node.js
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
-            throw new Error('You must install the "ws" package to use Strophe in nodejs.');
+        } catch {
+            throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
         return dom.window.XMLSerializer;
     }
-    return globalThis.XMLSerializer;
+
+    throw new Error(
+        'XMLSerializer implementation not found. In browsers, XMLSerializer should be available globally. In Node.js, you need to install the "jsdom" package.'
+    );
 }
 export const XMLSerializer = getXMLSerializerImplementation();
 
@@ -70,20 +84,25 @@ export const XMLSerializer = getXMLSerializerImplementation();
  * - nodejs: use 'jsdom' https://www.npmjs.com/package/jsdom
  */
 function getDOMParserImplementation() {
-    const DOMParserImplementation = globalThis.DOMParser;
-    if (typeof DOMParserImplementation === 'undefined') {
-        // NodeJS
+    if (typeof globalThis.DOMParser !== 'undefined') {
+        return globalThis.DOMParser;
+    }
+
+    // Only try to require jsdom if we're in Node.js
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
+        } catch {
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
         return dom.window.DOMParser;
     }
-    return DOMParserImplementation;
+
+    throw new Error(
+        'DOMParser implementation not found. In browsers, DOMParser should be available globally. In Node.js, you need to install the "jsdom" package.'
+    );
 }
 export const DOMParser = getDOMParserImplementation();
 
@@ -95,17 +114,23 @@ export const DOMParser = getDOMParserImplementation();
  * - nodejs: use 'jsdom' https://www.npmjs.com/package/jsdom
  */
 export function getDummyXMLDOMDocument() {
-    if (typeof document === 'undefined') {
-        // NodeJS
+    if (typeof document !== 'undefined') {
+        return document.implementation.createDocument('jabber:client', 'strophe', null);
+    }
+
+    // Only try to require jsdom if we're in Node.js
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
+        } catch {
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');
         return dom.window.document.implementation.createDocument('jabber:client', 'strophe', null);
     }
-    return document.implementation.createDocument('jabber:client', 'strophe', null);
+
+    throw new Error(
+        'Could not create XML document. In browsers, document should be available globally. In Node.js, you need to install the "jsdom" package.'
+    );
 }

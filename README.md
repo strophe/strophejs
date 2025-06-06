@@ -26,6 +26,16 @@ Mobile Safari, Chrome, Chrome for Android, Opera and the mobile Opera browser.
 
 Since version 1.3.0, support for IE < 11 has been dropped.
 
+### Node.js
+
+When running in Node.js, you'll need to install these additional packages:
+
+```bash
+npm install jsdom ws
+```
+
+These provide the required WebSocket and DOM APIs that are normally available in browsers.
+
 ### React Native
 
 Since version 1.6.0 the [WebCrypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)

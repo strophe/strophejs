@@ -56,9 +56,9 @@
     "clean": "make clean",
     "doc": "make doc",
     "debug-node": "NODE_OPTIONS='--inspect-wait' qunit -w --require ./tests/node tests/tests.js",
-    "test-node": "qunit --require ./tests/node tests/tests.js",
-    "test-browser": "karma start",
-    "test": "npm run test-node && npm run test-browser && npm run lint",
+    "test:node": "qunit --require ./tests/node tests/tests.js",
+    "test:browser": "karma start",
+    "test": "npm run test:node && npm run test:browser && npm run lint",
     "prettier": "prettier --write src/*.js"
   },
   "volo": {
@@ -75,12 +75,15 @@
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
+    "@types/jsdom": "^21.1.7",
+    "@types/ws": "^8.5.5",
     "almond": "~0.3.0",
     "es6-promise": "^4.2.8",
     "eslint": "^9.16.0",
     "globals": "^15.13.0",
     "http-server": "^14.1.0",
     "jsdoc": "^4.0.2",
+    "jsdom": "^25.0.1",
     "karma": "^6.3.17",
     "karma-chrome-launcher": "^3.1.1",
     "karma-qunit": "^4.1.2",
@@ -95,12 +98,19 @@
     "sinon": "19.0.2",
     "terser": "^5.10.0",
     "typescript": "^5.1.6",
+    "ws": "^8.18.2",
     "xhr2": "^0.2.1"
   },
-  "optionalDependencies": {
-    "@types/jsdom": "^21.1.7",
-    "@types/ws": "^8.5.5",
-    "jsdom": "^25.0.1",
-    "ws": "^8.18.0"
+  "peerDependencies": {
+    "jsdom": ">=20.0.0",
+    "ws": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "jsdom": {
+      "optional": true
+    },
+    "ws": {
+      "optional": true
+    }
   }
 }
