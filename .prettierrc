@@ -1,6 +1,8 @@
 {
+  "singleQuote": true,
   "printWidth": 120,
   "quoteProps": "preserve",
-  "singleQuote": true,
-  "tabWidth": 4
+  "spaceBeforeFunctionParen": true,
+  "tabWidth": 4,
+  "useTabs": false
 }
