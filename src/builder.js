@@ -304,8 +304,7 @@ class Builder {
         const xmlGen = xmlGenerator();
         try {
             impNode = xmlGen.importNode !== undefined;
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
+        } catch (_e) {
             impNode = false;
         }
 

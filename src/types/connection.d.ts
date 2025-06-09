@@ -479,9 +479,9 @@ declare class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Bosh.strip> if you want to strip this tag.
      *
-     * @param {Node|MessageEvent} elem - The XML data received by the connection.
+     * @param {Node|MessageEvent} _elem - The XML data received by the connection.
      */
-    xmlInput(elem: Node | MessageEvent): void;
+    xmlInput(_elem: Node | MessageEvent): void;
     /**
      * User overrideable function that receives XML data sent to the
      * connection.
@@ -497,9 +497,9 @@ declare class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Bosh.strip> if you want to strip this tag.
      *
-     * @param {Element} elem - The XMLdata sent by the connection.
+     * @param {Element} _elem - The XMLdata sent by the connection.
      */
-    xmlOutput(elem: Element): void;
+    xmlOutput(_elem: Element): void;
     /**
      * User overrideable function that receives raw data coming into the
      * connection.
@@ -509,9 +509,9 @@ declare class Connection {
      * >   (user code)
      * > };
      *
-     * @param {string} data - The data received by the connection.
+     * @param {string} _data - The data received by the connection.
      */
-    rawInput(data: string): void;
+    rawInput(_data: string): void;
     /**
      * User overrideable function that receives raw data sent to the
      * connection.
@@ -521,9 +521,9 @@ declare class Connection {
      * >   (user code)
      * > };
      *
-     * @param {string} data - The data sent by the connection.
+     * @param {string} _data - The data sent by the connection.
      */
-    rawOutput(data: string): void;
+    rawOutput(_data: string): void;
     /**
      * User overrideable function that receives the new valid rid.
      *
@@ -532,9 +532,9 @@ declare class Connection {
      * >    (user code)
      * > };
      *
-     * @param {number} rid - The next valid rid
+     * @param {number} _rid - The next valid rid
      */
-    nextValidRid(rid: number): void;
+    nextValidRid(_rid: number): void;
     /**
      * Send a stanza.
      *

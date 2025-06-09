@@ -409,7 +409,7 @@ function createFromHtmlElement(elem) {
                     el.appendChild(createHtml(elem.childNodes[i]));
                 }
             }
-        } catch (e) { // eslint-disable-line no-unused-vars
+        } catch (_e) {
             // invalid elements
             el = xmlTextNode('');
         }

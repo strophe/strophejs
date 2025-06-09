@@ -134,7 +134,6 @@ class Websocket {
      * This function is called by the reset function of the Strophe Connection.
      * Is not needed by WebSockets.
      */
-    // eslint-disable-next-line class-methods-use-this
     _reset() {
         return;
     }
@@ -324,7 +323,6 @@ class Websocket {
      * This is used so Strophe can process stanzas from WebSockets like BOSH
      * @param {string} stanza
      */
-    // eslint-disable-next-line class-methods-use-this
     _streamWrap(stanza) {
         return '<wrapper>' + stanza + '</wrapper>';
     }
@@ -352,7 +350,6 @@ class Websocket {
      * _Private_ function to check if the message queue is empty.
      * @return {true} - True, because WebSocket messages are send immediately after queueing.
      */
-    // eslint-disable-next-line class-methods-use-this
     _emptyQueue() {
         return true;
     }
@@ -403,12 +400,12 @@ class Websocket {
      *
      * This does nothing for WebSockets
      */
-    _onDisconnectTimeout() {} // eslint-disable-line class-methods-use-this
+    _onDisconnectTimeout() {}
 
     /**
      * _Private_ helper function that makes sure all pending requests are aborted.
      */
-    _abortAllRequests() {} // eslint-disable-line class-methods-use-this
+    _abortAllRequests() {}
 
     /**
      * _Private_ function to handle websockets errors.

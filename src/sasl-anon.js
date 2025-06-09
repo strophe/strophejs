@@ -14,7 +14,6 @@ class SASLAnonymous extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.authcid === null;
     }

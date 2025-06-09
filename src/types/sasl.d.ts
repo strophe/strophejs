@@ -60,10 +60,10 @@ declare class SASLMechanism {
      * > }
      *
      * See <SASL mechanisms> for a list of available mechanisms.
-     * @param {Connection} connection - Target Connection.
+     * @param {Connection} _connection - Target Connection.
      * @return {boolean} If mechanism was able to run.
      */
-    test(connection: Connection): boolean;
+    test(_connection: Connection): boolean;
     /**
      * Called before starting mechanism on some connection.
      * @param {Connection} connection - Target Connection.
@@ -76,11 +76,11 @@ declare class SASLMechanism {
      * By deafult, if the client is expected to send data first (isClientFirst === true),
      * this method is called with `challenge` as null on the first call,
      * unless `clientChallenge` is overridden in the relevant subclass.
-     * @param {Connection} connection - Target Connection.
-     * @param {string} [challenge] - current challenge to handle.
+     * @param {Connection} _connection - Target Connection.
+     * @param {string} [_challenge] - current challenge to handle.
      * @return {string|Promise<string|false>} Mechanism response.
      */
-    onChallenge(connection: Connection, challenge?: string): string | Promise<string | false>;
+    onChallenge(_connection: Connection, _challenge?: string): string | Promise<string | false>;
     /**
      * Called by the protocol implementation if the client is expected to send
      * data first in the authentication exchange (i.e. isClientFirst === true).

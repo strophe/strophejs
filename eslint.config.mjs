@@ -1,4 +1,5 @@
 import globals from "globals";
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import babelParser from "@babel/eslint-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +15,11 @@ const compat = new FlatCompat({
 });
 
 export default [...compat.extends("eslint:recommended"), {
+
+    plugins: {
+        "@typescript-eslint": typescriptEslint,
+    },
+
     languageOptions: {
         globals: {
             ...globals.browser,
@@ -47,7 +53,7 @@ export default [...compat.extends("eslint:recommended"), {
         "callback-return": "off",
         camelcase: "off",
         "capitalized-comments": "off",
-        "class-methods-use-this": "error",
+        "class-methods-use-this": "off",
         "comma-dangle": "off",
         "comma-spacing": "off",
         "comma-style": "off",
@@ -178,7 +184,16 @@ export default [...compat.extends("eslint:recommended"), {
         "no-underscore-dangle": "off",
         "no-unmodified-loop-condition": "error",
         "no-unneeded-ternary": "off",
-        "no-unused-vars": "error",
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error", {
+            args: "all",
+            argsIgnorePattern: "^_",
+            caughtErrors: "all",
+            caughtErrorsIgnorePattern: "^_",
+            destructuredArrayIgnorePattern: "^_",
+            varsIgnorePattern: "^_",
+            ignoreRestSiblings: true,
+        }],
         "no-unused-expressions": "off",
         "no-use-before-define": "off",
         "no-useless-call": "error",

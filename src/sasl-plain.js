@@ -15,7 +15,6 @@ class SASLPlain extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.authcid !== null;
     }
@@ -23,7 +22,6 @@ class SASLPlain extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         const { authcid, authzid, domain, pass } = connection;
         if (!domain) {

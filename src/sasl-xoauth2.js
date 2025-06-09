@@ -16,7 +16,6 @@ class SASLXOAuth2 extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.pass !== null;
     }
@@ -24,7 +23,6 @@ class SASLXOAuth2 extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         let auth_str = '\u0000';
         if (connection.authcid !== null) {

@@ -63,11 +63,10 @@ class SASLMechanism {
      * > }
      *
      * See <SASL mechanisms> for a list of available mechanisms.
-     * @param {Connection} connection - Target Connection.
+     * @param {Connection} _connection - Target Connection.
      * @return {boolean} If mechanism was able to run.
      */
-    // eslint-disable-next-line class-methods-use-this, no-unused-vars
-    test(connection) {
+    test(_connection) {
         return true;
     }
 
@@ -85,12 +84,11 @@ class SASLMechanism {
      * By deafult, if the client is expected to send data first (isClientFirst === true),
      * this method is called with `challenge` as null on the first call,
      * unless `clientChallenge` is overridden in the relevant subclass.
-     * @param {Connection} connection - Target Connection.
-     * @param {string} [challenge] - current challenge to handle.
+     * @param {Connection} _connection - Target Connection.
+     * @param {string} [_challenge] - current challenge to handle.
      * @return {string|Promise<string|false>} Mechanism response.
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    onChallenge(connection, challenge) {
+    onChallenge(_connection, _challenge) {
         throw new Error('You should implement challenge handling!');
     }
 

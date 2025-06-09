@@ -425,7 +425,6 @@ class Connection {
      * @param {string} suffix - A optional suffix to append to the id.
      * @returns {string} A unique string to be used for the id attribute.
      */
-    // eslint-disable-next-line class-methods-use-this
     getUniqueId(suffix) {
         const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             const r = (Math.random() * 16) | 0,
@@ -635,7 +634,7 @@ class Connection {
             try {
                 sessionStorage.setItem('_strophe_', '_strophe_');
                 sessionStorage.removeItem('_strophe_');
-            } catch (e) { // eslint-disable-line no-unused-vars
+            } catch (_e) {
                 return false;
             }
             return true;
@@ -658,10 +657,9 @@ class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Bosh.strip> if you want to strip this tag.
      *
-     * @param {Node|MessageEvent} elem - The XML data received by the connection.
+     * @param {Node|MessageEvent} _elem - The XML data received by the connection.
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    xmlInput(elem) {
+    xmlInput(_elem) {
         return;
     }
 
@@ -680,10 +678,9 @@ class Connection {
      * BOSH-Connections will have all stanzas wrapped in a <body> tag. See
      * <Bosh.strip> if you want to strip this tag.
      *
-     * @param {Element} elem - The XMLdata sent by the connection.
+     * @param {Element} _elem - The XMLdata sent by the connection.
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    xmlOutput(elem) {
+    xmlOutput(_elem) {
         return;
     }
 
@@ -696,10 +693,9 @@ class Connection {
      * >   (user code)
      * > };
      *
-     * @param {string} data - The data received by the connection.
+     * @param {string} _data - The data received by the connection.
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    rawInput(data) {
+    rawInput(_data) {
         return;
     }
 
@@ -712,10 +708,9 @@ class Connection {
      * >   (user code)
      * > };
      *
-     * @param {string} data - The data sent by the connection.
+     * @param {string} _data - The data sent by the connection.
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    rawOutput(data) {
+    rawOutput(_data) {
         return;
     }
 
@@ -727,10 +722,9 @@ class Connection {
      * >    (user code)
      * > };
      *
-     * @param {number} rid - The next valid rid
+     * @param {number} _rid - The next valid rid
      */
-    // eslint-disable-next-line no-unused-vars, class-methods-use-this
-    nextValidRid(rid) {
+    nextValidRid(_rid) {
         return;
     }
 
@@ -1404,7 +1398,6 @@ class Connection {
      * their priorities.
      * @param {SASLMechanism[]} mechanisms - Array of SASL mechanisms.
      */
-    // eslint-disable-next-line  class-methods-use-this
     sortMechanismsByPriority(mechanisms) {
         // Sorting mechanisms according to priority.
         for (let i = 0; i < mechanisms.length - 1; ++i) {

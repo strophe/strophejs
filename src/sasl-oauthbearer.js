@@ -15,7 +15,6 @@ class SASLOAuthBearer extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     test(connection) {
         return connection.pass !== null;
     }
@@ -23,7 +22,6 @@ class SASLOAuthBearer extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         let auth_str = 'n,';
         if (connection.authcid !== null) {

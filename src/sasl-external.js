@@ -20,7 +20,6 @@ class SASLExternal extends SASLMechanism {
     /**
      * @param {Connection} connection
      */
-    // eslint-disable-next-line class-methods-use-this
     onChallenge(connection) {
         /* According to XEP-178, an authzid SHOULD NOT be presented when the
          * authcid contained or implied in the client certificate is the JID (i.e.
