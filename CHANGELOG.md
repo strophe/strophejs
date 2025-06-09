@@ -1,8 +1,9 @@
 # Strophe.js Change Log
 
-## Version 3.1.2 - (Unreleased)
+## Version 4.0.0 - (Unreleased)
 
 - Moved `jsdom` and `ws` from optionalDependencies to peerDependencies
+- Breaking: `Strophe.shims` has been removed. Instead, just use the globals.
 
 ## Version 3.1.1 - (2025-05-20)
 
