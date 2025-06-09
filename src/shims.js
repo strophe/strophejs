@@ -74,8 +74,7 @@ function getDOMParserImplementation() {
         let JSDOM;
         try {
             JSDOM = require('jsdom').JSDOM;
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
+        } catch (_e) {
             throw new Error('You must install the "jsdom" package to use Strophe in nodejs.');
         }
         const dom = new JSDOM('');

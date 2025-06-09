@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 3.1.2 - (Unreleased)
+
+- Moved `jsdom` and `ws` from optionalDependencies to peerDependencies
+
 ## Version 3.1.1 - (2025-05-20)
 
 - Strip unnecessary whitespace from `Stanza` elements
