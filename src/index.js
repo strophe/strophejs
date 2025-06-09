@@ -15,6 +15,8 @@ import SASLSHA256 from './sasl-sha256.js';
 import SASLSHA384 from './sasl-sha384.js';
 import SASLSHA512 from './sasl-sha512.js';
 import SASLXOAuth2 from './sasl-xoauth2.js';
+import SASL2 from './sasl2.js';
+import FAST from './sasl2_fast.js';
 import TimedHandler from './timed-handler.js';
 import Websocket from './websocket.js';
 import WorkerWebsocket from './worker-websocket.js';
@@ -185,5 +187,15 @@ globalThis.stx = stx;
 
 const toStanza = Stanza.toElement;
 globalThis.toStanza = Stanza.toElement; // Deprecated
+
+
+// XXX hack to break the circular dependency
+// the encouraged way to do plugins is to import them all in your app along with Strophe as a peer
+Strophe.addConnectionPlugin('sasl2', SASL2);
+Strophe.addNamespace('SASL2', SASL2.NS);
+
+Strophe.addConnectionPlugin('fast', FAST);
+Strophe.addNamespace('FAST', FAST.NS);
+
 
 export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza, Request };

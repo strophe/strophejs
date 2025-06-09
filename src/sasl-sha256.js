@@ -16,7 +16,7 @@ class SASLSHA256 extends SASLMechanism {
      * @param {Connection} connection
      */
     test(connection) {
-        return connection.authcid !== null;
+        return scram.test(connection, 'SHA-256', 256);
     }
 
     /**
