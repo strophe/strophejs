@@ -1,6 +1,4 @@
-/*global globalThis*/
-
-import * as shims from './shims.js';
+/*global globalThis */
 import * as utils from './utils.js';
 import Bosh from './bosh.js';
 import Builder, { $build, $msg, $pres, $iq } from './builder.js';
@@ -92,8 +90,6 @@ const Strophe = {
 
     ...utils,
     ...log,
-
-    shims,
 
     Request,
 

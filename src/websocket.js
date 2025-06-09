@@ -16,7 +16,6 @@
  * @typedef {import("./connection.js").default} Connection
  */
 
-import { DOMParser, WebSocket } from './shims';
 import Builder, { $build } from './builder.js';
 import log from './log.js';
 import { NS, ErrorCondition, Status } from './constants.js';

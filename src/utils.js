@@ -1,6 +1,5 @@
 /* global btoa */
 import log from './log.js';
-import * as shims from './shims.js';
 import { ElementType, PARSE_ERROR_NS, XHTML } from './constants.js';
 
 /**
@@ -169,7 +168,7 @@ let _xmlGenerator = null;
  */
 export function xmlGenerator() {
     if (!_xmlGenerator) {
-        _xmlGenerator = shims.getDummyXMLDOMDocument();
+        _xmlGenerator = document.implementation.createDocument('jabber:client', 'strophe', null);
     }
     return _xmlGenerator;
 }
@@ -215,7 +214,7 @@ export function stripWhitespace(stanza) {
  * @return {XMLDocument}
  */
 export function xmlHtmlNode(text) {
-    const parser = new shims.DOMParser();
+    const parser = new DOMParser();
     return parser.parseFromString(text, 'text/xml');
 }
 

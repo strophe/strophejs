@@ -38,7 +38,6 @@ import { $pres } from './builder.js';
  * @property {XHTML} XHTML
  */
 export const Strophe: {
-    shims: typeof shims;
     Request: typeof Request;
     Bosh: typeof Bosh;
     Websocket: typeof Websocket;
@@ -207,7 +206,6 @@ import { Stanza } from './stanza.js';
 import { stx } from './stanza.js';
 export const toStanza: typeof Stanza.toElement;
 import Request from './request.js';
-import * as shims from './shims.js';
 import Bosh from './bosh.js';
 import Websocket from './websocket.js';
 import WorkerWebsocket from './worker-websocket.js';

@@ -1,6 +1,5 @@
 /*global globalThis, Strophe, $iq, $msg, $build, $pres, QUnit, stx */
-const serializer = new Strophe.shims.XMLSerializer();
-
+const serializer = new XMLSerializer();
 const { test } = QUnit;
 
 QUnit.module('Utility Methods');
@@ -208,8 +207,8 @@ test('content type can be set on the XMLHttpRequest object', (assert) => {
 });
 
 test('Cookies can be added to the document passing them as options to Strophe.Connection', (assert) => {
-    if (typeof document === 'undefined') {
-        console.warn("Skipping test since there's no 'document' object");
+    if (typeof window === 'undefined') {
+        console.warn("Skipping test since there's no 'window' object");
         assert.equal(true, true);
         return;
     }
@@ -359,7 +358,7 @@ test('copyElement() double escape bug', function (assert) {
 });
 
 test('XML serializing', function (assert) {
-    const parser = new Strophe.shims.DOMParser();
+    const parser = new DOMParser();
     // Attributes
     const element1 = parser.parseFromString("<foo attr1='abc' attr2='edf'>bar</foo>", 'text/xml').documentElement;
     assert.equal(Strophe.serialize(element1), '<foo attr1="abc" attr2="edf">bar</foo>', 'should be serialized');

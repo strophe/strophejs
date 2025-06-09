@@ -1,40 +1,97 @@
 import babel from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import globals from 'rollup-plugin-node-globals';
-import pkg from './package.json';
 import resolve from '@rollup/plugin-node-resolve';
 import { terser } from 'rollup-plugin-terser';
 import { babelConfig } from './babel.config.json';
 
 export default [
-    // browser-friendly UMD build
+    // Browser UMD build (unminified)
     {
         input: 'src/index.js',
         output: {
-            name: 'strophe',
-            file: pkg.browser,
+            name: 'Strophe',
+            file: 'dist/strophe.js',
             format: 'umd',
+            exports: 'named',
+            globals: {
+                'ws': 'WebSocket',
+                'jsdom': 'JSDOM',
+            },
         },
-        plugins: [babel(babelConfig), resolve(), commonjs(), globals()],
+        plugins: [babel(babelConfig), resolve({ browser: true }), commonjs(), globals()],
     },
-    // Minified UMD build
+    // Browser UMD build (minified)
     {
         input: 'src/index.js',
         output: {
-            name: 'strophe',
-            file: 'dist/strophe.umd.min.js',
+            name: 'Strophe',
+            file: 'dist/strophe.min.js',
             format: 'umd',
+            exports: 'named',
         },
-        plugins: [babel(babelConfig), resolve(), commonjs(), globals(), terser()],
+        plugins: [babel(babelConfig), resolve({ browser: true }), commonjs(), globals(), terser()],
     },
-    // CommonJS (for Node) and ES module (for bundlers) build.
+    // Browser ESM build
     {
         input: 'src/index.js',
-        external: ['window'],
-        output: [
-            { file: 'dist/strophe.common.js', format: 'cjs' },
-            { file: pkg.module, format: 'es' },
+        output: {
+            file: 'dist/strophe.browser.esm.js',
+            format: 'es',
+            exports: 'named',
+        },
+        plugins: [babel(babelConfig)],
+    },
+    // Node.js ESM build
+    {
+        input: 'src/index.js',
+        external: ['ws', 'jsdom'],
+        output: {
+            file: 'dist/strophe.node.esm.js',
+            format: 'es',
+            exports: 'named',
+        },
+        plugins: [
+            {
+                name: 'inject-shims',
+                renderChunk(code) {
+                    return {
+                        code:
+                            `async function setupShims() {
+                                    const { JSDOM } = await import('jsdom');
+                                    const { default: ws } = await import('ws');
+                                    const { window } = new JSDOM();
+                                    globalThis.WebSocket = ws;
+                                    globalThis.XMLSerializer = window.XMLSerializer;
+                                    globalThis.DOMParser = window.DOMParser;
+                                    globalThis.document = window.document;
+                                }
+                                setupShims();` + code,
+                        map: { mappings: '' },
+                    };
+                },
+            },
+            babel(babelConfig),
         ],
-        plugins: [babel(babelConfig), globals()],
+    },
+    // Node.js CJS build
+    {
+        input: 'src/index.js',
+        external: ['ws', 'jsdom'],
+        output: {
+            file: 'dist/strophe.common.js',
+            format: 'cjs',
+            exports: 'named',
+            intro: `
+                const { JSDOM } = require('jsdom');
+                const WebSocket = require('ws');
+                const { window } = new JSDOM();
+                globalThis.WebSocket = WebSocket;
+                globalThis.XMLSerializer = window.XMLSerializer;
+                globalThis.DOMParser = window.DOMParser;
+                globalThis.document = window.document;
+            `,
+        },
+        plugins: [babel(babelConfig)],
     },
 ];

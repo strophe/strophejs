@@ -42,12 +42,21 @@
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
   "exports": {
-    "node": {
-      "import": "./dist/strophe.esm.js",
-      "require": "./dist/strophe.common.js"
+    ".": {
+      "types": "./src/types/index.d.ts",
+      "browser": {
+        "import": "./dist/strophe.browser.esm.js",
+        "require": "./dist/strophe.js",
+        "default": "./dist/strophe.js"
+      },
+      "node": {
+        "import": "./dist/strophe.node.esm.js",
+        "require": "./dist/strophe.cjs.js",
+        "default": "./dist/strophe.cjs.js"
+      },
+      "default": "./dist/strophe.browser.esm.js"
     },
-    "types": "./src/types/index.d.ts",
-    "default": "./src/index.js"
+    "./package.json": "./package.json"
   },
   "scripts": {
     "types": "tsc",
@@ -75,8 +84,8 @@
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
-    "@types/jsdom": "^21.1.7",
-    "@types/ws": "^8.5.5",
+    "@types/node": "^22.15.30",
+    "@types/ws": "^8.18.1",
     "almond": "~0.3.0",
     "es6-promise": "^4.2.8",
     "eslint": "^9.16.0",
