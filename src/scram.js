@@ -137,7 +137,6 @@ function generate_cnonce() {
 
 const scram = {
     test: function (connection, hashName, hashBits) {
-        return true; // XXX debug
         return connection.authcid !== null
             && (
                 (typeof connection.pass === 'string' || connection.pass instanceof String)
