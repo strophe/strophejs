@@ -1619,14 +1619,12 @@ class Connection {
 
         if (this._sasl_data['server-signature']) {
 
-            console.debug("sasl success: checking final signature")
             let success;
             if (elem.namespaceURI == NS.SASL2) {
                 success = elem.querySelector('additional-data')
             } else if (elem.namespaceURI == NS.SASL) {
                 success = elem;
             } else {
-                console.error(`Unsupported namespace ${elem.namespaceURI}, cannot authenticate server.`)
                 return this._sasl_failure_cb(elem);
             }
 
@@ -1634,7 +1632,6 @@ class Connection {
                 // but I've enabled fall-through to multiple SASL methods so I need to revamp when 'server-signature' gets set
 
                 success = atob(getText(success))
-                console.debug("sasl success: final signature is", success)
 
                 const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
                 const matches = success.match(attribMatch);
@@ -1650,12 +1647,11 @@ class Connection {
                         this._sasl_challenge_handler = null;
                     }
                     this._sasl_data = {};
-                    console.error("Final SASL signature check failed")
                     return this._sasl_failure_cb(elem);
                 }
             }
         }
-        console.log('SASL authentication succeeded.');
+        log.info('SASL authentication succeeded.');
 
         if (elem.namespaceURI == NS.SASL2) {
             // TODO: do something useful with this?
