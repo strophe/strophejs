@@ -2,7 +2,6 @@
  * @typedef {import("./connection.js").default} Connection
  */
 import { Status } from './constants.js';
-import { getText } from './utils.js';
 
 const SASL2 = {
     // TODO: turn this into a full module
