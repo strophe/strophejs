@@ -146,6 +146,7 @@ class Bosh {
 
         const body = this._buildBody().attrs({
             'to': this._conn.domain,
+            ...(this._conn.service.startsWith("https://") ? { 'from': this._conn.jid } : {}),
             'xml:lang': 'en',
             'wait': this.wait,
             'hold': this.hold,
@@ -451,6 +452,7 @@ class Bosh {
                     if (data[i] === 'restart') {
                         body.attrs({
                             'to': this._conn.domain,
+                            ...(this._conn.service.startsWith("https://") ? { 'from': this._conn.jid } : {}),
                             'xml:lang': 'en',
                             'xmpp:restart': 'true',
                             'xmlns:xmpp': NS.BOSH,
