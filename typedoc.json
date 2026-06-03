@@ -1,0 +1,8 @@
+{
+    "entryPoints": ["src/"],
+    "entryPointStrategy": "expand",
+    "exclude": ["src/types/**"],
+    "out": "doc",
+    "name": "Strophe.js",
+    "tsconfig": "./tsconfig.json"
+}

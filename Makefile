@@ -32,7 +32,7 @@ node_modules: package.json
 .PHONY: doc
 doc:
 	@@echo "Building Strophe documentation..."
-	npx jsdoc -p -d $(DOC_DIR) -c jsdoc.json src/
+	npx typedoc
 	@@echo "Documentation built."
 	@@echo
 
