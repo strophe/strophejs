@@ -4,6 +4,8 @@
 
 - Moved `jsdom` and `ws` from optionalDependencies to peerDependencies
 - Breaking: `Strophe.shims` has been removed. Instead, just use the globals.
+- fix: encode SCRAM client-first-message as UTF-8 so that `btoa()` correctly handles non-ASCII
+  characters in the authcid (e.g. accented usernames)
 
 ## Version 3.1.1 - (2025-05-20)
 

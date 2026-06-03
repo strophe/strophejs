@@ -220,7 +220,7 @@ const scram = {
         const client_first_message_bare = `n=${connection.authcid},r=${cnonce}`;
         connection._sasl_data.cnonce = cnonce;
         connection._sasl_data['client-first-message-bare'] = client_first_message_bare;
-        return `n,,${client_first_message_bare}`;
+        return utils.utf16to8(`n,,${client_first_message_bare}`);
     },
 };
 
