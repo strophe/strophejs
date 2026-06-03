@@ -89,7 +89,7 @@
     "almond": "~0.3.0",
     "es6-promise": "^4.2.8",
     "eslint": "^9.16.0",
-    "globals": "^15.13.0",
+    "globals": "^17.6.0",
     "http-server": "^14.1.0",
     "jsdoc": "^4.0.2",
     "jsdom": "^25.0.1",
