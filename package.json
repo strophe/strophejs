@@ -37,7 +37,7 @@
   "license": "MIT",
   "browserslist": ">1%, maintained node versions",
   "main": "src/index.js",
-    "types": "dist/types/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "browser": "dist/strophe.umd.js",
   "module": "dist/strophe.esm.js",
   "unpkg": "dist/strophe.umd.min.js",
@@ -60,7 +60,7 @@
   },
   "scripts": {
     "types": "tsc",
-    "build": "rollup -c",
+    "build": "tsc && rollup -c",
     "lint": "eslint src/*.ts",
     "clean": "make clean",
     "doc": "make doc",
