@@ -13,7 +13,7 @@ XMPP applications.
 ## Quick Links
 
 * [Homepage](https://strophe.im/strophejs/)
-* [Documentation](https://strophe.im/strophejs/doc/2.0.0/files/strophe-umd-js.html)
+* [Documentation](https://strophe.im/strophejs)
 * [Mailing list](https://groups.google.com/g/strophe)
 * [Community Plugins](https://github.com/strophe/strophejs-plugins)
 
