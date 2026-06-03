@@ -1,14 +1,22 @@
-import babel from '@rollup/plugin-babel';
+import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
 import globals from 'rollup-plugin-node-globals';
 import resolve from '@rollup/plugin-node-resolve';
 import { terser } from 'rollup-plugin-terser';
-import { babelConfig } from './babel.config.json';
+
+const tsConfig = {
+    typescript: require('typescript'),
+    tsconfig: './tsconfig.json',
+    declaration: false,
+    declarationMap: false,
+    sourceMap: true,
+    outDir: undefined,
+};
 
 export default [
     // Browser UMD build (unminified)
     {
-        input: 'src/index.js',
+        input: 'src/index.ts',
         output: {
             name: 'Strophe',
             file: 'dist/strophe.js',
@@ -19,32 +27,32 @@ export default [
                 'jsdom': 'JSDOM',
             },
         },
-        plugins: [babel(babelConfig), resolve({ browser: true }), commonjs(), globals()],
+        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), globals()],
     },
     // Browser UMD build (minified)
     {
-        input: 'src/index.js',
+        input: 'src/index.ts',
         output: {
             name: 'Strophe',
             file: 'dist/strophe.min.js',
             format: 'umd',
             exports: 'named',
         },
-        plugins: [babel(babelConfig), resolve({ browser: true }), commonjs(), globals(), terser()],
+        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), globals(), terser()],
     },
     // Browser ESM build
     {
-        input: 'src/index.js',
+        input: 'src/index.ts',
         output: {
             file: 'dist/strophe.browser.esm.js',
             format: 'es',
             exports: 'named',
         },
-        plugins: [babel(babelConfig)],
+        plugins: [typescript(tsConfig)],
     },
     // Node.js ESM build
     {
-        input: 'src/index.js',
+        input: 'src/index.ts',
         external: ['ws', 'jsdom'],
         output: {
             file: 'dist/strophe.node.esm.js',
@@ -71,12 +79,12 @@ export default [
                     };
                 },
             },
-            babel(babelConfig),
+            typescript(tsConfig),
         ],
     },
     // Node.js CJS build
     {
-        input: 'src/index.js',
+        input: 'src/index.ts',
         external: ['ws', 'jsdom'],
         output: {
             file: 'dist/strophe.common.js',
@@ -92,6 +100,6 @@ export default [
                 globalThis.document = window.document;
             `,
         },
-        plugins: [babel(babelConfig)],
+        plugins: [typescript(tsConfig)],
     },
 ];

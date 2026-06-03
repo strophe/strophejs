@@ -1,6 +1,6 @@
 import globals from "globals";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import babelParser from "@babel/eslint-parser";
+import tsParser from "@typescript-eslint/parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
@@ -20,6 +20,8 @@ export default [...compat.extends("eslint:recommended"), {
         "@typescript-eslint": typescriptEslint,
     },
 
+    files: ["src/**/*.ts", "tests/**/*.ts"],
+
     languageOptions: {
         globals: {
             ...globals.browser,
@@ -31,12 +33,13 @@ export default [...compat.extends("eslint:recommended"), {
             window: true,
         },
 
-        parser: babelParser,
-        ecmaVersion: 2017,
+        parser: tsParser,
+        ecmaVersion: 2020,
         sourceType: "module",
 
         parserOptions: {
             allowImportExportEverywhere: true,
+            project: "./tsconfig.json",
         },
     },
 
@@ -119,7 +122,7 @@ export default [...compat.extends("eslint:recommended"), {
         "no-duplicate-imports": "error",
         "no-else-return": "off",
         "no-empty-function": "off",
-        "no-eq-null": "error",
+        "no-eq-null": "off",
         "no-eval": "error",
         "no-extend-native": "off",
         "no-extra-bind": "off",

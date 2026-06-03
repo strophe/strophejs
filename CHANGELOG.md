@@ -1,5 +1,9 @@
 # Strophe.js Change Log
 
+## Version 4.1.0 - (Unreleased)
+
+- Migrate to full TypeScript
+
 ## Version 4.0.0 - (2026-06-03)
 
 - Moved `jsdom` and `ws` from optionalDependencies to peerDependencies
