@@ -6,7 +6,7 @@ import log from './log.js';
 
 /**
  * @param {string} authMessage
- * @param {ArrayBufferLike} clientKey
+ * @param {ArrayBuffer} clientKey
  * @param {string} hashName
  */
 async function scramClientProof(authMessage, clientKey, hashName) {

@@ -147,10 +147,10 @@ export const Strophe: {
     toElement(string: string, throwErrorIfInvalidNS?: boolean): Element;
     handleError(e: Error): void;
     utf16to8(str: string): string;
-    xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBuffer;
-    arrayBufToBase64(buffer: ArrayBufferLike): string;
-    base64ToArrayBuf(str: string): ArrayBufferLike;
-    stringToArrayBuf(str: string): ArrayBufferLike;
+    xorArrayBuffers(x: ArrayBuffer, y: ArrayBuffer): ArrayBuffer;
+    arrayBufToBase64(buffer: ArrayBuffer): string;
+    base64ToArrayBuf(str: string): ArrayBuffer;
+    stringToArrayBuf(str: string): ArrayBuffer;
     addCookies(cookies: {
         [x: string]: string;
     } | {

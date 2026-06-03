@@ -16,25 +16,26 @@ export function handleError(e: Error): void;
  */
 export function utf16to8(str: string): string;
 /**
- * @param {ArrayBufferLike} x
- * @param {ArrayBufferLike} y
+ * @param {ArrayBuffer} x
+ * @param {ArrayBuffer} y
+ * @return {ArrayBuffer}
  */
-export function xorArrayBuffers(x: ArrayBufferLike, y: ArrayBufferLike): ArrayBuffer;
+export function xorArrayBuffers(x: ArrayBuffer, y: ArrayBuffer): ArrayBuffer;
 /**
- * @param {ArrayBufferLike} buffer
+ * @param {ArrayBuffer} buffer
  * @return {string}
  */
-export function arrayBufToBase64(buffer: ArrayBufferLike): string;
+export function arrayBufToBase64(buffer: ArrayBuffer): string;
 /**
  * @param {string} str
- * @return {ArrayBufferLike}
+ * @return {ArrayBuffer}
  */
-export function base64ToArrayBuf(str: string): ArrayBufferLike;
+export function base64ToArrayBuf(str: string): ArrayBuffer;
 /**
  * @param {string} str
- * @return {ArrayBufferLike}
+ * @return {ArrayBuffer}
  */
-export function stringToArrayBuf(str: string): ArrayBufferLike;
+export function stringToArrayBuf(str: string): ArrayBuffer;
 /**
  * @param {Cookies} cookies
  */

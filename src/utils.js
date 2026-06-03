@@ -66,8 +66,9 @@ export function utf16to8(str) {
 }
 
 /**
- * @param {ArrayBufferLike} x
- * @param {ArrayBufferLike} y
+ * @param {ArrayBuffer} x
+ * @param {ArrayBuffer} y
+ * @return {ArrayBuffer}
  */
 export function xorArrayBuffers(x, y) {
     const xIntArray = new Uint8Array(x);
@@ -80,7 +81,7 @@ export function xorArrayBuffers(x, y) {
 }
 
 /**
- * @param {ArrayBufferLike} buffer
+ * @param {ArrayBuffer} buffer
  * @return {string}
  */
 export function arrayBufToBase64(buffer) {
@@ -97,7 +98,7 @@ export function arrayBufToBase64(buffer) {
 
 /**
  * @param {string} str
- * @return {ArrayBufferLike}
+ * @return {ArrayBuffer}
  */
 export function base64ToArrayBuf(str) {
     return Uint8Array.from(atob(str), (c) => c.charCodeAt(0))?.buffer;
@@ -105,7 +106,7 @@ export function base64ToArrayBuf(str) {
 
 /**
  * @param {string} str
- * @return {ArrayBufferLike}
+ * @return {ArrayBuffer}
  */
 export function stringToArrayBuf(str) {
     const bytes = new TextEncoder().encode(str);
