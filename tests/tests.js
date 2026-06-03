@@ -754,6 +754,33 @@ test('SASL SCRAM-SHA-256 Auth', async (assert) => {
     saslsha256.onSuccess();
 });
 
+test('SASL SCRAM-SHA-256 Auth with non-ASCII authcid', (assert) => {
+    // Regression test for: login fails when username contains accented characters.
+    // btoa() treats each character as a Latin-1 byte, so a non-ASCII authcid must
+    // be UTF-8 encoded before the client-first-message is base64'd.
+    const conn = {
+        pass: 'password',
+        authcid: 'testaccentué',
+        authzid: 'testaccentué@chapril.org',
+        _sasl_data: [],
+    };
+    const saslsha256 = new Strophe.SASLSHA256();
+    saslsha256.onStart(conn);
+
+    const cnonce = 'testcnonce';
+    const response = saslsha256.clientChallenge(conn, cnonce);
+
+    // btoa() must not throw (would throw if response contained chars > 0xFF)
+    const encoded = btoa(response);
+
+    // The server decodes the base64 and interprets the bytes as UTF-8;
+    // doing the same here must recover the original accented authcid.
+    const decoded = new TextDecoder('utf-8').decode(
+        Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0))
+    );
+    assert.equal(decoded, `n,,n=${conn.authcid},r=${cnonce}`, 'client-first-message with accented authcid round-trips through btoa/atob as UTF-8');
+});
+
 test('SASL EXTERNAL Auth', async (assert) => {
     let conn = { pass: 'password', authcid: 'user', authzid: 'user@xmpp.org' };
     let sasl_external = new Strophe.SASLExternal();
