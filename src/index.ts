@@ -21,7 +21,7 @@ import log from './log';
 import { ElementType, ErrorCondition, LOG_LEVELS, LogLevel, NS, Status, XHTML } from './constants';
 import { stx, Stanza } from './stanza';
 
-interface StropheType {
+type StropheType = {
     VERSION: string;
     TIMEOUT: number;
     SECONDARY_TIMEOUT: number;
@@ -58,7 +58,7 @@ interface StropheType {
     setLogLevel(level: LogLevel): void;
     addNamespace(name: string, value: string): void;
     addConnectionPlugin(name: string, ptype: object): void;
-}
+} & typeof utils;
 
 const Strophe: StropheType = {
     VERSION: '3.0.0',

@@ -65,21 +65,28 @@ export default [
                 renderChunk(code) {
                     return {
                         code:
-                            `async function setupShims() {
-                                    const { JSDOM } = await import('jsdom');
-                                    const { default: ws } = await import('ws');
-                                    const { window } = new JSDOM();
-                                    globalThis.WebSocket = ws;
-                                    globalThis.XMLSerializer = window.XMLSerializer;
-                                    globalThis.DOMParser = window.DOMParser;
-                                    globalThis.document = window.document;
-                                }
-                                setupShims();` + code,
+                            `const { JSDOM } = await import('jsdom');
+const { default: ws } = await import('ws');
+const { window } = new JSDOM();
+globalThis.WebSocket = ws;
+globalThis.XMLSerializer = window.XMLSerializer;
+globalThis.DOMParser = window.DOMParser;
+globalThis.document = window.document;\n` + code,
                         map: { mappings: '' },
                     };
                 },
             },
             typescript(tsConfig),
+            {
+                name: 'emit-declaration',
+                generateBundle() {
+                    this.emitFile({
+                        type: 'asset',
+                        fileName: 'strophe.node.esm.d.ts',
+                        source: "export * from './types/index';\n",
+                    });
+                },
+            },
         ],
     },
     // Node.js CJS build

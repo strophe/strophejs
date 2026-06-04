@@ -40,12 +40,12 @@ class Handler {
      * @param options - Handler options
      */
     constructor(
-        handler: (stanza: Element) => boolean,
-        ns: string,
-        name: string,
-        type: string | string[],
-        id: string,
-        from: string,
+        handler: ((stanza: Element) => boolean) | null,
+        ns?: string | null,
+        name?: string | null,
+        type?: string | string[] | null,
+        id?: string | null,
+        from?: string | null,
         options?: HandlerOptions
     ) {
         this.handler = handler;
