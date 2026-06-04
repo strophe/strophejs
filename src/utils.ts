@@ -538,7 +538,7 @@ export function isTagEqual(el: Element, name: string): boolean {
  * @param elem - A DOM element.
  * @returns A String with the concatenated text of all text element children.
  */
-export function getText(elem: Element | null): string | null {
+export function getText(elem: Node | null): string | null {
     if (!elem) return null;
 
     let str = '';

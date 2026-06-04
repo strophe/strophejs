@@ -74,7 +74,7 @@ export interface ConnectionOptions {
      *     ANONYMOUS       20
      *     EXTERNAL        10
      */
-    mechanisms?: SASLMechanism[];
+    mechanisms?: (new (...args: any[]) => SASLMechanism)[];
     /**
      * If `explicitResourceBinding` is set to `true`, then the XMPP client
      * needs to explicitly call {@link Connection.bind} once the XMPP
@@ -569,7 +569,7 @@ class Connection {
     connect(
         jid: string,
         pass: string | Password,
-        callback: ConnectCallback,
+        callback?: ConnectCallback,
         wait?: number,
         hold?: number,
         route?: string,
@@ -672,7 +672,7 @@ class Connection {
      * @param wind - The optional HTTBIND window value.  This is the
      *     allowed range of request ids that are valid.  The default is 5.
      */
-    restore(jid: string, callback: ConnectCallback, wait?: number, hold?: number, wind?: number): void {
+    restore(jid?: string, callback?: ConnectCallback, wait?: number, hold?: number, wind?: number): void {
         if (!(this._proto instanceof Bosh) || !this._sessionCachingSupported()) {
             throw new SessionError('The "restore" method can only be used with a BOSH connection.');
         }
@@ -1121,7 +1121,7 @@ class Connection {
      * Connection (i.e. which this XMPP client will support).
      * @param mechanisms - Array of objects with SASLMechanism prototypes
      */
-    registerSASLMechanisms(mechanisms?: SASLMechanism[]): void {
+    registerSASLMechanisms(mechanisms?: (new (...args: any[]) => SASLMechanism)[]): void {
         this.mechanisms = {};
         (
             mechanisms || [

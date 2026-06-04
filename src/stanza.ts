@@ -2,9 +2,9 @@ import Builder from './builder';
 import log from './log';
 import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils';
 
-class UnsafeXML extends String {}
+export class UnsafeXML extends String {}
 
-export type StanzaValue = string | Stanza | Builder;
+export type StanzaValue = string | Stanza | Builder | UnsafeXML | StanzaValue[];
 
 /**
  * A Stanza represents a XML element used in XMPP (commonly referred to as stanzas).
