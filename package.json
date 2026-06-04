@@ -93,7 +93,7 @@
     "globals": "^15.13.0",
     "http-server": "^14.1.0",
     "jsdoc": "^4.0.2",
-    "jsdom": "^25.0.1",
+    "jsdom": "^29.1.1",
     "karma": "^6.3.17",
     "karma-chrome-launcher": "^3.1.1",
     "karma-qunit": "^4.1.2",
