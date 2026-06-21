@@ -12,12 +12,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-     DISPLAY: :99.0
 
     strategy:
       matrix:
-        node-version: [19.x]
+        node-version: [22.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -27,7 +25,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - name: Run Karma tests
-      uses: GabrielBB/xvfb-action@v1
-      with:
-          run: make check ARGS=--single-run
+    - name: Install dependencies
+      run: npm ci
+    - name: Build and test
+      run: npm run build && npx vitest run && npm run lint
