@@ -1,65 +1,63 @@
 import { Strophe, $iq, $msg, stx } from '../dist/strophe.node.esm.js';
-import sinon from 'sinon';
 import { XHR, makeRequest } from './helpers.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Handler', () => {
     it('HTTP errors', () => {
-        const spy500 = sinon.spy();
-        const spy401 = sinon.spy();
+        const spy500 = vi.fn();
+        const spy401 = vi.fn();
         const conn = new Strophe.Connection('http://fake');
         conn.addProtocolErrorHandler('HTTP', 500, spy500);
         conn.addProtocolErrorHandler('HTTP', 401, spy401);
         const req = new Strophe.Request('' as any, () => {}, 0);
         req.xhr = new XHR(200, 4) as unknown as XMLHttpRequest;
         (conn._proto as any)._onRequestStateChange(() => {}, req);
-        expect(spy500.called).toBe(false);
-        expect(spy401.called).toBe(false);
+        expect(spy500).not.toHaveBeenCalled();
+        expect(spy401).not.toHaveBeenCalled();
 
         req.xhr = new XHR(401, 4) as unknown as XMLHttpRequest;
         (conn._proto as any)._onRequestStateChange(() => {}, req);
-        expect(spy500.called).toBe(false);
-        expect(spy401.called).toBe(true);
+        expect(spy500).not.toHaveBeenCalled();
+        expect(spy401).toHaveBeenCalled();
 
         req.xhr = new XHR(500, 4) as unknown as XMLHttpRequest;
         (conn._proto as any)._onRequestStateChange(() => {}, req);
-        expect(spy500.called).toBe(true);
+        expect(spy500).toHaveBeenCalled();
     });
 
     it('IQ fallback handler', () => {
         // Strophe returns an IQ error stanza to unhandled incoming IQ get and set stanzas
         const conn = new Strophe.Connection('http://fake');
         conn.authenticated = true;
-        const spy = sinon.spy(conn, 'send');
+        const spy = vi.spyOn(conn, 'send');
 
         conn._dataRecv(makeRequest($iq({ 'type': 'get', 'id': '1' }).tree()));
-        expect(spy.calledOnce).toBe(true);
-        expect(Strophe.serialize((spy.args[0][0] as any).nodeTree)).toBe(
+        expect(spy).toHaveBeenCalledOnce();
+        expect(Strophe.serialize((spy.mock.calls[0][0] as any).nodeTree)).toBe(
             '<iq id="1" type="error" xmlns="jabber:client">' +
                 '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>' +
                 '</iq>',
         );
 
         conn._dataRecv(makeRequest($iq({ 'type': 'get', 'id': '2' }).tree()));
-        expect(spy.calledTwice).toBe(true);
-        expect(Strophe.serialize((spy.args[1][0] as any).nodeTree)).toBe(
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(Strophe.serialize((spy.mock.calls[1][0] as any).nodeTree)).toBe(
             '<iq id="2" type="error" xmlns="jabber:client">' +
                 '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>' +
                 '</iq>',
         );
 
         // When there is a handler, then the fallback handler isn't called.
-        const handlerStub = sinon.stub();
-        handlerStub.returns(true);
+        const handlerStub = vi.fn(() => true);
         conn.addHandler(handlerStub, null, 'iq', null, null, null);
 
         conn._dataRecv(makeRequest($iq({ 'type': 'set' }).tree()));
-        expect(spy.calledTwice).toBe(true);
+        expect(spy).toHaveBeenCalledTimes(2);
 
         conn._dataRecv(makeRequest($iq({ 'type': 'get' }).tree()));
-        expect(spy.calledTwice).toBe(true);
+        expect(spy).toHaveBeenCalledTimes(2);
 
-        expect(handlerStub.calledTwice).toBe(true);
+        expect(handlerStub).toHaveBeenCalledTimes(2);
     });
 
     it('Full JID matching', () => {

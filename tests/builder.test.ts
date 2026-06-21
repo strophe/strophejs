@@ -1,7 +1,6 @@
 import { Strophe, $build, $pres } from '../dist/strophe.node.esm.js';
-import sinon from 'sinon';
 import { isEqualNode } from './helpers.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Builder', () => {
     it('The root() method', () => {
@@ -22,16 +21,12 @@ describe('Builder', () => {
     it('Strophe.Connection.prototype.send() accepts Builders (#27)', () => {
         const stanza = $pres();
         const conn = new Strophe.Connection('');
-        const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
-        const timeoutStub = (sinon.stub(globalThis, 'setTimeout') as any).callsFake(function (func: () => void) {
-            // Stub setTimeout to immediately call functions, otherwise our
-            // assertions fail due to async execution.
-            func.apply(arguments);
-        });
+        const sendStub = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
+        const timeoutStub = vi.spyOn(globalThis as any, 'setTimeout').mockImplementation((func: () => void) => func());
         conn.send(stanza);
-        expect(sendStub.called).toBe(true);
-        sendStub.restore();
-        timeoutStub.restore();
+        expect(sendStub).toHaveBeenCalled();
+        sendStub.mockRestore();
+        timeoutStub.mockRestore();
     });
 
     it('The fromString static method', () => {

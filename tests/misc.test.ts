@@ -1,11 +1,10 @@
 import { Strophe } from '../dist/strophe.node.esm.js';
-import sinon from 'sinon';
 import { XHR } from './helpers.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Misc', () => {
     it('Function binding', () => {
-        const spy = sinon.spy();
+        const spy = vi.fn();
         const obj = {};
         const arg1 = 'foo';
         const arg2 = 'bar';
@@ -13,9 +12,9 @@ describe('Misc', () => {
 
         const f = spy.bind(obj, arg1, arg2);
         f(arg3);
-        expect(spy.called).toBe(true);
-        expect(spy.calledOn(obj)).toBe(true);
-        expect(spy.alwaysCalledWithExactly(arg1, arg2, arg3)).toBe(true);
+        expect(spy).toHaveBeenCalled();
+        expect(spy.mock.contexts[0]).toBe(obj);
+        expect(spy).toHaveBeenCalledWith(arg1, arg2, arg3);
     });
 
     it('Connfail for invalid XML', () => {
@@ -40,12 +39,12 @@ describe('Misc', () => {
         // simulate a finished but aborted request
         const req: any = { id: 43, sends: 1, xhr: new XHR(undefined, 4), abort: true };
         conn._requests = [req];
-        const spy = sinon.spy();
+        const spy = vi.fn();
         (conn._proto as any)._onRequestStateChange(spy, req);
 
         expect(req.abort).toBe(false);
         expect(conn._requests.length).toBe(1);
-        expect(spy.called).toBe(false);
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('Incomplete requests do nothing', () => {
@@ -53,9 +52,9 @@ describe('Misc', () => {
         const conn = new Strophe.Connection('http://fake');
         const req: any = { id: 44, sends: 1, xhr: new XHR(undefined, 3) };
         conn._requests = [req];
-        const spy = sinon.spy();
+        const spy = vi.fn();
         (conn._proto as any)._onRequestStateChange(spy, req);
         expect(conn._requests.length).toBe(1);
-        expect(spy.called).toBe(false);
+        expect(spy).not.toHaveBeenCalled();
     });
 });

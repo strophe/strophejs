@@ -1,7 +1,6 @@
 import { Strophe } from '../dist/strophe.node.esm.js';
-import sinon from 'sinon';
 import { XHR } from './helpers.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('BOSH Session resumption', () => {
     it('When passing in {keepalive: true} to Strophe.Connection, then the session tokens get cached automatically', () => {
@@ -9,19 +8,17 @@ describe('BOSH Session resumption', () => {
         conn.jid = 'dummy@localhost';
         const proto: any = conn._proto;
         proto.sid = '5332346';
-        const cacheSpy = sinon.spy(proto, '_cacheSession');
-        expect(cacheSpy.called).toBe(false);
+        const cacheSpy = vi.spyOn(proto, '_cacheSession');
+        expect(cacheSpy).not.toHaveBeenCalled();
         proto._buildBody();
-        expect(cacheSpy.called).toBe(true);
+        expect(cacheSpy).toHaveBeenCalled();
         expect(sessionStorage.getItem('strophe-bosh-session')).toBe(null);
         conn.authenticated = true;
         proto._buildBody();
         expect(sessionStorage.getItem('strophe-bosh-session')).toBeTruthy();
-        expect(cacheSpy.called).toBe(true);
         conn.authenticated = false;
         proto._buildBody();
         expect(sessionStorage.getItem('strophe-bosh-session')).toBe(null);
-        expect(cacheSpy.called).toBe(true);
     });
 
     it('the request ID (RID) has the proper value whenever a session is restored', () => {
@@ -50,8 +47,8 @@ describe('BOSH Session resumption', () => {
     it('restore can only be called with BOSH and when {keepalive: true} is passed to Strophe.Connection', () => {
         sessionStorage.removeItem('strophe-bosh-session');
         let conn = new Strophe.Connection('');
-        const boshSpy = sinon.spy(conn._proto as any, '_restore');
-        const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
+        const boshSpy = vi.spyOn(conn._proto as any, '_restore');
+        const checkSpy = vi.spyOn(conn, '_sessionCachingSupported');
         expect(conn.restored).toBe(false);
         let caughtError: any;
         try {
@@ -61,8 +58,8 @@ describe('BOSH Session resumption', () => {
         }
         expect(caughtError?.name).toBe('StropheSessionError');
         expect(caughtError?.message).toBe('_restore: no restoreable session.');
-        expect(boshSpy.called).toBe(true);
-        expect(checkSpy.called).toBe(true);
+        expect(boshSpy).toHaveBeenCalled();
+        expect(checkSpy).toHaveBeenCalled();
 
         conn = new Strophe.Connection('ws:localhost');
         let caughtError2: any;
@@ -96,8 +93,8 @@ describe('BOSH Session resumption', () => {
     it('when calling "restore" without a restorable session, an exception is raised', () => {
         sessionStorage.removeItem('strophe-bosh-session');
         const conn = new Strophe.Connection('', { 'keepalive': true });
-        const boshSpy = sinon.spy(conn._proto as any, '_restore');
-        const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
+        const boshSpy = vi.spyOn(conn._proto as any, '_restore');
+        const checkSpy = vi.spyOn(conn, '_sessionCachingSupported');
         expect(conn.restored).toBe(false);
         let caughtError: any;
         try {
@@ -108,15 +105,15 @@ describe('BOSH Session resumption', () => {
         expect(caughtError?.name).toBe('StropheSessionError');
         expect(caughtError?.message).toBe('_restore: no restoreable session.');
         expect(conn.restored).toBe(false);
-        expect(boshSpy.called).toBe(true);
-        expect(checkSpy.called).toBe(true);
+        expect(boshSpy).toHaveBeenCalled();
+        expect(checkSpy).toHaveBeenCalled();
     });
 
     it('"restore" takes an optional JID argument for more precise session verification', () => {
         sessionStorage.removeItem('strophe-bosh-session');
         const conn = new Strophe.Connection('', { 'keepalive': true });
-        const boshSpy = sinon.spy(conn._proto as any, '_restore');
-        const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
+        const boshSpy = vi.spyOn(conn._proto as any, '_restore');
+        const checkSpy = vi.spyOn(conn, '_sessionCachingSupported');
         const proto: any = conn._proto;
         // Let's create some tokens to cache
         conn.authenticated = true;
@@ -134,8 +131,8 @@ describe('BOSH Session resumption', () => {
         expect(caughtError?.name).toBe('StropheSessionError');
         expect(caughtError?.message).toBe('_restore: no restoreable session.');
         expect(conn.restored).toBe(false);
-        expect(boshSpy.called).toBe(true);
-        expect(checkSpy.called).toBe(true);
+        expect(boshSpy).toHaveBeenCalled();
+        expect(checkSpy).toHaveBeenCalled();
 
         // Check that passing in the right jid but with a resource is not a problem.
         conn.restore('dummy@localhost/with_resource');
@@ -159,17 +156,17 @@ describe('BOSH Session resumption', () => {
         delete proto.jid;
         expect(conn.restored).toBe(false);
 
-        const boshSpy = sinon.spy(proto, '_restore');
-        const checkSpy = sinon.spy(conn, '_sessionCachingSupported');
-        const attachSpy = sinon.spy(proto, '_attach');
+        const boshSpy = vi.spyOn(proto, '_restore');
+        const checkSpy = vi.spyOn(conn, '_sessionCachingSupported');
+        const attachSpy = vi.spyOn(proto, '_attach');
         conn.restore();
         expect(conn.jid).toBe('dummy@localhost');
         expect(proto.rid).toBe('123456');
         expect(proto.sid).toBe('987654321');
         expect(conn.restored).toBe(true);
-        expect(boshSpy.called).toBe(true);
-        expect(checkSpy.called).toBe(true);
-        expect(attachSpy.called).toBe(true);
+        expect(boshSpy).toHaveBeenCalled();
+        expect(checkSpy).toHaveBeenCalled();
+        expect(attachSpy).toHaveBeenCalled();
     });
 });
 
@@ -177,45 +174,45 @@ describe('BOSH next valid request id', () => {
     it('nextValidRid is called after successful request', () => {
         Strophe.Connection.prototype._onIdle = () => {};
         const conn = new Strophe.Connection('http://fake');
-        const spy = sinon.spy(conn, 'nextValidRid');
+        const spy = vi.spyOn(conn, 'nextValidRid');
         const req: any = { id: 43, sends: 1, xhr: new XHR(200, 4), rid: 42 };
         conn._requests = [req];
         (conn._proto as any)._onRequestStateChange(function () {}, req);
-        expect(spy.calledOnce).toBe(true);
-        expect(spy.calledWith(43)).toBe(true);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(43);
     });
 
     it('nextValidRid is not called after failed request', () => {
         Strophe.Connection.prototype._onIdle = () => {};
         const conn = new Strophe.Connection('http://fake');
-        const spy = sinon.spy(conn, 'nextValidRid');
+        const spy = vi.spyOn(conn, 'nextValidRid');
         const req: any = { id: 43, sends: 1, xhr: new XHR(0, 4), rid: 42 };
         conn._requests = [req];
         (conn._proto as any)._onRequestStateChange(function () {}, req);
-        expect(spy.called).toBe(false);
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('nextValidRid is called after failed request with disconnection', () => {
-        sinon.stub(Math, 'random').callsFake(() => 1);
+        const randomStub = vi.spyOn(Math, 'random').mockReturnValue(1);
         Strophe.Connection.prototype._onIdle = () => {};
         const conn = new Strophe.Connection('http://fake');
-        const spy = sinon.spy(conn, 'nextValidRid');
+        const spy = vi.spyOn(conn, 'nextValidRid');
         const req: any = { id: 43, sends: 1, xhr: new XHR(404, 4), rid: 42 };
         conn._requests = [req];
         (conn._proto as any)._onRequestStateChange(function () {}, req);
-        expect(spy.calledOnce).toBe(true);
-        expect(spy.calledWith(4294967295)).toBe(true);
-        (Math.random as unknown as sinon.SinonStub).restore();
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(4294967295);
+        randomStub.mockRestore();
     });
 
     it('nextValidRid is called after connection reset', () => {
-        sinon.stub(Math, 'random').callsFake(() => 1);
+        const randomStub = vi.spyOn(Math, 'random').mockReturnValue(1);
         Strophe.Connection.prototype._onIdle = () => {};
         const conn = new Strophe.Connection('http://fake');
-        const spy = sinon.spy(conn, 'nextValidRid');
+        const spy = vi.spyOn(conn, 'nextValidRid');
         conn.reset();
-        expect(spy.calledOnce).toBe(true);
-        expect(spy.calledWith(4294967295)).toBe(true);
-        (Math.random as unknown as sinon.SinonStub).restore();
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(4294967295);
+        randomStub.mockRestore();
     });
 });
