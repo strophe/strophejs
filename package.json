@@ -86,7 +86,7 @@
     "@types/ws": "^8.18.1",
     "almond": "~0.3.0",
     "es6-promise": "^4.2.8",
-    "eslint": "^9.16.0",
+    "eslint": "^10.5.0",
     "globals": "^15.13.0",
     "http-server": "^14.1.0",
     "jsdoc": "^4.0.2",
