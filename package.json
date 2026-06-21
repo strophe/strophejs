@@ -17,9 +17,9 @@
   "files": [
     "src/",
     "dist/",
-    "CHANGELOG.txt",
+    "CHANGELOG.md",
     "LICENSE.txt",
-    "README.txt"
+    "README.md"
   ],
   "author": "Jack Moffit (metajack)",
   "contributors": [
@@ -72,14 +72,8 @@
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.5",
-    "@babel/eslint-parser": "^7.19.1",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
-    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
-    "@babel/preset-env": "^7.18.2",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.16.0",
-    "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^1.0.0",

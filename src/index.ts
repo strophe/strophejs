@@ -61,7 +61,7 @@ type StropheType = {
 } & typeof utils;
 
 const Strophe: StropheType = {
-    VERSION: '3.0.0',
+    VERSION: '4.0.0',
 
     get TIMEOUT() {
         return Bosh.getTimeoutMultplier();
