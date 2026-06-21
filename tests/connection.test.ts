@@ -1,47 +1,42 @@
 import { Strophe, $pres } from '../dist/strophe.node.esm.js';
-import sinon from 'sinon';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Strophe.Connection options', () => {
     it('withCredentials can be set on the XMLHttpRequest object', () => {
         const stanza = $pres();
-        const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
-        const timeoutStub = (sinon.stub(globalThis, 'setTimeout') as any).callsFake(function (func: () => void) {
-            func.apply(arguments);
-        });
+        const sendStub = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
+        const timeoutStub = vi.spyOn(globalThis as any, 'setTimeout').mockImplementation((func: () => void) => func());
 
         let conn = new Strophe.Connection('example.org');
         conn.send(stanza);
-        expect(sendStub.called).toBe(true);
-        expect(!!sendStub.getCalls()[0].thisValue.withCredentials).toBe(false);
+        expect(sendStub).toHaveBeenCalled();
+        expect(!!(sendStub.mock.contexts[0] as any).withCredentials).toBe(false);
 
         conn = new Strophe.Connection('example.org', { 'withCredentials': true });
         conn.send(stanza);
-        expect(sendStub.called).toBe(true);
-        expect(sendStub.getCalls()[1].thisValue.withCredentials).toBe(true);
-        sendStub.restore();
-        timeoutStub.restore();
+        expect(sendStub).toHaveBeenCalled();
+        expect((sendStub.mock.contexts[1] as any).withCredentials).toBe(true);
+        sendStub.mockRestore();
+        timeoutStub.mockRestore();
     });
 
     it('content type can be set on the XMLHttpRequest object', () => {
         const stanza = $pres();
-        const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
-        const timeoutStub = (sinon.stub(globalThis, 'setTimeout') as any).callsFake(function (func: () => void) {
-            func.apply(arguments);
-        });
-        const setRetRequestHeaderStub = sinon.stub(XMLHttpRequest.prototype, 'setRequestHeader');
+        const sendStub = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
+        const timeoutStub = vi.spyOn(globalThis as any, 'setTimeout').mockImplementation((func: () => void) => func());
+        const setRetRequestHeaderStub = vi.spyOn(XMLHttpRequest.prototype, 'setRequestHeader').mockImplementation(() => {});
         let conn = new Strophe.Connection('example.org');
         conn.send(stanza);
-        expect(setRetRequestHeaderStub.getCalls()[0].args[0]).toBe('Content-Type');
-        expect(setRetRequestHeaderStub.getCalls()[0].args[1]).toBe('text/xml; charset=utf-8');
+        expect(setRetRequestHeaderStub.mock.calls[0][0]).toBe('Content-Type');
+        expect(setRetRequestHeaderStub.mock.calls[0][1]).toBe('text/xml; charset=utf-8');
 
         conn = new Strophe.Connection('example.org', { contentType: 'text/plain; charset=utf-8' });
         conn.send(stanza);
-        expect(setRetRequestHeaderStub.getCalls()[1].args[0]).toBe('Content-Type');
-        expect(setRetRequestHeaderStub.getCalls()[1].args[1]).toBe('text/plain; charset=utf-8');
-        sendStub.restore();
-        timeoutStub.restore();
-        setRetRequestHeaderStub.restore();
+        expect(setRetRequestHeaderStub.mock.calls[1][0]).toBe('Content-Type');
+        expect(setRetRequestHeaderStub.mock.calls[1][1]).toBe('text/plain; charset=utf-8');
+        sendStub.mockRestore();
+        timeoutStub.mockRestore();
+        setRetRequestHeaderStub.mockRestore();
     });
 
     it('Cookies can be added to the document passing them as options to Strophe.Connection', () => {
@@ -72,14 +67,12 @@ describe('Strophe.Connection options', () => {
         end = end == -1 ? document.cookie.length : end;
         expect(document.cookie.substring(start, end)).toBe('_yyy=4321');
 
-        const sendStub = sinon.stub(XMLHttpRequest.prototype, 'send');
-        const timeoutStub = (sinon.stub(globalThis, 'setTimeout') as any).callsFake(function (func: () => void) {
-            func.apply(arguments);
-        });
+        const sendStub = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
+        const timeoutStub = vi.spyOn(globalThis as any, 'setTimeout').mockImplementation((func: () => void) => func());
         conn.send(stanza);
-        expect(sendStub.called).toBe(true);
-        sendStub.restore();
-        timeoutStub.restore();
+        expect(sendStub).toHaveBeenCalled();
+        sendStub.mockRestore();
+        timeoutStub.mockRestore();
     });
 
     it('send() does not accept strings', () => {
