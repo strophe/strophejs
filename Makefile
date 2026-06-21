@@ -53,7 +53,7 @@ dist/types: src/*
 .PHONY: dist
 dist: $(STROPHE) dist/types
 
-$(STROPHE): src/* rollup.config.js node_modules Makefile
+$(STROPHE): src/* rollup.config.mjs node_modules Makefile
 	npm run build
 
 .PHONY: eslint
