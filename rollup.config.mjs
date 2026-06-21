@@ -1,11 +1,11 @@
 import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
-import globals from 'rollup-plugin-node-globals';
 import resolve from '@rollup/plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
+import ts from 'typescript';
 
 const tsConfig = {
-    typescript: require('typescript'),
+    typescript: ts,
     tsconfig: './tsconfig.json',
     declaration: false,
     declarationMap: false,
@@ -27,7 +27,7 @@ export default [
                 'jsdom': 'JSDOM',
             },
         },
-        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), globals()],
+        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs()],
     },
     // Browser UMD build (minified)
     {
@@ -38,7 +38,7 @@ export default [
             format: 'umd',
             exports: 'named',
         },
-        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), globals(), terser()],
+        plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), terser()],
     },
     // Browser ESM build
     {
