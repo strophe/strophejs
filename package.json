@@ -36,25 +36,26 @@
   ],
   "license": "MIT",
   "browserslist": ">1%, maintained node versions",
-  "main": "src/index.js",
-  "types": "dist/types/index.d.ts",
-  "browser": "dist/strophe.umd.js",
-  "module": "dist/strophe.esm.js",
-  "unpkg": "dist/strophe.umd.min.js",
+  "type": "module",
+  "main": "./dist/strophe.cjs",
+  "types": "./dist/types/index.d.ts",
+  "browser": "./dist/strophe.umd.cjs",
+  "module": "./dist/strophe.esm.js",
+  "unpkg": "./dist/strophe.umd.min.js",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "browser": {
-        "import": "./dist/strophe.browser.esm.js",
-        "require": "./dist/strophe.js",
-        "default": "./dist/strophe.js"
+        "import": "./dist/strophe.esm.js",
+        "require": "./dist/strophe.umd.cjs",
+        "default": "./dist/strophe.umd.cjs"
       },
       "node": {
         "import": "./dist/strophe.node.esm.js",
-        "require": "./dist/strophe.cjs.js",
-        "default": "./dist/strophe.cjs.js"
+        "require": "./dist/strophe.cjs",
+        "default": "./dist/strophe.cjs"
       },
-      "default": "./dist/strophe.browser.esm.js"
+      "default": "./dist/strophe.esm.js"
     },
     "./package.json": "./package.json"
   },

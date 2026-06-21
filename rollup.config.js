@@ -13,15 +13,35 @@ const tsConfig = {
     outDir: undefined,
 };
 
+// The Node.js builds run in an environment without a DOM or WebSocket, so we
+// shim those browser globals via jsdom and ws. Using `intro` (rather than a
+// custom renderChunk) lets Rollup keep the generated source maps correct.
+const nodeShimESM = `const { JSDOM } = await import('jsdom');
+const { default: ws } = await import('ws');
+const { window } = new JSDOM();
+globalThis.WebSocket = ws;
+globalThis.XMLSerializer = window.XMLSerializer;
+globalThis.DOMParser = window.DOMParser;
+globalThis.document = window.document;`;
+
+const nodeShimCJS = `const { JSDOM } = require('jsdom');
+const WebSocket = require('ws');
+const { window } = new JSDOM();
+globalThis.WebSocket = WebSocket;
+globalThis.XMLSerializer = window.XMLSerializer;
+globalThis.DOMParser = window.DOMParser;
+globalThis.document = window.document;`;
+
 export default [
-    // Browser UMD build (unminified)
+    // Browser UMD build (unminified) — CommonJS-compatible for `require()` consumers
     {
         input: 'src/index.ts',
         output: {
             name: 'Strophe',
-            file: 'dist/strophe.js',
+            file: 'dist/strophe.umd.cjs',
             format: 'umd',
             exports: 'named',
+            sourcemap: true,
             globals: {
                 'ws': 'WebSocket',
                 'jsdom': 'JSDOM',
@@ -29,14 +49,15 @@ export default [
         },
         plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs()],
     },
-    // Browser UMD build (minified)
+    // Browser UMD build (minified) — for direct <script>/CDN usage
     {
         input: 'src/index.ts',
         output: {
             name: 'Strophe',
-            file: 'dist/strophe.min.js',
+            file: 'dist/strophe.umd.min.js',
             format: 'umd',
             exports: 'named',
+            sourcemap: true,
         },
         plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs(), terser()],
     },
@@ -44,9 +65,10 @@ export default [
     {
         input: 'src/index.ts',
         output: {
-            file: 'dist/strophe.browser.esm.js',
+            file: 'dist/strophe.esm.js',
             format: 'es',
             exports: 'named',
+            sourcemap: true,
         },
         plugins: [typescript(tsConfig)],
     },
@@ -58,24 +80,10 @@ export default [
             file: 'dist/strophe.node.esm.js',
             format: 'es',
             exports: 'named',
+            sourcemap: true,
+            intro: nodeShimESM,
         },
         plugins: [
-            {
-                name: 'inject-shims',
-                renderChunk(code) {
-                    return {
-                        code:
-                            `const { JSDOM } = await import('jsdom');
-const { default: ws } = await import('ws');
-const { window } = new JSDOM();
-globalThis.WebSocket = ws;
-globalThis.XMLSerializer = window.XMLSerializer;
-globalThis.DOMParser = window.DOMParser;
-globalThis.document = window.document;\n` + code,
-                        map: { mappings: '' },
-                    };
-                },
-            },
             typescript(tsConfig),
             {
                 name: 'emit-declaration',
@@ -94,18 +102,11 @@ globalThis.document = window.document;\n` + code,
         input: 'src/index.ts',
         external: ['ws', 'jsdom'],
         output: {
-            file: 'dist/strophe.common.js',
+            file: 'dist/strophe.cjs',
             format: 'cjs',
             exports: 'named',
-            intro: `
-                const { JSDOM } = require('jsdom');
-                const WebSocket = require('ws');
-                const { window } = new JSDOM();
-                globalThis.WebSocket = WebSocket;
-                globalThis.XMLSerializer = window.XMLSerializer;
-                globalThis.DOMParser = window.DOMParser;
-                globalThis.document = window.document;
-            `,
+            sourcemap: true,
+            intro: nodeShimCJS,
         },
         plugins: [typescript(tsConfig)],
     },

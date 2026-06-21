@@ -7,7 +7,8 @@ NDPROJ_DIR 		= ndproj
 SED				?= sed
 SHELL			?= /usr/env/bin/bash
 SRC_DIR			= src
-STROPHE			= dist/strophe.umd.js
+STROPHE			= dist/strophe.umd.cjs
+STROPHE_MIN		= dist/strophe.umd.min.js
 
 all: doc $(STROPHE)
 
@@ -53,7 +54,7 @@ dist/types: src/*
 .PHONY: dist
 dist: $(STROPHE) dist/types
 
-$(STROPHE): src/* rollup.config.mjs node_modules Makefile
+$(STROPHE): src/* rollup.config.js node_modules Makefile
 	npm run build
 
 .PHONY: eslint
@@ -85,7 +86,6 @@ clean:
 	@@rm -rf node_modules
 	@@rm -f $(STROPHE)
 	@@rm -f $(STROPHE_MIN)
-	@@rm -f $(PLUGIN_FILES_MIN)
 	@@rm -rf $(NDPROJ_DIR) $(DOC_DIR) $(DOC_TEMP)
 	@@echo "Done."
 	@@echo
