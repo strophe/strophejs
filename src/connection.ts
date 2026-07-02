@@ -115,7 +115,7 @@ export interface ConnectionOptions {
      * This allows you to share a single websocket-based connection between
      * multiple Connection instances, for example one per browser tab.
      *
-     * The script to use is the one in `src/shared-connection-worker.js`.
+     * The script to use is `dist/shared-connection-worker.js`.
      */
     worker?: string;
     /**
@@ -248,6 +248,12 @@ class Connection {
     do_authentication: boolean;
     paused: boolean;
     restored: boolean;
+    /**
+     * This connection's role in a shared-worker setup: the 'primary' tab
+     * drives the stream, 'secondary' tabs share it. undefined outside worker
+     * mode. Assigned by the worker (see {@link Connection#onRoleChanged}).
+     */
+    role?: 'primary' | 'secondary';
     _data: (Element | 'restart')[];
     _uniqueId: number;
     _sasl_success_handler: Handler | null;
@@ -356,7 +362,7 @@ class Connection {
                 this.send(
                     $iq({ type: 'error', id: iq.getAttribute('id') })
                         .c('error', { 'type': 'cancel' })
-                        .c('service-unavailable', { 'xmlns': NS.STANZAS })
+                        .c('service-unavailable', { 'xmlns': NS.STANZAS }),
                 );
                 return false;
             },
@@ -364,7 +370,7 @@ class Connection {
             null,
             ['get', 'set'],
             null,
-            null
+            null,
         );
 
         // initialize plugins
@@ -574,7 +580,7 @@ class Connection {
         hold?: number,
         route?: string,
         authcid?: string,
-        disconnection_timeout = 3000
+        disconnection_timeout = 3000,
     ): void {
         this.jid = jid;
         /** Authorization identity */
@@ -635,7 +641,7 @@ class Connection {
         callback?: ConnectCallback,
         wait?: number,
         hold?: number,
-        wind?: number
+        wind?: number,
     ): void {
         if (this._proto instanceof Bosh && typeof jid === 'string') {
             return this._proto._attach(jid, sid, rid, callback, wait, hold, wind);
@@ -706,11 +712,6 @@ class Connection {
      * User overrideable function that receives XML data coming into the
      * connection.
      *
-     * The default function does nothing.  User code can override this with
-     * > Connection.xmlInput = function (elem) {
-     * >   (user code)
-     * > };
-     *
      * Due to limitations of current Browsers' XML-Parsers the opening and closing
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
      *
@@ -726,11 +727,6 @@ class Connection {
     /**
      * User overrideable function that receives XML data sent to the
      * connection.
-     *
-     * The default function does nothing.  User code can override this with
-     * > Connection.xmlOutput = function (elem) {
-     * >   (user code)
-     * > };
      *
      * Due to limitations of current Browsers' XML-Parsers the opening and closing
      * <stream> tag for WebSocket-Connoctions will be passed as selfclosing here.
@@ -748,11 +744,6 @@ class Connection {
      * User overrideable function that receives raw data coming into the
      * connection.
      *
-     * The default function does nothing.  User code can override this with
-     * > Connection.rawInput = function (data) {
-     * >   (user code)
-     * > };
-     *
      * @param _data - The data received by the connection.
      */
     rawInput(_data: string): void {
@@ -763,11 +754,6 @@ class Connection {
      * User overrideable function that receives raw data sent to the
      * connection.
      *
-     * The default function does nothing.  User code can override this with
-     * > Connection.rawOutput = function (data) {
-     * >   (user code)
-     * > };
-     *
      * @param _data - The data sent by the connection.
      */
     rawOutput(_data: string): void {
@@ -777,14 +763,23 @@ class Connection {
     /**
      * User overrideable function that receives the new valid rid.
      *
-     * The default function does nothing. User code can override this with
-     * > Connection.nextValidRid = function (rid) {
-     * >    (user code)
-     * > };
-     *
      * @param _rid - The next valid rid
      */
     nextValidRid(_rid: number): void {
+        return;
+    }
+
+    /**
+     * User overrideable function that receives the new role of this
+     * connection in a shared-worker setup.
+     *
+     * Called when the shared worker assigns or changes this tab's role,
+     * for example when this tab is promoted to 'primary' after the previous
+     * primary tab went away.
+     *
+     * @param _role - The new role ('primary' or 'secondary')
+     */
+    onRoleChanged(_role: 'primary' | 'secondary'): void {
         return;
     }
 
@@ -841,7 +836,7 @@ class Connection {
         stanza: Element | Builder,
         callback?: (stanza: Element) => void,
         errback?: (stanza: Element | null) => void,
-        timeout?: number
+        timeout?: number,
     ): string {
         let timeoutHandler: TimedHandler | null = null;
 
@@ -870,7 +865,7 @@ class Connection {
                 null,
                 'presence',
                 null,
-                id
+                id,
             );
 
             // if timeout specified, set up a timeout handler.
@@ -903,7 +898,7 @@ class Connection {
         stanza: Element | Builder,
         callback?: (stanza: Element) => void,
         errback?: (stanza: Element | null) => void,
-        timeout?: number
+        timeout?: number,
     ): string {
         let timeoutHandler: TimedHandler | null = null;
 
@@ -937,7 +932,7 @@ class Connection {
                 null,
                 'iq',
                 ['error', 'result'],
-                id
+                id,
             );
 
             // if timeout specified, set up a timeout handler.
@@ -1088,7 +1083,7 @@ class Connection {
         type: string | string[] | null,
         id?: string | null,
         from?: string | null,
-        options?: HandlerOptions
+        options?: HandlerOptions,
     ): Handler {
         const hand = new Handler(handler, ns, name, type, id, from, options);
         this.addHandlers.push(hand);
@@ -1181,7 +1176,7 @@ class Connection {
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 this.disconnection_timeout,
-                this._onDisconnectTimeout.bind(this)
+                this._onDisconnectTimeout.bind(this),
             );
             this._proto._disconnect(pres);
         } else {
@@ -1274,9 +1269,7 @@ class Connection {
      * @param raw - The stanza as raw string.
      */
     _dataRecv(req: Element | Request, raw?: string): void {
-        const elem = (
-            '_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req
-        ) as Element | null;
+        const elem = ('_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req) as Element | null;
         if (elem === null) {
             return;
         }
@@ -1338,36 +1331,32 @@ class Connection {
         }
 
         // send each incoming stanza through the handler chain
-        forEachChild(
-            elem,
-            null,
-            (child: Element) => {
-                const matches: Handler[] = [];
-                this.handlers = this.handlers.reduce((handlers, handler) => {
-                    try {
-                        if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
-                            if (handler.run(child)) {
-                                handlers.push(handler);
-                            }
-                            matches.push(handler);
-                        } else {
+        forEachChild(elem, null, (child: Element) => {
+            const matches: Handler[] = [];
+            this.handlers = this.handlers.reduce((handlers, handler) => {
+                try {
+                    if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
+                        if (handler.run(child)) {
                             handlers.push(handler);
                         }
-                    } catch (e) {
-                        // if the handler throws an exception, we consider it as false
-                        log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+                        matches.push(handler);
+                    } else {
+                        handlers.push(handler);
                     }
-
-                    return handlers;
-                }, []);
-
-                // If no handler was fired for an incoming IQ with type="set",
-                // then we return an IQ error stanza with service-unavailable.
-                if (!matches.length && this.iqFallbackHandler.isMatch(child)) {
-                    this.iqFallbackHandler.run(child);
+                } catch (e) {
+                    // if the handler throws an exception, we consider it as false
+                    log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                 }
+
+                return handlers;
+            }, []);
+
+            // If no handler was fired for an incoming IQ with type="set",
+            // then we return an IQ error stanza with service-unavailable.
+            if (!matches.length && this.iqFallbackHandler.isMatch(child)) {
+                this.iqFallbackHandler.run(child);
             }
-        );
+        });
     }
 
     /**
@@ -1392,9 +1381,7 @@ class Connection {
 
         let bodyWrap: Element | null;
         try {
-            bodyWrap = (
-                '_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req
-            ) as Element | null;
+            bodyWrap = ('_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req) as Element | null;
         } catch (e) {
             if (e.name !== ErrorCondition.BAD_FORMAT) {
                 throw e;
@@ -1518,21 +1505,21 @@ class Connection {
                 null,
                 'success',
                 null,
-                null
+                null,
             );
             this._sasl_failure_handler = this._addSysHandler(
                 this._sasl_failure_cb.bind(this),
                 null,
                 'failure',
                 null,
-                null
+                null,
             );
             this._sasl_challenge_handler = this._addSysHandler(
                 this._sasl_challenge_cb.bind(this),
                 null,
                 'challenge',
                 null,
-                null
+                null,
             );
 
             this._sasl_mechanism = mechanisms[i];
@@ -1590,7 +1577,7 @@ class Connection {
                     .c('query', { xmlns: NS.AUTH })
                     .c('username', {})
                     .t(getNodeFromJid(this.jid))
-                    .tree()
+                    .tree(),
             );
         }
     }
@@ -1689,8 +1676,8 @@ class Connection {
                 null,
                 'stream:features',
                 null,
-                null
-            )
+                null,
+            ),
         );
 
         streamfeature_handlers.push(
@@ -1699,8 +1686,8 @@ class Connection {
                 NS.STREAM,
                 'features',
                 null,
-                null
-            )
+                null,
+            ),
         );
 
         // we must send an xmpp:restart now
@@ -1763,7 +1750,7 @@ class Connection {
                     .c('bind', { xmlns: NS.BIND })
                     .c('resource', {})
                     .t(resource)
-                    .tree()
+                    .tree(),
             );
         } else {
             this.send($iq({ type: 'set', id: '_bind_auth_2' }).c('bind', { xmlns: NS.BIND }).tree());
@@ -1820,7 +1807,7 @@ class Connection {
         if (!this.do_session) {
             throw new Error(
                 `Connection.prototype._establishSession ` +
-                    `called but apparently ${NS.SESSION} wasn't advertised by the server`
+                    `called but apparently ${NS.SESSION} wasn't advertised by the server`,
             );
         }
         this._addSysHandler(this._onSessionResultIQ.bind(this), null, null, null, '_session_auth_2');
@@ -1930,7 +1917,7 @@ class Connection {
         ns: string | null,
         name: string | null,
         type: string | null,
-        id: string | null
+        id: string | null,
     ): Handler {
         const hand = new Handler(handler, ns, name, type, id, null);
         hand.user = false;
