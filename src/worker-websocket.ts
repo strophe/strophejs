@@ -2,7 +2,7 @@ import type Connection from './connection';
 import Websocket from './websocket';
 import log from './log';
 import Builder, { $build } from './builder';
-import { LOG_LEVELS, NS, Status } from './constants';
+import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants';
 import { WebsocketLike } from 'types';
 
 /**
@@ -12,6 +12,7 @@ class WorkerWebsocket extends Websocket {
     worker: SharedWorker;
     _messageHandler: (m: MessageEvent) => void;
     socket: WebsocketLike | null;
+    private _lifecycleAttached: boolean;
 
     /**
      * Create and initialize a WorkerWebsocket object.
@@ -47,7 +48,8 @@ class WorkerWebsocket extends Websocket {
         this._messageHandler = (m: MessageEvent) => this._onInitialMessage(m);
         this.worker.port.start();
         this.worker.port.onmessage = (ev) => this._onWorkerMessage(ev);
-        this.worker.port.postMessage(['_connect', this._conn.service, this._conn.jid]);
+        this.worker.port.postMessage(['_connect', this._conn.service, this._conn.jid, SHARED_WORKER_PROTOCOL_VERSION]);
+        this._attachLifecycleListeners();
     }
 
     /**
@@ -59,7 +61,65 @@ class WorkerWebsocket extends Websocket {
         this._conn.connect_callback = callback;
         this.worker.port.start();
         this.worker.port.onmessage = (ev) => this._onWorkerMessage(ev);
-        this.worker.port.postMessage(['_attach', this._conn.service]);
+        this.worker.port.postMessage(['_attach', this._conn.service, SHARED_WORKER_PROTOCOL_VERSION]);
+        this._attachLifecycleListeners();
+    }
+
+    /**
+     * Called by the worker to assign this tab's role. A secondary shares the
+     * already-established session, so it must not treat inbound frames as its
+     * own connection handshake.
+     * @param role
+     * @param jid - The shared connection's JID.
+     */
+    _role(role: 'primary' | 'secondary', jid?: string): void {
+        this._conn.role = role;
+        if (role === 'secondary') {
+            this._messageHandler = (m: MessageEvent) => this._onMessage(m);
+            if (jid) this._conn.jid = jid;
+        }
+        this._conn.onRoleChanged(role);
+    }
+
+    /**
+     * Called by the worker when this tab is promoted to primary after the
+     * previous primary went away. Same socket — no reconnect happens.
+     * @param jid - The shared connection's JID.
+     */
+    _promote(jid?: string): void {
+        this._conn.role = 'primary';
+        if (jid) this._conn.jid = jid;
+        this._conn.onRoleChanged('primary');
+    }
+
+    /**
+     * Liveness probe from the worker. Answered from this message handler —
+     * which runs even when the browser throttles this tab's timers — so a
+     * merely-backgrounded tab never looks dead to the worker.
+     */
+    _ping(): void {
+        this.worker.port.postMessage(['_pong']);
+    }
+
+    /**
+     * Wire the page lifecycle into the worker's port bookkeeping: `_bye` on
+     * pagehide (graceful removal + failover), `_relinquish` on freeze (hand
+     * the primary role over *before* this tab's CPU stops), and a `_pong`
+     * when the page comes back (which also re-admits this port if the worker
+     * dropped it while we were away). Routine liveness is worker-driven
+     * ping/pong (see {@link WorkerWebsocket#_ping}) — deliberately no
+     * page-side timers, because hidden tabs may only run timers once every
+     * ten minutes.
+     */
+    private _attachLifecycleListeners(): void {
+        if (this._lifecycleAttached || typeof window === 'undefined') {
+            return;
+        }
+        window.addEventListener('pagehide', () => this.worker.port.postMessage(['_bye']));
+        window.addEventListener('pageshow', () => this.worker.port.postMessage(['_pong']));
+        document.addEventListener('freeze', () => this.worker.port.postMessage(['_relinquish']));
+        document.addEventListener('resume', () => this.worker.port.postMessage(['_pong']));
+        this._lifecycleAttached = true;
     }
 
     /**

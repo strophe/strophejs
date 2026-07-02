@@ -28,6 +28,16 @@ export const NS = {
 export const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
 
 /**
+ * The version of the page↔worker message protocol spoken between
+ * WorkerWebsocket and dist/shared-connection-worker.js. A SharedWorker can
+ * outlive the pages that spawned it, so after a deploy a freshly loaded page
+ * may attach to a worker from an older build (or vice versa). The version is
+ * exchanged on _connect/_attach so that a mismatch fails loudly instead of
+ * silently misbehaving.
+ */
+export const SHARED_WORKER_PROTOCOL_VERSION = 1;
+
+/**
  * Contains allowed tags, tag attributes, and css properties.
  * Used in the {@link Strophe.createHtml} function to filter incoming html into the allowed XHTML-IM subset.
  * See [XEP-0071](http://xmpp.org/extensions/xep-0071.html#profile-summary) for the list of recommended

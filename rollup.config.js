@@ -110,4 +110,17 @@ export default [
         },
         plugins: [typescript(tsConfig)],
     },
+    // Shared-connection worker: a self-contained classic (non-module) worker
+    // script; point the Connection `worker` option at this file's URL.
+    {
+        input: 'src/shared-connection-worker.ts',
+        output: {
+            name: 'StropheSharedConnectionWorker',
+            file: 'dist/shared-connection-worker.js',
+            format: 'iife',
+            exports: 'named',
+            sourcemap: true,
+        },
+        plugins: [typescript(tsConfig)],
+    },
 ];
