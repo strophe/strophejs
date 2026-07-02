@@ -62,11 +62,11 @@
   "scripts": {
     "types": "tsc",
     "build": "tsc && rollup -c",
-    "lint": "eslint src/*.ts",
+    "lint": "eslint src",
     "clean": "make clean",
     "doc": "make doc",
     "test": "npm run build && vitest run && npm run lint",
-    "prettier": "prettier --write src/*.ts"
+    "prettier": "prettier --write \"src/**/*.ts\""
   },
   "volo": {
     "url": "https://raw.githubusercontent.com/strophe/strophejs/release-{version}/strophe.js"

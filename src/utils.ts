@@ -199,7 +199,7 @@ export function stripWhitespace(stanza: Element): Element {
         if (node.nodeName.toLowerCase() === 'body') {
             return;
         }
-        if (node.nodeType === ElementType.TEXT && !(/\S/).test(node.nodeValue)) {
+        if (node.nodeType === ElementType.TEXT && !/\S/.test(node.nodeValue)) {
             stanza.removeChild(node);
         } else if (node.nodeType === ElementType.NORMAL) {
             stripWhitespace(node as Element);
@@ -472,12 +472,12 @@ export function copyElement(node: Node): Element | Text | undefined {
  * @returns Escaped text.
  */
 export function xmlescape(text: string): string {
-    text = text.replace(/\&/g, '&amp;');
-    text = text.replace(/</g, '&lt;');
-    text = text.replace(/>/g, '&gt;');
-    text = text.replace(/'/g, '&apos;');
-    text = text.replace(/"/g, '&quot;');
-    return text;
+    return text
+        .replace(/\&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/'/g, '&apos;')
+        .replace(/"/g, '&quot;');
 }
 
 /**

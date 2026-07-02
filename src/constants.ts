@@ -2,25 +2,27 @@
  * Common namespace constants from the XMPP RFCs and XEPs.
  */
 export const NS = {
-    HTTPBIND: 'http://jabber.org/protocol/httpbind',
+    AUTH: 'jabber:iq:auth',
+    BIND: 'urn:ietf:params:xml:ns:xmpp-bind',
     BOSH: 'urn:xmpp:xbosh',
     CLIENT: 'jabber:client',
-    SERVER: 'jabber:server',
-    AUTH: 'jabber:iq:auth',
-    ROSTER: 'jabber:iq:roster',
-    PROFILE: 'jabber:iq:profile',
     DISCO_INFO: 'http://jabber.org/protocol/disco#info',
     DISCO_ITEMS: 'http://jabber.org/protocol/disco#items',
-    MUC: 'http://jabber.org/protocol/muc',
-    SASL: 'urn:ietf:params:xml:ns:xmpp-sasl',
-    STREAM: 'http://etherx.jabber.org/streams',
+    DELAY: 'urn:xmpp:delay' /** XEP-0203 */,
     FRAMING: 'urn:ietf:params:xml:ns:xmpp-framing',
-    BIND: 'urn:ietf:params:xml:ns:xmpp-bind',
+    HTTPBIND: 'http://jabber.org/protocol/httpbind',
+    MUC: 'http://jabber.org/protocol/muc',
+    PROFILE: 'jabber:iq:profile',
+    ROSTER: 'jabber:iq:roster',
+    SASL: 'urn:ietf:params:xml:ns:xmpp-sasl',
+    SERVER: 'jabber:server',
     SESSION: 'urn:ietf:params:xml:ns:xmpp-session',
-    VERSION: 'jabber:iq:version',
+    SM: 'urn:xmpp:sm:3',
     STANZAS: 'urn:ietf:params:xml:ns:xmpp-stanzas',
-    XHTML_IM: 'http://jabber.org/protocol/xhtml-im',
+    STREAM: 'http://etherx.jabber.org/streams',
+    VERSION: 'jabber:iq:version',
     XHTML: 'http://www.w3.org/1999/xhtml',
+    XHTML_IM: 'http://jabber.org/protocol/xhtml-im',
 } as const;
 
 export const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
