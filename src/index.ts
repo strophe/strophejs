@@ -14,6 +14,7 @@ import SASLSHA256 from './sasl-sha256';
 import SASLSHA384 from './sasl-sha384';
 import SASLSHA512 from './sasl-sha512';
 import SASLXOAuth2 from './sasl-xoauth2';
+import StreamManagement, { MemoryStorageBackend, SessionStorageBackend } from './stream-management';
 import TimedHandler from './timed-handler';
 import Websocket from './websocket';
 import WorkerWebsocket from './worker-websocket';
@@ -41,6 +42,7 @@ type StropheType = {
     SASLExternal: typeof SASLExternal;
     SASLXOAuth2: typeof SASLXOAuth2;
     Stanza: typeof Stanza;
+    StreamManagement: typeof StreamManagement;
     Builder: typeof Builder;
     ElementType: typeof ElementType;
     ErrorCondition: typeof ErrorCondition;
@@ -101,6 +103,7 @@ const Strophe: StropheType = {
     SASLXOAuth2,
 
     Stanza,
+    StreamManagement,
     Builder,
     ElementType,
     ErrorCondition,
@@ -144,4 +147,19 @@ const Strophe: StropheType = {
 const toStanza = Stanza.toElement;
 (globalThis as any).toStanza = Stanza.toElement;
 
-export { Builder, $build, $iq, $msg, $pres, Strophe, Stanza, stx, toStanza, Request };
+export {
+    Builder,
+    $build,
+    $iq,
+    $msg,
+    $pres,
+    Strophe,
+    Stanza,
+    stx,
+    toStanza,
+    Request,
+    StreamManagement,
+    MemoryStorageBackend,
+    SessionStorageBackend,
+};
+export type { StanzaView, QueuedStanza, SMState, SMStorageBackend, StreamManagementOptions } from './stream-management';
