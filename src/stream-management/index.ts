@@ -9,4 +9,5 @@
 export { default } from './engine';
 export { MemoryStorageBackend, SessionStorageBackend } from './storage';
 export { isCountableStanza, stampDelay } from './utils';
+export { toStanzaView } from './dom';
 export type { StanzaView, QueuedStanza, SMState, SMStorageBackend, StreamManagementOptions } from './types';
