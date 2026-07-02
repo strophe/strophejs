@@ -212,10 +212,7 @@ class StreamManagement {
      */
     onInbound(view: StanzaView): boolean {
         if (isCountableStanza(view.name)) {
-            if (this._state.enabled) {
-                this._state.hIn = (this._state.hIn + 1) % H_WRAP;
-                this._persist();
-            }
+            this.onInboundStanza(view.name);
             return false;
         }
         switch (view.name) {
@@ -259,6 +256,38 @@ class StreamManagement {
      */
     sendAck(): void {
         this._sendRaw(`<a xmlns="${NS.SM}" h="${this._state.hIn}"/>`);
+    }
+
+    /**
+     * Count an inbound top-level stanza by name. Adapters call this from
+     * their dispatch loop for every inbound child element — non-countable
+     * names and inactive sessions are no-ops, so no StanzaView needs to be
+     * built for the common case.
+     * @param name - The element's local tag name.
+     */
+    onInboundStanza(name: string): void {
+        if (this._state.enabled && isCountableStanza(name)) {
+            this._state.hIn = (this._state.hIn + 1) % H_WRAP;
+            this._persist();
+        }
+    }
+
+    /**
+     * Call when the stream is about to be closed cleanly: sends a final
+     * <a/> so the server doesn't redeliver stanzas that were actually
+     * received (RECOMMENDED, XEP-0198 §4), clears persisted state (a
+     * cleanly closed stream is not resumable, XEP-0198 §Stream Closure) and
+     * deactivates the engine, so nothing sent during teardown is tracked or
+     * re-persisted.
+     */
+    onGracefulClose(): void {
+        if (this._state.enabled) {
+            this.sendAck();
+        }
+        this.clearPersistedState();
+        this._state = freshState();
+        this._resumePending = false;
+        this._pendingResend = [];
     }
 
     /** Overridable event hook: an SM session was established via <enabled/>. */

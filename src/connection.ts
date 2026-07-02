@@ -23,12 +23,19 @@ import {
     getResourceFromJid,
     getText,
     handleError,
+    toElement,
     type Cookies,
 } from './utils';
 import { SessionError } from './errors';
 import Bosh from './bosh';
 import WorkerWebsocket from './worker-websocket';
 import Websocket from './websocket';
+import StreamManagement, {
+    SessionStorageBackend,
+    isCountableStanza,
+    toStanzaView,
+    type StreamManagementOptions,
+} from './stream-management';
 
 export interface ConnectionOptions {
     /**
@@ -85,6 +92,20 @@ export interface ConnectionOptions {
      * session, before binding the JID resource for this session.
      */
     explicitResourceBinding?: boolean;
+    /**
+     * If `enableStreamManagement` is set to `true`, Strophe negotiates
+     * XEP-0198 Stream Management on websocket connections.
+     *
+     * Defaults to `false`. Not available over BOSH, nor (yet) in
+     * combination with the `worker` option.
+     */
+    enableStreamManagement?: boolean;
+    /**
+     * Fine-tuning options for XEP-0198 Stream Management — see
+     * {@link StreamManagementOptions}. Only relevant together with
+     * {@link ConnectionOptions.enableStreamManagement}.
+     */
+    streamManagement?: StreamManagementOptions;
     /**
      * _Note: This option is only relevant to Websocket connections, and not BOSH_
      *
@@ -223,6 +244,7 @@ const connectionPlugins: Record<string, object> = {};
  *
  * @memberof Strophe
  */
+
 class Connection {
     service: string;
     options: ConnectionOptions;
@@ -270,6 +292,13 @@ class Connection {
     _proto: Bosh | Websocket | WorkerWebsocket;
     _sasl_mechanism: SASLMechanism | null;
     _requests: Request[];
+    /**
+     * The XEP-0198 Stream Management engine. Only present when the
+     * `enableStreamManagement` option is set on a non-worker websocket
+     * connection.
+     */
+    sm?: StreamManagement;
+    _smHandlers: Handler[];
 
     /**
      * Create and initialize a {@link Connection} object.
@@ -294,6 +323,25 @@ class Connection {
         this.options = options;
 
         this.setProtocol();
+
+        this._smHandlers = [];
+        if (options.enableStreamManagement && !options.worker) {
+            // The engine is constructed regardless of the current
+            // transport since embedders may swap `_proto` after construction.
+            const smOptions = { ...(options.streamManagement || {}) };
+            if (!smOptions.storage && typeof sessionStorage !== 'undefined') {
+                smOptions.storage = new SessionStorageBackend();
+            }
+
+            // The SM engine emits nonzas (and re-sends queued stanzas) as
+            // strings. They are pushed directly onto the send queue and
+            // they ride the same FIFO, so an <r/> goes out after the
+            // stanzas it covers.
+            this.sm = new StreamManagement((data: string) => {
+                this._data.push(toElement(data));
+                this._proto._send();
+            }, smOptions);
+        }
 
         /* The connected JID. */
         this.jid = '';
@@ -421,6 +469,9 @@ class Connection {
      */
     reset(): void {
         this._proto._reset();
+        // In-memory SM state only. Persisted (resumable) state is kept and
+        // reloaded when the next stream advertises SM support.
+        this.sm?.reset();
 
         // SASL
         this.do_session = false;
@@ -441,6 +492,24 @@ class Connection {
         this._data = [];
         this._requests = [];
         this._uniqueId = 0;
+    }
+
+    /**
+     * @returns true if the current session was established by resuming a
+     *     previous one via XEP-0198 Stream Management (in which case the
+     *     previously bound resource is still valid and roster/presence
+     *     state was retained by the server).
+     */
+    hasResumed(): boolean {
+        return !!this.sm?.resumed;
+    }
+
+    /**
+     * @returns true if a XEP-0198 Stream Management session is currently
+     *     active (i.e. <enabled/> was received or a session was resumed).
+     */
+    isStreamManagementEnabled(): boolean {
+        return !!this.sm?.enabled;
     }
 
     /**
@@ -602,6 +671,9 @@ class Connection {
         this.authenticated = false;
         this.restored = false;
         this.disconnection_timeout = disconnection_timeout;
+        // Per-stream SM state starts fresh; resumable state is reloaded from
+        // storage once the server advertises SM (_onStreamFeaturesAfterSASL).
+        this.sm?.reset();
 
         // parse jid for domain
         this.domain = getDomainFromJid(this.jid);
@@ -963,6 +1035,13 @@ class Connection {
             throw error;
         }
         this._data.push(element);
+        // XEP-0198: every countable outbound stanza is queued here, after the
+        // push, so that an <r/> emitted by the engine lands behind it in the
+        // send FIFO. Hooking _queueData (rather than send/sendIQ/sendPresence)
+        // means raw send() calls can't escape the counting.
+        if (this.sm?.state.enableSent && isCountableStanza(element.tagName)) {
+            this.sm.trackOutbound(toStanzaView(element));
+        }
     }
 
     /**
@@ -1173,6 +1252,10 @@ class Connection {
                     'type': 'unavailable',
                 }).tree();
             }
+            // A cleanly closed stream is not resumable: send a final <a/> so
+            // the server doesn't redeliver stanzas we already received, and
+            // drop the persisted XEP-0198 state.
+            this.sm?.onGracefulClose();
             // setup timeout handler
             this._disconnectTimeout = this._addSysTimedHandler(
                 this.disconnection_timeout,
@@ -1332,6 +1415,9 @@ class Connection {
 
         // send each incoming stanza through the handler chain
         forEachChild(elem, null, (child: Element) => {
+            // XEP-0198: count inbound stanzas here in the dispatch loop —
+            // exactly-once, in order, and immune to handler churn.
+            this.sm?.onInboundStanza(child.nodeName);
             const matches: Handler[] = [];
             this.handlers = this.handlers.reduce((handlers, handler) => {
                 try {
@@ -1347,7 +1433,6 @@ class Connection {
                     // if the handler throws an exception, we consider it as false
                     log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
                 }
-
                 return handlers;
             }, []);
 
@@ -1711,6 +1796,22 @@ class Connection {
             if (child.nodeName === 'session') {
                 this.do_session = true;
             }
+            if (this.sm && child.nodeName === 'sm' && (child as Element).namespaceURI === NS.SM) {
+                this.sm.serverSupported = true;
+            }
+        }
+
+        // SM is only negotiated over websocket. Checked here on the
+        // live transport because the transport can be swapped after
+        // construction (e.g. XEP-0156 discovery).
+        if (this.sm?.serverSupported && this._proto instanceof Websocket) {
+            this.sm.initialize(this.jid);
+            if (this.sm.hasResumableState()) {
+                // Attempt XEP-0198 stream resumption instead of binding a resource.
+                this._registerSMHandlers();
+                this.sm.sendResume();
+                return false;
+            }
         }
 
         if (!this.do_bind) {
@@ -1722,6 +1823,94 @@ class Connection {
             this._changeConnectStatus(Status.BINDREQUIRED, null);
         }
         return false;
+    }
+
+    /**
+     * Register the XEP-0198 nonza handlers (idempotently)
+     * They are system handlers, so they run before authentication completes,
+     * which the resume flow requires.
+     */
+    _registerSMHandlers(): void {
+        this._smHandlers.forEach((h) => this.deleteHandler(h));
+        const delegate = (el: Element): boolean => {
+            this.sm.onInbound(toStanzaView(el));
+            return true;
+        };
+        this._smHandlers = [
+            this._addSysHandler(delegate, NS.SM, 'r', null, null),
+            this._addSysHandler(delegate, NS.SM, 'a', null, null),
+            this._addSysHandler(delegate, NS.SM, 'enabled', null, null),
+            this._addSysHandler((el) => this._onStreamResumed(el), NS.SM, 'resumed', null, null),
+            this._addSysHandler((el) => this._onStreamResumptionFailed(el), NS.SM, 'failed', null, null),
+        ];
+    }
+
+    /**
+     * _Private_ handler for a successful XEP-0198 stream resumption.
+     *
+     * The engine reconciles the server's 'h' and re-sends whatever the
+     * server didn't acknowledge.
+     *
+     * The connection state is restored, `this.jid` is set back to the JID that
+     * was bound when the SM session was established, *before* CONNECTED is emitted,
+     * so no stanza can ever be stamped with a resource the server doesn't know.
+     * @param elem - The <resumed/> nonza.
+     * @return `true` to keep the handler.
+     */
+    _onStreamResumed(elem: Element): boolean {
+        this.sm.onInbound(toStanzaView(elem));
+        this.do_bind = false;
+        this.authenticated = true;
+        this.restored = true;
+        this.jid = this.sm.boundJid;
+        this._changeConnectStatus(Status.CONNECTED, null);
+        return true;
+    }
+
+    /**
+     * _Private_ handler for a failed <enable/> or <resume/>.
+     *
+     * The engine resets its state; after a failed *resumption* it also
+     * salvages the unacked queue (re-sent once a fresh session reaches
+     * <enabled/>), and the connection falls back to binding a resource on
+     * this same stream, per XEP-0198 ("the server SHOULD allow the client
+     * to bind a resource at this point"). A refused <enable/> needs neither:
+     * the stream is alive and bound, it just runs without SM.
+     * @param elem - The <failed/> nonza.
+     * @return `true` to keep the handler.
+     */
+    _onStreamResumptionFailed(elem: Element): boolean {
+        // Read before feeding the nonza to the engine, which clears the flag.
+        const resuming = this.sm.resumePending;
+        this.sm.onInbound(toStanzaView(elem));
+        if (resuming) {
+            this.do_bind = true;
+            if (this.options.explicitResourceBinding) {
+                this._changeConnectStatus(Status.BINDREQUIRED, null);
+            } else {
+                this.bind();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Start a fresh XEP-0198 session if the server supports it and no
+     * session was resumed. Called at the CONNECTED-emission points of the
+     * connect flow (after resource binding, or after legacy session
+     * establishment when the server requires it). The XEP allows <enable/>
+     * any time after binding.
+     */
+    _maybeEnableStreamManagement(): void {
+        if (
+            this.sm?.serverSupported &&
+            !this.sm.resumed &&
+            !this.sm.state.enableSent &&
+            this._proto instanceof Websocket
+        ) {
+            this._registerSMHandlers();
+            this.sm.sendEnable(this.jid);
+        }
     }
 
     /**
@@ -1784,6 +1973,7 @@ class Connection {
                 if (this.do_session) {
                     this._establishSession();
                 } else {
+                    this._maybeEnableStreamManagement();
                     this._changeConnectStatus(Status.CONNECTED, null);
                 }
             }
@@ -1833,6 +2023,7 @@ class Connection {
     _onSessionResultIQ(elem: Element): boolean {
         if (elem.getAttribute('type') === 'result') {
             this.authenticated = true;
+            this._maybeEnableStreamManagement();
             this._changeConnectStatus(Status.CONNECTED, null);
         } else if (elem.getAttribute('type') === 'error') {
             this.authenticated = false;
