@@ -32,8 +32,10 @@ import WorkerWebsocket from './worker-websocket';
 import Websocket from './websocket';
 import StreamManagement, {
     SessionStorageBackend,
+    StreamManagementMirror,
     isCountableStanza,
     toStanzaView,
+    type StreamManagementController,
     type StreamManagementOptions,
 } from './stream-management';
 
@@ -96,8 +98,9 @@ export interface ConnectionOptions {
      * If `enableStreamManagement` is set to `true`, Strophe negotiates
      * XEP-0198 Stream Management on websocket connections.
      *
-     * Defaults to `false`. Not available over BOSH, nor (yet) in
-     * combination with the `worker` option.
+     * Defaults to `false`. Not available over BOSH. In combination with the
+     * `worker` option, the SM session lives inside the shared worker (which
+     * sees every tab's traffic) and the connection only mirrors its state.
      */
     enableStreamManagement?: boolean;
     /**
@@ -294,10 +297,14 @@ class Connection {
     _requests: Request[];
     /**
      * The XEP-0198 Stream Management engine. Only present when the
-     * `enableStreamManagement` option is set on a non-worker websocket
-     * connection.
+     * `enableStreamManagement` option is set on a websocket connection.
+     * Under the `worker` option this is a {@link StreamManagementMirror}:
+     * the engine itself lives inside the shared worker and the mirror only
+     * reflects the session state. Typed against the shared
+     * {@link StreamManagementController} interface so the two are
+     * interchangeable here.
      */
-    sm?: StreamManagement;
+    sm?: StreamManagementController;
     _smHandlers: Handler[];
 
     /**
@@ -325,22 +332,30 @@ class Connection {
         this.setProtocol();
 
         this._smHandlers = [];
-        if (options.enableStreamManagement && !options.worker) {
-            // The engine is constructed regardless of the current
-            // transport since embedders may swap `_proto` after construction.
-            const smOptions = { ...(options.streamManagement || {}) };
-            if (!smOptions.storage && typeof sessionStorage !== 'undefined') {
-                smOptions.storage = new SessionStorageBackend();
-            }
+        if (options.enableStreamManagement) {
+            if (options.worker) {
+                // Under a shared worker the page hosts no SM engine since
+                // the worker owns all counting and queueing. The mirror
+                // only reflects the session state so that hasResumed()
+                // and friends keep working in every tab.
+                this.sm = new StreamManagementMirror();
+            } else {
+                // The engine is constructed regardless of the current
+                // transport since embedders may swap `_proto` after construction.
+                const smOptions = { ...(options.streamManagement || {}) };
+                if (!smOptions.storage && typeof sessionStorage !== 'undefined') {
+                    smOptions.storage = new SessionStorageBackend();
+                }
 
-            // The SM engine emits nonzas (and re-sends queued stanzas) as
-            // strings. They are pushed directly onto the send queue and
-            // they ride the same FIFO, so an <r/> goes out after the
-            // stanzas it covers.
-            this.sm = new StreamManagement((data: string) => {
-                this._data.push(toElement(data));
-                this._proto._send();
-            }, smOptions);
+                // The SM engine emits nonzas (and re-sends queued stanzas) as
+                // strings. They are pushed directly onto the send queue and
+                // they ride the same FIFO, so an <r/> goes out after the
+                // stanzas it covers.
+                this.sm = new StreamManagement((data: string) => {
+                    this._data.push(toElement(data));
+                    this._proto._send();
+                }, smOptions);
+            }
         }
 
         /* The connected JID. */
@@ -1039,7 +1054,7 @@ class Connection {
         // push, so that an <r/> emitted by the engine lands behind it in the
         // send FIFO. Hooking _queueData (rather than send/sendIQ/sendPresence)
         // means raw send() calls can't escape the counting.
-        if (this.sm?.state.enableSent && isCountableStanza(element.tagName)) {
+        if (this.sm?.isTracking() && isCountableStanza(element.tagName)) {
             this.sm.trackOutbound(toStanzaView(element));
         }
     }
@@ -1801,28 +1816,47 @@ class Connection {
             }
         }
 
-        // SM is only negotiated over websocket. Checked here on the
-        // live transport because the transport can be swapped after
-        // construction (e.g. XEP-0156 discovery).
-        if (this.sm?.serverSupported && this._proto instanceof Websocket) {
-            this.sm.initialize(this.jid);
-            if (this.sm.hasResumableState()) {
-                // Attempt XEP-0198 stream resumption instead of binding a resource.
-                this._registerSMHandlers();
-                this.sm.sendResume();
+        if (this.sm?.serverSupported) {
+            if (this.options.worker) {
+                // Only the worker knows whether resumable state exists: it
+                // either sends <resume/> itself (answering _smResumed or
+                // _smFailed) or replies _smNoState, upon which the
+                // connection proceeds to bind (see WorkerWebsocket).
+                (this._proto as WorkerWebsocket)._smFeatures();
                 return false;
+            }
+
+            // SM is only negotiated over websocket. Checked here on the
+            // live transport because the transport can be swapped after
+            // construction (e.g. XEP-0156 discovery).
+            if (this._proto instanceof Websocket) {
+                this.sm.initialize(this.jid);
+                if (this.sm.hasResumableState()) {
+                    // Attempt XEP-0198 stream resumption instead of binding a resource.
+                    this._registerSMHandlers();
+                    this.sm.sendResume();
+                    return false;
+                }
             }
         }
 
+        this._proceedToBind();
+        return false;
+    }
+
+    /**
+     * Continue the connect flow with resource binding, once it is clear no
+     * XEP-0198 resumption will happen (no SM support, no resumable state, a
+     * failed <resume/>, or the shared worker reporting _smNoState).
+     */
+    _proceedToBind(): void {
         if (!this.do_bind) {
             this._changeConnectStatus(Status.AUTHFAIL, null);
-            return false;
         } else if (!this.options.explicitResourceBinding) {
             this.bind();
         } else {
             this._changeConnectStatus(Status.BINDREQUIRED, null);
         }
-        return false;
     }
 
     /**
@@ -1885,29 +1919,35 @@ class Connection {
         this.sm.onInbound(toStanzaView(elem));
         if (resuming) {
             this.do_bind = true;
-            if (this.options.explicitResourceBinding) {
-                this._changeConnectStatus(Status.BINDREQUIRED, null);
-            } else {
-                this.bind();
-            }
+            this._proceedToBind();
         }
         return true;
     }
 
     /**
-     * Start a fresh XEP-0198 session if the server supports it and no
-     * session was resumed. Called at the CONNECTED-emission points of the
-     * connect flow (after resource binding, or after legacy session
-     * establishment when the server requires it). The XEP allows <enable/>
-     * any time after binding.
+     * Called at the CONNECTED-emission points of the connect flow, just
+     * before CONNECTED is emitted i.e. once the full JID is final (resource
+     * bound, legacy session established, or legacy auth completed).
+     *
+     * Under the `worker` option the bound JID is always reported to the
+     * shared worker — with or without Stream Management — so it can hand the
+     * right JID to attaching tabs, release joins parked on the handshake,
+     * and (when this stream's features advertised SM) start a fresh SM
+     * session itself (it answers with _smEnabled, which updates the mirror).
+     *
+     * Otherwise, if the server supports XEP-0198 and nothing was resumed,
+     * a fresh SM session is started from here. The XEP allows <enable/> any
+     * time after binding.
      */
-    _maybeEnableStreamManagement(): void {
-        if (
-            this.sm?.serverSupported &&
-            !this.sm.resumed &&
-            !this.sm.state.enableSent &&
-            this._proto instanceof Websocket
-        ) {
+    _onSessionReady(): void {
+        if (this.options.worker) {
+            (this._proto as WorkerWebsocket)._bound(this.jid);
+            return;
+        }
+        if (!this.sm?.serverSupported || this.sm.resumed || !(this._proto instanceof Websocket)) {
+            return;
+        }
+        if (!this.sm.isTracking()) {
             this._registerSMHandlers();
             this.sm.sendEnable(this.jid);
         }
@@ -1973,7 +2013,7 @@ class Connection {
                 if (this.do_session) {
                     this._establishSession();
                 } else {
-                    this._maybeEnableStreamManagement();
+                    this._onSessionReady();
                     this._changeConnectStatus(Status.CONNECTED, null);
                 }
             }
@@ -2023,7 +2063,7 @@ class Connection {
     _onSessionResultIQ(elem: Element): boolean {
         if (elem.getAttribute('type') === 'result') {
             this.authenticated = true;
-            this._maybeEnableStreamManagement();
+            this._onSessionReady();
             this._changeConnectStatus(Status.CONNECTED, null);
         } else if (elem.getAttribute('type') === 'error') {
             this.authenticated = false;
@@ -2067,6 +2107,7 @@ class Connection {
     _auth2_cb(elem: Element): boolean {
         if (elem.getAttribute('type') === 'result') {
             this.authenticated = true;
+            this._onSessionReady();
             this._changeConnectStatus(Status.CONNECTED, null);
         } else if (elem.getAttribute('type') === 'error') {
             this._changeConnectStatus(Status.AUTHFAIL, null, elem);

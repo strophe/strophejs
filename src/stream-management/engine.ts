@@ -1,37 +1,40 @@
 /**
- * XEP-0198 Stream Management — the engine.
+ * XEP-0198 Stream Management engine.
  *
  * This class holds all SM state and logic (counters, the unacked queue, the
  * enable/resume lifecycle) and never touches a DOM Element or a raw websocket
  * frame, so the same class can be hosted by a page-side Connection or inside a
  * SharedWorker. Everything it needs from a stanza is captured in a minimal
- * {@link StanzaView}, produced by whichever side hosts it. Nonzas are emitted
- * as strings through the injected `sendRaw` function.
+ * {@link StanzaView}, produced by whichever side hosts it (dom.ts on the page,
+ * parse.ts in the worker). Nonzas are emitted as strings through the injected
+ * `sendRaw` function.
  *
  * IMPORTANT: this module must be loadable in a SharedWorker global (it is
  * bundled into dist/shared-connection-worker.js), so keep it free of imports
- * beyond log/constants and its worker-safe siblings — in particular no
+ * beyond log/constants and its worker-safe siblings, in particular no
  * ../utils.ts or ../builder.ts, and no module-level DOM access.
  */
 import log from '../log';
 import { NS } from '../constants';
-import { QueuedStanza, SMState, SMStorageBackend, StanzaView, StreamManagementOptions } from './types';
+import {
+    QueuedStanza,
+    SMState,
+    SMStorageBackend,
+    StanzaView,
+    StreamManagementController,
+    StreamManagementOptions,
+} from './types';
 import { H_WRAP, freshState, isCountableStanza, parseH, stampDelay, xmlEscape } from './utils';
 import { MemoryStorageBackend } from './storage';
-
-/** SM nonza names in the urn:xmpp:sm:3 namespace. */
-const NONZAS = ['r', 'a', 'enabled', 'resumed', 'failed'];
 
 /**
  * The XEP-0198 Stream Management engine.
  *
  * Hosted by {@link Connection} (page) or by the shared-connection worker; fed
  * {@link StanzaView}s by a thin per-environment adapter. Emits nonzas through
- * the injected `sendRaw` function — on the page that appends to the
- * connection's send queue (never a direct socket write, to preserve stanza
- * ordering), in the worker it writes to the socket.
+ * the injected `sendRaw` function.
  */
-class StreamManagement {
+class StreamManagement implements StreamManagementController {
     /** Whether the current stream's features advertised <sm xmlns="urn:xmpp:sm:3"/>. Not persisted. */
     serverSupported: boolean;
 
@@ -183,6 +186,16 @@ class StreamManagement {
     }
 
     /**
+     * @returns true once <enable/> has been sent, i.e. outbound stanzas are
+     *     being tracked. Lets the caller skip building a {@link StanzaView}
+     *     for {@link trackOutbound} when tracking is inactive, without
+     *     reaching into the engine's state.
+     */
+    isTracking(): boolean {
+        return this._state.enableSent;
+    }
+
+    /**
      * Track an outbound top-level element. Called for every element that
      * enters the send queue; non-countable elements are ignored here.
      * Active from the moment <enable/> is sent (not from <enabled/> receipt —
@@ -204,44 +217,35 @@ class StreamManagement {
     }
 
     /**
-     * Process an inbound top-level element.
+     * Process one inbound top-level element: count it if it is a countable
+     * stanza (when the session is enabled), otherwise handle it as an SM
+     * nonza (<r>/<a>/<enabled>/<resumed>/<failed>). Unrecognised elements are
+     * ignored. Each host dispatches inbound elements to its own handlers
+     * independently of this call, so nothing is returned.
      * @param view
-     * @returns true if the element was an SM nonza (consumed by the engine),
-     *     false if it's a regular stanza (counted here when the session is
-     *     enabled, but still to be dispatched to handlers by the caller).
      */
-    onInbound(view: StanzaView): boolean {
+    onInbound(view: StanzaView): void {
         if (isCountableStanza(view.name)) {
             this.onInboundStanza(view.name);
-            return false;
+            return;
         }
         switch (view.name) {
             case 'r':
                 if (this._state.enabled) this.sendAck();
-                return true;
+                break;
             case 'a':
                 this._handleAck(view);
-                return true;
+                break;
             case 'enabled':
                 this._handleEnabled(view);
-                return true;
+                break;
             case 'resumed':
                 this._handleResumed(view);
-                return true;
+                break;
             case 'failed':
                 this._handleFailed(view);
-                return true;
-            default:
-                return false;
+                break;
         }
-    }
-
-    /**
-     * @param name - A top-level element's local tag name.
-     * @returns true if the element is an SM nonza.
-     */
-    isNonza(name: string): boolean {
-        return NONZAS.includes(name);
     }
 
     /** Send an unrequested ack request <r/> to the server. */

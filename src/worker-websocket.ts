@@ -4,6 +4,7 @@ import log from './log';
 import Builder, { $build } from './builder';
 import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants';
 import { WebsocketLike } from 'types';
+import type { StreamManagementMirror } from './stream-management';
 
 /**
  * Helper class that handles a websocket connection inside a shared worker.
@@ -93,12 +94,85 @@ class WorkerWebsocket extends Websocket {
     }
 
     /**
+     * Ask the worker to negotiate XEP-0198 for the freshly authenticated
+     * stream (§2.3): it sends <resume/> if it holds resumable state,
+     * otherwise it replies with _smNoState and the connection proceeds to
+     * bind a resource.
+     */
+    _smFeatures(): void {
+        this.worker.port.postMessage(['_smFeatures']);
+    }
+
+    /**
+     * Report that the connect flow completed (resource bound, or legacy
+     * auth/session establishment finished). Sent with or without SM: the
+     * worker adopts the bound JID as the shared one, releases tabs parked on
+     * the handshake, and starts a fresh SM session itself when this stream's
+     * features advertised support.
+     * @param jid - The server-assigned full JID.
+     */
+    _bound(jid: string): void {
+        this.worker.port.postMessage(['_bound', jid]);
+    }
+
+    /**
      * Liveness probe from the worker. Answered from this message handler —
      * which runs even when the browser throttles this tab's timers — so a
      * merely-backgrounded tab never looks dead to the worker.
      */
     _ping(): void {
         this.worker.port.postMessage(['_pong']);
+    }
+
+    /**
+     * Called by the worker when it has no resumable state: continue the
+     * connect flow with resource binding.
+     */
+    _smNoState(): void {
+        this._conn._proceedToBind();
+    }
+
+    /**
+     * Called by the worker when a fresh SM session was established.
+     * @param id - The SM-ID.
+     * @param max - The server's preferred maximum resumption time.
+     * @param boundJid - The JID that was bound when the session was enabled.
+     */
+    _smEnabled(id: string, max: number, boundJid: string): void {
+        (this._conn.sm as StreamManagementMirror)?._onEnabled(id, max, boundJid);
+    }
+
+    /**
+     * Called by the worker when the previous session was resumed. Every tab
+     * adopts the originally bound JID; the primary — which drove the connect
+     * flow — additionally restores the connection state and emits CONNECTED
+     * (the same actions a non-worker connection applies on <resumed/>).
+     * @param jid - The worker's boundJid.
+     */
+    _smResumed(jid: string): void {
+        const conn = this._conn;
+        (conn.sm as StreamManagementMirror)?._onResumed(jid);
+        conn.jid = jid;
+        if (conn.role === 'primary') {
+            conn.do_bind = false;
+            conn.authenticated = true;
+            conn.restored = true;
+            conn._changeConnectStatus(Status.CONNECTED, null);
+        }
+    }
+
+    /**
+     * Called by the worker when resumption failed: the primary falls back
+     * to binding a resource on this same stream (the salvaged queue stays
+     * in the worker and is re-sent after the next <enabled/>).
+     */
+    _smFailed(): void {
+        const conn = this._conn;
+        (conn.sm as StreamManagementMirror)?._onFailed();
+        if (conn.role === 'primary') {
+            conn.do_bind = true;
+            conn._proceedToBind();
+        }
     }
 
     /**

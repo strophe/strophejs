@@ -14,7 +14,7 @@ import SASLSHA256 from './sasl-sha256';
 import SASLSHA384 from './sasl-sha384';
 import SASLSHA512 from './sasl-sha512';
 import SASLXOAuth2 from './sasl-xoauth2';
-import StreamManagement, { MemoryStorageBackend, SessionStorageBackend } from './stream-management';
+import StreamManagement, { MemoryStorageBackend, SessionStorageBackend, StreamManagementMirror } from './stream-management';
 import TimedHandler from './timed-handler';
 import Websocket from './websocket';
 import WorkerWebsocket from './worker-websocket';
@@ -159,7 +159,15 @@ export {
     toStanza,
     Request,
     StreamManagement,
+    StreamManagementMirror,
     MemoryStorageBackend,
     SessionStorageBackend,
 };
-export type { StanzaView, QueuedStanza, SMState, SMStorageBackend, StreamManagementOptions } from './stream-management';
+export type {
+    StanzaView,
+    QueuedStanza,
+    SMState,
+    SMStorageBackend,
+    StreamManagementController,
+    StreamManagementOptions,
+} from './stream-management';

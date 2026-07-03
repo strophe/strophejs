@@ -1,5 +1,5 @@
 /**
- * XEP-0198 Stream Management — shared types.
+ * XEP-0198 Stream Management
  *
  * Everything in this module is environment-free (no DOM, no worker globals)
  * so it can be imported from both the page bundle and the standalone
@@ -15,7 +15,7 @@
 export interface StanzaView {
     name: string; /** The local (unprefixed) tag name of the top-level element. */
     attrs: Record<string, string>; /** The attributes of the top-level element. */
-    serialized: string; /** The serialized element — used as the unacked queue payload. */
+    serialized: string; /** The serialized element used as the unacked queue payload. */
 }
 
 /** An entry in the unacked queue. */
@@ -62,4 +62,56 @@ export interface StreamManagementOptions {
     requestResume?: boolean; /** Ask for a resumable session (resume="true" on <enable/>). Default: true. */
     max?: number; /** The client's preferred max resumption time in seconds (max attribute on <enable/>). */
     storage?: SMStorageBackend; /** Storage backend for resumable state. Default: per-instance MemoryStorageBackend. */
+}
+
+/**
+ * The Stream Management surface a page-side Connection depends on, implemented
+ * by both the worker-free engine (engine.ts) and the worker-mode page mirror
+ * (mirror.ts). Typing `Connection.sm` against this (rather than the concrete
+ * engine class) is what lets the mirror be a peer implementation instead of a
+ * subclass full of neutralised overrides: any member added here must be
+ * implemented by both sides, so the mirror can never silently inherit a live
+ * engine method it was meant to render inert.
+ */
+export interface StreamManagementController {
+    /** Whether the current stream's features advertised <sm xmlns="urn:xmpp:sm:3"/>. */
+    serverSupported: boolean;
+    /** The live SM session state (fields are mutable; the reference is not reassigned). */
+    readonly state: SMState;
+    /** Whether <enabled/> has been received and the session is active. */
+    readonly enabled: boolean;
+    /** Whether the current session was established by resumption. */
+    readonly resumed: boolean;
+    /** The full JID bound when the session was enabled. */
+    readonly boundJid: string;
+    /** Whether a <resume/> has been sent and not yet answered. */
+    readonly resumePending: boolean;
+
+    /** Load persisted resumable state for the given (bare) JID. */
+    initialize(jid: string): void;
+    /** Whether persisted state allows attempting <resume/>. */
+    hasResumableState(): boolean;
+    /** Reset the in-memory session state. */
+    reset(): void;
+    /** Send <resume/> for the persisted previous session. */
+    sendResume(): void;
+    /** Send <enable/> to start a new session. */
+    sendEnable(boundJid: string): void;
+    /** Whether outbound stanzas are currently being tracked (i.e. <enable/> was sent). */
+    isTracking(): boolean;
+    /** Track an outbound top-level element. */
+    trackOutbound(view: StanzaView): void;
+    /** Process an inbound top-level element (count a stanza or handle a nonza). */
+    onInbound(view: StanzaView): void;
+    /** Count an inbound top-level stanza by name. */
+    onInboundStanza(name: string): void;
+    /** End the session cleanly: final <a/> and clear persisted state. */
+    onGracefulClose(): void;
+
+    /** Overridable event hook: a session was established via <enabled/>. */
+    onEnabled(): void;
+    /** Overridable event hook: the previous session was resumed via <resumed/>. */
+    onResumed(): void;
+    /** Overridable event hook: <enable/> or <resume/> failed. */
+    onFailed(view?: StanzaView, resumeFailed?: boolean): void;
 }
