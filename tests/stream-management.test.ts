@@ -124,7 +124,7 @@ describe('StreamManagement core', () => {
             enable(sm);
             sm.onInbound(view('message'));
             sm.onInbound(view('message'));
-            expect(sm.onInbound(view('r'))).toBe(true);
+            sm.onInbound(view('r'));
             expect(sent.at(-1)).toBe(`<a xmlns="${SM_NS}" h="2"/>`);
         });
 

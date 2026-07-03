@@ -5,24 +5,19 @@
  * Exactly one live port holds the 'primary' role and it drives the XMPP stream
  * (handshake, and at the application layer it is the tab that should respond
  * to stanzas). All other ports are 'secondary' and attach to the shared
- * session — but only once that session is *established* (resource bound or
- * resumed): a join that arrives while the handshake is still in flight is
- * parked and answered when it completes, so no tab is ever told ATTACHED on
- * an unauthenticated stream or handed a pre-bind JID. When the primary goes
- * away (graceful `_bye`, freeze-time `_relinquish`, or missed pongs) the next
- * live port is promoted on the same socket.
+ * session.
  *
- * Port liveness is worker-probed: the worker pings, pages answer from their
- * message handler — which browsers do not throttle, unlike timers, which a
- * hidden tab may only run once every ten minutes. Delivery is never gated on
- * liveness: a silent port keeps receiving broadcasts (a frozen tab replays
- * them on thaw) until it has been quiet for so long that it must be gone for
- * good.
+ * The worker sends pings to probe port liveness. Pages answer from their
+ * message handler, which browsers do not throttle. A silent port keeps
+ * receiving broadcasts (a frozen tab replays them on thaw) until it has
+ * been quiet for so long that it must be gone for good (30 mins).
  *
  * This file is built as a self-contained classic-worker script
  * (`dist/shared-connection-worker.js`) keep it free of DOM dependencies.
  */
 import { SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants';
+import StreamManagement from './stream-management/engine';
+import { peekElement } from './stream-management/parse';
 
 /** How often the worker pings its ports (and sweeps for gone ones). */
 export const PING_INTERVAL = 30_000;
@@ -47,14 +42,24 @@ export const PORT_GC_TIMEOUT = 30 * 60_000;
 export const SOCKET_GRACE = 10_000;
 
 /** The page→worker methods that may be invoked via postMessage. */
-const METHODS = ['_connect', '_attach', '_pong', '_relinquish', 'send', 'close', '_closeSocket', '_bound'];
+const METHODS = [
+    '_connect',
+    '_attach',
+    '_pong',
+    '_relinquish',
+    'send',
+    'close',
+    '_closeSocket',
+    '_smFeatures',
+    '_bound',
+];
 
 /**
  * The subset of METHODS that presumes a live socket. When one arrives after
  * the socket died, the sender is answered with _onClose instead of having
  * its message dropped into the void (see _onPortMessage).
  */
-const SESSION_METHODS = ['send', 'close', '_bound'];
+const SESSION_METHODS = ['send', 'close', '_smFeatures', '_bound'];
 
 type Role = 'primary' | 'secondary';
 
@@ -74,11 +79,20 @@ class ConnectionManager {
     socket: WebSocket | null;
     /**
      * Where the shared stream is in its lifecycle. 'connecting' spans from
-     * socket creation until the primary reports the bound JID (_bound);
-     * only in 'established' are join requests answered — earlier ones wait
-     * in _pendingJoins.
+     * socket creation until the primary reports the bound JID (_bound) or a
+     * worker-driven resumption succeeds; only in 'established' are join
+     * requests answered — earlier ones wait in _pendingJoins.
      */
     session: 'none' | 'connecting' | 'established';
+    /**
+     * The worker-resident XEP-0198 engine (created lazily on the first SM
+     * negotiation). The worker is the only party that sees all inbound
+     * traffic (one socket) and all outbound traffic (every port's send
+     * relays through here), so it is the only correct owner of the SM
+     * counters and queue once more than one tab sends — a stanza sent from
+     * a secondary tab survives resumption, and failover needs no reconnect.
+     */
+    sm: StreamManagement | null;
     /** Ports whose join arrived while the handshake was still in flight. */
     private _pendingJoins: MessagePort[];
     private _sweepTimer: ReturnType<typeof setInterval>;
@@ -88,6 +102,7 @@ class ConnectionManager {
         this.ports = new Map();
         this.socket = null;
         this.session = 'none';
+        this.sm = null;
         this._pendingJoins = [];
         this._sweepTimer = null;
         this._graceTimer = null;
@@ -142,11 +157,15 @@ class ConnectionManager {
             }
         }
         if (SESSION_METHODS.includes(method) && !this._socketReady()) {
-            // The tab is talking to a dead (or still-connecting) socket — no
-            // legitimate sender exists before the socket opens, since the
-            // primary only starts the stream in reaction to _onOpen. Make
-            // reality visible instead of dropping the message into the void
-            // (a send() on a CONNECTING socket would throw and lose the frame).
+            // The tab is talking to a dead (or still-connecting) socket —
+            // no legitimate sender exists before the socket opens, since the
+            // primary only starts the stream in reaction to _onOpen. Salvage
+            // what can be salvaged and make reality visible instead of
+            // dropping the message into the void (a send() on a CONNECTING
+            // socket would throw and lose the frame).
+            if (method === 'send') {
+                this._salvageFrame(args[0] as string);
+            }
             this._post(port, '_onClose', 'The shared socket is gone');
             return;
         }
@@ -175,6 +194,11 @@ class ConnectionManager {
         this.service = service;
         this.jid = jid;
 
+        // Per-stream SM state starts fresh; resumable state is reloaded from
+        // the engine's storage when the primary reports SM support
+        // (_smFeatures), mirroring the page-side connect() flow.
+        this.sm?.reset();
+
         // This port drives the new connection and becomes primary.
         for (const [p, info] of this.ports) {
             if (p !== port && info.role === 'primary') {
@@ -187,7 +211,10 @@ class ConnectionManager {
         this._closeSocket();
         this.session = 'connecting';
         this.socket = new WebSocket(service, 'xmpp');
-        this.socket.onopen = () => this._onOpen();
+        // _onOpen goes only to the connecting (primary) port: every tab's
+        // Websocket layer reacts to it by sending a stream-<open/>, and a
+        // still-attached secondary doing so would corrupt the new stream.
+        this.socket.onopen = () => this._post(port, '_onOpen');
         this.socket.onerror = (e) => this._onError(e);
         this.socket.onclose = (e) => this._onClose(e);
         this.socket.onmessage = (message) => this._onMessage(message);
@@ -211,17 +238,74 @@ class ConnectionManager {
     }
 
     /**
+     * The primary reports that the post-SASL stream features advertise
+     * XEP-0198 (§2.3). This is the resume-vs-bind decision point: only the
+     * worker knows whether resumable state exists, so it either sends
+     * <resume/> itself (answering with _smResumed/_smFailed once the server
+     * replies) or tells the requesting port to proceed with binding.
+     * @param port
+     */
+    _smFeatures(port: MessagePort): void {
+        const sm = this._ensureSM();
+        sm.serverSupported = true;
+        sm.initialize(this.jid);
+        if (sm.hasResumableState()) {
+            sm.sendResume();
+        } else {
+            this._post(port, '_smNoState');
+        }
+    }
+
+    /**
      * The primary reports that the connect flow completed (resource bound,
      * or legacy auth/session establishment finished): adopt the bound JID as
      * the shared one so attaching secondaries and promotions hand out a
-     * resource the server actually knows about, and release any joins parked
-     * on the handshake.
+     * resource the server actually knows about, start a fresh SM session if
+     * this stream's features advertised support (_smFeatures), and release
+     * any joins parked on the handshake. The <enable/> is written before the
+     * parked joins drain, so it precedes anything a newly attached tab sends.
      * @param _port
      * @param jid - The server-assigned full JID.
      */
     _bound(_port: MessagePort, jid: string): void {
         this.jid = jid;
+        if (this.sm?.serverSupported) {
+            this.sm.sendEnable(jid);
+        }
         this._sessionEstablished();
+    }
+
+    /**
+     * Lazily create the worker-resident engine. Its nonzas go straight to
+     * the socket (outbound frames relay in receipt order, so nothing can be
+     * overtaken), and its lifecycle events are forwarded to the tabs as the
+     * _smEnabled/_smResumed/_smFailed messages that feed the page-side
+     * mirrors and drive the primary's connect flow.
+     */
+    private _ensureSM(): StreamManagement {
+        if (!this.sm) {
+            const sm = new StreamManagement((data: string) => {
+                this.socket?.send(data);
+            });
+            sm.onEnabled = () => this._broadcast('_smEnabled', sm.state.id, sm.state.max, sm.state.boundJid);
+            sm.onResumed = () => {
+                this.jid = sm.boundJid;
+                // The resumed session is established: release parked joins
+                // (with the bound JID) before the mirrors hear about it.
+                this._sessionEstablished();
+                this._broadcast('_smResumed', sm.boundJid);
+            };
+            // Only a failed *resumption* concerns the tabs (the primary must
+            // fall back to binding); a refused <enable/> just means this
+            // stream runs without SM.
+            sm.onFailed = (_view, resumeFailed) => {
+                if (resumeFailed) {
+                    this._broadcast('_smFailed');
+                }
+            };
+            this.sm = sm;
+        }
+        return this.sm;
     }
 
     /**
@@ -271,12 +355,35 @@ class ConnectionManager {
     }
 
     /**
-     * Relay an outbound frame to the socket.
+     * Relay an outbound frame to the socket, feeding it to the XEP-0198
+     * engine too.
      * @param _port
      * @param data
      */
     send(_port: MessagePort, data: string): void {
+        if (!this.sm) {
+            this.socket.send(data);
+            return;
+        }
+        const view = peekElement(data);
+        if (view?.name === 'close') {
+            // A stream-closing <close/> triggers the final ack + state clearing,
+            // and the engine writes that final <a/> straight to the socket, so
+            // onGracefulClose() must run *before* the close frame goes out.
+            this.sm.onGracefulClose();
+            this.socket.send(data);
+            return;
+        }
+
         this.socket.send(data);
+        if (view) {
+            // A countable stanza is tracked *after* it is written, because
+            // trackOutbound() may emit an <r/> which should ride behind the
+            // stanza it covers.
+            this.sm.trackOutbound(view);
+        } else {
+            this._warnUnpeekable('outbound', data);
+        }
     }
 
     /**
@@ -287,6 +394,7 @@ class ConnectionManager {
     close(port: MessagePort, data: string): void {
         if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
             try {
+                this.sm?.onGracefulClose();
                 this.socket.send(data);
             } catch (e) {
                 this._post(port, 'log', 'error', e);
@@ -318,10 +426,6 @@ class ConnectionManager {
         this.socket = null;
     }
 
-    _onOpen(): void {
-        this._broadcast('_onOpen');
-    }
-
     /**
      * @param e
      */
@@ -332,7 +436,10 @@ class ConnectionManager {
     }
 
     /**
-     * Deliver an inbound frame to the tabs.
+     * Deliver an inbound frame to the tabs, feeding it to the XEP-0198
+     * engine first: counting and <r/> → <a/> replies happen exactly once.
+     * Lifecycle transitions (<enabled/>/<resumed/>/<failed/>) surface
+     * through the engine's event hooks (see _ensureSM).
      *
      * Until the session is established, frames go only to the primary,
      * since only it is responsible for SASL negotiation and session setup.
@@ -340,6 +447,14 @@ class ConnectionManager {
      * @param message
      */
     _onMessage(message: MessageEvent): void {
+        if (this.sm && typeof message.data === 'string') {
+            const view = peekElement(message.data);
+            if (view) {
+                this.sm.onInbound(view);
+            } else {
+                this._warnUnpeekable('inbound', message.data);
+            }
+        }
         if (this.session === 'established') {
             this._broadcast('_onMessage', { data: message.data });
         } else {
@@ -420,10 +535,7 @@ class ConnectionManager {
     /**
      * Join a port onto the shared session: it becomes secondary (or primary,
      * if no primary is left) and is attached. Joins that arrive while the
-     * handshake is still in flight are parked: answering ATTACHED now would
-     * hand out a pre-bind JID on a stream that hasn't authenticated yet, and
-     * the tab could start sending stanzas into it.
-     * @param port
+     * handshake is still in flight are parked.
      */
     private _joinShared(port: MessagePort): void {
         if (this.session !== 'established') {
@@ -526,6 +638,62 @@ class ConnectionManager {
             }
         }
         return best;
+    }
+
+    /**
+     * A frame was sent into a dead socket. If an SM session was active, feed
+     * a stanza to the engine anyway: it lands in the unacked queue and is
+     * replayed when the session is resumed over the next socket, so the
+     * message the user just sent isn't lost to the bad timing. A <close/>
+     * still ends the session: the final <a/> can't be delivered anymore
+     * (the engine's sendRaw is null-guarded), but the persisted state is
+     * cleared so the deliberately-ended session isn't resumed later.
+     * @param data - The raw outbound frame.
+     */
+    private _salvageFrame(data: string): void {
+        if (!this.sm) return;
+        const view = peekElement(data);
+        if (view?.name === 'close') {
+            this.sm.onGracefulClose();
+        } else if (view) {
+            this.sm.trackOutbound(view);
+        } else {
+            this._warnUnpeekable('outbound', data);
+        }
+    }
+
+    /**
+     * Report a frame the regex peeker (see parse.ts) could not parse while an
+     * SM session was active. Such a frame passes through uncounted and
+     * untracked, so the XEP-0198 handled-stanza counters drift and stanzas
+     * get duplicated (inbound) or lost (outbound) on the next resume —
+     * exactly the silent corruption SM exists to prevent, so make it loud.
+     *
+     * Only frames that look like an element open are reported: the stream
+     * prolog, whitespace keepalives and empty frames legitimately don't peek
+     * and are never countable stanzas.
+     *
+     * The opening tag is included so the peeker can actually be fixed — it is
+     * where the parse failed (peekElement only ever inspects the opening tag)
+     * and is the whole diagnostic. The report stops at the first '>' (capped),
+     * which keeps the stanza payload — message bodies and the like — out of
+     * the logs.
+     * @param direction
+     * @param frame
+     */
+    private _warnUnpeekable(direction: 'inbound' | 'outbound', frame: string): void {
+        if (!/^\s*<[a-zA-Z]/.test(frame)) {
+            return;
+        }
+        const MAX = 200;
+        const tagEnd = frame.indexOf('>');
+        const openTag = tagEnd !== -1 && tagEnd + 1 <= MAX ? frame.slice(0, tagEnd + 1) : frame.slice(0, MAX) + '…';
+        this._broadcast(
+            'log',
+            'error',
+            `StreamManagement: could not parse an ${direction} frame; it was not counted, ` +
+                `so the handled-stanza counters may drift. Opening tag: ${openTag}`,
+        );
     }
 
     /**

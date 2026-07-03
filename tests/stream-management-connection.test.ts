@@ -84,8 +84,8 @@ describe('Stream Management connection integration', () => {
             ).documentElement,
         );
         expect(bosh.sm.serverSupported).toBe(true);
-        (bosh as any)._maybeEnableStreamManagement();
-        expect(bosh.sm.state.enableSent).toBe(false); // no <enable/> sent over BOSH
+        (bosh as any)._onSessionReady();
+        expect(bosh.sm.isTracking()).toBe(false); // no <enable/> sent over BOSH
     });
 
     it('negotiates a fresh SM session at the CONNECTED-emission point', () => {
