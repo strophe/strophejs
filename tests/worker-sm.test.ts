@@ -270,6 +270,22 @@ describe('worker-resident stream management', () => {
         expect(socket2.sent.filter((s) => s.includes('rescued')).length).toBe(1);
     });
 
+    it('reflects a salvaged stanza to the other tabs (it will be replayed on resume)', () => {
+        const { manager, p1, socket } = establish();
+        const p2 = new MockPort();
+        manager.addPort(p2 as unknown as MessagePort);
+        p2.emit('_attach', SERVICE, VERSION);
+
+        socket.readyState = FakeWebSocket.CLOSED;
+        p1.emit('send', "<message to='juliet@example.net'><body>rescued</body></message>");
+        // the sender is told the socket is gone, but the other tab still
+        // learns of the send: the stanza sits in the SM queue and will be
+        // replayed on the next resume
+        expect(p1.msgs('_onClose').length).toBe(1);
+        expect(p2.msgs('_onStanzaSent').length).toBe(1);
+        expect(p1.msgs('_onStanzaSent')).toEqual([]);
+    });
+
     it('a <close/> sent into a dead socket still ends the resumable session', () => {
         const { manager, p1, socket } = establish();
         socket.readyState = FakeWebSocket.CLOSED;
@@ -398,6 +414,28 @@ describe('page-side state mirror under options.worker', () => {
         const { port, fromWorker } = makeConn();
         fromWorker('_ping');
         expect(port.posted.at(-1)).toEqual(['_pong']);
+    });
+
+    it('routes reflected stanzas to onForeignStanzaSent, not the inbound pipeline', () => {
+        const { conn, fromWorker } = makeConn();
+        const seen: Element[] = [];
+        conn.onForeignStanzaSent = (el: Element) => seen.push(el);
+        let inbound = 0;
+        conn.addHandler(
+            () => {
+                inbound += 1;
+                return true;
+            },
+            null,
+            'message',
+        );
+        fromWorker('_onStanzaSent', "<message to='juliet@example.net' type='chat'><body>from another tab</body></message>");
+        expect(seen.length).toBe(1);
+        expect(seen[0].tagName).toBe('message');
+        expect(seen[0].getAttribute('to')).toBe('juliet@example.net');
+        // a sent stanza must not look like received traffic
+        expect(inbound).toBe(0);
+        expect(conn.sm.state.hIn).toBe(0);
     });
 
     it('the mirror is inert: the page neither counts nor queues', () => {

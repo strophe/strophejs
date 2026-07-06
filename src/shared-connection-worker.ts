@@ -164,7 +164,7 @@ class ConnectionManager {
             // dropping the message into the void (a send() on a CONNECTING
             // socket would throw and lose the frame).
             if (method === 'send') {
-                this._salvageFrame(args[0] as string);
+                this._salvageFrame(port, args[0] as string);
             }
             this._post(port, '_onClose', 'The shared socket is gone');
             return;
@@ -356,33 +356,56 @@ class ConnectionManager {
 
     /**
      * Relay an outbound frame to the socket, feeding it to the XEP-0198
-     * engine too.
-     * @param _port
+     * engine and reflecting messages/presences to the other tabs.
+     * @param port
      * @param data
      */
-    send(_port: MessagePort, data: string): void {
-        if (!this.sm) {
-            this.socket.send(data);
-            return;
-        }
+    send(port: MessagePort, data: string): void {
         const view = peekElement(data);
         if (view?.name === 'close') {
             // A stream-closing <close/> triggers the final ack + state clearing,
             // and the engine writes that final <a/> straight to the socket, so
             // onGracefulClose() must run *before* the close frame goes out.
-            this.sm.onGracefulClose();
+            this.sm?.onGracefulClose();
             this.socket.send(data);
             return;
         }
 
         this.socket.send(data);
+        if (this.sm) {
+            if (view) {
+                // A countable stanza is tracked *after* it is written, because
+                // trackOutbound() may emit an <r/> which should ride behind the
+                // stanza it covers.
+                this.sm.trackOutbound(view);
+            } else {
+                this._warnUnpeekable('outbound', data);
+            }
+        }
         if (view) {
-            // A countable stanza is tracked *after* it is written, because
-            // trackOutbound() may emit an <r/> which should ride behind the
-            // stanza it covers.
-            this.sm.trackOutbound(view);
-        } else {
-            this._warnUnpeekable('outbound', data);
+            this._reflect(port, view.name, data);
+        }
+    }
+
+    /**
+     * Reflect an outbound message/presence to every tab except the sender,
+     * so all tabs can render what any one of them sent. Delivered as its own
+     * `_onStanzaSent` page message — never as `_onMessage` — because a sent
+     * stanza must not enter the receiving tabs' inbound pipeline (stanza
+     * handlers, SM counting, xmlInput). IQs are not reflected: they are
+     * request/response traffic private to the sending tab.
+     * @param sender - The port the stanza came from (gets no reflection).
+     * @param name - The frame's tag name (from the peeker).
+     * @param data - The raw outbound frame.
+     */
+    private _reflect(sender: MessagePort, name: string, data: string): void {
+        if (name !== 'message' && name !== 'presence') {
+            return;
+        }
+        for (const [port] of this.ports) {
+            if (port !== sender) {
+                this._post(port, '_onStanzaSent', data);
+            }
         }
     }
 
@@ -648,15 +671,21 @@ class ConnectionManager {
      * still ends the session: the final <a/> can't be delivered anymore
      * (the engine's sendRaw is null-guarded), but the persisted state is
      * cleared so the deliberately-ended session isn't resumed later.
+     * @param port - The port the frame came from.
      * @param data - The raw outbound frame.
      */
-    private _salvageFrame(data: string): void {
+    private _salvageFrame(port: MessagePort, data: string): void {
         if (!this.sm) return;
         const view = peekElement(data);
         if (view?.name === 'close') {
             this.sm.onGracefulClose();
         } else if (view) {
             this.sm.trackOutbound(view);
+            if (this.sm.isTracking()) {
+                // The stanza sits in the queue and will be replayed on the
+                // next resume, so reflect it like any sent stanza.
+                this._reflect(port, view.name, data);
+            }
         } else {
             this._warnUnpeekable('outbound', data);
         }
