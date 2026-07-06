@@ -871,6 +871,22 @@ class Connection {
     }
 
     /**
+     * User overrideable function that receives message and presence stanzas
+     * sent by *another* tab sharing this connection (via the `worker`
+     * option), so every tab can render what any tab sent.
+     *
+     * Deliberately separate from the inbound handler pipeline: these stanzas
+     * were sent, not received, so they must not trigger stanza handlers.
+     * IQs are not reflected — they are request/response traffic private to
+     * the sending tab.
+     *
+     * @param _elem - The sent stanza.
+     */
+    onForeignStanzaSent(_elem: Element): void {
+        return;
+    }
+
+    /**
      * Send a stanza.
      *
      * This function is called to push data onto the send queue to

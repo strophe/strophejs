@@ -17,6 +17,48 @@ XMPP applications.
 * [Mailing list](https://groups.google.com/g/strophe)
 * [Community Plugins](https://github.com/strophe/strophejs-plugins)
 
+## Stream Management (XEP-0198)
+
+Since version 4.1.0, Strophe.js natively supports
+[XEP-0198 Stream Management](https://xmpp.org/extensions/xep-0198.html) on websocket
+connections: sent stanzas are acknowledged by the server, and a dropped connection can be
+resumed without losing them.
+
+It is off by default; opt in when creating the connection:
+
+```javascript
+const conn = new Strophe.Connection(service, {
+    enableStreamManagement: true,
+    // Optional fine-tuning:
+    streamManagement: {
+        maxUnacked: 5,       // request an ack every N sent stanzas
+        requestResume: true, // ask the server for a resumable session
+    },
+});
+```
+
+After connecting, `conn.hasResumed()` tells you whether the previous session was resumed
+(skip re-fetching the roster, re-joining rooms etc.) or a fresh session was established.
+Resumable state is kept in `sessionStorage` by default; pass a custom
+`streamManagement.storage` backend to change that.
+
+### Sharing a connection between tabs
+
+With the `worker` connection option, all tabs of your application share a single websocket
+connection through a SharedWorker. Point it at `dist/shared-connection-worker.js` (the page
+and the worker script must come from the same build — a version check enforces this).
+
+One tab is assigned the `primary` role and drives the connection; the others attach to it
+as `secondary` and are promoted automatically if the primary tab goes away (see
+`Connection.onRoleChanged`). When Stream Management is enabled, the XEP-0198 engine runs
+inside the worker itself, so a single SM session covers all tabs and a stanza sent from
+any tab survives resumption.
+
+Messages and presences sent from one tab are reflected to all the other tabs, so every tab
+can render what any tab sent — override `Connection.onForeignStanzaSent` to receive them.
+They are deliberately kept out of the regular stanza handlers, which only see *received*
+traffic.
+
 ## Support in different environments
 
 ### Browsers

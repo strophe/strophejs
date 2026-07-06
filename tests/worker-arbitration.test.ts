@@ -264,6 +264,42 @@ describe('shared-connection-worker arbitration', () => {
         expect(FakeWebSocket.instances[0].sent).toEqual(['<presence/>']);
     });
 
+    it('reflects sent messages and presences to the other tabs, never the sender', () => {
+        const { join } = makeManager();
+        const p1 = join();
+        connect(p1);
+        bind(p1);
+        const p2 = join();
+        attach(p2);
+        const p3 = join();
+        attach(p3);
+        // reflection is an arbitration feature: it works without SM (no
+        // engine exists in this test)
+        const msg = "<message to='juliet@example.net' type='chat'><body>hi</body></message>";
+        p1.emit('send', msg);
+        expect(p1.msgs('_onStanzaSent')).toEqual([]);
+        expect(p2.msgs('_onStanzaSent')).toEqual([['_onStanzaSent', msg]]);
+        expect(p3.msgs('_onStanzaSent')).toEqual([['_onStanzaSent', msg]]);
+        // symmetric: a secondary's send reaches the primary and the other secondary
+        p2.emit('send', "<presence type='away'/>");
+        expect(p1.msgs('_onStanzaSent')).toEqual([['_onStanzaSent', "<presence type='away'/>"]]);
+        expect(p3.msgs('_onStanzaSent').length).toBe(2);
+        // p2 only ever saw p1's message, not its own presence
+        expect(p2.msgs('_onStanzaSent')).toEqual([['_onStanzaSent', msg]]);
+    });
+
+    it('does not reflect IQs, nonzas or close frames', () => {
+        const { join } = makeManager();
+        const p1 = join();
+        connect(p1);
+        bind(p1);
+        const p2 = join();
+        attach(p2);
+        p1.emit('send', "<iq type='get' id='1'><query xmlns='jabber:iq:roster'/></iq>");
+        p1.emit('send', '<close xmlns="urn:ietf:params:xml:ns:xmpp-framing"/>');
+        expect(p2.msgs('_onStanzaSent')).toEqual([]);
+    });
+
     it('promotes a secondary when the primary says _bye — same socket', () => {
         const { join } = makeManager();
         const p1 = join();

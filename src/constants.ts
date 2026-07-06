@@ -35,7 +35,7 @@ export const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
  * exchanged on _connect/_attach so that a mismatch fails loudly instead of
  * silently misbehaving.
  */
-export const SHARED_WORKER_PROTOCOL_VERSION = 1;
+export const SHARED_WORKER_PROTOCOL_VERSION = 2;
 
 /**
  * Contains allowed tags, tag attributes, and css properties.
