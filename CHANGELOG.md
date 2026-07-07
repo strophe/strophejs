@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 4.1.0 - (Unreleased)
+## Version 4.1.0 - (2026-07-07)
 
 - Migrate to full TypeScript
 - Add native [XEP-0198 Stream Management](https://xmpp.org/extensions/xep-0198.html) support for
