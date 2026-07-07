@@ -6,6 +6,11 @@
 - Add native [XEP-0198 Stream Management](https://xmpp.org/extensions/xep-0198.html) support for
   websocket connections. Opt in with the new `enableStreamManagement` connection option and tune it
   via the `streamManagement` option (see the README).
+- New `Connection.onForeignStanzaSent` hook: under the `worker` option, messages and presences
+  sent from one tab are reflected to all other tabs.
+- `Strophe.Status.RECONNECTING` is now defined.
+- Export `MemoryStorageBackend`, `SessionStorageBackend`, `ConnectionOptions` and
+  `ConnectCallback` from the package root.
 
 ## Version 4.0.0 - (2026-06-03)
 
