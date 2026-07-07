@@ -1,7 +1,4 @@
-/**
- * Common namespace constants from the XMPP RFCs and XEPs.
- */
-export const NS = {
+const _NS = {
     AUTH: 'jabber:iq:auth',
     BIND: 'urn:ietf:params:xml:ns:xmpp-bind',
     BOSH: 'urn:xmpp:xbosh',
@@ -24,6 +21,13 @@ export const NS = {
     XHTML: 'http://www.w3.org/1999/xhtml',
     XHTML_IM: 'http://jabber.org/protocol/xhtml-im',
 } as const;
+
+/**
+ * Common namespace constants from the XMPP RFCs and XEPs.
+ * Extensible at runtime via {@link Strophe.addNamespace}, hence the string
+ * index signature.
+ */
+export const NS: typeof _NS & Record<string, string> = _NS;
 
 export const PARSE_ERROR_NS = 'http://www.w3.org/1999/xhtml';
 

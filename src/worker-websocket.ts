@@ -4,7 +4,7 @@ import log from './log';
 import Builder, { $build } from './builder';
 import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants';
 import { toElement } from './utils';
-import { WebsocketLike } from 'types';
+import { WebsocketLike } from './types';
 import type { StreamManagementMirror } from './stream-management';
 
 /**

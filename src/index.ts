@@ -43,6 +43,8 @@ type StropheType = {
     SASLXOAuth2: typeof SASLXOAuth2;
     Stanza: typeof Stanza;
     StreamManagement: typeof StreamManagement;
+    MemoryStorageBackend: typeof MemoryStorageBackend;
+    SessionStorageBackend: typeof SessionStorageBackend;
     Builder: typeof Builder;
     ElementType: typeof ElementType;
     ErrorCondition: typeof ErrorCondition;
@@ -60,7 +62,8 @@ type StropheType = {
     setLogLevel(level: LogLevel): void;
     addNamespace(name: string, value: string): void;
     addConnectionPlugin(name: string, ptype: object): void;
-} & typeof utils;
+} & typeof utils &
+    typeof log;
 
 const Strophe: StropheType = {
     VERSION: '4.0.0',
@@ -104,6 +107,8 @@ const Strophe: StropheType = {
 
     Stanza,
     StreamManagement,
+    MemoryStorageBackend,
+    SessionStorageBackend,
     Builder,
     ElementType,
     ErrorCondition,
@@ -171,3 +176,4 @@ export type {
     StreamManagementController,
     StreamManagementOptions,
 } from './stream-management';
+export type { ConnectCallback, ConnectionOptions } from './connection';
