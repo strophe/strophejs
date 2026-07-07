@@ -11,7 +11,7 @@ import type Connection from './connection';
 import Builder, { $build } from './builder';
 import log from './log';
 import { NS, ErrorCondition, Status } from './constants';
-import {WebsocketLike} from 'types';
+import {WebsocketLike} from './types';
 
 /**
  * Helper class that handles WebSocket Connections

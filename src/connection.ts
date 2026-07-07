@@ -212,7 +212,7 @@ type ProtocolErrorHandlers = {
     websocket: Record<number, Function>;
 };
 
-type ConnectCallback = (status: number, condition: string | null, elem?: Element) => void;
+export type ConnectCallback = (status: number, condition: string | null, elem?: Element) => void;
 
 /**
  * _Private_ variable Used to store plugin names that need
@@ -722,7 +722,7 @@ class Connection {
      *     allowed range of request ids that are valid.  The default is 5.
      */
     attach(
-        jid: string | (() => void),
+        jid: string | ConnectCallback,
         sid?: string,
         rid?: number,
         callback?: ConnectCallback,
