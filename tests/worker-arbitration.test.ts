@@ -188,6 +188,20 @@ describe('shared-connection-worker arbitration', () => {
         expect(p2.msgs('_attachCallback')).toEqual([['_attachCallback', Status.ATTACHFAIL]]);
     });
 
+    it('fails a parked _connect join with _onClose instead of ATTACHFAIL, so the page retries', () => {
+        const { join } = makeManager();
+        const p1 = join();
+        connect(p1);
+        const p2 = join();
+        connect(p2); // same user, handshake in flight: parked
+        FakeWebSocket.instances[0].onclose({ reason: 'boom' });
+        // ATTACHFAIL is the attach() contract; a connect()-initiated page
+        // would treat it as terminal and wedge, so it gets _onClose, which
+        // fails the connect attempt and lets the embedder reconnect.
+        expect(p2.msgs('_attachCallback')).toEqual([]);
+        expect(p2.msgs('_onClose').length).toBeGreaterThanOrEqual(1);
+    });
+
     it('closes the socket when the connecting primary leaves mid-handshake', () => {
         const { join } = makeManager();
         const p1 = join();

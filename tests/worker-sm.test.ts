@@ -300,6 +300,20 @@ describe('worker-resident stream management', () => {
         expect(FakeWebSocket.instances[1].sent.some((s) => s.startsWith('<resume'))).toBe(false);
     });
 
+    it('seeds the SM mirror of a tab that joins the established session', () => {
+        const { manager } = establish();
+        const p2 = new MockPort();
+        manager.addPort(p2 as unknown as MessagePort);
+        p2.emit('_attach', SERVICE, VERSION);
+        // the joiner missed the _smEnabled broadcast, so it is seeded,
+        // before ATTACHED, so the mirror is consistent when the page's
+        // attach callback runs
+        const smIdx = p2.sent.findIndex((m) => m[0] === '_smEnabled');
+        const attachedIdx = p2.sent.findIndex((m) => m[0] === '_attachCallback');
+        expect(p2.msgs('_smEnabled')).toEqual([['_smEnabled', 'sm-1', 600, 'romeo@example.net/orchard']]);
+        expect(smIdx).toBeLessThan(attachedIdx);
+    });
+
     it('probes a quiet stream with <r/> and declares the socket dead when unanswered', () => {
         const { manager, p1, socket } = establish();
         const before = socket.sent.length;
@@ -482,6 +496,17 @@ describe('page-side state mirror under options.worker', () => {
         expect(port.posted.at(-1)).toEqual(['_pong']);
     });
 
+    it('fails the connect attempt when the worker reports the socket gone while connecting', () => {
+        const { conn, statuses, fromWorker } = makeConn();
+        conn.connected = false; // the connect attempt is still in flight
+        fromWorker('_onClose', 'The shared connection could not be established');
+        // The base Websocket ignores closes while not connected, which would
+        // leave the tab in CONNECTING forever; the worker transport must
+        // fail the attempt so the embedder's reconnect logic can retry.
+        expect(statuses).toContain(Status.CONNFAIL);
+        expect(statuses).toContain(Status.DISCONNECTED);
+    });
+
     it('routes reflected stanzas to onForeignStanzaSent, not the inbound pipeline', () => {
         const { conn, fromWorker } = makeConn();
         const seen: Element[] = [];
@@ -495,7 +520,10 @@ describe('page-side state mirror under options.worker', () => {
             null,
             'message',
         );
-        fromWorker('_onStanzaSent', "<message to='juliet@example.net' type='chat'><body>from another tab</body></message>");
+        fromWorker(
+            '_onStanzaSent',
+            "<message to='juliet@example.net' type='chat'><body>from another tab</body></message>",
+        );
         expect(seen.length).toBe(1);
         expect(seen[0].tagName).toBe('message');
         expect(seen[0].getAttribute('to')).toBe('juliet@example.net');

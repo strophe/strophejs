@@ -103,8 +103,14 @@ class ConnectionManager {
      * a secondary tab survives resumption, and failover needs no reconnect.
      */
     sm: StreamManagement | null;
-    /** Ports whose join arrived while the handshake was still in flight. */
-    private _pendingJoins: MessagePort[];
+    /**
+     * Ports whose join arrived while the handshake was still in flight,
+     * with the method they joined through: on failure, an '_attach' join is
+     * answered with ATTACHFAIL (the attach() contract), while a '_connect'
+     * join is told the socket closed, so its page fails the connect attempt
+     * and the embedder's reconnect logic takes over.
+     */
+    private _pendingJoins: Map<MessagePort, '_connect' | '_attach'>;
     private _sweepTimer: ReturnType<typeof setInterval>;
     private _graceTimer: ReturnType<typeof setTimeout>;
     /** Pending death sentence for an unanswered ack probe (see _probe). */
@@ -117,7 +123,7 @@ class ConnectionManager {
         this.socket = null;
         this.session = 'none';
         this.sm = null;
-        this._pendingJoins = [];
+        this._pendingJoins = new Map();
         this._sweepTimer = null;
         this._graceTimer = null;
         this._probeTimer = null;
@@ -209,7 +215,7 @@ class ConnectionManager {
             // zombie session would otherwise only find out at the next
             // sweep-driven probe.
             this._probe();
-            this._joinShared(port);
+            this._joinShared(port, '_connect');
             return;
         }
         this.service = service;
@@ -253,7 +259,7 @@ class ConnectionManager {
         }
         if (this._socketLive()) {
             this._probe();
-            this._joinShared(port);
+            this._joinShared(port, '_attach');
         } else {
             this._post(port, '_attachCallback', Status.ATTACHFAIL);
         }
@@ -586,11 +592,13 @@ class ConnectionManager {
      * Join a port onto the shared session: it becomes secondary (or primary,
      * if no primary is left) and is attached. Joins that arrive while the
      * handshake is still in flight are parked.
+     * @param port
+     * @param origin - The method the join arrived through (see _pendingJoins).
      */
-    private _joinShared(port: MessagePort): void {
+    private _joinShared(port: MessagePort, origin: '_connect' | '_attach'): void {
         if (this.session !== 'established') {
-            if (!this._pendingJoins.includes(port)) {
-                this._pendingJoins.push(port);
+            if (!this._pendingJoins.has(port)) {
+                this._pendingJoins.set(port, origin);
             }
             return;
         }
@@ -604,6 +612,11 @@ class ConnectionManager {
         }
         info.role = hasOtherPrimary ? 'secondary' : info.role;
         this._post(port, '_role', info.role, this.jid);
+        if (this.sm?.enabled) {
+            // Seed the joining tab's page-side SM mirror with the running
+            // session — it missed the _smEnabled/_smResumed broadcast.
+            this._post(port, '_smEnabled', this.sm.state.id, this.sm.state.max, this.sm.state.boundJid);
+        }
         this._post(port, '_attachCallback', Status.ATTACHED, this.jid);
     }
 
@@ -614,18 +627,26 @@ class ConnectionManager {
     private _sessionEstablished(): void {
         this.session = 'established';
         const pending = this._pendingJoins;
-        this._pendingJoins = [];
-        pending.filter((p) => this.ports.has(p)).forEach((p) => this._joinShared(p));
+        this._pendingJoins = new Map();
+        pending.forEach((origin, p) => this.ports.has(p) && this._joinShared(p, origin));
     }
 
     /**
-     * Answer parked joins with ATTACHFAIL — the session they were waiting
-     * for died before it was established.
+     * Fail parked joins. The session they were waiting for died before it
+     * was established. '_attach' joins get ATTACHFAIL; '_connect' joins are
+     * told the socket closed, which fails the page's connect attempt so the
+     * embedder's reconnect logic can retry.
      */
     private _failPendingJoins(): void {
         const pending = this._pendingJoins;
-        this._pendingJoins = [];
-        pending.forEach((p) => this._post(p, '_attachCallback', Status.ATTACHFAIL));
+        this._pendingJoins = new Map();
+        pending.forEach((origin, p) => {
+            if (origin === '_attach') {
+                this._post(p, '_attachCallback', Status.ATTACHFAIL);
+            } else {
+                this._post(p, '_onClose', 'The shared connection could not be established');
+            }
+        });
     }
 
     /**
