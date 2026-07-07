@@ -546,6 +546,16 @@ class ConnectionManager {
                 `${SHARED_WORKER_PROTOCOL_VERSION}) — the page and dist/shared-connection-worker.js ` +
                 `are from different builds`,
         );
+        if (version > SHARED_WORKER_PROTOCOL_VERSION) {
+            // The page comes from a newer build than this worker.
+            // Shut down, so that the pages' next connection attempt spawns a fresh worker.
+            this._broadcast('_onClose', 'The shared connection worker is outdated and has shut down');
+            this._closeSocket();
+            (globalThis as { close?: () => void }).close?.();
+            return false;
+        }
+        // The page is older than this worker (a stale tab after a deploy):
+        // refuse it so that it has to be reloaded to speak this protocol.
         this._post(port, '_onClose', 'Shared connection worker protocol mismatch');
         this.ports.delete(port);
         return false;
@@ -612,7 +622,7 @@ class ConnectionManager {
         this._post(port, '_role', info.role, this.jid);
         if (this.sm?.enabled) {
             // Seed the joining tab's page-side SM mirror with the running
-            // session — it missed the _smEnabled/_smResumed broadcast.
+            // session (it missed the _smEnabled/_smResumed broadcast).
             this._post(port, '_smEnabled', this.sm.state.id, this.sm.state.max, this.sm.state.boundJid);
         }
         this._post(port, '_attachCallback', Status.ATTACHED, this.jid);

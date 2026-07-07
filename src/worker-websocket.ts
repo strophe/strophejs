@@ -23,6 +23,24 @@ class WorkerWebsocket extends Websocket {
     constructor(connection: Connection) {
         super(connection);
         this._conn = connection;
+        this._initWorker();
+    }
+
+    /**
+     * (Re)create the SharedWorker. Called for every connection attempt: if
+     * the worker for this URL is still running, the browser just opens
+     * another port to it (the previous port is said goodbye to and closed),
+     * but if it terminated (it shuts itself down when it detects a page from
+     * a newer build, and the browser reclaims it when the last tab goes away
+     * or it crashes), a fresh worker running the *current* script is
+     * spawned. Ports to a dead worker fail silently, so re-creating per
+     * attempt is the only reliable way to recover from worker death.
+     */
+    private _initWorker(): void {
+        if (this.worker) {
+            this.worker.port.postMessage(['_bye']);
+            this.worker.port.close();
+        }
         this.worker = new SharedWorker(this._conn.options.worker, 'Strophe XMPP Connection');
         this.worker.onerror = (e) => {
             console?.error(e);
@@ -46,6 +64,7 @@ class WorkerWebsocket extends Websocket {
     }
 
     _connect(): void {
+        this._initWorker();
         this._setSocket();
         this._messageHandler = (m: MessageEvent) => this._onInitialMessage(m);
         this.worker.port.start();
@@ -58,6 +77,7 @@ class WorkerWebsocket extends Websocket {
      * @param callback
      */
     _attach(callback: (status: number, condition?: string | Element, response?: Element | string) => void): void {
+        this._initWorker();
         this._setSocket();
         this._messageHandler = (m: MessageEvent) => this._onMessage(m);
         this._conn.connect_callback = callback;

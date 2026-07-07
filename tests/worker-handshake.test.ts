@@ -65,6 +65,8 @@ class PagePort {
 
     start(): void {}
 
+    close(): void {}
+
     postMessage(msg: unknown[]): void {
         this._toWorker(msg);
     }

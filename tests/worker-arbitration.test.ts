@@ -216,14 +216,38 @@ describe('shared-connection-worker arbitration', () => {
         expect(p2.msgs('_onClose').length).toBe(1);
     });
 
-    it('rejects a page speaking a different protocol version', () => {
+    it('rejects a page speaking an older protocol version', () => {
         const { manager, join } = makeManager();
         const p1 = join();
-        p1.emit('_connect', SERVICE, JID, VERSION + 1);
+        p1.emit('_connect', SERVICE, JID, VERSION - 1);
         expect(FakeWebSocket.instances.length).toBe(0);
         expect(p1.msgs('_onClose').length).toBe(1);
         expect(p1.msgs('log').some((m) => m[1] === 'fatal')).toBe(true);
         expect(manager.ports.size).toBe(0); // not admitted
+    });
+
+    it('shuts itself down when a page from a newer build connects', () => {
+        const workerClose = vi.fn();
+        vi.stubGlobal('close', workerClose);
+        const { manager, join } = makeManager();
+        const p1 = join();
+        connect(p1);
+        bind(p1);
+        const socket = FakeWebSocket.instances[0];
+        socket.readyState = FakeWebSocket.OPEN;
+
+        // A deploy happened: a freshly loaded page speaks a newer protocol.
+        const p2 = join();
+        p2.emit('_connect', SERVICE, JID, VERSION + 1);
+
+        expect(p2.msgs('log').some((m) => m[1] === 'fatal')).toBe(true);
+        // every tab is told, so pages from builds that respawn their
+        // SharedWorker per connection attempt reconnect through a fresh
+        // worker running the current script
+        expect(p1.msgs('_onClose').length).toBe(1);
+        expect(p2.msgs('_onClose').length).toBe(1);
+        expect(manager.socket).toBe(null);
+        expect(workerClose).toHaveBeenCalled();
     });
 
     it('broadcasts inbound traffic to all live ports', () => {

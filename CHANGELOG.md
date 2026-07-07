@@ -1,5 +1,12 @@
 # Strophe.js Change Log
 
+## Version 4.1.1 - (Unreleased)
+
+- Fix: repopulate a tab's Stream Management mirror (SM-ID and max) after a worker-driven resumption.
+- A stale shared connection worker now shuts itself down when a page from a newer build
+  connects, and pages respawn their SharedWorker per connection attempt, so deploys converge
+  without having to close every tab.
+
 ## Version 4.1.0 - (2026-07-07)
 
 - Migrate to full TypeScript
