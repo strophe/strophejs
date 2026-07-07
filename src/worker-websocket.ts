@@ -210,6 +210,32 @@ class WorkerWebsocket extends Websocket {
     }
 
     /**
+     * Called when the worker reports that the shared socket closed or died.
+     * Unlike a page-owned websocket this can arrive while this tab believes
+     * it is still connecting. The worker owns the socket, and e.g. its
+     * connection attempt to the server can fail. The base implementation
+     * ignores closes in that state (it only knows real CloseEvents), which
+     * would leave this tab stuck in CONNECTING forever, so fail the
+     * connection attempt instead: the embedder's reconnect logic takes it
+     * from there.
+     * @param e - The close reason from the worker, or a close event.
+     */
+    _onClose(e?: CloseEvent | string): void {
+        if (this._conn.connected && !this._conn.disconnecting) {
+            log.error('Websocket closed unexpectedly');
+            this._conn._doDisconnect();
+        } else if (!this._conn.connected && !this._conn.disconnecting) {
+            const reason =
+                typeof e === 'string' ? e : 'The shared websocket connection could not be established or was lost.';
+            log.error(`Shared websocket closed while connecting: ${reason}`);
+            this._conn._changeConnectStatus(Status.CONNFAIL, reason);
+            this._conn._doDisconnect();
+        } else {
+            log.debug('Websocket closed');
+        }
+    }
+
+    /**
      * @param status
      * @param jid
      */
