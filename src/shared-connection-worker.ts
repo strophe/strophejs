@@ -41,6 +41,16 @@ export const PORT_GC_TIMEOUT = 30 * 60_000;
 /** How long the socket is kept open after the last port has gone away. */
 export const SOCKET_GRACE = 10_000;
 
+/**
+ * How long the worker waits for the server to answer an ack probe (<r/>)
+ * before presuming the socket dead. Probes are sent from the sweep when an
+ * SM-enabled stream has been quiet for a full PING_INTERVAL, and when a
+ * tab (re)joins the established session. Without them, a silently dead
+ * socket (NAT timeout, sleep/wake) is only discovered by the OS's TCP
+ * timeout, which can take many minutes.
+ */
+export const PROBE_TIMEOUT = 10_000;
+
 /** The page→worker methods that may be invoked via postMessage. */
 const METHODS = [
     '_connect',
@@ -97,6 +107,10 @@ class ConnectionManager {
     private _pendingJoins: MessagePort[];
     private _sweepTimer: ReturnType<typeof setInterval>;
     private _graceTimer: ReturnType<typeof setTimeout>;
+    /** Pending death sentence for an unanswered ack probe (see _probe). */
+    private _probeTimer: ReturnType<typeof setTimeout>;
+    /** When the socket last delivered anything (probes count inbound only). */
+    private _lastInbound: number;
 
     constructor() {
         this.ports = new Map();
@@ -106,6 +120,8 @@ class ConnectionManager {
         this._pendingJoins = [];
         this._sweepTimer = null;
         this._graceTimer = null;
+        this._probeTimer = null;
+        this._lastInbound = 0;
     }
 
     /**
@@ -188,6 +204,11 @@ class ConnectionManager {
         }
         const sameUser = !this.jid || !jid || jid.split('/')[0].toLowerCase() === this.jid.split('/')[0].toLowerCase();
         if (this._socketLive() && sameUser) {
+            // A tab (re)connecting is a good moment to verify that the
+            // shared socket is actually alive: a reloaded page joining a
+            // zombie session would otherwise only find out at the next
+            // sweep-driven probe.
+            this._probe();
             this._joinShared(port);
             return;
         }
@@ -231,6 +252,7 @@ class ConnectionManager {
             return;
         }
         if (this._socketLive()) {
+            this._probe();
             this._joinShared(port);
         } else {
             this._post(port, '_attachCallback', Status.ATTACHFAIL);
@@ -435,6 +457,7 @@ class ConnectionManager {
      */
     _closeSocket(_port?: MessagePort): void {
         this.session = 'none';
+        this._cancelProbe();
         this._failPendingJoins();
         if (this.socket) {
             try {
@@ -454,6 +477,7 @@ class ConnectionManager {
      */
     _onClose(e: CloseEvent): void {
         this.session = 'none';
+        this._cancelProbe();
         this._failPendingJoins();
         this._broadcast('_onClose', e.reason);
     }
@@ -470,6 +494,9 @@ class ConnectionManager {
      * @param message
      */
     _onMessage(message: MessageEvent): void {
+        // Any inbound traffic proves the socket alive.
+        this._lastInbound = Date.now();
+        this._cancelProbe();
         if (this.sm && typeof message.data === 'string') {
             const view = peekElement(message.data);
             if (view) {
@@ -755,6 +782,46 @@ class ConnectionManager {
         if (this.ports.size === 0 && this._socketLive()) {
             this._startGrace();
         }
+        if (this.session === 'established' && now - this._lastInbound >= PING_INTERVAL) {
+            this._probe();
+        }
+    }
+
+    /**
+     * Ask the server for an ack and treat a missing reply as socket death.
+     * The <r/> doubles as a keepalive on quiet connections.
+     */
+    private _probe(): void {
+        if (this._probeTimer || !this.sm?.enabled || !this._socketReady()) {
+            return;
+        }
+        this.sm.requestAck();
+        this._probeTimer = setTimeout(() => {
+            this._probeTimer = null;
+            this._onSocketDead();
+        }, PROBE_TIMEOUT);
+    }
+
+    private _cancelProbe(): void {
+        if (this._probeTimer) {
+            clearTimeout(this._probeTimer);
+            this._probeTimer = null;
+        }
+    }
+
+    /**
+     * The probe went unanswered: the socket is transmitting into the void.
+     * Close it and tell the tabs, so they reconnect. The engine's state is
+     * untouched, so the next stream resumes and replays the unacked queue.
+     */
+    private _onSocketDead(): void {
+        this._broadcast(
+            'log',
+            'warn',
+            `StreamManagement: ack probe unanswered for ${PROBE_TIMEOUT}ms; presuming the socket dead`,
+        );
+        this._closeSocket();
+        this._broadcast('_onClose', 'The connection stopped responding');
     }
 
     /**
