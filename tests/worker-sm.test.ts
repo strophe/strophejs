@@ -1,4 +1,4 @@
-import ConnectionManager from '../src/shared-connection-worker';
+import ConnectionManager, { PING_INTERVAL, PROBE_TIMEOUT } from '../src/shared-connection-worker';
 import { SHARED_WORKER_PROTOCOL_VERSION } from '../src/constants';
 import { Strophe, $msg } from '../dist/strophe.node.esm.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -298,6 +298,72 @@ describe('worker-resident stream management', () => {
         p1.emit('_smFeatures');
         expect(p1.msgs('_smNoState').length).toBe(2); // one from establish(), one now
         expect(FakeWebSocket.instances[1].sent.some((s) => s.startsWith('<resume'))).toBe(false);
+    });
+
+    it('probes a quiet stream with <r/> and declares the socket dead when unanswered', () => {
+        const { manager, p1, socket } = establish();
+        const before = socket.sent.length;
+
+        // the stream goes quiet; the sweep sends an ack probe
+        vi.advanceTimersByTime(PING_INTERVAL);
+        expect(socket.sent.slice(before)).toEqual([`<r xmlns="${SM_NS}"/>`]);
+
+        // port liveness traffic is not socket traffic and must not save it
+        p1.emit('_pong');
+        vi.advanceTimersByTime(PROBE_TIMEOUT);
+        expect(manager.socket).toBe(null); // the zombie was closed
+        expect(p1.msgs('_onClose').length).toBe(1);
+
+        // the engine kept its state: the tab reconnects and the worker resumes
+        p1.emit('_connect', SERVICE, 'romeo@example.net', VERSION);
+        p1.emit('_smFeatures');
+        const socket2 = FakeWebSocket.instances.at(-1);
+        expect(socket2.sent.some((s) => s.startsWith('<resume'))).toBe(true);
+    });
+
+    it('keeps the connection when the probe is answered, and probes again later', () => {
+        const { manager, p1, socket } = establish();
+        vi.advanceTimersByTime(PING_INTERVAL);
+        expect(socket.sent.at(-1)).toBe(`<r xmlns="${SM_NS}"/>`);
+
+        socket.onmessage({ data: `<a xmlns='${SM_NS}' h='0'/>` });
+        vi.advanceTimersByTime(PROBE_TIMEOUT + 1000);
+        expect(manager.socket).not.toBe(null);
+        expect(p1.msgs('_onClose').length).toBe(0);
+
+        // still quiet: the next sweep probes again (doubles as a keepalive)
+        vi.advanceTimersByTime(PING_INTERVAL);
+        expect(socket.sent.filter((s) => s === `<r xmlns="${SM_NS}"/>`).length).toBe(2);
+    });
+
+    it('probes immediately when a tab joins the established session', () => {
+        const { manager, p1, socket } = establish();
+        const before = socket.sent.length;
+
+        const p2 = new MockPort();
+        manager.addPort(p2 as unknown as MessagePort);
+        p2.emit('_connect', SERVICE, 'romeo@example.net', VERSION);
+        expect(p2.msgs('_attachCallback')).toEqual([['_attachCallback', Status.ATTACHED, 'romeo@example.net/orchard']]);
+        // the joining tab put the socket's liveness to the test right away
+        expect(socket.sent.slice(before)).toEqual([`<r xmlns="${SM_NS}"/>`]);
+
+        vi.advanceTimersByTime(PROBE_TIMEOUT);
+        expect(p1.msgs('_onClose').length).toBe(1);
+        expect(p2.msgs('_onClose').length).toBe(1);
+    });
+
+    it('does not probe without an SM-enabled stream', () => {
+        const manager = new ConnectionManager();
+        const p1 = new MockPort();
+        manager.addPort(p1 as unknown as MessagePort);
+        p1.emit('_connect', SERVICE, 'romeo@example.net', VERSION);
+        const socket = FakeWebSocket.instances.at(-1);
+        p1.emit('_bound', 'romeo@example.net/orchard'); // no _smFeatures → no engine
+
+        vi.advanceTimersByTime(3 * PING_INTERVAL + PROBE_TIMEOUT);
+        expect(socket.sent.some((s) => s.startsWith('<r '))).toBe(false);
+        expect(manager.socket).not.toBe(null);
+        expect(p1.msgs('_onClose').length).toBe(0);
     });
 
     it('sends a final <a/> before relaying <close/> and clears the session', () => {
