@@ -154,7 +154,7 @@ describe('worker-resident stream management', () => {
         expect(p2.msgs('_smNoState').length).toBe(0); // the worker resumed on its own
 
         socket2.onmessage({ data: `<resumed xmlns='${SM_NS}' h='0' previd='sm-1'/>` });
-        expect(p2.msgs('_smResumed')).toEqual([['_smResumed', 'romeo@example.net/orchard']]);
+        expect(p2.msgs('_smResumed')).toEqual([['_smResumed', 'romeo@example.net/orchard', 'sm-1', 600]]);
         // the secondary's stanza was replayed from the worker queue on the new socket
         expect(socket2.sent.filter((s) => s.includes('from p2')).length).toBe(1);
         expect(socket2.sent.at(-1)).toBe(`<r xmlns="${SM_NS}"/>`);
@@ -458,6 +458,21 @@ describe('page-side state mirror under options.worker', () => {
         expect(conn.do_bind).toBe(false);
         expect(conn.restored).toBe(true);
         expect(statuses).toContain(Status.CONNECTED);
+    });
+
+    it('repopulates a reset mirror from _smResumed (the reconnect-driving tab)', () => {
+        const { conn, fromWorker } = makeConn();
+        sendFeatures(conn);
+        fromWorker('_smEnabled', 'sm-1', 600, 'romeo@example.net/orchard');
+        // The tab drives a reconnect: connect() resets the mirror, and
+        // _smResumed is the only SM message this tab receives afterwards.
+        conn.sm.reset();
+        fromWorker('_smResumed', 'romeo@example.net/orchard', 'sm-1', 600);
+        expect(conn.hasResumed()).toBe(true);
+        expect(conn.isStreamManagementEnabled()).toBe(true);
+        expect(conn.sm.state.id).toBe('sm-1');
+        expect(conn.sm.state.max).toBe(600);
+        expect(conn.sm.boundJid).toBe('romeo@example.net/orchard');
     });
 
     it('proceeds to bind on _smNoState and reports the bound JID', () => {

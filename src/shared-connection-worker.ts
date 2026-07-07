@@ -318,10 +318,8 @@ class ConnectionManager {
             sm.onEnabled = () => this._broadcast('_smEnabled', sm.state.id, sm.state.max, sm.state.boundJid);
             sm.onResumed = () => {
                 this.jid = sm.boundJid;
-                // The resumed session is established: release parked joins
-                // (with the bound JID) before the mirrors hear about it.
                 this._sessionEstablished();
-                this._broadcast('_smResumed', sm.boundJid);
+                this._broadcast('_smResumed', sm.boundJid, sm.state.id, sm.state.max);
             };
             // Only a failed *resumption* concerns the tabs (the primary must
             // fall back to binding); a refused <enable/> just means this

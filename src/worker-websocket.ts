@@ -161,10 +161,12 @@ class WorkerWebsocket extends Websocket {
      * flow — additionally restores the connection state and emits CONNECTED
      * (the same actions a non-worker connection applies on <resumed/>).
      * @param jid - The worker's boundJid.
+     * @param id - The SM-ID of the resumed session.
+     * @param max - The server's preferred maximum resumption time.
      */
-    _smResumed(jid: string): void {
+    _smResumed(jid: string, id?: string, max?: number): void {
         const conn = this._conn;
-        (conn.sm as StreamManagementMirror)?._onResumed(jid);
+        (conn.sm as StreamManagementMirror)?._onResumed(jid, id, max);
         conn.jid = jid;
         if (conn.role === 'primary') {
             conn.do_bind = false;

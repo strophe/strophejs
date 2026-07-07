@@ -116,12 +116,19 @@ export class StreamManagementMirror implements StreamManagementController {
 
     /**
      * @param boundJid - The worker's boundJid for the resumed session.
+     * @param id - The SM-ID of the resumed session.
+     * @param max - The server's preferred maximum resumption time.
      */
-    _onResumed(boundJid: string): void {
+    _onResumed(boundJid: string, id?: string, max?: number): void {
         const s = this._state;
         s.resumed = true;
         s.enabled = true;
         s.boundJid = boundJid;
+        // Repopulate id/max too: the tab that drove the reconnect reset its
+        // mirror when the reconnect started, and _onResumed is the only SM
+        // message it receives.
+        if (id !== undefined) s.id = id;
+        if (max !== undefined) s.max = max;
         this.onResumed();
     }
 
