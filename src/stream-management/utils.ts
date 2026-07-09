@@ -70,6 +70,30 @@ export function isCountableStanza(name: string): boolean {
 }
 
 /**
+ * Remove the `from` attribute from a serialized stanza's root element, so a
+ * re-sent stanza cannot carry a stale resource after a failed resumption. Only
+ * the root opening tag is touched; nested `from` attributes (forwarded stanzas,
+ * MUC addresses) are preserved. The server stamps the authoritative c2s `from`.
+ * DOM-free string surgery, mirroring stampDelay.
+ * @param serialized - The serialized stanza.
+ * @returns The stanza with the root `from` removed (unchanged if none).
+ */
+export function stripFrom(serialized: string): string {
+    const end = serialized.indexOf('>');
+    if (end === -1) {
+        return serialized;
+    }
+    const openTag = serialized.slice(0, end);
+    const rest = serialized.slice(end);
+
+    // Values cannot contain their own delimiter quote (the serializer escapes it),
+    // so a non-greedy match to the matching quote is safe. The leading \s is
+    // consumed too, leaving no double space. Only the first (root) from is removed.
+    const stripped = openTag.replace(/\sfrom=(["'])[\s\S]*?\1/, '');
+    return stripped === openTag ? serialized : stripped + rest;
+}
+
+/**
  * Insert a XEP-0203 <delay/> child into a serialized stanza (DOM-free string
  * surgery). Used when re-sending salvaged stanzas after a failed resumption,
  * so the receiving client can show the original send time.

@@ -1,4 +1,5 @@
 import { StreamManagement, MemoryStorageBackend, SessionStorageBackend } from '../dist/strophe.node.esm.js';
+import { stripFrom } from '../src/stream-management/utils';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 const SM_NS = 'urn:xmpp:sm:3';
@@ -302,6 +303,80 @@ describe('StreamManagement core', () => {
         });
     });
 
+    describe('from reconciliation on re-send', () => {
+        it('strips the root from when re-sending salvaged stanzas after a failed resume', () => {
+            const { sm, sent } = make();
+            enable(sm);
+            // A client-stamped full-from IQ (e.g. a disco#info) enters the queue.
+            sm.trackOutbound(
+                view(
+                    'iq',
+                    {},
+                    '<iq type="get" from="romeo@example.net/OLD" id="disco1"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>'
+                )
+            );
+            sm.sendResume(); // reconnect attempts to resume...
+            sm.onInbound(view('failed', {})); // ...which the server refuses
+            const before = sent.length;
+            enable(sm); // fresh session with a new resource
+            const resent = sent.slice(before + 1); // skip the <enable/>
+            expect(resent[0]).toBe(
+                '<iq type="get" id="disco1"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>'
+            );
+            expect(resent[0]).not.toContain('from=');
+            // and the requeued copy on the new session is also clean
+            expect(sm.state.unacked[0].stanza).not.toContain('from=');
+        });
+
+        it('preserves a nested from inside a forwarded payload while stripping the root', () => {
+            const { sm, sent } = make();
+            enable(sm);
+            sm.trackOutbound(
+                view(
+                    'message',
+                    {},
+                    '<message from="romeo@example.net/OLD" to="juliet@example.net">' +
+                        '<forwarded xmlns="urn:xmpp:forward:0">' +
+                        '<message from="alice@example.net/res"><body>hi</body></message>' +
+                        '</forwarded></message>'
+                )
+            );
+            sm.sendResume();
+            sm.onInbound(view('failed', {}));
+            const before = sent.length;
+            enable(sm);
+            const resent = sent.slice(before + 1);
+            // root from removed (the message now opens straight onto `to`)...
+            expect(resent[0].startsWith('<message to="juliet@example.net">')).toBe(true);
+            // ...but the forwarded stanza's own from survives.
+            expect(resent[0]).toContain('<message from="alice@example.net/res">');
+        });
+
+        it('re-sends a salvaged stanza that has no from unchanged (bar the delay stamp)', () => {
+            const { sm, sent } = make();
+            enable(sm);
+            sm.trackOutbound(view('iq', {}, '<iq type="set" id="s1"/>'));
+            sm.sendResume();
+            sm.onInbound(view('failed', {}));
+            const before = sent.length;
+            enable(sm);
+            const resent = sent.slice(before + 1);
+            expect(resent[0]).toBe('<iq type="set" id="s1"/>'); // untouched
+        });
+
+        it('strips the root from when re-sending on a successful <resumed/> (no delay stamp)', () => {
+            const { sm, sent } = make();
+            enable(sm);
+            sm.trackOutbound(view('iq', {}, '<iq type="get" from="romeo@example.net/orchard" id="p1"/>'));
+            const before = sent.length;
+            sm.onInbound(view('resumed', { h: '0', previd: 'some-long-sm-id' }));
+            const resent = sent.slice(before);
+            expect(resent[0]).toBe('<iq type="get" id="p1"/>'); // from stripped, no delay added
+            expect(resent[0]).not.toContain('delay');
+            expect(resent.at(-1)).toBe(`<r xmlns="${SM_NS}"/>`); // followed by an ack request
+        });
+    });
+
     describe('resumePending', () => {
         it('is set by sendResume and cleared by <resumed/>', () => {
             const { sm } = make();
@@ -420,5 +495,45 @@ describe('StreamManagement core', () => {
             backend.clear('strophe-sm:romeo@example.net');
             expect(backend.load('strophe-sm:romeo@example.net')).toBeNull();
         });
+    });
+});
+
+describe('stripFrom', () => {
+    it('strips from on a self-closing root (double quotes)', () => {
+        expect(stripFrom('<iq type="get" from="user@host/OLD" id="1"/>')).toBe('<iq type="get" id="1"/>');
+    });
+
+    it('strips from on a container root', () => {
+        expect(stripFrom('<message from="user@host/OLD"><body>hi</body></message>')).toBe(
+            '<message><body>hi</body></message>'
+        );
+    });
+
+    it('strips from written with single quotes', () => {
+        expect(stripFrom("<iq from='user@host/OLD' id='1'/>")).toBe("<iq id='1'/>");
+    });
+
+    it('leaves a stanza without a from unchanged', () => {
+        const s = '<iq type="get" id="1"/>';
+        expect(stripFrom(s)).toBe(s);
+    });
+
+    it('does not match an attribute whose name merely ends in from', () => {
+        const s = '<iq notfrom="x" id="1"/>';
+        expect(stripFrom(s)).toBe(s);
+    });
+
+    it('strips only the root from, preserving a nested one', () => {
+        const s =
+            '<message from="user@host/OLD"><forwarded xmlns="urn:xmpp:forward:0">' +
+            '<message from="a@host/res"><body>hi</body></message></forwarded></message>';
+        expect(stripFrom(s)).toBe(
+            '<message><forwarded xmlns="urn:xmpp:forward:0">' +
+                '<message from="a@host/res"><body>hi</body></message></forwarded></message>'
+        );
+    });
+
+    it('returns the input unchanged when the opening tag is unterminated', () => {
+        expect(stripFrom('<iq from="user@host/OLD"')).toBe('<iq from="user@host/OLD"');
     });
 });

@@ -16,7 +16,7 @@
 export { default } from './engine';
 export { MemoryStorageBackend, SessionStorageBackend } from './storage';
 export { StreamManagementMirror } from './mirror';
-export { isCountableStanza, stampDelay } from './utils';
+export { isCountableStanza, stampDelay, stripFrom } from './utils';
 export { toStanzaView } from './dom';
 export { peekElement } from './parse';
 export type {

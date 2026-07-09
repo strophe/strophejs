@@ -1,5 +1,11 @@
 # Strophe.js Change Log
 
+## Version 4.1.2 (Unreleased)
+
+- Fix: strip a stale `from` from Stream Management stanzas re-sent after a failed resumption,
+  so the freshly bound session no longer rejects them with `invalid-from`. The server stamps
+  the authoritative c2s `from`; nested `from` attributes inside payloads are preserved.
+
 ## Version 4.1.1 - (2026-07-08)
 
 - Fix: repopulate a tab's Stream Management mirror (SM-ID and max) after a worker-driven resumption.
