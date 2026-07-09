@@ -7,11 +7,11 @@
  * For more information on XMPP-over-WebSocket see RFC 7395:
  * http://tools.ietf.org/html/rfc7395
  */
-import type Connection from './connection';
-import Builder, { $build } from './builder';
-import log from './log';
-import { NS, ErrorCondition, Status } from './constants';
-import {WebsocketLike} from './types';
+import type Connection from '../connection';
+import Builder, { $build } from '../builder';
+import log from '../log';
+import { NS, ErrorCondition, Status } from '../constants';
+import {WebsocketLike} from '../types';
 
 /**
  * Helper class that handles WebSocket Connections

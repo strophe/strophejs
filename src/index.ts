@@ -1,5 +1,5 @@
 import * as utils from './utils';
-import Bosh from './bosh';
+import Bosh from './transports/bosh';
 import Builder, { $build, $msg, $pres, $iq } from './builder';
 import Connection from './connection';
 import Handler from './handler';
@@ -16,8 +16,8 @@ import SASLSHA512 from './sasl-sha512';
 import SASLXOAuth2 from './sasl-xoauth2';
 import StreamManagement, { MemoryStorageBackend, SessionStorageBackend, StreamManagementMirror } from './stream-management';
 import TimedHandler from './timed-handler';
-import Websocket from './websocket';
-import WorkerWebsocket from './worker-websocket';
+import Websocket from './transports/websocket';
+import WorkerWebsocket from './transports/worker-websocket';
 import log from './log';
 import { ElementType, ErrorCondition, LOG_LEVELS, LogLevel, NS, Status, XHTML } from './constants';
 import { stx, Stanza } from './stanza';

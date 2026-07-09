@@ -7,11 +7,11 @@
  */
 
 type Connection = any;
-import log from './log';
-import Builder, { $build } from './builder';
-import Request from './request';
-import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from './utils';
-import { Status, NS } from './constants';
+import log from '../log';
+import Builder, { $build } from '../builder';
+import Request from '../request';
+import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from '../utils';
+import { Status, NS } from '../constants';
 
 type ConnectionCallback = (connection: Connection) => void;
 
