@@ -1,6 +1,6 @@
 # Strophe.js
 
-[![Build Status](https://github.com/strophe/strophejs/actions/workflows/karma-tests.yml/badge.svg)](https://github.com/strophe/strophejs/actions/workflows/karma-tests.yml)
+[![Build Status](https://github.com/strophe/strophejs/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/strophe/strophejs/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/strophe.js.svg)](https://www.npmjs.com/package/strophe.js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
 
