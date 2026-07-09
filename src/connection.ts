@@ -27,9 +27,9 @@ import {
     type Cookies,
 } from './utils';
 import { SessionError } from './errors';
-import Bosh from './bosh';
-import WorkerWebsocket from './worker-websocket';
-import Websocket from './websocket';
+import Bosh from './transports/bosh';
+import WorkerWebsocket from './transports/worker-websocket';
+import Websocket from './transports/websocket';
 import StreamManagement, {
     SessionStorageBackend,
     StreamManagementMirror,
