@@ -3,6 +3,7 @@ const _NS = {
     BIND: 'urn:ietf:params:xml:ns:xmpp-bind',
     BOSH: 'urn:xmpp:xbosh',
     CLIENT: 'jabber:client',
+    COMPONENT: 'jabber:component:accept' /** XEP-0114 */,
     DISCO_INFO: 'http://jabber.org/protocol/disco#info',
     DISCO_ITEMS: 'http://jabber.org/protocol/disco#items',
     DELAY: 'urn:xmpp:delay' /** XEP-0203 */,

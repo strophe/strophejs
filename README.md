@@ -30,6 +30,7 @@ WebSockets ([RFC 7395](https://tools.ietf.org/html/rfc7395)) or BOSH/HTTP
 - [Handling incoming stanzas](#handling-incoming-stanzas)
 - [Stream Management (XEP-0198)](#stream-management-xep-0198)
 - [Sharing a connection between tabs](#sharing-a-connection-between-tabs)
+- [Connecting as an external component (XEP-0114)](#connecting-as-an-external-component-xep-0114)
 - [Running in different environments](#running-in-different-environments)
 - [Documentation and community](#documentation-and-community)
 - [Contributing](#contributing)
@@ -194,6 +195,53 @@ can render what any other tab sent (override `Connection.onForeignStanzaSent` to
 They are deliberately kept out of the regular stanza handlers, which only see _received_
 traffic.
 
+## Connecting as an external component (XEP-0114)
+
+Strophe.js can attach to an XMPP server as an
+[XEP-0114](https://xmpp.org/extensions/xep-0114.html) external component
+(`jabber:component:accept`) over a raw TCP stream. This is useful for building gateways,
+bots and services that run alongside the server rather than as a regular client.
+
+This transport is **Node-only** and is not part of the browser build. Select it with the
+`protocol: 'component'` option and a `tcp://host:port` service URL. The `jid` you pass
+to `connect()` is the component's own domain and the `pass` is the shared secret configured
+on the server:
+
+```javascript
+import { Strophe, stx } from 'strophe.js';
+
+const conn = new Strophe.Connection('tcp://localhost:5347', { protocol: 'component' });
+
+conn.connect('component.example.org', 'the-shared-secret', (status) => {
+    if (status === Strophe.Status.CONNECTED) {
+        // The component is authenticated. Send and receive stanzas as usual;
+        // handlers, IQ callbacks and plugins all work unchanged.
+        conn.send(stx`
+            <message xmlns="jabber:client"
+                     from="component.example.org"
+                     to="user@example.org">
+                <body>Hello from the component</body>
+            </message>`);
+    } else if (status === Strophe.Status.AUTHFAIL) {
+        console.error('Wrong shared secret');
+    }
+});
+```
+
+Unlike a client-to-server stream there is no SASL, TLS negotiation or resource binding.
+After the stream is opened the component authenticates with a single SHA-1 handshake and is
+then `CONNECTED`. A component **must** stamp a `from` attribute (a JID under its own domain)
+on the stanzas it sends; the transport adds one automatically when it is missing, but you
+can also set it explicitly (for example a sub-JID such as `room@component.example.org`).
+
+The server needs a component listener, for example ejabberd's `ejabberd_service` on port
+5347, or in Prosody:
+
+```lua
+Component "component.example.org"
+    component_secret = "the-shared-secret"
+```
+
 ## Running in different environments
 
 ### Browsers
@@ -207,6 +255,14 @@ DOM APIs that browsers supply natively:
 
 ```bash
 npm install jsdom ws
+```
+
+The XEP-0114 external component transport additionally uses the `saxes` streaming XML
+parser (a dependency of `jsdom`, so it is usually already present); install it explicitly
+if you use that transport without `jsdom`:
+
+```bash
+npm install saxes
 ```
 
 ### React Native

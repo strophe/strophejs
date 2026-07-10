@@ -2,6 +2,15 @@
 
 ## Version 4.1.2 (2026-07-12)
 
+- Add a Node-only [XEP-0114](https://xmpp.org/extensions/xep-0114.html) external component
+  transport. Connect as a `jabber:component:accept` component over a raw TCP stream by passing
+  the `protocol: 'component'` option and a `tcp://host:port` service URL.
+- Replace `jsdom` with `@xmldom/xmldom` for the DOM APIs the Node build needs (`DOMParser`,
+  `XMLSerializer` and `document.implementation`), a small, pure-JavaScript XML DOM in place of a
+  full HTML browser emulation. Node users should now install `@xmldom/xmldom` and `ws` (instead of
+  `jsdom` and `ws`); see the README. Note one behavior change in Node: `Builder.h()` now parses its
+  argument as XML rather than HTML, so XHTML-IM content must be well-formed XML (for example
+  `<br/>`, not `<br>`). Browser builds are unaffected.
 - Fix: strip a stale `from` from Stream Management stanzas re-sent after a failed resumption,
   so the freshly bound session no longer rejects them with `invalid-from`. The server stamps
   the authoritative c2s `from`; nested `from` attributes inside payloads are preserved.
