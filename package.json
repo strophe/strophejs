@@ -51,6 +51,7 @@
                 "default": "./dist/strophe.umd.cjs"
             },
             "node": {
+                "types": "./dist/types/index-node.d.ts",
                 "import": "./dist/strophe.node.esm.js",
                 "require": "./dist/strophe.cjs",
                 "default": "./dist/strophe.cjs"
@@ -90,6 +91,7 @@
         "minimist": "^1.2.5",
         "prettier": "^3.5.3",
         "rollup": "^4.62.2",
+        "saxes": "6.0.0",
         "terser": "^5.10.0",
         "tslib": "^2.8.1",
         "typedoc": "^0.28.19",
@@ -101,10 +103,14 @@
     },
     "peerDependencies": {
         "jsdom": ">=20.0.0",
+        "saxes": "^6.0.0",
         "ws": ">=8.0.0"
     },
     "peerDependenciesMeta": {
         "jsdom": {
+            "optional": true
+        },
+        "saxes": {
             "optional": true
         },
         "ws": {

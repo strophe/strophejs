@@ -32,6 +32,12 @@ globalThis.XMLSerializer = window.XMLSerializer;
 globalThis.DOMParser = window.DOMParser;
 globalThis.document = window.document;`;
 
+// The Node builds additionally bundle Node-only transports (e.g. the XEP-0114
+// component transport). Their imports — Node builtins and the `saxes` stream
+// tokenizer — must stay external so they resolve at runtime rather than being
+// pulled into the bundle. The browser builds never import these modules.
+const nodeExternal = (id) => id === 'ws' || id === 'jsdom' || id === 'saxes' || id.startsWith('node:');
+
 export default [
     // Browser UMD build (unminified) — CommonJS-compatible for `require()` consumers
     {
@@ -74,8 +80,8 @@ export default [
     },
     // Node.js ESM build
     {
-        input: 'src/index.ts',
-        external: ['ws', 'jsdom'],
+        input: 'src/index-node.ts',
+        external: nodeExternal,
         output: {
             file: 'dist/strophe.node.esm.js',
             format: 'es',
@@ -91,7 +97,7 @@ export default [
                     this.emitFile({
                         type: 'asset',
                         fileName: 'strophe.node.esm.d.ts',
-                        source: "export * from './types/index';\n",
+                        source: "export * from './types/index-node';\n",
                     });
                 },
             },
@@ -99,8 +105,8 @@ export default [
     },
     // Node.js CJS build
     {
-        input: 'src/index.ts',
-        external: ['ws', 'jsdom'],
+        input: 'src/index-node.ts',
+        external: nodeExternal,
         output: {
             file: 'dist/strophe.cjs',
             format: 'cjs',

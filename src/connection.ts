@@ -30,6 +30,10 @@ import { SessionError } from './errors';
 import Bosh from './transports/bosh';
 import WorkerWebsocket from './transports/worker-websocket';
 import Websocket from './transports/websocket';
+// Type-only: the Component transport is Node-only and is registered at
+// runtime via addProtocol() from the Node entry point, so importing it
+// as a type keeps it out of the browser build.
+import type Component from './transports/component';
 import StreamManagement, {
     SessionStorageBackend,
     StreamManagementMirror,
@@ -128,8 +132,12 @@ export interface ConnectionOptions {
      * Also because downgrading security is not permitted by browsers, when using
      * relative URLs both BOSH and WebSocket connections will use their secure
      * variants if the current connection to the site is also secure (https).
+     *
+     * The `'component'` value selects the Node-only XEP-0114 external component
+     * transport (see the `Component` class). It requires a `tcp://host:port`
+     * service URL and is not available in the browser build.
      */
-    protocol?: 'ws' | 'wss';
+    protocol?: 'ws' | 'wss' | 'component';
     /**
      * _Note: This option is only relevant to Websocket connections, and not BOSH_
      *
@@ -221,6 +229,14 @@ export type ConnectCallback = (status: number, condition: string | null, elem?: 
 const connectionPlugins: Record<string, object> = {};
 
 /**
+ * _Private_ registry of optional, environment-specific transports keyed by the
+ * `protocol` option that selects them. The Node-only XEP-0114 component
+ * transport registers itself here (see the Node entry point) so that its
+ * Node-only dependencies never reach the browser bundle.
+ */
+const transportProtocols: Record<string, new (connection: Connection) => Component> = {};
+
+/**
  * **XMPP Connection manager**
  *
  * This class is the main part of Strophe.  It manages a BOSH or websocket
@@ -292,7 +308,7 @@ class Connection {
     scram_keys: Record<string, unknown> | null;
     connect_callback: ConnectCallback | null;
     disconnection_timeout: number;
-    _proto: Bosh | Websocket | WorkerWebsocket;
+    _proto: Bosh | Websocket | WorkerWebsocket | Component;
     _sasl_mechanism: SASLMechanism | null;
     _requests: Request[];
     /**
@@ -410,7 +426,7 @@ class Connection {
         this.maxRetries = 5;
 
         // Call onIdle callback every 1/10th of a second
-        this._idleTimeout = setTimeout(() => this._onIdle(), 100);
+        this._scheduleIdle();
 
         addCookies(this.options.cookies);
         this.registerSASLMechanisms(this.options.mechanisms);
@@ -459,11 +475,26 @@ class Connection {
     }
 
     /**
+     * Register an optional transport, selectable via the `protocol` connection
+     * option. Used to plug in environment-specific transports (such as the
+     * Node-only XEP-0114 component transport) without the core browser build
+     * depending on them.
+     * @param name - The `protocol` option value that selects this transport.
+     * @param manager - The transport (protocol-manager) constructor.
+     */
+    static addProtocol(name: string, manager: new (connection: Connection) => Component): void {
+        transportProtocols[name] = manager;
+    }
+
+    /**
      * Select protocal based on this.options or this.service
      */
     setProtocol(): void {
         const proto = this.options.protocol || '';
-        if (this.options.worker) {
+        const RegisteredTransport = transportProtocols[proto];
+        if (RegisteredTransport) {
+            this._proto = new RegisteredTransport(this);
+        } else if (this.options.worker) {
             this._proto = new WorkerWebsocket(this);
         } else if (
             this.service.indexOf('ws:') === 0 ||
@@ -471,6 +502,11 @@ class Connection {
             proto.indexOf('ws') === 0
         ) {
             this._proto = new Websocket(this);
+        } else if (proto) {
+            throw new Error(
+                `Strophe: unknown connection protocol "${proto}". Valid values are "ws" and "wss"; ` +
+                    `other transports must first be registered with Connection.addProtocol().`,
+            );
         } else {
             this._proto = new Bosh(this);
         }
@@ -1082,7 +1118,7 @@ class Connection {
     _sendRestart(): void {
         this._data.push('restart');
         this._proto._sendRestart();
-        this._idleTimeout = setTimeout(() => this._onIdle(), 100);
+        this._scheduleIdle();
     }
 
     /**
@@ -2185,6 +2221,21 @@ class Connection {
         // actually disconnect
         this._doDisconnect();
         return false;
+    }
+
+    /**
+     * (Re)arm the idle loop.
+     *
+     * Cancels any pending idle tick and schedules the next call to
+     * {@link Connection#_onIdle}. `_onIdle` re-arms itself while connected, so
+     * this only needs to be called to (re)start the loop: at construction, on a
+     * stream restart, or when a transport becomes connected without having gone
+     * through the send path (e.g. a receive-only component after its handshake).
+     * @private
+     */
+    _scheduleIdle(): void {
+        clearTimeout(this._idleTimeout);
+        this._idleTimeout = setTimeout(() => this._onIdle(), 100);
     }
 
     /**
