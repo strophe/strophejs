@@ -32,7 +32,7 @@ async function scramClientProof(authMessage: string, clientKey: ArrayBuffer, has
         await crypto.subtle.digest(hashName, clientKey),
         { name: 'HMAC', hash: hashName },
         false,
-        ['sign']
+        ['sign'],
     );
     const clientSignature = await crypto.subtle.sign('HMAC', storedKey, utils.stringToArrayBuf(authMessage));
 
@@ -99,19 +99,19 @@ async function scramDeriveKeys(
     salt: BufferSource,
     iter: number,
     hashName: string,
-    hashBits: number
+    hashBits: number,
 ): Promise<DerivedKeys> {
     const saltedPasswordBits = await crypto.subtle.deriveBits(
         { name: 'PBKDF2', salt, iterations: iter, hash: { name: hashName } },
         await crypto.subtle.importKey('raw', utils.stringToArrayBuf(password), 'PBKDF2', false, ['deriveBits']),
-        hashBits
+        hashBits,
     );
     const saltedPassword = await crypto.subtle.importKey(
         'raw',
         saltedPasswordBits,
         { name: 'HMAC', hash: hashName },
         false,
-        ['sign']
+        ['sign'],
     );
 
     return {
@@ -142,6 +142,13 @@ function generate_cnonce(): string {
 
 const scram = {
     /**
+     * Whether the Web Crypto `SubtleCrypto` API that SCRAM relies on is available.
+     */
+    supported(): boolean {
+        return typeof crypto !== 'undefined' && typeof crypto.subtle !== 'undefined';
+    },
+
+    /**
      * On success, sets
      * connection_sasl_data["server-signature"]
      * and
@@ -159,7 +166,7 @@ const scram = {
         connection: Connection,
         challenge: string,
         hashName: string,
-        hashBits: number
+        hashBits: number,
     ): Promise<string | false> {
         const cnonce = connection._sasl_data.cnonce;
         const challengeData = scramParseChallenge(challenge);
@@ -180,7 +187,7 @@ const scram = {
                 challengeData.salt,
                 challengeData.iter,
                 hashName,
-                hashBits
+                hashBits,
             );
             clientKey = keys.ck;
             serverKey = keys.sk;

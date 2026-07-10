@@ -6,6 +6,7 @@
   so the freshly bound session no longer rejects them with `invalid-from`. The server stamps
   the authoritative c2s `from`; nested `from` attributes inside payloads are preserved.
 - Fix: always clear the idle timer on disconnect, so no stray idle callback fires after teardown under Node.
+- Fix: Check whether CryptoSubtle is available before attempting SCRAM
 
 ## Version 4.1.1 - (2026-07-08)
 

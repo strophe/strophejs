@@ -8,7 +8,7 @@ class SASLSHA256 extends SASLMechanism {
     }
 
     test(connection: Connection): boolean {
-        return connection.authcid !== null;
+        return connection.authcid !== null && scram.supported();
     }
 
     async onChallenge(connection: Connection, challenge?: string): Promise<string | false> {
