@@ -24,7 +24,9 @@ describe('Strophe.Connection options', () => {
         const stanza = $pres();
         const sendStub = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
         const timeoutStub = vi.spyOn(globalThis as any, 'setTimeout').mockImplementation((func: () => void) => func());
-        const setRetRequestHeaderStub = vi.spyOn(XMLHttpRequest.prototype, 'setRequestHeader').mockImplementation(() => {});
+        const setRetRequestHeaderStub = vi
+            .spyOn(XMLHttpRequest.prototype, 'setRequestHeader')
+            .mockImplementation(() => {});
         let conn = new Strophe.Connection('example.org');
         conn.send(stanza);
         expect(setRetRequestHeaderStub.mock.calls[0][0]).toBe('Content-Type');
@@ -132,5 +134,23 @@ describe('Strophe.Connection options', () => {
             '<show/><status/>' +
             '</presence>';
         expect(pres.toString()).toBe(expected);
+    });
+});
+
+describe('Strophe.Connection#_doDisconnect', () => {
+    it('clears the idle timer so the loop stops after disconnect', async () => {
+        // The idle loop is driven by setTimeout, whose handle is a number in the
+        // browser but a Timeout object in Node. _doDisconnect must clear it
+        // regardless of the handle type.
+        const conn = new Strophe.Connection('example.org');
+        let idleCalls = 0;
+        conn._onIdle = () => {
+            idleCalls++;
+        };
+
+        conn._doDisconnect();
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
+        expect(idleCalls).toBe(0);
     });
 });

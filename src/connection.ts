@@ -1342,9 +1342,7 @@ class Connection {
      * @param condition - the error condition
      */
     _doDisconnect(condition?: string | null): void {
-        if (typeof this._idleTimeout === 'number') {
-            clearTimeout(this._idleTimeout);
-        }
+        clearTimeout(this._idleTimeout);
 
         // Cancel Disconnect Timeout
         if (this._disconnectTimeout !== null) {
