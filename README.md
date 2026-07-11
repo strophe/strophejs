@@ -254,12 +254,14 @@ When running in Node.js, install these additional packages, which provide the We
 DOM APIs that browsers supply natively:
 
 ```bash
-npm install jsdom ws
+npm install @xmldom/xmldom ws
 ```
 
+`@xmldom/xmldom` is a small, pure-JavaScript XML DOM (needed for `DOMParser`, `XMLSerializer`
+and `document.implementation`).
+
 The XEP-0114 external component transport additionally uses the `saxes` streaming XML
-parser (a dependency of `jsdom`, so it is usually already present); install it explicitly
-if you use that transport without `jsdom`:
+parser. Install it as well if you use that transport:
 
 ```bash
 npm install saxes

@@ -10,7 +10,7 @@
  *
  * The parser is deliberately Node-only: it relies on `node:string_decoder` to
  * reassemble multi-byte UTF-8 characters split across TCP reads and on `saxes`
- * (a small, well-tested SAX tokenizer that ships with jsdom) for tokenization.
+ * (a small, well-tested SAX tokenizer) for tokenization.
  * The actual DOM construction reuses Strophe's own {@link xmlGenerator}, so the
  * `Element` objects handed downstream are the exact same type produced by the
  * BOSH and WebSocket transports.
