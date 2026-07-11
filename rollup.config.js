@@ -13,30 +13,14 @@ const tsConfig = {
     outDir: undefined,
 };
 
-// The Node.js builds run in an environment without a DOM or WebSocket, so we
-// shim those browser globals via jsdom and ws. Using `intro` (rather than a
-// custom renderChunk) lets Rollup keep the generated source maps correct.
-const nodeShimESM = `const { JSDOM } = await import('jsdom');
-const { default: ws } = await import('ws');
-const { window } = new JSDOM();
-globalThis.WebSocket = ws;
-globalThis.XMLSerializer = window.XMLSerializer;
-globalThis.DOMParser = window.DOMParser;
-globalThis.document = window.document;`;
-
-const nodeShimCJS = `const { JSDOM } = require('jsdom');
-const WebSocket = require('ws');
-const { window } = new JSDOM();
-globalThis.WebSocket = WebSocket;
-globalThis.XMLSerializer = window.XMLSerializer;
-globalThis.DOMParser = window.DOMParser;
-globalThis.document = window.document;`;
-
-// The Node builds additionally bundle Node-only transports (e.g. the XEP-0114
-// component transport). Their imports — Node builtins and the `saxes` stream
-// tokenizer — must stay external so they resolve at runtime rather than being
-// pulled into the bundle. The browser builds never import these modules.
-const nodeExternal = (id) => id === 'ws' || id === 'jsdom' || id === 'saxes' || id.startsWith('node:');
+// The Node.js builds run in an environment without a DOM or WebSocket. Those
+// browser globals are installed by `src/shims/node-dom.ts` (the first import in
+// the Node entry point), which pulls in `@xmldom/xmldom` and `ws`. Those
+// packages, the Node builtins and the `saxes` stream tokenizer must stay
+// external so they resolve at runtime rather than being pulled into the bundle.
+// The browser builds never import any of these modules.
+const nodeExternal = (id) =>
+    id === 'ws' || id === '@xmldom/xmldom' || id === 'saxes' || id.startsWith('node:');
 
 export default [
     // Browser UMD build (unminified) — CommonJS-compatible for `require()` consumers
@@ -48,10 +32,6 @@ export default [
             format: 'umd',
             exports: 'named',
             sourcemap: true,
-            globals: {
-                'ws': 'WebSocket',
-                'jsdom': 'JSDOM',
-            },
         },
         plugins: [typescript(tsConfig), resolve({ browser: true }), commonjs()],
     },
@@ -87,7 +67,6 @@ export default [
             format: 'es',
             exports: 'named',
             sourcemap: true,
-            intro: nodeShimESM,
         },
         plugins: [
             typescript(tsConfig),
@@ -112,7 +91,6 @@ export default [
             format: 'cjs',
             exports: 'named',
             sourcemap: true,
-            intro: nodeShimCJS,
         },
         plugins: [typescript(tsConfig)],
     },

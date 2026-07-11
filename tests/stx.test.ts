@@ -208,9 +208,12 @@ describe('The stx tagged template literal', () => {
             <status>${status}</status>
         </presence>`;
 
-        expect(templateStanza.tree().querySelector('status')!.innerHTML).toBe(
-            '&lt;script&gt;alert("p0wned")&lt;/script&gt;',
-        );
+        // The interpolated value must be inserted as escaped text, never parsed
+        // as live markup: no <script> element is injected, and the raw string
+        // survives verbatim as text content.
+        const statusEl = templateStanza.tree().getElementsByTagName('status')[0];
+        expect(statusEl.getElementsByTagName('script').length).toBe(0);
+        expect(statusEl.textContent).toBe('<script>alert("p0wned")</script>');
     });
 
     it('The unsafeXML directive', () => {
