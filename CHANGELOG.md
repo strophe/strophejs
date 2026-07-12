@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 4.1.2 (Unreleased)
+## Version 4.1.2 (2026-07-12)
 
 - Fix: strip a stale `from` from Stream Management stanzas re-sent after a failed resumption,
   so the freshly bound session no longer rejects them with `invalid-from`. The server stamps
