@@ -2,19 +2,7 @@ import log from './log';
 import { ElementType, PARSE_ERROR_NS, XHTML } from './constants';
 
 export type XHTMLAttrs =
-    | 'a'
-    | 'blockquote'
-    | 'br'
-    | 'cite'
-    | 'em'
-    | 'img'
-    | 'li'
-    | 'ol'
-    | 'p'
-    | 'span'
-    | 'strong'
-    | 'ul'
-    | 'body';
+    'a' | 'blockquote' | 'br' | 'cite' | 'em' | 'img' | 'li' | 'ol' | 'p' | 'span' | 'strong' | 'ul' | 'body';
 
 export interface CookieValue {
     value: string;
@@ -530,6 +518,33 @@ export function forEachChild(elem: Element, elemName: string, func: (child: Elem
  */
 export function isTagEqual(el: Element, name: string): boolean {
     return el.tagName === name;
+}
+
+/**
+ * Return the XML namespace of an element.
+ *
+ * Prefers the serialized `xmlns` attribute and falls back to the DOM
+ * `namespaceURI`, because the two diverge depending on how the element was
+ * built and neither is reliable on its own:
+ *
+ *  - Locally-built stanzas (`$iq`, `stx`, {@link Builder}) are created with
+ *    `createElement` and carry their namespace only in the `xmlns` attribute;
+ *    their `namespaceURI` is null.
+ *  - Stanzas received over the XEP-0114 component transport are built with
+ *    `createElementNS` and carry their namespace only on `namespaceURI`; the
+ *    redundant `xmlns` attribute is omitted.
+ *  - WebSocket / BOSH stanzas parsed by `DOMParser` carry both, except on
+ *    child elements that inherit the default namespace without redeclaring it
+ *    (those have only `namespaceURI`).
+ *
+ * Checking both is the transport-agnostic way to read an element's namespace.
+ *
+ * @method Strophe.getNamespace
+ * @param elem - The element whose namespace is wanted.
+ * @returns The namespace URI, or null if the element has none.
+ */
+export function getNamespace(elem: Element): string | null {
+    return elem.getAttribute('xmlns') || elem.namespaceURI;
 }
 
 /**

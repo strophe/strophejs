@@ -415,6 +415,32 @@ describe('ComponentParser (streaming XML)', () => {
         expect(c.stanzas.map((s) => s.nodeName)).toEqual(['presence', 'message', 'iq']);
     });
 
+    it('produces stanzas whose namespaced payload is matchable by a Handler', () => {
+        // The parser builds its DOM with createElementNS and drops the
+        // redundant xmlns attribute, so a payload element carries its
+        // namespace only on namespaceURI. Handler.getNamespace must fall back
+        // to namespaceURI, otherwise a handler registered for the payload's
+        // namespace never matches and the IQ is silently dropped.
+        const c = collect();
+        const stanza =
+            "<iq type='set' from='pubsub.example.org' to='component.example.org' id='pub1'>" +
+            "<pubsub xmlns='http://jabber.org/protocol/pubsub'><publish node='princely_musings'/></pubsub>" +
+            '</iq>';
+        feed(c.parser, STREAM_OPEN + stanza, 1);
+
+        expect(c.errors).toHaveLength(0);
+        expect(c.stanzas).toHaveLength(1);
+
+        const payload = c.stanzas[0].getElementsByTagName('pubsub')[0];
+        // The producer side of the bug: namespaceURI is set but the xmlns
+        // attribute was stripped.
+        expect(payload.namespaceURI).toBe('http://jabber.org/protocol/pubsub');
+        expect(payload.getAttribute('xmlns')).toBeNull();
+
+        const hand = new Strophe.Handler(null, 'http://jabber.org/protocol/pubsub', 'iq', 'set');
+        expect(hand.isMatch(c.stanzas[0])).toBe(true);
+    });
+
     it('handles a stanza split inside an attribute value', () => {
         const c = collect();
         c.parser.write(Buffer.from(STREAM_OPEN, 'utf8'));

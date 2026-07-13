@@ -1,4 +1,4 @@
-import { getBareJidFromJid, handleError, isTagEqual } from './utils';
+import { getBareJidFromJid, getNamespace as getElementNamespace, handleError, isTagEqual } from './utils';
 
 export interface HandlerOptions {
     matchBareFromJid?: boolean;
@@ -63,14 +63,18 @@ class Handler {
     }
 
     /**
-     * Returns the XML namespace attribute on an element.
+     * Returns the XML namespace of an element.
+     * Resolved via {@link Strophe.getNamespace}, which reads the `xmlns`
+     * attribute and falls back to `namespaceURI` so matching works regardless
+     * of how the stanza's DOM was built (locally, via DOMParser, or via the
+     * component transport's `createElementNS`).
      * If `ignoreNamespaceFragment` was passed in for this handler, then the
      * URL fragment will be stripped.
      * @param elem - The XML element with the namespace.
      * @returns The namespace, with optionally the fragment stripped.
      */
     getNamespace(elem: Element): string | null {
-        let elNamespace = elem.getAttribute('xmlns');
+        let elNamespace = getElementNamespace(elem);
         if (elNamespace && this.options.ignoreNamespaceFragment) {
             elNamespace = elNamespace.split('#')[0];
         }
