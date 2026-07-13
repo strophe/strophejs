@@ -4,13 +4,13 @@ import log from '../log';
 import Builder, { $build } from '../builder';
 import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from '../constants';
 import { toElement } from '../utils';
-import { WebsocketLike } from '../types';
+import { WebsocketLike, Transport } from './types';
 import type { StreamManagementMirror } from '../stream-management';
 
 /**
  * Helper class that handles a websocket connection inside a shared worker.
  */
-class WorkerWebsocket extends Websocket {
+class WorkerWebsocket extends Websocket implements Transport {
     worker: SharedWorker;
     _messageHandler: (m: MessageEvent) => void;
     socket: WebsocketLike | null;

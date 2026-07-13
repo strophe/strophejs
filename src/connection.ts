@@ -30,10 +30,7 @@ import { SessionError } from './errors';
 import Bosh from './transports/bosh';
 import WorkerWebsocket from './transports/worker-websocket';
 import Websocket from './transports/websocket';
-// Type-only: the Component transport is Node-only and is registered at
-// runtime via addProtocol() from the Node entry point, so importing it
-// as a type keeps it out of the browser build.
-import type Component from './transports/component';
+import type { Transport } from './transports/types';
 import StreamManagement, {
     SessionStorageBackend,
     StreamManagementMirror,
@@ -234,7 +231,7 @@ const connectionPlugins: Record<string, object> = {};
  * transport registers itself here (see the Node entry point) so that its
  * Node-only dependencies never reach the browser bundle.
  */
-const transportProtocols: Record<string, new (connection: Connection) => Component> = {};
+const transportProtocols: Record<string, new (connection: Connection) => Transport> = {};
 
 /**
  * **XMPP Connection manager**
@@ -308,7 +305,7 @@ class Connection {
     scram_keys: Record<string, unknown> | null;
     connect_callback: ConnectCallback | null;
     disconnection_timeout: number;
-    _proto: Bosh | Websocket | WorkerWebsocket | Component;
+    _proto: Transport;
     _sasl_mechanism: SASLMechanism | null;
     _requests: Request[];
     /**
@@ -482,7 +479,7 @@ class Connection {
      * @param name - The `protocol` option value that selects this transport.
      * @param manager - The transport (protocol-manager) constructor.
      */
-    static addProtocol(name: string, manager: new (connection: Connection) => Component): void {
+    static addProtocol(name: string, manager: new (connection: Connection) => Transport): void {
         transportProtocols[name] = manager;
     }
 
@@ -1417,7 +1414,7 @@ class Connection {
      * @param raw - The stanza as raw string.
      */
     _dataRecv(req: Element | Request, raw?: string): void {
-        const elem = ('_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req) as Element | null;
+        const elem = (this._proto instanceof Bosh ? this._proto._reqToData(req as Request) : req) as Element | null;
         if (elem === null) {
             return;
         }
@@ -1531,7 +1528,7 @@ class Connection {
 
         let bodyWrap: Element | null;
         try {
-            bodyWrap = ('_reqToData' in this._proto ? this._proto._reqToData(req as Request) : req) as Element | null;
+            bodyWrap = (this._proto instanceof Bosh ? this._proto._reqToData(req as Request) : req) as Element | null;
         } catch (e) {
             if (e.name !== ErrorCondition.BAD_FORMAT) {
                 throw e;
