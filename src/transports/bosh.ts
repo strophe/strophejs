@@ -12,6 +12,7 @@ import Builder, { $build } from '../builder';
 import Request from '../request';
 import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from '../utils';
 import { Status, NS } from '../constants';
+import type { Transport } from './types';
 
 type ConnectionCallback = (connection: Connection) => void;
 
@@ -23,7 +24,7 @@ let secondaryTimeoutMultiplier = 0.1;
  * The Bosh class is used internally by Connection
  * to encapsulate BOSH sessions. It is not meant to be used from user's code.
  */
-class Bosh {
+class Bosh implements Transport {
     _conn: Connection;
     rid: number;
     sid: string | null;

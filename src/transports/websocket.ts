@@ -11,7 +11,7 @@ import type Connection from '../connection';
 import Builder, { $build } from '../builder';
 import log from '../log';
 import { NS, ErrorCondition, Status } from '../constants';
-import {WebsocketLike} from '../types';
+import {WebsocketLike, Transport} from './types';
 
 /**
  * Helper class that handles WebSocket Connections
@@ -19,7 +19,7 @@ import {WebsocketLike} from '../types';
  * The WebSocket class is used internally by Connection
  * to encapsulate WebSocket sessions. It is not meant to be used from user's code.
  */
-class Websocket {
+class Websocket implements Transport {
     _conn: Connection;
     strip: string;
     socket: WebSocket | WebsocketLike | null;

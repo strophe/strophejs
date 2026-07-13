@@ -30,6 +30,7 @@ import { stx } from '../stanza';
 import log from '../log';
 import { ErrorCondition, NS, Status } from '../constants';
 import { xmlGenerator, xmlescape } from '../utils';
+import type { Transport } from './types';
 import ComponentParser from './component-parser';
 
 const DEFAULT_COMPONENT_PORT = 5347;
@@ -67,7 +68,7 @@ function parseStreamError(streamError: Element): { condition: string; text: stri
  * with the `protocol: 'component'` connection option and a `tcp://host:port`
  * service URL.
  */
-class Component {
+class Component implements Transport {
     _conn: Connection;
     strip: string;
     socket: Socket | null;
