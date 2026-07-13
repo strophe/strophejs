@@ -1,4 +1,4 @@
-import { Strophe } from '../dist/strophe.node.esm.js';
+import { Strophe, $iq } from '../dist/strophe.node.esm.js';
 import { describe, it, expect } from 'vitest';
 
 describe('XML', () => {
@@ -40,6 +40,32 @@ describe('XML', () => {
         el = Strophe.xmlElement('message', [['foo', 'bar']], 'Some text');
         expect(el.textContent).toBe('Some text');
         expect(el.getAttribute('foo')).toBe('bar');
+    });
+
+    it('getNamespace resolves the namespace across DOM shapes', () => {
+        // Strophe-built stanza: namespace is in the xmlns attribute only,
+        // namespaceURI is null (xmlElement uses createElement, not NS-aware).
+        const built = $iq({ type: 'get' }).tree();
+        expect(built.getAttribute('xmlns')).toBe('jabber:client');
+        expect(built.namespaceURI).toBeNull();
+        expect(Strophe.getNamespace(built)).toBe('jabber:client');
+
+        // DOMParser shape (WebSocket/BOSH): the xmlns attribute is present.
+        const parsed = new DOMParser().parseFromString(
+            "<pubsub xmlns='http://jabber.org/protocol/pubsub'/>",
+            'text/xml',
+        ).documentElement;
+        expect(Strophe.getNamespace(parsed)).toBe('http://jabber.org/protocol/pubsub');
+
+        // Component-transport shape: built with createElementNS, so the
+        // namespace lives only on namespaceURI and there is no xmlns attribute.
+        const nsOnly = Strophe.xmlGenerator().createElementNS('http://jabber.org/protocol/pubsub', 'pubsub');
+        expect(nsOnly.getAttribute('xmlns')).toBeNull();
+        expect(nsOnly.namespaceURI).toBe('http://jabber.org/protocol/pubsub');
+        expect(Strophe.getNamespace(nsOnly)).toBe('http://jabber.org/protocol/pubsub');
+
+        // No namespace at all.
+        expect(Strophe.getNamespace(Strophe.xmlElement('foo'))).toBeNull();
     });
 
     it('copyElement() double escape bug', () => {
