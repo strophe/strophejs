@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo/strophe-logo-dark.svg">
+    <img alt="strophe.js" src="logo/strophe-logo.svg" width="440">
+  </picture>
+</p>
+
 # Strophe.js
 
 [![Build Status](https://github.com/strophe/strophejs/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/strophe/strophejs/actions/workflows/ci.yml)

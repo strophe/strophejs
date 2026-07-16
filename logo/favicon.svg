@@ -1,0 +1,9 @@
+<!-- strophe.js logo. Concept: an XMPP stanza in flight between two endpoint brackets. Generated, source: JetBrains Mono outlined to paths + hand-drawn geometry. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="327.45 -150.05 245.09 245.09" role="img" aria-label="strophe.js">
+  <rect x="327.45" y="-150.05" width="245.09" height="245.09" rx="53.92" fill="#14171A"/>
+  <g fill="none" stroke="#EEF1F3" stroke-width="11.776" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="10">
+    <path d="M 401.64 -86.07 L 364.44 -27.50 L 401.64 31.07"/>
+    <path d="M 498.36 -86.07 L 535.56 -27.50 L 498.36 31.07"/>
+  </g>
+  <circle cx="450.00" cy="-27.50" r="25.30" fill="#818CF8"/>
+</svg>

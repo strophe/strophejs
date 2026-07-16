@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>strophe.js logo</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #14171A; background: #fff; }
+  header { padding: 40px 32px 8px; }
+  h1 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+  header p { margin: 0; color: #667; font-size: 13px; max-width: 60ch; line-height: 1.5; }
+  .panel { padding: 44px 32px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center; }
+  .light { background: #ffffff; }
+  .grey  { background: #f2f3f5; }
+  .dark  { background: #0d1117; }
+  .dark .cap { color: #8b949e; }
+  .cap { font-size: 12px; color: #8a94a0; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 14px; }
+  .cell { display: flex; flex-direction: column; align-items: flex-start; }
+  .lock  { height: 84px; }
+  .lock.big { height: 120px; }
+  .glyph { height: 92px; }
+  .row { display: flex; align-items: flex-end; gap: 22px; }
+  .row img { display: block; image-rendering: -webkit-optimize-contrast; }
+  .swatch { display: flex; gap: 20px; padding: 24px 32px; background: #fff; flex-wrap: wrap; }
+  .chip { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #445; }
+  .dot { width: 20px; height: 20px; border-radius: 5px; border: 1px solid #0002; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>strophe.js &mdash; brand mark</h1>
+    <p>Concept: an XMPP stanza in flight between two endpoint brackets. The name is the message being
+    routed; the round indigo dot is the stanza. Wordmark set in JetBrains Mono and outlined to paths;
+    the accent is indigo (#4338CA).</p>
+  </header>
+
+  <section class="panel light">
+    <div class="cell"><div class="cap">primary lockup</div>
+      <img class="lock big" src="strophe-logo.svg" alt="strophe.js lockup"></div>
+    <div class="cell"><div class="cap">glyph</div>
+      <img class="glyph" src="strophe-glyph.svg" alt="strophe.js glyph"></div>
+  </section>
+
+  <section class="panel dark">
+    <div class="cell"><div class="cap">primary lockup (dark)</div>
+      <img class="lock big" src="strophe-logo-dark.svg" alt="strophe.js lockup dark"></div>
+    <div class="cell"><div class="cap">glyph (dark)</div>
+      <img class="glyph" src="strophe-glyph-dark.svg" alt="strophe.js glyph dark"></div>
+  </section>
+
+  <section class="panel grey">
+    <div class="cell"><div class="cap">favicon at real sizes</div>
+      <div class="row">
+        <img src="png/apple-touch-icon-180.png" width="96" height="96" alt="128">
+        <img src="png/favicon-32.png" width="48" height="48" alt="48">
+        <img src="png/favicon-32.png" width="32" height="32" alt="32">
+        <img src="png/favicon-16.png" width="16" height="16" alt="16">
+      </div>
+    </div>
+  </section>
+
+  <section class="swatch">
+    <div class="chip"><span class="dot" style="background:#14171A"></span> ink #14171A</div>
+    <div class="chip"><span class="dot" style="background:#EEF1F3"></span> ink dark #EEF1F3</div>
+    <div class="chip"><span class="dot" style="background:#4338CA"></span> indigo #4338CA</div>
+    <div class="chip"><span class="dot" style="background:#818CF8"></span> indigo on dark #818CF8</div>
+  </section>
+</body>
+</html>
