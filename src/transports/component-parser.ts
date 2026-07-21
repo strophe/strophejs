@@ -16,9 +16,36 @@
  * BOSH and WebSocket transports.
  */
 import { Buffer } from 'node:buffer';
+import { createRequire } from 'node:module';
 import { StringDecoder } from 'node:string_decoder';
-import { SaxesParser, type SaxesTagNS } from 'saxes';
+import type { SaxesParser, SaxesTagNS } from 'saxes';
 import { xmlGenerator } from '../utils';
+
+/** Cached `saxes` constructor, resolved by {@link getSaxesParser} on first use. */
+let SaxesParserCtor: typeof import('saxes').SaxesParser | undefined;
+
+/**
+ * Resolve the `saxes` parser constructor, loading the package on first use.
+ *
+ * `saxes` is an optional peer dependency needed only by this transport, so it is
+ * deliberately *not* imported at module load.
+ *
+ * The load is synchronous because {@link Component} builds its parser in its
+ * constructor.
+ */
+function getSaxesParser(): typeof import('saxes').SaxesParser {
+    if (!SaxesParserCtor) {
+        try {
+            SaxesParserCtor = createRequire(import.meta.url)('saxes').SaxesParser;
+        } catch {
+            throw new Error(
+                'Strophe: the XEP-0114 component transport requires the "saxes" package, ' +
+                    'which is an optional peer dependency. Install it with `npm install saxes`.',
+            );
+        }
+    }
+    return SaxesParserCtor;
+}
 
 export interface StreamParserHandlers {
     /** Called once the opening `<stream:stream …>` header is seen, with its
@@ -68,7 +95,8 @@ export default class ComponentParser {
         this._stack = [];
         this._streamOpened = false;
         this._errored = false;
-        this._parser = new SaxesParser<{ xmlns: true }>({ xmlns: true });
+        const SaxesParserClass = getSaxesParser();
+        this._parser = new SaxesParserClass<{ xmlns: true }>({ xmlns: true });
         this._parser.on('opentag', (tag) => this._onOpenTag(tag));
         this._parser.on('closetag', () => this._onCloseTag());
         this._parser.on('text', (text) => this._onText(text));

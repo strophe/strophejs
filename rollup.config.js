@@ -22,6 +22,23 @@ const tsConfig = {
 const nodeExternal = (id) =>
     id === 'ws' || id === '@xmldom/xmldom' || id === 'saxes' || id.startsWith('node:');
 
+// `component-parser.ts` resolves the optional `saxes` peer dependency lazily via
+// `createRequire(import.meta.url)`. For CommonJS output Rollup expands
+// `import.meta.url` to a snippet that first tests `typeof document === 'undefined'`
+// to decide whether it is in a browser, but the Node build installs a global
+// `document` (see `src/shims/node-dom.ts`), so that test picks the browser branch
+// and derives a bogus URL. These builds are Node-only, so resolve it from
+// `__filename` unconditionally instead.
+const nodeImportMetaUrl = {
+    name: 'node-import-meta-url',
+    resolveImportMeta(property, { format }) {
+        if (property === 'url' && format === 'cjs') {
+            return `require('url').pathToFileURL(__filename).href`;
+        }
+        return null;
+    },
+};
+
 export default [
     // Browser UMD build (unminified) — CommonJS-compatible for `require()` consumers
     {
@@ -92,7 +109,7 @@ export default [
             exports: 'named',
             sourcemap: true,
         },
-        plugins: [typescript(tsConfig)],
+        plugins: [typescript(tsConfig), nodeImportMetaUrl],
     },
     // Shared-connection worker: a self-contained classic (non-module) worker
     // script; point the Connection `worker` option at this file's URL.
