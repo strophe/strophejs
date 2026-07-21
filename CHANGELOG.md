@@ -1,16 +1,44 @@
 # Strophe.js Change Log
 
-## Version 4.1.2 (2026-07-12)
+## Version 5.0.0 (2026-07-21)
+
+### Breaking changes
+
+Both breaking changes affect Node.js only. Browser builds are unaffected, and no public API
+was removed.
+
+- **`jsdom` is replaced by `@xmldom/xmldom`.** The Node build only ever used jsdom for three
+  XML DOM globals (`DOMParser`, `XMLSerializer` and `document.implementation`), a small fraction
+  of what a full HTML browser emulation provides. It now uses `@xmldom/xmldom`, a small,
+  pure-JavaScript XML DOM. Install `@xmldom/xmldom` alongside `ws` and drop `jsdom`. Upgrading
+  without it fails at import with `ERR_MODULE_NOT_FOUND`. See the README.
+- **`Builder.h()` parses its argument as XML rather than HTML under Node.** XHTML-IM content
+  must now be well-formed XML, for example `<br/>` rather than `<br>`. Markup that is not
+  well-formed yields an empty element instead of being error corrected.
+
+### Features
 
 - Add a Node-only [XEP-0114](https://xmpp.org/extensions/xep-0114.html) external component
   transport. Connect as a `jabber:component:accept` component over a raw TCP stream by passing
-  the `protocol: 'component'` option and a `tcp://host:port` service URL.
-- Replace `jsdom` with `@xmldom/xmldom` for the DOM APIs the Node build needs (`DOMParser`,
-  `XMLSerializer` and `document.implementation`), a small, pure-JavaScript XML DOM in place of a
-  full HTML browser emulation. Node users should now install `@xmldom/xmldom` and `ws` (instead of
-  `jsdom` and `ws`); see the README. Note one behavior change in Node: `Builder.h()` now parses its
-  argument as XML rather than HTML, so XHTML-IM content must be well-formed XML (for example
-  `<br/>`, not `<br>`). Browser builds are unaffected.
+  the `protocol: 'component'` option and a `tcp://host:port` service URL. The transport uses the
+  `saxes` streaming XML parser, an optional peer dependency that is resolved on first use, so
+  applications that only speak BOSH or WebSocket do not need it installed.
+- Add `Connection.addProtocol(name, transport)` for registering an additional transport, which is
+  how the component transport is made selectable without the browser build depending on it.
+- Add `Strophe.getNamespace(elem)`, a transport-agnostic accessor that resolves an element's
+  namespace from either `namespaceURI` or an `xmlns` attribute.
+- Add a project logo and brand assets.
+
+### Fixes
+
+- Fix: match handlers by namespace regardless of how the stanza DOM was built. Handlers
+  registered with a namespace (such as `addHandler(cb, NS.PUBSUB, 'iq', 'set')`) silently failed
+  to match stanzas that carry their namespace on `namespaceURI` rather than in an `xmlns`
+  attribute, which is how the component transport builds them. Matching now reads both, so a
+  handler may now fire on stanzas where it previously stayed silent.
+
+## Version 4.1.2 (2026-07-12)
+
 - Fix: strip a stale `from` from Stream Management stanzas re-sent after a failed resumption,
   so the freshly bound session no longer rejects them with `invalid-from`. The server stamps
   the authoritative c2s `from`; nested `from` attributes inside payloads are preserved.
