@@ -4,8 +4,8 @@
 
 ### Breaking changes
 
-These breaking changes fall out of the `stx` whitespace fix below, which stops writing interpolated
-values into the text that is parsed.
+The first three of these fall out of the `stx` whitespace fix below, which stops writing interpolated
+values into the text that is parsed. The last is a fix of its own, for a gap which predates `stx`.
 
 - **Markup spliced into an `stx` template with `Stanza.unsafeXML()` or a `Builder` must now be
   well-formed on its own.** A fragment is parsed in isolation, in the namespace scope of where it
@@ -40,6 +40,23 @@ values into the text that is parsed.
   tag of another, which used to be a way to write attributes conditionally: `` stx`to="${to}"` `` is
   not an element, so it now throws `missing root element` where 5.0.0 wrote it in. Use
   `` unsafeXML(`to="${Strophe.xmlescape(to)}"`) `` there instead, which is written in as it was.
+- **`Strophe.xmlTextNode()`, `Strophe.xmlElement()`, `Builder.t()` and `Builder.attrs()` throw on a
+  character XML cannot represent, and normalise line endings.** `Builder` puts text and attribute
+  values straight into the DOM, and `Strophe.serialize()` writes them back out through `xmlescape`,
+  which handles only `& < > ' "`, so a character outside the `Char` production of XML 1.0 § 2.2,
+  such as a control character or a lone surrogate, reached the wire intact, and the server answered
+  the stream with `not-well-formed` and closed it, costing the connection rather than the one
+  message. Each now throws rather than return a node which cannot be sent (`A text node holds
+  U+0000 at index 1, which XML cannot represent and no escape can stand in for. Remove it before
+  building the stanza.`), so code which builds stanzas from text it does not control, and would
+  rather lose the message than the connection, should catch it or check the text first. Line
+  endings are normalised as XML 1.0 § 2.11 requires, so a CR or a CRLF passed in reads back as a
+  LF, which is what every recipient's parser made of it anyway. `Strophe.serialize()` also writes a
+  tab, a line feed or a carriage return in an attribute value as a character reference (`&#x9;`,
+  `&#xA;`, `&#xD;`), the only way an attribute can carry one, since a parser reads one written
+  literally as a space (XML 1.0 § 3.3.3). The attribute reads back as it was set; what changes is
+  the text on the wire, which anything comparing it as a string will notice. Neither change can
+  cost a stanza which was sendable before.
 
 ### Fixes
 
