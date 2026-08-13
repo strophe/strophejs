@@ -2,6 +2,7 @@ import log from './log';
 import { ElementType, PARSE_ERROR_NS, XHTML } from './constants';
 import { checkNamespace } from './namespace';
 import { strip } from './whitespace';
+import { xmlText } from './xml-chars';
 
 export type XHTMLAttrs =
     'a' | 'blockquote' | 'br' | 'cite' | 'em' | 'img' | 'li' | 'ol' | 'p' | 'span' | 'strong' | 'ul' | 'body';
@@ -158,11 +159,16 @@ export function xmlGenerator(): Document {
 /**
  * Creates an XML DOM text node.
  * Provides a cross implementation version of document.createTextNode.
+ *
+ * The text is put through {@link xmlText} first. Nothing parses a node built
+ * this way, on its way in or on its way out, so this is the only chance to
+ * refuse text which cannot be sent. See {@link xmlText} for what that means.
+ *
  * @param text - The content of the text node.
  * @returns A new XML DOM text node.
  */
 export function xmlTextNode(text: string): Text {
-    return xmlGenerator().createTextNode(text);
+    return xmlGenerator().createTextNode(xmlText(text, 'A text node'));
 }
 
 /**
@@ -269,14 +275,14 @@ export function xmlElement(name: string, attrs?: XmlElementAttrs, text?: string 
         for (const attr of attrs) {
             if (Array.isArray(attr)) {
                 if (attr[0] != null && attr[1] != null) {
-                    node.setAttribute(attr[0], attr[1]);
+                    node.setAttribute(attr[0], xmlText(attr[1], `The "${attr[0]}" attribute`));
                 }
             }
         }
     } else if (typeof attrs === 'object') {
         for (const k of Object.keys(attrs)) {
             if (k && attrs[k] != null) {
-                node.setAttribute(k, attrs[k].toString());
+                node.setAttribute(k, xmlText(attrs[k].toString(), `The "${k}" attribute`));
             }
         }
     }

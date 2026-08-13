@@ -1,7 +1,28 @@
 import { ElementType, NS } from './constants';
 import { copyElement, createHtml, toElement, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils';
+import { xmlText } from './xml-chars';
 
 export type StanzaAttrs = Record<string, string | number>;
+
+/**
+ * An attribute value as it has to be written to be read back unchanged.
+ *
+ * A parser normalises the whitespace in an attribute value (XML 1.0 § 3.3.3):
+ * a tab, a line feed or a carriage return written literally is read back as a
+ * space. Written as a character reference each is read back as itself, which is
+ * the only way an attribute can carry one at all.
+ *
+ * Without this, {@link xmlText} normalising a value's line endings on the way
+ * in bought nothing for an attribute: the tree held the line feed and every
+ * recipient's tree held a space, which is the divergence between the sender's
+ * stanza and everybody else's that the normalisation is there to prevent.
+ *
+ * Element content needs none of it, since a parser leaves the whitespace
+ * between tags as it stands.
+ */
+function attributeValue(value: string): string {
+    return xmlescape(value).replace(/\t/g, '&#x9;').replace(/\n/g, '&#xA;').replace(/\r/g, '&#xD;');
+}
 
 /**
  * Create a {@link Strophe.Builder}
@@ -145,7 +166,7 @@ class Builder {
         const names = [...Array(el.attributes.length).keys()].map((i) => el.attributes[i].nodeName);
         names.sort();
         let result = names.reduce(
-            (a, n) => `${a} ${n}="${xmlescape(el.attributes.getNamedItem(n)!.value)}"`,
+            (a, n) => `${a} ${n}="${attributeValue(el.attributes.getNamedItem(n)!.value)}"`,
             `<${el.nodeName}`
         );
 
@@ -238,7 +259,7 @@ class Builder {
         for (const k in moreattrs) {
             if (Object.prototype.hasOwnProperty.call(moreattrs, k)) {
                 if (moreattrs[k] != null) {
-                    this.node.setAttribute(k, moreattrs[k]!.toString());
+                    this.node.setAttribute(k, xmlText(moreattrs[k]!.toString(), `The "${k}" attribute`));
                 } else {
                     this.node.removeAttribute(k);
                 }
