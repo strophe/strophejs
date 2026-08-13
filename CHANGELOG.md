@@ -98,7 +98,8 @@ values into the text that is parsed. The last is a fix of its own, for a gap whi
   not. Both are now dropped as the tree is built, wherever they were written, the template's own
   text and markup interpolated with `unsafeXML()` alike. Dropped rather than refused, since a
   comment is a reasonable thing to write in a template or to find in a fragment which came from
-  somewhere else, and nothing which could have been sent is lost. Stanzas parsed by
+  somewhere else, and nothing which could have been sent is lost. A value interpolated into one is
+  refused instead, since it would be dropped along with it without a word. Stanzas parsed by
   `Strophe.toElement()` or arriving from the server are untouched: a comment is legal XML and
   what to do about one there is the application's business.
 - Fix: markup spliced into a template with `Stanza.unsafeXML()` or a `Builder` is spliced in
@@ -134,8 +135,10 @@ values into the text that is parsed. The last is a fix of its own, for a gap whi
     A value written out that way can open or close a tag itself, and doing so is now accounted for,
     so the whitespace fix above holds for the rest of the template either way. A value at document
     level is the exception. It is allowed to span the stanza, as the breaking change above describes,
-    so what it opens is deliberately not counted, and a value which follows it is placed by the
-    template's own tags rather than by the ones the value wrote.
+    so the elements it opens are deliberately not counted, and a value which follows it is placed by
+    the template's own tags rather than by the ones the value wrote. Not counted is not the same as
+    not read: a comment or a CDATA section such a value opens carries on into the rest of the
+    template, and is carried to the values which land in it.
 
 - Which way the template's own indentation around a `${}` goes is decided by what the value puts
   against it, and not by how the value was written. Indentation against text is part of that text
@@ -158,10 +161,15 @@ values into the text that is parsed. The last is a fix of its own, for a gap whi
 - Markup interpolated into an `stx` template where it is written into the template text verbatim,
   which is to say inside a tag or at document level, can open a comment or a CDATA section which
   swallows the rest of the template. A value which lands in what it opened used to go out as
-  nothing at all (5.0.0 dropped it in silence, and it could leave a placeholder on the wire).
-  `tree()` now throws instead. The same markup can also carry a placeholder of its own, which
-  would let one value stand in for another; that throws too. Every value is accounted for exactly
-  once before a tree is handed back.
+  nothing at all (5.0.0 dropped it in silence, and it could leave a placeholder on the wire), or,
+  in a CDATA section, escaped as though it were markup, so that `a & b` came back out of the
+  stanza as the five characters `a &amp; b`. `tree()` now throws instead, in both positions and
+  whether or not an element of the template's own also encloses the value. A CDATA section opened
+  at document level is refused outright rather than written into: nothing after it is markup, so
+  nothing can close it again, and the value carrying the `]]>` which would is character data there
+  like any other. Write such a section in the template text instead. The same markup can also carry
+  a placeholder of its own, which would let one value stand in for another; that throws too. Every
+  value is accounted for exactly once before a tree is handed back.
 
 ## Version 5.0.0 (2026-07-21)
 

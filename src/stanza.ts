@@ -52,6 +52,7 @@ export interface Cursor {
     element: boolean; // Whether the tag being read is an element's, rather than a declaration's.
     prev: string; // The character read before this one, to spot a self-closing tag.
     tail: number; // How many `]` the CDATA section read so far ends in, up to the two a `]]>` needs.
+    opened: boolean; // Whether the CDATA section being read was opened by a value at document level.
     slot: string; // The processing instruction target this expansion stands values in.
 }
 
@@ -60,7 +61,16 @@ export interface Cursor {
  * the whole stanza is expanded with the one slot name and filled in one pass.
  */
 export function newCursor(): Cursor {
-    return { mode: 'text', quote: '', depth: 0, element: false, prev: '', tail: 0, slot: `${SLOT}-${slotSeq++}` };
+    return {
+        mode: 'text',
+        quote: '',
+        depth: 0,
+        element: false,
+        prev: '',
+        tail: 0,
+        opened: false,
+        slot: `${SLOT}-${slotSeq++}`,
+    };
 }
 
 /**
@@ -87,6 +97,7 @@ export function scanText(xml: string, i: number, cursor: Cursor): number {
     if (xml.startsWith('<![CDATA[', lt)) {
         cursor.mode = 'cdata';
         cursor.tail = 0;
+        cursor.opened = false;
         return lt + 9;
     }
     // A processing instruction has no attributes, so a quote in one is a
@@ -212,8 +223,9 @@ export function scan(xml: string, cursor: Cursor): void {
  * the cursor has read what the parser will read. A value written verbatim can
  * open or close a tag just as a static part of the template can, and if the
  * cursor did not see it the two would disagree about where the next value
- * lands. The single exception is a value at document level, which is allowed
- * to span the stanza and so is written without being read.
+ * lands. A value at document level is read like any other; what it opens is
+ * simply not counted, which {@link Stanza.expandValue} arranges by putting
+ * {@link Cursor.depth} back afterwards.
  *
  * Inside a CDATA section the parser reads one run into the next, so a `]]>`
  * which begins in the run before this one and ends in this one would close the
@@ -697,17 +709,56 @@ export class Stanza extends Builder {
     }
 
     static #expandValue(value: StanzaValue, slots: StanzaValue[], cursor: Cursor): string {
-        // Inside an attribute value, which is inside a tag and so is one of the
-        // places below, but is the one the parser does not read verbatim. A
-        // quote is only ever open in a tag, so this cannot catch anything else.
-        if (cursor.quote) return emit(serializeIntoAttribute(value), cursor);
+        // A comment and a processing instruction are the places in a template a
+        // value cannot go, so it is refused rather than written.
+        //
+        // Not because a value could break out of one: a comment may not hold
+        // `--` at all, so a value carrying the `-->` which would end it does
+        // not parse, and the parser says so, and a value in a processing
+        // instruction is escaped, so the `>` of a `?>` it carries is not one.
+        // Because it goes nowhere. {@link prune} drops both, so the value in
+        // one is dropped with it on the way to the wire, and no slot was
+        // written to notice: a value there is character data rather than a
+        // node to stand in for, so {@link assertFilled} has nothing to count.
+        // Silent loss is the one thing this mechanism exists to prevent, and
+        // these are the positions where it cannot be caught after the fact.
+        if (cursor.mode === 'comment' || cursor.mode === 'pi') {
+            const what = cursor.mode === 'comment' ? 'a comment' : 'a processing instruction';
+            throw new Error(
+                `A value cannot be interpolated into ${what}. Neither a comment nor a processing ` +
+                    'instruction is serialized, so the value would be dropped on the way to the wire ' +
+                    'without a word.',
+            );
+        }
 
-        // Inside a tag, a processing instruction, a comment or a CDATA section
-        // there is no node to stand in for, so the value is written into the
-        // text as it always was. What that text has to look like is not the
-        // same in all of them: a CDATA section reads it as characters, the rest
-        // as markup.
-        if (cursor.mode === 'cdata') return emit(serializeIntoCdata(value), cursor);
+        // Inside a tag or a CDATA section there is no node to stand in for, so
+        // the value is written into the text as it always was. What that text
+        // has to look like differs: a CDATA section reads it as characters, an
+        // attribute value as characters the parser would otherwise rewrite, the
+        // rest of a tag as markup.
+        if (cursor.mode === 'cdata') {
+            // A section a value opened at document level is one the values
+            // after it cannot close: each is written as characters, the `]]>`
+            // meant to close it included, so the section runs on through the
+            // rest of the template. Refusing beats the parser error which the
+            // unclosed section would otherwise produce.
+            //
+            // Asked of the section and not of the depth, which the cursor does
+            // not count inside an element a value opened. A section the template
+            // wrote there is at depth zero too, and closes like any other.
+            if (cursor.opened) {
+                throw new Error(
+                    'A value landed in a CDATA section which markup interpolated at document level ' +
+                        'opened. Inside it every value is written as characters, including a "]]>" ' +
+                        'meant to close it, so the section would run on through the rest of the ' +
+                        'template. Write the section in the template text rather than in a value.',
+                );
+            }
+            return emit(serializeIntoCdata(value), cursor);
+        }
+        // A quote is only ever open inside a tag, so this catches an attribute
+        // value and nothing else.
+        if (cursor.quote) return emit(serializeIntoAttribute(value), cursor);
         if (cursor.mode !== 'text') return emit(serializeValue(value), cursor);
 
         if (Array.isArray(value)) {
@@ -737,12 +788,31 @@ export class Stanza extends Builder {
         // The value is the stanza itself rather than content inside one, so it is
         // written into the text and parsed as markup.
         //
-        // This is the one thing the cursor deliberately does not read. A value
-        // here is allowed to span, so that a stanza may be opened by one and
-        // closed by another; reading it would leave the cursor inside the
-        // element it opened, and the value which closes that element again
-        // would be stood in for rather than written out.
-        if (cursor.depth <= 0) return serializeValue(value);
+        // What such a value opens is the one thing the cursor deliberately does
+        // not count. A value here is allowed to span, so that a stanza may be
+        // opened by one and closed by another; counting would leave the cursor
+        // inside the element it opened, and the value which closes that element
+        // again would be stood in for rather than written out. So the depth is
+        // put back where the value found it.
+        //
+        // It is read, though, which is a different question and was once
+        // skipped along with the counting. A comment or a CDATA section a value
+        // opens here carries on into the rest of the template, and a value which
+        // lands in one has to be refused or written as characters like any
+        // other. Left unread, the cursor believed it was still in element
+        // content, so such a value went out escaped as markup, or into a comment
+        // and so nowhere at all, with no slot written for {@link assertFilled}
+        // to miss.
+        if (cursor.depth <= 0) {
+            const depth = cursor.depth;
+            const text = emit(serializeValue(value), cursor);
+            cursor.depth = depth;
+            // The cursor was in text when the value began, or it would not have
+            // got this far, so a CDATA section it is in now is one the value
+            // opened. (Widened because the compiler cannot see emit move it.)
+            if ((cursor.mode as Cursor['mode']) === 'cdata') cursor.opened = true;
+            return text;
+        }
 
         slots.push(value);
         return emit(`<?${cursor.slot} ${slots.length - 1}?>`, cursor);
