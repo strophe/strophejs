@@ -194,7 +194,8 @@ function emit(xml: string, cursor: Cursor): string {
 }
 
 /**
- * A value as it is written into the template text.
+ * A value as it is written into the template text, where what surrounds it is
+ * markup and a string has to be escaped to be read as the characters it holds.
  */
 function serializeValue(value: StanzaValue): string {
     if (Array.isArray(value)) return value.map(serializeValue).join('');
@@ -225,6 +226,39 @@ function serializeIntoAttribute(value: StanzaValue): string {
 
     const text = xmlescape(xmlText((value ?? '').toString(), 'An interpolated value'));
     return text.replace(/\t/g, '&#x9;').replace(/\n/g, '&#xA;');
+}
+
+/**
+ * A value as its own characters, with nothing escaped and no markup meant.
+ */
+function characterData(value: StanzaValue): string {
+    if (Array.isArray(value)) return value.map(characterData).join('');
+    if (value instanceof UnsafeXML || value instanceof Builder) return value.toString();
+    return (value ?? '').toString();
+}
+
+/**
+ * A value as it is written inside a CDATA section.
+ *
+ * A CDATA section escapes nothing. Everything up to the `]]>` which ends it is
+ * character data as it stands, so a value goes in as its own characters: an `&`
+ * written `&amp;` in there is read back as those five characters rather than as
+ * an ampersand, which is what escaping it did.
+ *
+ * `]]>` is the one sequence a value cannot carry, since it would end the
+ * section early and leave the rest of the value to be read as markup. XML has
+ * no escape for it, so the section is closed and opened again around it: the
+ * `]]` ends the first section and the `>` begins the second, and the two are
+ * read back as one run of character data. {@link scanDelimited} follows the
+ * same pair, so the cursor comes out of this still inside a CDATA section,
+ * which is where the template left it.
+ *
+ * Splitting after the parts are joined rather than within each of them is what
+ * catches a `]]>` which only exists because one part ended in `]]` and the next
+ * began with `>`.
+ */
+function serializeIntoCdata(value: StanzaValue): string {
+    return characterData(value).split(']]>').join(']]]]><![CDATA[>');
 }
 
 /**
@@ -582,7 +616,10 @@ export class Stanza extends Builder {
         if (cursor.quote) return emit(serializeIntoAttribute(value), cursor);
 
         // Inside a tag, a comment or a CDATA section there is no node to stand
-        // in for, so the value is written into the text as it always was.
+        // in for, so the value is written into the text as it always was. What
+        // that text has to look like is not the same in all three: a CDATA
+        // section reads it as characters, the other two as markup.
+        if (cursor.mode === 'cdata') return emit(serializeIntoCdata(value), cursor);
         if (cursor.mode !== 'text') return emit(serializeValue(value), cursor);
 
         if (Array.isArray(value)) {

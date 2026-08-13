@@ -1,4 +1,4 @@
-import { Strophe, $iq, $msg, $pres, stx } from '../dist/strophe.node.esm.js';
+import { Strophe, $build, $iq, $msg, $pres, stx } from '../dist/strophe.node.esm.js';
 import { isEqualNode } from './helpers.js';
 import { describe, it, expect } from 'vitest';
 
@@ -1149,5 +1149,57 @@ describe('A nested template which does not end where it began', () => {
         expect(
             Strophe.serialize(stx`<message xmlns="jabber:client"><body>${spaced}world</body></message>`.tree()),
         ).toBe('<message xmlns="jabber:client"><body> hello world</body></message>');
+    });
+});
+
+describe('A value inside a CDATA section', () => {
+    const cdata = (value: unknown) =>
+        stx`<message xmlns="jabber:client"><c><![CDATA[${value as string}]]></c></message>`;
+    const textOf = (stanza: ReturnType<typeof stx>) => stanza.tree().getElementsByTagName('c')[0].textContent;
+
+    it('goes in as its own characters, since CDATA escapes nothing', () => {
+        // Escaping these turned them into the literal five and four characters
+        // of the entity, because a CDATA section does not read entities back.
+        expect(Strophe.serialize(cdata('a & b').tree())).toBe(
+            '<message xmlns="jabber:client"><c><![CDATA[a & b]]></c></message>',
+        );
+        expect(textOf(cdata('a & b'))).toBe('a & b');
+
+        expect(textOf(cdata('a < b'))).toBe('a < b');
+        expect(textOf(cdata('1 > 0'))).toBe('1 > 0');
+        expect(textOf(cdata(`it's "quoted"`))).toBe(`it's "quoted"`);
+    });
+
+    it('closes and reopens the section around a "]]>" it cannot escape', () => {
+        // The only sequence a CDATA section cannot hold. `]]` ends the first
+        // section, `>` begins the second, and a parser reads the two back as
+        // one run of character data.
+        expect(Strophe.serialize(cdata('x]]>y').tree())).toBe(
+            '<message xmlns="jabber:client"><c><![CDATA[x]]]]><![CDATA[>y]]></c></message>',
+        );
+        expect(textOf(cdata('x]]>y'))).toBe('x]]>y');
+
+        // Which means the value cannot break out and be read as markup.
+        expect(textOf(cdata(']]><evil/>'))).toBe(']]><evil/>');
+        expect(cdata(']]><evil/>').tree().getElementsByTagName('evil').length).toBe(0);
+    });
+
+    it('splits a "]]>" which only exists because two parts met', () => {
+        expect(textOf(cdata([']]', '>hello']))).toBe(']]>hello');
+    });
+
+    it('leaves the cursor inside the section, so what follows still lands', () => {
+        // The reopened section has to be read as one, or the value after it
+        // would be placed against a cursor which had lost its place.
+        const stanza = stx`<message xmlns="jabber:client"><c><![CDATA[${'a]]>b'}]]>${'tail'}</c></message>`;
+        expect(textOf(stanza)).toBe('a]]>btail');
+    });
+
+    it('writes interpolated markup as characters too', () => {
+        // Inside a CDATA section nothing is markup, so a Builder goes in as the
+        // text of its serialization rather than as elements.
+        const stanza = cdata($build('b', {}).t('hi'));
+        expect(textOf(stanza)).toBe('<b>hi</b>');
+        expect(stanza.tree().getElementsByTagName('b').length).toBe(0);
     });
 });
