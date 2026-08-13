@@ -48,6 +48,12 @@ describe('The template scanner', () => {
             expect(cdata).toMatchObject({ mode: 'cdata', depth: 0 });
         });
 
+        it('opens a CDATA section with no `]` read yet', () => {
+            const c = cursor({ tail: 2 });
+            scanText('<![CDATA[', 0, c);
+            expect(c).toMatchObject({ mode: 'cdata', tail: 0 });
+        });
+
         it('skips the text before the tag', () => {
             const c = cursor();
             expect(scanText('hello <b>', 0, c)).toBe(7);
@@ -189,6 +195,33 @@ describe('The template scanner', () => {
             const pi = cursor({ mode: 'pi' });
             expect(scanDelimited('a --> ]]> b', 0, pi)).toBe(EXHAUSTED);
             expect(pi.mode).toBe('pi');
+        });
+
+        it('counts the `]` a CDATA run ends in, up to the two a `]]>` needs', () => {
+            // A `]]>` can begin in one run and end in the next. Neither run
+            // holds it, so the `]` are remembered for the run which follows.
+            const c = cursor({ mode: 'cdata' });
+            expect(scanDelimited('x]]', 0, c)).toBe(EXHAUSTED);
+            expect(c.tail).toBe(2);
+
+            expect(scanDelimited('x]', 0, c)).toBe(EXHAUSTED);
+            expect(c.tail).toBe(1);
+
+            expect(scanDelimited(']]]]', 0, c)).toBe(EXHAUSTED);
+            expect(c.tail).toBe(2);
+
+            expect(scanDelimited('x', 0, c)).toBe(EXHAUSTED);
+            expect(c.tail).toBe(0);
+
+            // Only from the index it is given.
+            expect(scanDelimited(']]x', 2, c)).toBe(EXHAUSTED);
+            expect(c.tail).toBe(0);
+        });
+
+        it('forgets them at the close', () => {
+            const c = cursor({ mode: 'cdata', tail: 2 });
+            scanDelimited('x]]>', 0, c);
+            expect(c).toMatchObject({ mode: 'text', tail: 0 });
         });
     });
 

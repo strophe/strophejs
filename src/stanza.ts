@@ -51,6 +51,7 @@ export interface Cursor {
     depth: number; // How many elements enclose the point the cursor has reached.
     element: boolean; // Whether the tag being read is an element's, rather than a declaration's.
     prev: string; // The character read before this one, to spot a self-closing tag.
+    tail: number; // How many `]` the CDATA section read so far ends in, up to the two a `]]>` needs.
     slot: string; // The processing instruction target this expansion stands values in.
 }
 
@@ -59,7 +60,7 @@ export interface Cursor {
  * the whole stanza is expanded with the one slot name and filled in one pass.
  */
 export function newCursor(): Cursor {
-    return { mode: 'text', quote: '', depth: 0, element: false, prev: '', slot: `${SLOT}-${slotSeq++}` };
+    return { mode: 'text', quote: '', depth: 0, element: false, prev: '', tail: 0, slot: `${SLOT}-${slotSeq++}` };
 }
 
 /**
@@ -85,6 +86,7 @@ export function scanText(xml: string, i: number, cursor: Cursor): number {
     }
     if (xml.startsWith('<![CDATA[', lt)) {
         cursor.mode = 'cdata';
+        cursor.tail = 0;
         return lt + 9;
     }
     // A processing instruction has no attributes, so a quote in one is a
@@ -142,13 +144,24 @@ const CLOSERS: Record<Delimited, string> = { pi: '?>', comment: '-->', cdata: ']
  *
  * All three are opaque. What they hold is not markup, so there is nothing in
  * there to count and nowhere in there to stand a value.
+ *
+ * A run can end part-way through a `]]>`, with the `]` in this run and the `>`
+ * in the next. Neither run holds the token, so a search of either finds
+ * nothing, yet the parser reads the two as one text and closes the section
+ * there. The `]` a CDATA run ends in are therefore counted into
+ * {@link Cursor.tail}, for {@link emit} to hold against the run which follows.
+ * Two are all a `]]>` can use, so no more are counted.
  */
 export function scanDelimited(xml: string, i: number, cursor: Cursor): number {
     const close = CLOSERS[cursor.mode as Delimited];
     const end = xml.indexOf(close, i);
-    if (end === -1) return EXHAUSTED;
+    if (end === -1) {
+        if (cursor.mode === 'cdata') cursor.tail = Math.min(2, /\]*$/.exec(xml.slice(i))![0].length);
+        return EXHAUSTED;
+    }
 
     cursor.mode = 'text';
+    cursor.tail = 0;
     return end + close.length;
 }
 
@@ -201,14 +214,38 @@ export function scan(xml: string, cursor: Cursor): void {
  * cursor did not see it the two would disagree about where the next value
  * lands. The single exception is a value at document level, which is allowed
  * to span the stanza and so is written without being read.
+ *
+ * Inside a CDATA section the parser reads one run into the next, so a `]]>`
+ * which begins in the run before this one and ends in this one would close the
+ * section where neither run wrote a close, and the rest of this run would be
+ * read as markup. A value in a CDATA section is written as characters, so it
+ * ends in whatever it ends in and is followed by whatever the template or the
+ * next value begins with, and the two can meet that way. The section is closed
+ * and opened again between them instead, and the parser reads the `]` and the
+ * `>` as the character data they were.
  */
 function emit(xml: string, cursor: Cursor): string {
+    if (cursor.mode === 'cdata' && closesAcross(cursor.tail, xml)) {
+        xml = `]]><![CDATA[${xml}`;
+    }
     scan(xml, cursor);
     return xml;
 }
 
 /**
- * A value as it is written into the template text.
+ * Whether the first `]]>` the parser would read begins in the `]` the CDATA
+ * section's text so far ended in, which {@link Cursor.tail} counts, and ends in
+ * this run. One which begins in this run is the run's own: the template's
+ * closing token, or a `]]>` {@link serializeIntoCdata} has already split.
+ */
+function closesAcross(tail: number, xml: string): boolean {
+    const at = (']'.repeat(tail) + xml).indexOf(']]>');
+    return at !== -1 && at < tail;
+}
+
+/**
+ * A value as it is written into the template text, where what surrounds it is
+ * markup and a string has to be escaped to be read as the characters it holds.
  */
 function serializeValue(value: StanzaValue): string {
     if (Array.isArray(value)) return value.map(serializeValue).join('');
@@ -235,6 +272,42 @@ function serializeIntoAttribute(value: StanzaValue): string {
     if (value instanceof UnsafeXML || value instanceof Builder) return value.toString();
 
     return attributeWhitespace(xmlescape(xmlText((value ?? '').toString(), 'An interpolated value')));
+}
+
+/**
+ * A value as its own characters, with nothing escaped and no markup meant.
+ */
+function characterData(value: StanzaValue): string {
+    if (Array.isArray(value)) return value.map(characterData).join('');
+    if (value instanceof UnsafeXML || value instanceof Builder) return value.toString();
+    return (value ?? '').toString();
+}
+
+/**
+ * A value as it is written inside a CDATA section.
+ *
+ * A CDATA section escapes nothing. Everything up to the `]]>` which ends it is
+ * character data as it stands, so a value goes in as its own characters: an `&`
+ * written `&amp;` in there is read back as those five characters rather than as
+ * an ampersand, which is what escaping it did.
+ *
+ * `]]>` is the one sequence a value cannot carry, since it would end the
+ * section early and leave the rest of the value to be read as markup. XML has
+ * no escape for it, so the section is closed and opened again around it: the
+ * `]]` ends the first section and the `>` begins the second, and the two are
+ * read back as one run of character data. {@link scanDelimited} follows the
+ * same pair, so the cursor comes out of this still inside a CDATA section,
+ * which is where the template left it.
+ *
+ * Splitting after the parts are joined rather than within each of them is what
+ * catches a `]]>` which only exists because one part ended in `]]` and the next
+ * began with `>`. The same can happen at either end of the value, between it
+ * and the template text or the value beside it, which nothing here can see:
+ * {@link emit} catches that one, since it reads every run against the one
+ * before it.
+ */
+function serializeIntoCdata(value: StanzaValue): string {
+    return characterData(value).split(']]>').join(']]]]><![CDATA[>');
 }
 
 /**
@@ -631,7 +704,10 @@ export class Stanza extends Builder {
 
         // Inside a tag, a processing instruction, a comment or a CDATA section
         // there is no node to stand in for, so the value is written into the
-        // text as it always was.
+        // text as it always was. What that text has to look like is not the
+        // same in all of them: a CDATA section reads it as characters, the rest
+        // as markup.
+        if (cursor.mode === 'cdata') return emit(serializeIntoCdata(value), cursor);
         if (cursor.mode !== 'text') return emit(serializeValue(value), cursor);
 
         if (Array.isArray(value)) {
