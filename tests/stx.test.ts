@@ -917,7 +917,7 @@ describe('A value which is written into the template text rather than stood in f
     });
 
     it('lets a value at document level go on spanning the stanza', () => {
-        // The one place the cursor deliberately does not read what is written.
+        // The one place the cursor deliberately does not count what is written.
         // A stanza may be opened by one value and closed by another, so the
         // cursor must not follow the first one inside the element it opened,
         // or the second would be stood in for instead of written out.
@@ -986,27 +986,49 @@ describe('A value which is written into the template text rather than stood in f
     });
 
     it('says so when it leaves a value inside a comment which a value opened', () => {
-        // The cursor deliberately does not read a value at document level, so
-        // it still counts the template's own <body> as element content while
-        // the parser is inside the comment this one opened. The slot written
-        // for the value in that <body> is character data there rather than a
-        // node, so nothing substitutes it and the value would go out as
-        // nothing at all. 5.0.0 dropped it in silence; say so instead.
+        // Not counted is not the same as not read. What a value at document
+        // level opens is not counted, so the template's own <body> below still
+        // reads as element content, but the comment the value opened is carried
+        // to the value inside it, which is refused where it stands.
+        //
+        // 5.0.0 dropped such a value in silence: the slot written for it was
+        // character data inside the comment rather than a node, so nothing
+        // substituted it and it went out as nothing at all.
         expect(() =>
             stx`${Strophe.Stanza.unsafeXML('<message xmlns="jabber:client"><!--')}<body>${'SECRET'}</body>${Strophe.Stanza.unsafeXML(
                 '--></message>',
             )}`.tree(),
-        ).toThrow(/never made it into the stanza/);
+        ).toThrow(/cannot be interpolated into a comment/);
+
+        // With no <body> of the template's own around it, the value is at
+        // document level as well as inside the comment. Nothing counted it, so
+        // no slot was ever written and {@link assertFilled} had nothing to
+        // miss: reading the comment is the only thing which catches this one.
+        expect(() =>
+            stx`${Strophe.Stanza.unsafeXML('<message xmlns="jabber:client"><!--')}${'SECRET'}${Strophe.Stanza.unsafeXML(
+                '--><body>hi</body></message>',
+            )}`.tree(),
+        ).toThrow(/cannot be interpolated into a comment/);
     });
 
     it('says so when it leaves a value inside a CDATA section which a value opened', () => {
-        // The same, except that the slot is not even dropped: it goes out on
-        // the wire as the placeholder's own text.
+        // A CDATA section opened at document level swallows the rest of the
+        // template, since nothing after it is markup and so nothing can close
+        // it again. Both shapes are refused where the value stands, for the
+        // same reason and with the same words.
         expect(() =>
             stx`${Strophe.Stanza.unsafeXML('<message xmlns="jabber:client"><c><![CDATA[')}<body>${'SECRET'}</body>${Strophe.Stanza.unsafeXML(
                 ']]></c></message>',
             )}`.tree(),
-        ).toThrow(/never made it into the stanza/);
+        ).toThrow(/opened a CDATA section which the rest of the template is inside/);
+
+        // 5.0.0 wrote this one into the section escaped, so `a & b` came back
+        // out of the stanza as the five characters `a &amp; b`.
+        expect(() =>
+            stx`${Strophe.Stanza.unsafeXML('<message xmlns="jabber:client"><body><![CDATA[')}${'a & b'}${Strophe.Stanza.unsafeXML(
+                ']]></body></message>',
+            )}`.tree(),
+        ).toThrow(/opened a CDATA section which the rest of the template is inside/);
     });
 });
 
@@ -1201,5 +1223,49 @@ describe('A value inside a CDATA section', () => {
         const stanza = cdata($build('b', {}).t('hi'));
         expect(textOf(stanza)).toBe('<b>hi</b>');
         expect(stanza.tree().getElementsByTagName('b').length).toBe(0);
+    });
+});
+
+describe('A value interpolated into a comment', () => {
+    it('is refused, since it would go nowhere', () => {
+        // Builder.serialize writes no comment, so the value used to be dropped
+        // on the way to the wire without a word. No slot was written for it
+        // either, so assertFilled had nothing to count and could not say so
+        // afterwards; refusing is the only place the loss can be caught.
+        expect(() => stx`<message xmlns="jabber:client"><!-- ${'hello'} --><c/></message>`.tree()).toThrow(
+            /cannot be interpolated into a comment/,
+        );
+        expect(() => stx`<message xmlns="jabber:client"><!-- ${'hello'} --><c/></message>`.toString()).toThrow(
+            /cannot be interpolated into a comment/,
+        );
+    });
+
+    it('is refused whatever the value is', () => {
+        // Including one which would contribute nothing, so that whether a
+        // template builds does not depend on what a value happened to hold.
+        expect(() => stx`<message xmlns="jabber:client"><!--${''}--><c/></message>`.tree()).toThrow(
+            /cannot be interpolated into a comment/,
+        );
+        expect(() =>
+            stx`<message xmlns="jabber:client"><!--${Strophe.Stanza.unsafeXML('<b/>')}--><c/></message>`.tree(),
+        ).toThrow(/cannot be interpolated into a comment/);
+    });
+
+    it('is refused before the parser gets a chance to object', () => {
+        // A comment may not hold `--` at all, so a value carrying the `-->`
+        // which would end one is a parse error rather than an injection. The
+        // refusal comes first and says something more useful.
+        expect(() => stx`<message xmlns="jabber:client"><!-- ${'--><evil/><!--'} --><c/></message>`.tree()).toThrow(
+            /cannot be interpolated into a comment/,
+        );
+    });
+
+    it('leaves a comment the template wrote itself alone', () => {
+        // Nothing is lost there that the author did not write as a comment.
+        const stanza = stx`<message xmlns="jabber:client"><!-- a note --><c/></message>`;
+        // The comment node is in the tree, next to <c/>, and Builder.serialize
+        // is what leaves it behind on the way to the wire.
+        expect(stanza.tree().childNodes.length).toBe(2);
+        expect(stanza.toString()).toBe('<message xmlns="jabber:client"><c/></message>');
     });
 });

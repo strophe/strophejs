@@ -185,8 +185,9 @@ export function scan(xml: string, cursor: Cursor): void {
  * the cursor has read what the parser will read. A value written verbatim can
  * open or close a tag just as a static part of the template can, and if the
  * cursor did not see it the two would disagree about where the next value
- * lands. The single exception is a value at document level, which is allowed
- * to span the stanza and so is written without being read.
+ * lands. A value at document level is read like any other; what it opens is
+ * simply not counted, which {@link Stanza.expandValue} arranges by putting
+ * {@link Cursor.depth} back afterwards.
  */
 function emit(xml: string, cursor: Cursor): string {
     scan(xml, cursor);
@@ -610,16 +611,53 @@ export class Stanza extends Builder {
     }
 
     static #expandValue(value: StanzaValue, slots: StanzaValue[], cursor: Cursor): string {
-        // Inside an attribute value, which is inside a tag and so is one of the
-        // places below, but is the one the parser does not read verbatim. A
-        // quote is only ever open in a tag, so this cannot catch anything else.
-        if (cursor.quote) return emit(serializeIntoAttribute(value), cursor);
+        // A comment is the one place in a template a value cannot go, so it is
+        // refused rather than written.
+        //
+        // Not because a value could break out of one: a comment may not hold
+        // `--` at all, so a value carrying the `-->` which would end it does
+        // not parse, and the parser says so. Because it goes nowhere.
+        // {@link Builder.serialize} writes no comment, so the whole comment and
+        // the value in it are dropped on the way to the wire, and no slot was
+        // written to notice: a value in a comment is character data rather than
+        // a node to stand in for, so {@link assertFilled} has nothing to count.
+        // Silent loss is the one thing this mechanism exists to prevent, and a
+        // comment is the one position where it cannot be caught after the fact.
+        if (cursor.mode === 'comment') {
+            throw new Error(
+                'A value cannot be interpolated into a comment. A comment is not serialized, so the ' +
+                    'value would be dropped on the way to the wire without a word, and there is no ' +
+                    'escaping inside a comment to make it safe to write there.',
+            );
+        }
 
-        // Inside a tag, a comment or a CDATA section there is no node to stand
-        // in for, so the value is written into the text as it always was. What
-        // that text has to look like is not the same in all three: a CDATA
-        // section reads it as characters, the other two as markup.
-        if (cursor.mode === 'cdata') return emit(serializeIntoCdata(value), cursor);
+        // Inside a tag or a CDATA section there is no node to stand in for, so
+        // the value is written into the text as it always was. What that text
+        // has to look like differs: a CDATA section reads it as characters, an
+        // attribute value as characters the parser would otherwise rewrite, the
+        // rest of a tag as markup.
+        if (cursor.mode === 'cdata') {
+            // A CDATA section written in the template text is inside an element,
+            // so the depth is never zero there. Zero means a value opened one at
+            // document level and the rest of the template is inside it, where
+            // nothing is markup and so nothing can close it again: a value
+            // carrying the `]]>` which would is written as characters like any
+            // other, and the section runs to the end of the template. Refusing
+            // is all that is left, and it beats the parser error which the
+            // unclosed section would otherwise produce.
+            if (cursor.depth <= 0) {
+                throw new Error(
+                    'Markup interpolated at document level opened a CDATA section which the rest of ' +
+                        'the template is inside. Everything after it is character data rather than ' +
+                        'markup, so nothing can close the section again. Write the section in the ' +
+                        'template text rather than in a value.',
+                );
+            }
+            return emit(serializeIntoCdata(value), cursor);
+        }
+        // A quote is only ever open inside a tag, so this catches an attribute
+        // value and nothing else.
+        if (cursor.quote) return emit(serializeIntoAttribute(value), cursor);
         if (cursor.mode !== 'text') return emit(serializeValue(value), cursor);
 
         if (Array.isArray(value)) {
@@ -649,12 +687,27 @@ export class Stanza extends Builder {
         // The value is the stanza itself rather than content inside one, so it is
         // written into the text and parsed as markup.
         //
-        // This is the one thing the cursor deliberately does not read. A value
-        // here is allowed to span, so that a stanza may be opened by one and
-        // closed by another; reading it would leave the cursor inside the
-        // element it opened, and the value which closes that element again
-        // would be stood in for rather than written out.
-        if (cursor.depth <= 0) return serializeValue(value);
+        // What such a value opens is the one thing the cursor deliberately does
+        // not count. A value here is allowed to span, so that a stanza may be
+        // opened by one and closed by another; counting would leave the cursor
+        // inside the element it opened, and the value which closes that element
+        // again would be stood in for rather than written out. So the depth is
+        // put back where the value found it.
+        //
+        // It is read, though, which is a different question and was once
+        // skipped along with the counting. A comment or a CDATA section a value
+        // opens here carries on into the rest of the template, and a value which
+        // lands in one has to be refused or written as characters like any
+        // other. Left unread, the cursor believed it was still in element
+        // content, so such a value went out escaped as markup, or into a comment
+        // and so nowhere at all, with no slot written for {@link assertFilled}
+        // to miss.
+        if (cursor.depth <= 0) {
+            const depth = cursor.depth;
+            const text = emit(serializeValue(value), cursor);
+            cursor.depth = depth;
+            return text;
+        }
 
         slots.push(value);
         return emit(`<?${cursor.slot} ${slots.length - 1}?>`, cursor);
