@@ -1,7 +1,7 @@
 import Builder from './builder';
 import { ElementType } from './constants';
 import { checkNamespace } from './namespace';
-import { findDisallowedChar } from './xml-chars';
+import { xmlText } from './xml-chars';
 import { strip } from './whitespace';
 import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils';
 
@@ -212,7 +212,7 @@ function serializeValue(value: StanzaValue): string {
  * position where a value cannot be stood in for and so has to go through the
  * parser at all. Written as a character reference each is read back as itself.
  *
- * A carriage return is not among them because {@link textFor} has already turned
+ * A carriage return is not among them because {@link xmlText} has already turned
  * every one it could reach into a line feed.
  *
  * Interpolated markup is left as it stands, as it is everywhere else. An
@@ -223,7 +223,7 @@ function serializeIntoAttribute(value: StanzaValue): string {
     if (Array.isArray(value)) return value.map(serializeIntoAttribute).join('');
     if (value instanceof UnsafeXML || value instanceof Builder) return value.toString();
 
-    const text = xmlescape(textFor((value ?? '').toString()));
+    const text = xmlescape(xmlText((value ?? '').toString(), 'An interpolated value'));
     return text.replace(/\t/g, '&#x9;').replace(/\n/g, '&#xA;');
 }
 
@@ -319,45 +319,24 @@ function parseFragment(xml: string, declarations: string): Node[] {
 }
 
 /**
- * An interpolated string as the data of the text node which will carry it.
- *
- * Line endings are normalised as XML 1.0 § 2.11 requires. Left alone, a CRLF
- * would reach the wire intact and every recipient's parser would turn it into a
- * line feed, so the sender's own tree would disagree with the one everyone else
- * holds about a message they all received whole.
- *
- * A character which XML cannot represent is refused outright. Nothing can
- * escape one, so a stanza carrying it is unsendable. It would be serialized
- * unchanged, and the server would answer the stream with `not-well-formed` and
- * close it.
- */
-function textFor(value: string): string {
-    const text = value.replace(/\r\n?/g, '\n');
-
-    const found = findDisallowedChar(text);
-    if (found) {
-        throw new Error(
-            `An interpolated value holds ${found.point} at index ${found.index}, which XML cannot represent ` +
-                `and no escape can stand in for. Remove it from the value before interpolating it.`,
-        );
-    }
-    return text;
-}
-
-/**
  * The nodes a value contributes where it was interpolated.
  *
  * Markup is moved into the stanza's document rather than copied into it. Its
  * own document was made to parse it and is dropped as soon as it has been read,
  * so there is nothing for a copy to leave behind, and the deep copy
  * `importNode` makes is the most expensive thing about splicing a value in.
+ *
+ * A value in element content becomes a text node without the parser reading it,
+ * so it goes through {@link xmlText} for the same reasons a text node built by
+ * {@link Builder} does. It cannot use {@link xmlTextNode} to make the node,
+ * since the node has to belong to the document the template was parsed into.
  */
 function nodesFor(value: StanzaValue, context: Element, declarations: string): Node[] {
     const doc = context.ownerDocument as Document;
     if (value instanceof UnsafeXML || value instanceof Builder) {
         return parseFragment(value.toString(), declarations).map((node) => doc.adoptNode(node));
     }
-    const text = textFor((value ?? '').toString());
+    const text = xmlText((value ?? '').toString(), 'An interpolated value');
     return text ? [doc.createTextNode(text)] : [];
 }
 
