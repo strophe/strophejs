@@ -48,3 +48,58 @@ export function findDisallowedChar(text: string): DisallowedChar | null {
     const point = (found[0].codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0');
     return { point: `U+${point}`, index: found.index };
 }
+
+/**
+ * A string as XML is able to carry it, for the places one is put into a tree
+ * without a parser ever reading it.
+ *
+ * Line endings are normalised as XML 1.0 § 2.11 requires. Left alone, a CRLF
+ * reaches the wire intact and every recipient's parser turns it into a line
+ * feed, so the sender's own tree disagrees with the one everyone else holds
+ * about a message they all received whole.
+ *
+ * A character XML cannot represent is refused. Nothing escapes one, so a stanza
+ * carrying it is unsendable: it would be serialized unchanged, and the server
+ * would answer the stream with `not-well-formed` and close it, costing the
+ * connection rather than the one message.
+ *
+ * @param text
+ * @param subject - What to call the text in the error, as the sentence's
+ *  subject: `A text node`, `The "id" attribute`.
+ * @returns The text, with its line endings normalised.
+ */
+export function xmlText(text: string, subject: string): string {
+    // `String()` because callers in plain JavaScript pass numbers to every API
+    // which reaches here, and `createTextNode` and `setAttribute` took them
+    // before this check stood in front of them.
+    const normalised = String(text).replace(/\r\n?/g, '\n');
+
+    const found = findDisallowedChar(normalised);
+    if (found) {
+        throw new Error(
+            `${subject} holds ${found.point} at index ${found.index}, which XML cannot represent and no ` +
+                `escape can stand in for. Remove it before building the stanza.`,
+        );
+    }
+    return normalised;
+}
+
+/**
+ * Text already escaped by `xmlescape`, with its whitespace written so that an
+ * attribute value reads it back unchanged.
+ *
+ * A parser normalises the whitespace in an attribute value (XML 1.0 § 3.3.3):
+ * a tab, a line feed or a carriage return written literally is read back as a
+ * space. Written as a character reference each is read back as itself, which is
+ * the only way an attribute can carry one at all. Element content needs none of
+ * it, since a parser leaves the whitespace between tags as it stands.
+ *
+ * Takes the text escaped rather than escaping it, so that this module still
+ * pulls in nothing.
+ *
+ * @param escaped - Text which has been through `xmlescape`.
+ * @returns The text, as an attribute value has to hold it.
+ */
+export function attributeWhitespace(escaped: string): string {
+    return escaped.replace(/\t/g, '&#x9;').replace(/\n/g, '&#xA;').replace(/\r/g, '&#xD;');
+}

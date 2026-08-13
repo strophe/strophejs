@@ -1,5 +1,6 @@
 import { ElementType, NS } from './constants.js';
 import { copyElement, createHtml, toElement, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils.js';
+import { attributeWhitespace, xmlText } from './xml-chars.js';
 
 export type StanzaAttrs = Record<string, string | number>;
 
@@ -144,8 +145,11 @@ class Builder {
 
         const names = [...Array(el.attributes.length).keys()].map((i) => el.attributes[i].nodeName);
         names.sort();
+        // Escaping the whitespace is what makes the line endings xmlText
+        // normalised on the way in worth anything here: written literally, the
+        // tree held a line feed and every recipient's tree a space.
         let result = names.reduce(
-            (a, n) => `${a} ${n}="${xmlescape(el.attributes.getNamedItem(n)!.value)}"`,
+            (a, n) => `${a} ${n}="${attributeWhitespace(xmlescape(el.attributes.getNamedItem(n)!.value))}"`,
             `<${el.nodeName}`
         );
 
@@ -238,7 +242,7 @@ class Builder {
         for (const k in moreattrs) {
             if (Object.prototype.hasOwnProperty.call(moreattrs, k)) {
                 if (moreattrs[k] != null) {
-                    this.node.setAttribute(k, moreattrs[k]!.toString());
+                    this.node.setAttribute(k, xmlText(moreattrs[k]!.toString(), `The "${k}" attribute`));
                 } else {
                     this.node.removeAttribute(k);
                 }
