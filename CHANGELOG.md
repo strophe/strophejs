@@ -1,5 +1,137 @@
 # Strophe.js Change Log
 
+## Version 6.0.0 (Unreleased)
+
+### Breaking changes
+
+These breaking changes fall out of the `stx` whitespace fix below, which stops writing interpolated
+values into the text that is parsed.
+
+- **Markup spliced into an `stx` template with `Stanza.unsafeXML()` or a `Builder` must now be
+  well-formed on its own.** A fragment is parsed in isolation, in the namespace scope of where it
+  lands, and its nodes are inserted into the tree. It is no longer concatenated into the template
+  text before the whole stanza is parsed. It therefore cannot open or close an element belonging to
+  the template around it. `unsafeXML('</body><evil/><body>')` interpolated into `<body>${…}</body>`
+  used to yield an `<evil/>` sibling that the template never wrote, and now throws a parser error
+  from `tree()`. Confining a fragment to the element it was interpolated into is the point of the
+  change, but code which relied on a fragment spanning element boundaries will break. This only
+  applies to a fragment interpolated inside an element. A value at document level, where nothing
+  encloses it, is still written into the text which is parsed, so a fragment there can still span:
+  `` stx`${unsafeXML('<message …>')}<body/>${unsafeXML('</message>')}` `` builds the stanza it always did.
+- **`Strophe.stripWhitespace()` exempts the XHTML-IM `<body>` of XEP-0071, and no longer every
+  element named `body`.** The exemption is there because a run of whitespace between two inline
+  XHTML elements separates words, so it reads the element's namespace rather than only its name.
+  A `<body>` in any other namespace is a different element which happens to share the name: a
+  plain-text message body, whose text is kept by the single-child rule whatever this does, or a
+  BOSH wrapper, whose layout is nobody's content. Whitespace between the children of such a
+  `<body>` is now stripped. The exemption also applies to the element it is given, and not only to
+  that element's children, so an XHTML-IM `<body>` keeps its whitespace whether it is passed in or
+  reached through the tree.
+- **`stx` stanzas serialize through the tree they build, like every other `Builder`.** `toString()`
+  returned the template text instead: the values written into it, but none of the parsing. In 5.0.0
+  the two differed only in layout, since the template kept its own indentation. They differ in
+  substance now, because markup interpolated into a template is confined to the element it landed
+  in only once the stanza has been built, so the text was the copy on which the confinement above
+  had not happened. A stanza had two answers to what it was and the one which had skipped the parser
+  was the one people read. What `toString()` (and so `` `${stanza}` ``) gives is now exactly what
+  `connection.send()` puts on the wire: whitespace stripped, attributes in serialized order, and
+  interpolated markup confined. It also now throws what building the stanza throws, so a template
+  which cannot be sent no longer reads back as though it could.
+
+### Fixes
+
+- Fix: keep the whitespace which comes from an interpolated value in an `stx` template.
+  Whitespace in a template has two origins that mean opposite things: the line breaks and
+  indentation between the tags of the template are formatting, while anything arriving through
+  `${}` is data. Both looked alike once the template had been turned into a string, so
+  `stripWhitespace` deleted both. The XHTML-IM `<body>` of XEP-0071 was already exempt. What this
+  fixes is every other shape, such as an Atom `type="xhtml"` construct
+  (XEP-0277), where the XHTML lives in a `<div>` under `<title>` or `<content>`. A value is no
+  longer written into the text which is parsed and is instead put into the tree afterwards, so its
+  whitespace is never a candidate for stripping. Template indentation is still stripped where it
+  separates elements, including the indentation written around an interpolated element.
+  Mark the element `xml:space="preserve"` to keep the rest.
+- Fix: whitespace in a value interpolated into an attribute is kept as well. An attribute value is
+  the one position a value cannot be stood in for, since no XML parser accepts a placeholder there,
+  so it goes into the template text and comes back through the parser, which normalises the
+  whitespace in an attribute value (XML 1.0 § 3.3.3). Written literally, a tab or a line feed a
+  value carried came back a space:
+
+      stx`<message xmlns="jabber:client" id="${'a\nb'}"/>`.tree().getAttribute('id')  // was 'a b'
+
+  Each is now written as a character reference, which is what carries it, so an attribute keeps
+  what a value put there like every other position, and agrees with what `$msg({id: 'a\nb'})`
+  builds. Markup interpolated into an attribute value with `unsafeXML()` is untouched, as is a
+  value elsewhere in a tag, which the conditional-attribute idiom relies on.
+- Fix: markup spliced into a template with `Stanza.unsafeXML()` or a `Builder` is spliced in
+  unchanged, whitespace and all, rather than being reformatted. This includes the whitespace at the
+  ends of the fragment, not only the whitespace between its tags. A value interpolated at document
+  level is the exception, and keeps the 5.0.0 behaviour. It is the entire stanza rather than content
+  within one, so it counts as markup and its whitespace is stripped like a template's.
+
+      const xhtml = `<title type="xhtml"><div xmlns="${XHTML}">
+          <a href="${a}">@bob</a>\n<a href="${b}">link</a>
+      </div></title>`;
+
+      // The line break between the two <a> elements is kept:
+      stx`<message xmlns="jabber:client">${unsafeXML(xhtml)}</message>`
+
+      // It is stripped, along with the template's own indentation:
+      stx`${unsafeXML(`<message xmlns="jabber:client">${xhtml}</message>`)}`
+
+    The two are told apart by where the whitespace came from, and at document level that is no longer
+    knowable. `xml:space="preserve"` is the only handle there, so mark the elements whose whitespace
+    matters before passing the markup in. Whitespace between XHTML elements is fragile in general,
+    since it collapses to a single space when rendered and this library is not the only thing which
+    may drop it. The business rules of XEP-0071 recommend writing a line break as `<br/>` and whitespace
+    which carries meaning as the equivalent number of no-break spaces, which survives regardless.
+
+- Where a value lands is read off the template text, and a value written into that text is read
+  along with it. Not every position can hold a stand-in: neither an element name nor an attribute
+  is somewhere an XML parser accepts one, so a value inside a tag is still written out, which is
+  what the conditional-attribute idiom relies on:
+
+      stx`<presence ${to ? unsafeXML(`to="${to}"`) : ''} xmlns="jabber:client">…`
+
+    A value written out that way can open or close a tag itself, and doing so is now accounted for,
+    so the whitespace fix above holds for the rest of the template either way. A value at document
+    level is the exception. It is allowed to span the stanza, as the breaking change above describes,
+    so the elements it opens are deliberately not counted, and a value which follows it is placed by
+    the template's own tags rather than by the ones the value wrote. Not counted is not the same as
+    not read: a comment or a CDATA section such a value opens carries on into the rest of the
+    template, and is carried to the values which land in it.
+
+- Which way the template's own indentation around a `${}` goes is decided by what the value puts
+  against it, and not by how the value was written. Indentation against text is part of that text
+  and is kept; indentation against an element separates elements, so it is formatting and is
+  removed, as it is around an element written out in the template. A `${x}` and a `${unsafeXML(x)}`
+  in the same position therefore lay out alike. Each end of a value is read on its own, so markup
+  which begins in text and ends in an element keeps the indentation before it and loses the
+  indentation after it. Whitespace inside the value is its own either way and is never touched.
+- An element whose content is only whitespace still keeps it, unless a value was interpolated
+  inside it, in which case only the whitespace which the value contributed is kept. Mark the
+  element `xml:space="preserve"` to keep the rest.
+- `Strophe.stripWhitespace()` honours `xml:space` (XML 1.0 § 2.10): a subtree marked
+  `xml:space="preserve"` keeps its whitespace, until a descendant sets `xml:space="default"`
+  again. This is the way to keep whitespace which was written out in a template or in a string
+  passed to `Stanza.toElement()`. It outranks the XHTML-IM `<body>` exemption in both directions,
+  so an XHTML-IM `<body>` which sets `xml:space="default"` is now stripped, where 5.0.0 always
+  left a `<body>` alone.
+- `Strophe.ElementType` gained `PROCESSING_INSTRUCTION` (`7`), alongside the node types it already
+  carried.
+- Markup interpolated into an `stx` template where it is written into the template text verbatim,
+  which is to say inside a tag or at document level, can open a comment or a CDATA section which
+  swallows the rest of the template. A value which lands in what it opened used to go out as
+  nothing at all (5.0.0 dropped it in silence, and it could leave a placeholder on the wire), or,
+  in a CDATA section, escaped as though it were markup, so that `a & b` came back out of the
+  stanza as the five characters `a &amp; b`. `tree()` now throws instead, in both positions and
+  whether or not an element of the template's own also encloses the value. A CDATA section opened
+  at document level is refused outright rather than written into: nothing after it is markup, so
+  nothing can close it again, and the value carrying the `]]>` which would is character data there
+  like any other. Write such a section in the template text instead. The same markup can also carry
+  a placeholder of its own, which would let one value stand in for another; that throws too. Every
+  value is accounted for exactly once before a tree is handed back.
+
 ## Version 5.0.0 (2026-07-21)
 
 ### Breaking changes
