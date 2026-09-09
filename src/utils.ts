@@ -674,6 +674,14 @@ export function getBareJidFromJid(jid: string): string | null {
     return jid ? jid.split('/')[0] : null;
 }
 
+/**
+ * Checks whether a value is a Promise (thenable).
+ * @param obj - The value to check.
+ */
+export function isPromise(obj: unknown): obj is Promise<boolean> {
+    return !!obj && typeof (obj as Promise<boolean>).then === 'function';
+}
+
 const utils = {
     utf16to8,
     xorArrayBuffers,
