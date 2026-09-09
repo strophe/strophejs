@@ -121,6 +121,53 @@ describe('Handler', () => {
         expect(hand.isMatch(elem)).toBe(false);
     });
 
+    it('async handler stays registered while its Promise pending, removed once it resolves false', async () => {
+        const conn = new Strophe.Connection('http://fake');
+        conn.authenticated = true;
+
+        let resolveHandler: (keep: boolean) => void = () => {};
+        let handlerPromise: Promise<boolean> = Promise.resolve(true);
+        const handlerStub = vi.fn(() => {
+            handlerPromise = new Promise<boolean>((resolve) => {
+                resolveHandler = resolve;
+            });
+            return handlerPromise;
+        });
+        conn.addHandler(handlerStub, null, 'message', null, null, null);
+
+        conn._dataRecv(makeRequest($msg().tree()));
+        expect(handlerStub).toHaveBeenCalledTimes(1);
+
+        // handler stays registered while its Promise is pending
+        conn._dataRecv(makeRequest($msg().tree()));
+        expect(handlerStub).toHaveBeenCalledTimes(2);
+
+        resolveHandler(false);
+        await handlerPromise;
+
+        // resolving false unregisters it: no further calls
+        conn._dataRecv(makeRequest($msg().tree()));
+        expect(handlerStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('async handler removed when its Promise rejects', async () => {
+        const conn = new Strophe.Connection('http://fake');
+        conn.authenticated = true;
+
+        const handlerPromise = Promise.reject(new Error('boom'));
+        const handlerStub = vi.fn(() => handlerPromise);
+        conn.addHandler(handlerStub, null, 'message', null, null, null);
+
+        conn._dataRecv(makeRequest($msg().tree()));
+        expect(handlerStub).toHaveBeenCalledTimes(1);
+
+        await handlerPromise.catch(() => {});
+
+        // rejection unregisters it: no further calls
+        conn._dataRecv(makeRequest($msg().tree()));
+        expect(handlerStub).toHaveBeenCalledTimes(1);
+    });
+
     it('Stanza type matching', () => {
         const elem = $iq({ type: 'error' }).tree();
         let hand = new Strophe.Handler(null, null, 'iq', 'error');

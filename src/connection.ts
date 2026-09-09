@@ -23,6 +23,7 @@ import {
     getResourceFromJid,
     getText,
     handleError,
+    isPromise,
     toElement,
     type Cookies,
 } from './utils';
@@ -1220,7 +1221,7 @@ class Connection {
      * @return A reference to the handler that can be used to remove it.
      */
     addHandler(
-        handler: (stanza: Element) => boolean,
+        handler: (stanza: Element) => boolean | Promise<boolean>,
         ns: string | null,
         name: string | null,
         type: string | string[] | null,
@@ -1484,7 +1485,24 @@ class Connection {
             this.handlers = this.handlers.reduce((handlers, handler) => {
                 try {
                     if (handler.isMatch(child) && (this.authenticated || !handler.user)) {
-                        if (handler.run(child)) {
+                        const result = handler.run(child);
+                        if (isPromise(result)) {
+                            // Keep the handler while its Promise is pending; remove
+                            // it later (via the existing deferred-removal queue)
+                            // if it resolves falsy or rejects.
+                            handlers.push(handler);
+                            result.then(
+                                (keep) => {
+                                    if (!keep) {
+                                        this.deleteHandler(handler);
+                                    }
+                                },
+                                (e) => {
+                                    log.warn('Removing Strophe handlers due to uncaught exception: ' + e.message);
+                                    this.deleteHandler(handler);
+                                },
+                            );
+                        } else if (result) {
                             handlers.push(handler);
                         }
                         matches.push(handler);

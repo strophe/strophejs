@@ -19,7 +19,7 @@ export interface HandlerOptions {
  * {@link Connection.deleteHandler}.
  */
 class Handler {
-    handler: (stanza: Element) => boolean;
+    handler: (stanza: Element) => boolean | Promise<boolean>;
     ns: string;
     name: string;
     type: string | string[];
@@ -40,7 +40,7 @@ class Handler {
      * @param options - Handler options
      */
     constructor(
-        handler: ((stanza: Element) => boolean) | null,
+        handler: ((stanza: Element) => boolean | Promise<boolean>) | null,
         ns?: string | null,
         name?: string | null,
         type?: string | string[] | null,
@@ -128,10 +128,11 @@ class Handler {
     /**
      * Run the callback on a matching stanza.
      * @param elem - The DOM element that triggered the Handler.
-     * @returns A boolean indicating if the handler should remain active.
+     * @returns A boolean (or a Promise thereof) indicating if the handler
+     *     should remain active.
      */
-    run(elem: Element): boolean | null {
-        let result: boolean | null = null;
+    run(elem: Element): boolean | null | Promise<boolean> {
+        let result: boolean | null | Promise<boolean> = null;
         try {
             result = this.handler(elem);
         } catch (e) {
