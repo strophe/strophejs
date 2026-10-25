@@ -130,11 +130,16 @@ export const LOG_LEVELS: LogLevels = {
  *
  * - ElementType.NORMAL - Normal element.
  * - ElementType.TEXT - Text data element.
+ * - ElementType.CDATA - CDATA section.
+ * - ElementType.PROCESSING_INSTRUCTION - Processing instruction.
+ * - ElementType.COMMENT - Comment.
  * - ElementType.FRAGMENT - XHTML fragment element.
  */
 export const ElementType = {
     NORMAL: 1,
     TEXT: 3,
     CDATA: 4,
+    PROCESSING_INSTRUCTION: 7,
+    COMMENT: 8,
     FRAGMENT: 11,
 } as const;
