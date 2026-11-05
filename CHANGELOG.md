@@ -1,6 +1,6 @@
 # Strophe.js Change Log
 
-## Version 6.0.0 (Unreleased)
+## Version 6.0.0 (2026-11-05)
 
 ### Breaking changes
 
