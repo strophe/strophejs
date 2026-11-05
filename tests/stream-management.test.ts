@@ -1,6 +1,6 @@
 import { StreamManagement, MemoryStorageBackend, SessionStorageBackend } from '../dist/strophe.node.esm.js';
 import { stripFrom } from '../src/stream-management/utils';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
 const SM_NS = 'urn:xmpp:sm:3';
 
@@ -472,8 +472,12 @@ describe('StreamManagement core', () => {
     });
 
     describe('SessionStorageBackend', () => {
+        // Node 25+ ships a global sessionStorage, so hide it explicitly.
+        beforeEach(() => {
+            vi.stubGlobal('sessionStorage', undefined);
+        });
         afterEach(() => {
-            delete (globalThis as any).sessionStorage;
+            vi.unstubAllGlobals();
         });
 
         it('throws when sessionStorage is unavailable', () => {
@@ -482,11 +486,11 @@ describe('StreamManagement core', () => {
 
         it('round-trips via a sessionStorage global', () => {
             const store = new Map<string, string>();
-            (globalThis as any).sessionStorage = {
+            vi.stubGlobal('sessionStorage', {
                 getItem: (k: string) => store.get(k) ?? null,
                 setItem: (k: string, v: string) => store.set(k, v),
                 removeItem: (k: string) => store.delete(k),
-            };
+            });
             const backend = new SessionStorageBackend();
             const { sm } = make({ storage: backend });
             sm.initialize('romeo@example.net');

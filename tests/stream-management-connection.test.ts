@@ -1,5 +1,5 @@
 import { Strophe, $msg, MemoryStorageBackend } from '../dist/strophe.node.esm.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const SM_NS = 'urn:xmpp:sm:3';
 const BIND_NS = 'urn:ietf:params:xml:ns:xmpp-bind';
@@ -65,6 +65,15 @@ function establish(conn: InstanceType<typeof Strophe.Connection>, id = 'sm-id-1'
 }
 
 describe('Stream Management connection integration', () => {
+    // Node 25+ ships a global sessionStorage, which Connection would pick up
+    // as the default SM store and leak state between tests. Hide it.
+    beforeEach(() => {
+        vi.stubGlobal('sessionStorage', undefined);
+    });
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
     it('creates the engine when enabled, but only negotiates over websocket', () => {
         expect(makeConn().conn.sm).toBeDefined();
         expect(new Strophe.Connection('wss://example.org/ws').sm).toBeUndefined();
