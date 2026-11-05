@@ -1,6 +1,6 @@
-import type Connection from './connection';
-import utils from './utils';
-import log from './log';
+import type Connection from './connection.js';
+import utils from './utils.js';
+import log from './log.js';
 
 interface ScramChallengeData {
     nonce: string;

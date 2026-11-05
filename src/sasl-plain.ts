@@ -1,6 +1,6 @@
-import type Connection from './connection';
-import SASLMechanism from './sasl';
-import utils from './utils';
+import type Connection from './connection.js';
+import SASLMechanism from './sasl.js';
+import utils from './utils.js';
 
 class SASLPlain extends SASLMechanism {
     constructor(mechname = 'PLAIN', isClientFirst = true, priority = 50) {

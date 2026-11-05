@@ -21,17 +21,16 @@
  *       }
  *   });
  */
-import { Buffer } from 'node:buffer';
 import { connect as netConnect, type Socket } from 'node:net';
 import { createHash } from 'node:crypto';
-import type Connection from '../connection';
-import Builder from '../builder';
-import { stx } from '../stanza';
-import log from '../log';
-import { ErrorCondition, NS, Status } from '../constants';
-import { xmlGenerator, xmlescape } from '../utils';
-import type { Transport } from './types';
-import ComponentParser from './component-parser';
+import type Connection from '../connection.js';
+import Builder from '../builder.js';
+import { stx } from '../stanza.js';
+import log from '../log.js';
+import { ErrorCondition, NS, Status } from '../constants.js';
+import { xmlGenerator, xmlescape } from '../utils.js';
+import type { Transport } from './types.js';
+import ComponentParser from './component-parser.js';
 
 const DEFAULT_COMPONENT_PORT = 5347;
 
@@ -71,7 +70,7 @@ function parseStreamError(streamError: Element): { condition: string; text: stri
 class Component implements Transport {
     _conn: Connection;
     strip: string;
-    socket: Socket | null;
+    private socket: Socket | null;
     private _parser: ComponentParser;
     private _streamId: string | null;
 
@@ -146,7 +145,7 @@ class Component implements Transport {
         const socket = netConnect({ host, port });
         this.socket = socket;
         socket.on('connect', () => this._onOpen());
-        socket.on('data', (chunk: Buffer) => this._onData(chunk));
+        socket.on('data', (chunk: Uint8Array) => this._onData(chunk));
         socket.on('error', (e: Error) => this._onError(e));
         socket.on('close', () => this._onClose());
     }
@@ -198,7 +197,7 @@ class Component implements Transport {
      * Feeds them into the incremental stream parser.
      * @param chunk - The bytes received from the socket.
      */
-    _onData(chunk: Buffer): void {
+    _onData(chunk: Uint8Array): void {
         this._parser.write(chunk);
     }
 

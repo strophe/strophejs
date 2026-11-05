@@ -1,7 +1,7 @@
-import log from './log';
-import Builder from './builder';
-import { ErrorCondition } from './constants';
-import { getParserError, xmlHtmlNode } from './utils';
+import log from './log.js';
+import Builder from './builder.js';
+import { ErrorCondition } from './constants.js';
+import { getParserError, xmlHtmlNode } from './utils.js';
 
 /**
  * _Private_ variable that keeps track of the request ids for connections.

@@ -1,5 +1,5 @@
-import { ElementType, NS } from './constants';
-import { copyElement, createHtml, toElement, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils';
+import { ElementType, NS } from './constants.js';
+import { copyElement, createHtml, toElement, xmlElement, xmlGenerator, xmlTextNode, xmlescape } from './utils.js';
 
 export type StanzaAttrs = Record<string, string | number>;
 

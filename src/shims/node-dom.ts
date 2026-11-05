@@ -21,7 +21,7 @@
  */
 import ws from 'ws';
 import { DOMParser as XmlDOMParser, XMLSerializer, DOMImplementation } from '@xmldom/xmldom';
-import { PARSE_ERROR_NS } from '../constants';
+import { PARSE_ERROR_NS } from '../constants.js';
 
 const domImplementation = new DOMImplementation();
 

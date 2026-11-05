@@ -1,5 +1,5 @@
-import type Connection from './connection';
-import SASLMechanism from './sasl';
+import type Connection from './connection.js';
+import SASLMechanism from './sasl.js';
 
 class SASLExternal extends SASLMechanism {
     constructor(mechname = 'EXTERNAL', isClientFirst = true, priority = 10) {

@@ -4,6 +4,7 @@
     "compilerOptions": {
         "rootDir": ".",
         "noEmit": true,
+        "module": "esnext",
         "moduleResolution": "bundler"
     }
 }

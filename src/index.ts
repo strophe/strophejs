@@ -1,26 +1,26 @@
-import * as utils from './utils';
-import Bosh from './transports/bosh';
-import Builder, { $build, $msg, $pres, $iq } from './builder';
-import Connection from './connection';
-import Handler from './handler';
-import Request from './request';
-import SASLAnonymous from './sasl-anon';
-import SASLExternal from './sasl-external';
-import SASLMechanism from './sasl';
-import SASLOAuthBearer from './sasl-oauthbearer';
-import SASLPlain from './sasl-plain';
-import SASLSHA1 from './sasl-sha1';
-import SASLSHA256 from './sasl-sha256';
-import SASLSHA384 from './sasl-sha384';
-import SASLSHA512 from './sasl-sha512';
-import SASLXOAuth2 from './sasl-xoauth2';
-import StreamManagement, { MemoryStorageBackend, SessionStorageBackend, StreamManagementMirror } from './stream-management';
-import TimedHandler from './timed-handler';
-import Websocket from './transports/websocket';
-import WorkerWebsocket from './transports/worker-websocket';
-import log from './log';
-import { ElementType, ErrorCondition, LOG_LEVELS, LogLevel, NS, Status, XHTML } from './constants';
-import { stx, Stanza } from './stanza';
+import * as utils from './utils.js';
+import Bosh from './transports/bosh.js';
+import Builder, { $build, $msg, $pres, $iq } from './builder.js';
+import Connection from './connection.js';
+import Handler from './handler.js';
+import Request from './request.js';
+import SASLAnonymous from './sasl-anon.js';
+import SASLExternal from './sasl-external.js';
+import SASLMechanism from './sasl.js';
+import SASLOAuthBearer from './sasl-oauthbearer.js';
+import SASLPlain from './sasl-plain.js';
+import SASLSHA1 from './sasl-sha1.js';
+import SASLSHA256 from './sasl-sha256.js';
+import SASLSHA384 from './sasl-sha384.js';
+import SASLSHA512 from './sasl-sha512.js';
+import SASLXOAuth2 from './sasl-xoauth2.js';
+import StreamManagement, { MemoryStorageBackend, SessionStorageBackend, StreamManagementMirror } from './stream-management/index.js';
+import TimedHandler from './timed-handler.js';
+import Websocket from './transports/websocket.js';
+import WorkerWebsocket from './transports/worker-websocket.js';
+import log from './log.js';
+import { ElementType, ErrorCondition, LOG_LEVELS, LogLevel, NS, Status, XHTML } from './constants.js';
+import { stx, Stanza } from './stanza.js';
 
 type StropheType = {
     VERSION: string;
@@ -175,5 +175,5 @@ export type {
     SMStorageBackend,
     StreamManagementController,
     StreamManagementOptions,
-} from './stream-management';
-export type { ConnectCallback, ConnectionOptions } from './connection';
+} from './stream-management/index.js';
+export type { ConnectCallback, ConnectionOptions } from './connection.js';

@@ -7,8 +7,8 @@
  * SessionStorageBackend requires a browser page context, but only at
  * construction time, there is no module-level DOM access here.
  */
-import log from '../log';
-import { SMState, SMStorageBackend } from './types';
+import log from '../log.js';
+import { SMState, SMStorageBackend } from './types.js';
 
 /**
  * In-memory storage backend (Node, tests, or non-resumable setups).

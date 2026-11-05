@@ -1,4 +1,4 @@
-import { LOG_LEVELS, LogLevel } from './constants';
+import { LOG_LEVELS, LogLevel } from './constants.js';
 
 let logLevel = LOG_LEVELS.DEBUG;
 

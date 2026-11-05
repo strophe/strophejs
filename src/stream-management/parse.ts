@@ -12,7 +12,7 @@
  * the opening tag with a regex. Divergence between the page and worker
  * environments is prevented by sharing the engine, not the parser.
  */
-import type { StanzaView } from './types';
+import type { StanzaView } from './types.js';
 
 const OPENING_TAG = /^\s*<([a-zA-Z][^\s/>]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*\/?>/;
 const ATTRIBUTE = /([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;

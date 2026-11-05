@@ -1,4 +1,4 @@
-import { getBareJidFromJid, getNamespace as getElementNamespace, handleError, isTagEqual } from './utils';
+import { getBareJidFromJid, getNamespace as getElementNamespace, handleError, isTagEqual } from './utils.js';
 
 export interface HandlerOptions {
     matchBareFromJid?: boolean;

@@ -5,8 +5,8 @@
  *
  * Page-only: never imported by the shared-connection-worker bundle.
  */
-import { freshState } from './utils';
-import { SMState, StanzaView, StreamManagementController } from './types';
+import { freshState } from './utils.js';
+import { SMState, StanzaView, StreamManagementController } from './types.js';
 
 /**
  * A page-side stand-in for the worker-resident engine: when the connection

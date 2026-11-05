@@ -44,8 +44,8 @@
     "unpkg": "./dist/strophe.umd.min.js",
     "exports": {
         ".": {
-            "types": "./dist/types/index.d.ts",
             "browser": {
+                "types": "./dist/types/index.d.ts",
                 "import": "./dist/strophe.esm.js",
                 "require": "./dist/strophe.umd.cjs",
                 "default": "./dist/strophe.umd.cjs"
@@ -56,6 +56,7 @@
                 "require": "./dist/strophe.cjs",
                 "default": "./dist/strophe.cjs"
             },
+            "types": "./dist/types/index.d.ts",
             "default": "./dist/strophe.esm.js"
         },
         "./package.json": "./package.json"
@@ -66,7 +67,8 @@
         "lint": "eslint src",
         "clean": "make clean",
         "doc": "make doc",
-        "test": "npm run build && vitest run && npm run lint",
+        "test": "npm run build && vitest run && npm run lint && npm run check:types",
+        "check:types": "scripts/check-consumer-types.sh",
         "prettier": "prettier --write \"src/**/*.ts\""
     },
     "volo": {
