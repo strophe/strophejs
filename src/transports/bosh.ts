@@ -7,12 +7,12 @@
  */
 
 type Connection = any;
-import log from '../log';
-import Builder, { $build } from '../builder';
-import Request from '../request';
-import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from '../utils';
-import { Status, NS } from '../constants';
-import type { Transport } from './types';
+import log from '../log.js';
+import Builder, { $build } from '../builder.js';
+import Request from '../request.js';
+import { getBareJidFromJid, getDomainFromJid, getNodeFromJid } from '../utils.js';
+import { Status, NS } from '../constants.js';
+import type { Transport } from './types.js';
 
 type ConnectionCallback = (connection: Connection) => void;
 

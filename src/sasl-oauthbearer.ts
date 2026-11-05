@@ -1,6 +1,6 @@
-import type Connection from './connection';
-import SASLMechanism from './sasl';
-import utils from './utils';
+import type Connection from './connection.js';
+import SASLMechanism from './sasl.js';
+import utils from './utils.js';
 
 class SASLOAuthBearer extends SASLMechanism {
     constructor(mechname = 'OAUTHBEARER', isClientFirst = true, priority = 40) {

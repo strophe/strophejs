@@ -4,7 +4,7 @@
   ],
   "compilerOptions": {
     "target": "es2016",
-    "module": "esnext",
+    "module": "nodenext",
 
     // Generate d.ts files
     "declaration": true,
@@ -12,7 +12,6 @@
 
     "rootDir": "./src",
     "outDir": "./dist/types/",
-    "baseUrl": "./src/",
 
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -23,7 +22,7 @@
 
     "skipLibCheck": true,
 
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
 
     "lib": ["ES2020", "DOM", "DOM.Iterable"]

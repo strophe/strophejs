@@ -1,4 +1,4 @@
-import type Connection from './connection';
+import type Connection from './connection.js';
 
 /**
  * Encapsulates an SASL authentication mechanism.

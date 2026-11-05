@@ -1,11 +1,11 @@
-import type Connection from '../connection';
-import Websocket from './websocket';
-import log from '../log';
-import Builder, { $build } from '../builder';
-import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from '../constants';
-import { toElement } from '../utils';
-import { WebsocketLike, Transport } from './types';
-import type { StreamManagementMirror } from '../stream-management';
+import type Connection from '../connection.js';
+import Websocket from './websocket.js';
+import log from '../log.js';
+import Builder, { $build } from '../builder.js';
+import { LOG_LEVELS, NS, SHARED_WORKER_PROTOCOL_VERSION, Status } from '../constants.js';
+import { toElement } from '../utils.js';
+import { WebsocketLike, Transport } from './types.js';
+import type { StreamManagementMirror } from '../stream-management/index.js';
 
 /**
  * Helper class that handles a websocket connection inside a shared worker.

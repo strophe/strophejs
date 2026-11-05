@@ -1,5 +1,18 @@
 # Strophe.js Change Log
 
+## Unreleased
+
+### Bug fixes
+
+- #886 TypeScript types now resolve under `"moduleResolution": "node16"` and `"nodenext"`.
+  Relative imports in the published declarations carry `.js` extensions, and Node consumers
+  get the Node entry's types (which include `Component` and `ComponentParser`) instead of the
+  browser ones. These types do not need `@types/node`: `ComponentParser.write()` now takes a
+  `Uint8Array` (which a `Buffer` is), and the internal `Component.socket` field is now private.
+  The published types are ESM-only. TypeScript projects that compile to CommonJS need
+  `"moduleResolution": "nodenext"` with TypeScript 5.8 or later. Under `node16`, or with an older
+  TypeScript, they get error TS1479. The CommonJS runtime build is unchanged.
+
 ## Version 5.0.0 (2026-07-21)
 
 ### Breaking changes

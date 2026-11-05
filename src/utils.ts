@@ -1,5 +1,5 @@
-import log from './log';
-import { ElementType, PARSE_ERROR_NS, XHTML } from './constants';
+import log from './log.js';
+import { ElementType, PARSE_ERROR_NS, XHTML } from './constants.js';
 
 export type XHTMLAttrs =
     'a' | 'blockquote' | 'br' | 'cite' | 'em' | 'img' | 'li' | 'ol' | 'p' | 'span' | 'strong' | 'ul' | 'body';

@@ -15,11 +15,10 @@
  * `Element` objects handed downstream are the exact same type produced by the
  * BOSH and WebSocket transports.
  */
-import { Buffer } from 'node:buffer';
 import { createRequire } from 'node:module';
 import { StringDecoder } from 'node:string_decoder';
 import type { SaxesParser, SaxesTagNS } from 'saxes';
-import { xmlGenerator } from '../utils';
+import { xmlGenerator } from '../utils.js';
 
 /** Cached `saxes` constructor, resolved by {@link getSaxesParser} on first use. */
 let SaxesParserCtor: typeof import('saxes').SaxesParser | undefined;
@@ -107,13 +106,13 @@ export default class ComponentParser {
     /**
      * Feed a chunk of raw stream data into the parser.
      *
-     * Accepts a `Buffer` (as delivered by a `node:net` socket) or an already
-     * decoded string. Buffers are run through a {@link StringDecoder} so that a
+     * Accepts bytes (a `Buffer`, as delivered by a `node:net` socket, is a
+     * `Uint8Array`) or an already decoded string. Bytes are run through a {@link StringDecoder} so that a
      * multi-byte UTF-8 character split across two chunks is reassembled instead
      * of corrupted.
      * @param chunk - The bytes (or string) received from the socket.
      */
-    write(chunk: Buffer | string): void {
+    write(chunk: Uint8Array | string): void {
         if (this._errored) {
             return;
         }

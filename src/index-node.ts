@@ -12,11 +12,11 @@
  */
 // Must be first: installs the DOM globals (via @xmldom/xmldom) and `ws` that the
 // rest of the library assumes, before any module touches `document`/`DOMParser`.
-import './shims/node-dom';
-import Connection from './connection';
-import Component from './transports/component';
-import ComponentParser from './transports/component-parser';
-import { Strophe } from './index';
+import './shims/node-dom.js';
+import Connection from './connection.js';
+import Component from './transports/component.js';
+import ComponentParser from './transports/component-parser.js';
+import { Strophe } from './index.js';
 
 // Make the component transport selectable via `{ protocol: 'component' }`.
 Connection.addProtocol('component', Component);
@@ -27,6 +27,6 @@ Connection.addProtocol('component', Component);
 (Strophe as unknown as { Component: typeof Component }).Component = Component;
 (Strophe as unknown as { ComponentParser: typeof ComponentParser }).ComponentParser = ComponentParser;
 
-export * from './index';
+export * from './index.js';
 export { Component, ComponentParser };
-export type { StreamParserHandlers } from './transports/component-parser';
+export type { StreamParserHandlers } from './transports/component-parser.js';

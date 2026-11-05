@@ -56,6 +56,10 @@ Then import what you need:
 import { Strophe, stx } from 'strophe.js';
 ```
 
+The bundled TypeScript types are ESM-only. A TypeScript project that compiles to
+CommonJS needs `"moduleResolution": "nodenext"` and TypeScript 5.8 or later.
+Plain JavaScript can still use `require('strophe.js')`.
+
 Or load it from a CDN in a plain web page, which exposes `Strophe`, `stx`,
 `$iq`, `$msg`, `$pres` and `$build` as globals:
 

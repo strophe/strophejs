@@ -1,5 +1,5 @@
-import type Connection from './connection';
-import SASLMechanism from './sasl';
+import type Connection from './connection.js';
+import SASLMechanism from './sasl.js';
 
 class SASLAnonymous extends SASLMechanism {
     constructor(mechname = 'ANONYMOUS', isClientFirst = false, priority = 20) {

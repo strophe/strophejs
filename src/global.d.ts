@@ -1,4 +1,4 @@
-import type { Strophe as StropheType, Builder, Stanza } from './index';
+import type { Strophe as StropheType, Builder, Stanza } from './index.js';
 
 declare global {
     const Strophe: typeof StropheType;

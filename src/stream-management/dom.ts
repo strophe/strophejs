@@ -9,7 +9,7 @@
  * imported by the shared-connection-worker bundle. Keeping it in its own
  * file makes that boundary structural instead of comment-enforced.
  */
-import { StanzaView } from './types';
+import { StanzaView } from './types.js';
 
 /**
  * Build the environment-free {@link StanzaView} consumed by the XEP-0198

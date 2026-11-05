@@ -15,9 +15,9 @@
  * This file is built as a self-contained classic-worker script
  * (`dist/shared-connection-worker.js`) keep it free of DOM dependencies.
  */
-import { SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants';
-import StreamManagement from './stream-management/engine';
-import { peekElement } from './stream-management/parse';
+import { SHARED_WORKER_PROTOCOL_VERSION, Status } from './constants.js';
+import StreamManagement from './stream-management/engine.js';
+import { peekElement } from './stream-management/parse.js';
 
 /** How often the worker pings its ports (and sweeps for gone ones). */
 export const PING_INTERVAL = 30_000;

@@ -1,6 +1,6 @@
-import type Connection from './connection';
-import SASLMechanism from './sasl';
-import scram from './scram';
+import type Connection from './connection.js';
+import SASLMechanism from './sasl.js';
+import scram from './scram.js';
 
 class SASLSHA1 extends SASLMechanism {
     constructor(mechname = 'SCRAM-SHA-1', isClientFirst = true, priority = 60) {

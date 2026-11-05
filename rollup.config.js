@@ -93,7 +93,7 @@ export default [
                     this.emitFile({
                         type: 'asset',
                         fileName: 'strophe.node.esm.d.ts',
-                        source: "export * from './types/index-node';\n",
+                        source: "export * from './types/index-node.js';\n",
                     });
                 },
             },

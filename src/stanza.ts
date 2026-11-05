@@ -1,6 +1,6 @@
-import Builder from './builder';
-import log from './log';
-import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils';
+import Builder from './builder.js';
+import log from './log.js';
+import { getFirstElementChild, getParserError, stripWhitespace, xmlHtmlNode, xmlescape } from './utils.js';
 
 export class UnsafeXML extends String {}
 
