@@ -1,5 +1,18 @@
 # Strophe.js Change Log
 
+## Version 6.1.0 (Unreleased)
+
+### Changes
+
+- Client-side SCRAM failures report `AUTHFAIL` with a `SCRAM_*` condition.
+- On a bad SCRAM challenge, Strophe sends `<abort/>` and reports one `AUTHFAIL`.
+- A missing or wrong SCRAM server signature fails auth and disconnects.
+- `disconnect()` does nothing while the connection is already disconnecting.
+- If a mechanism's `onChallenge()` throws, the SASL exchange is aborted.
+- `Strophe.SASLError` lets a mechanism's `onChallenge()` pick the condition.
+- A late answer to a SASL exchange that has already ended is dropped.
+- A SCRAM server nonce must extend the client nonce with its own part.
+
 ## Version 6.0.0 (2026-11-05)
 
 ### Breaking changes
