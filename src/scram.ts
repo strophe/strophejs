@@ -1,6 +1,8 @@
 import type Connection from './connection.js';
 import utils from './utils.js';
 import log from './log.js';
+import { ErrorCondition } from './constants.js';
+import { SASLError } from './errors.js';
 
 interface ScramChallengeData {
     nonce: string;
@@ -60,7 +62,12 @@ function scramParseChallenge(challenge: string): ScramChallengeData | undefined 
                 nonce = matches[2];
                 break;
             case 's':
-                salt = utils.base64ToArrayBuf(matches[2]);
+                try {
+                    salt = utils.base64ToArrayBuf(matches[2]);
+                } catch {
+                    log.warn('Failing SCRAM authentication because the salt is not valid base64.');
+                    return undefined;
+                }
                 break;
             case 'i':
                 iter = parseInt(matches[2], 10);
@@ -156,7 +163,8 @@ const scram = {
      *
      * The server signature should be verified after this function completes..
      *
-     * On failure, returns connection._sasl_failure_cb();
+     * On failure, throws a `SASLError` saying why, and the connection aborts
+     * the SASL exchange.
      * @param connection
      * @param challenge
      * @param hashName
@@ -167,14 +175,21 @@ const scram = {
         challenge: string,
         hashName: string,
         hashBits: number,
-    ): Promise<string | false> {
-        const cnonce = connection._sasl_data.cnonce;
+    ): Promise<string> {
+        // Write results to this exchange's data, even if a new exchange has
+        // started by the time the keys are derived.
+        const data = connection._sasl_data;
+        const cnonce = data.cnonce as string;
         const challengeData = scramParseChallenge(challenge);
 
-        if (!challengeData || challengeData.nonce.slice(0, (cnonce as string).length) !== cnonce) {
+        if (!challengeData) {
+            throw new SASLError(ErrorCondition.SCRAM_BAD_CHALLENGE, 'The SCRAM challenge is malformed or insecure.');
+        }
+        // The server must extend our nonce with its own part (RFC 5802 § 5.1).
+        const { nonce } = challengeData;
+        if (!cnonce || !nonce?.startsWith(cnonce) || nonce.length <= cnonce.length) {
             log.warn('Failing SCRAM authentication because server supplied incorrect nonce.');
-            connection._sasl_data = {};
-            return connection._sasl_failure_cb(null) as false;
+            throw new SASLError(ErrorCondition.SCRAM_BAD_NONCE, "The server's nonce doesn't extend ours.");
         }
 
         let clientKey: ArrayBuffer, serverKey: ArrayBuffer;
@@ -200,10 +215,11 @@ const scram = {
             clientKey = utils.base64ToArrayBuf(ck);
             serverKey = utils.base64ToArrayBuf(sk);
         } else {
-            return connection._sasl_failure_cb(null) as false;
+            log.warn("Failing SCRAM authentication because the stored keys don't match the server's challenge.");
+            throw new SASLError(ErrorCondition.SCRAM_STALE_KEYS, "The stored keys don't match the challenge.");
         }
 
-        const clientFirstMessageBare = connection._sasl_data['client-first-message-bare'];
+        const clientFirstMessageBare = data['client-first-message-bare'];
         const serverFirstMessage = challenge;
         const clientFinalMessageBare = `c=biws,r=${challengeData.nonce}`;
 
@@ -212,8 +228,8 @@ const scram = {
         const clientProof = await scramClientProof(authMessage, clientKey, hashName);
         const serverSignature = await scramServerSign(authMessage, serverKey, hashName);
 
-        connection._sasl_data['server-signature'] = utils.arrayBufToBase64(serverSignature);
-        connection._sasl_data.keys = {
+        data['server-signature'] = utils.arrayBufToBase64(serverSignature);
+        data.keys = {
             name: hashName,
             iter: challengeData.iter,
             salt: utils.arrayBufToBase64(challengeData.salt),

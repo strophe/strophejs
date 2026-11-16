@@ -108,6 +108,14 @@ export const ErrorCondition = {
     MISSING_JID_NODE: 'x-strophe-bad-non-anon-jid',
     NO_AUTH_MECH: 'no-auth-mech',
     UNKNOWN_REASON: 'unknown',
+    /** The server's SCRAM challenge is malformed or insecure (e.g. fewer than 4096 iterations). */
+    SCRAM_BAD_CHALLENGE: 'x-strophe-scram-bad-challenge',
+    /** The server's SCRAM nonce doesn't start with the client's nonce. */
+    SCRAM_BAD_NONCE: 'x-strophe-scram-bad-nonce',
+    /** The stored SCRAM keys don't match the server's hash, salt or iteration count. */
+    SCRAM_STALE_KEYS: 'x-strophe-scram-stale-keys',
+    /** The server signature in `<success>` doesn't match, so the server isn't verified. */
+    SCRAM_BAD_SERVER_SIGNATURE: 'x-strophe-scram-bad-server-signature',
 } as const;
 
 /**

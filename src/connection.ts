@@ -26,7 +26,7 @@ import {
     toElement,
     type Cookies,
 } from './utils.js';
-import { SessionError } from './errors.js';
+import { SessionError, SASLError } from './errors.js';
 import Bosh from './transports/bosh.js';
 import WorkerWebsocket from './transports/worker-websocket.js';
 import Websocket from './transports/websocket.js';
@@ -297,6 +297,16 @@ class Connection {
     _sasl_success_handler: Handler | null;
     _sasl_failure_handler: Handler | null;
     _sasl_challenge_handler: Handler | null;
+    /**
+     * How many `<abort/>`s the server still owes a `<failure><aborted/>`
+     * reply for. Each was already reported, so the reply is dropped.
+     */
+    _sasl_aborts_pending: number;
+    /**
+     * Identifies the current SASL exchange. It changes when an exchange starts
+     * or ends, so a handler or answer of an older exchange can tell it's stale.
+     */
+    _sasl_exchange: number;
     maxRetries: number;
     iqFallbackHandler: Handler;
     authzid: string | null;
@@ -418,6 +428,8 @@ class Connection {
         this._sasl_success_handler = null;
         this._sasl_failure_handler = null;
         this._sasl_challenge_handler = null;
+        this._sasl_aborts_pending = 0;
+        this._sasl_exchange = 0;
 
         // Max retries before disconnecting
         this.maxRetries = 5;
@@ -522,6 +534,7 @@ class Connection {
         this.sm?.reset();
 
         // SASL
+        this._sasl_aborts_pending = 0;
         this.do_session = false;
         this.do_bind = false;
 
@@ -1301,6 +1314,12 @@ class Connection {
      * @param reason - The reason the disconnect is occuring.
      */
     disconnect(reason?: string): void {
+        if (this.disconnecting) {
+            // The stream is already being closed; closing it again would send
+            // a second <close/> and report the disconnect twice.
+            log.debug('Disconnect was called while already disconnecting');
+            return;
+        }
         this._changeConnectStatus(Status.DISCONNECTING, reason);
         if (reason) {
             log.info('Disconnect was called because: ' + reason);
@@ -1643,26 +1662,33 @@ class Connection {
     _attemptSASLAuth(mechanisms?: SASLMechanism[]): boolean {
         mechanisms = this.sortMechanismsByPriority(mechanisms || []);
         let mechanism_found = false;
+        // Each exchange starts from scratch, so nothing leaks from an earlier one.
+        this._sasl_end_exchange();
         for (let i = 0; i < mechanisms.length; ++i) {
             if (!mechanisms[i].test(this)) {
                 continue;
             }
+            const exchange = ++this._sasl_exchange;
             this._sasl_success_handler = this._addSysHandler(
-                this._sasl_success_cb.bind(this),
+                (elem: Element) => this._sasl_success_cb(elem, exchange),
                 null,
                 'success',
                 null,
                 null,
             );
             this._sasl_failure_handler = this._addSysHandler(
-                this._sasl_failure_cb.bind(this),
+                (elem: Element) => this._sasl_failure_cb(elem, null, exchange),
                 null,
                 'failure',
                 null,
                 null,
             );
             this._sasl_challenge_handler = this._addSysHandler(
-                this._sasl_challenge_cb.bind(this),
+                (elem: Element) => {
+                    // Kept for later challenges; the answer is sent when ready.
+                    this._sasl_challenge_cb(elem, exchange);
+                    return true;
+                },
                 null,
                 'challenge',
                 null,
@@ -1677,7 +1703,15 @@ class Connection {
                 'mechanism': this._sasl_mechanism.mechname,
             });
             if (this._sasl_mechanism.isClientFirst) {
-                const response = this._sasl_mechanism.clientChallenge(this);
+                let response: string | Promise<string | false>;
+                try {
+                    response = this._sasl_mechanism.clientChallenge(this);
+                } catch (e) {
+                    // Nothing went out yet, so there's no exchange to abort.
+                    log.warn(`Failing SASL authentication because the first message couldn't be built: ${e}`);
+                    this._sasl_failure_cb(null, e instanceof SASLError ? e.condition : ErrorCondition.UNKNOWN_REASON);
+                    return true;
+                }
                 request_auth_exchange.t(btoa(response as string));
             }
             this.send(request_auth_exchange.tree());
@@ -1691,14 +1725,67 @@ class Connection {
      * _Private_ handler for the SASL challenge
      * @private
      * @param elem
+     * @param exchange - The exchange the handler was added for. If it's over
+     *  (or a new one has started) by the time the mechanism answers, the
+     *  answer is dropped.
      */
-    async _sasl_challenge_cb(elem: Element): Promise<boolean> {
-        const challenge = atob(getText(elem));
-        const response = await this._sasl_mechanism.onChallenge(this, challenge);
+    async _sasl_challenge_cb(elem: Element, exchange = this._sasl_exchange): Promise<boolean> {
+        if (exchange !== this._sasl_exchange) return false;
+        let response: string | false;
+        try {
+            response = await this._sasl_mechanism.onChallenge(this, atob(getText(elem)));
+        } catch (e) {
+            if (exchange !== this._sasl_exchange) return false;
+            log.warn(`Failing SASL authentication because the challenge couldn't be answered: ${e}`);
+            this._sasl_abort(e instanceof SASLError ? e.condition : ErrorCondition.UNKNOWN_REASON);
+            return false;
+        }
+        if (exchange !== this._sasl_exchange) return false;
+        if (response === false) {
+            this._sasl_abort(ErrorCondition.UNKNOWN_REASON);
+            return false;
+        }
         const stanza = $build('response', { 'xmlns': NS.SASL });
         if (response) stanza.t(btoa(response));
         this.send(stanza.tree());
         return true;
+    }
+
+    /**
+     * _Private_ function to abort a SASL exchange on the client's side.
+     *
+     * Sends `<abort/>` (RFC 6120 § 6.4.4) and reports `Status.AUTHFAIL` with
+     * `condition` and no element. The server's `<failure><aborted/></failure>`
+     * reply is not reported again, even if a new exchange has started by then.
+     * @private
+     * @param condition - One of the `ErrorCondition` values, saying why.
+     * @return `false`, so a mechanism can return it from `onChallenge()`.
+     */
+    _sasl_abort(condition: string): false {
+        this.send($build('abort', { 'xmlns': NS.SASL }).tree());
+        this._sasl_aborts_pending++;
+        this._sasl_failure_cb(null, condition);
+        return false;
+    }
+
+    /**
+     * _Private_ check that a SCRAM `<success>` carries the server signature
+     * computed while answering the server's challenge.
+     * @private
+     * @param elem - The `<success>` element.
+     * @return `false` if no challenge was answered, or the signature is
+     *  missing, malformed or wrong.
+     */
+    _sasl_verify_server_signature(elem: Element): boolean {
+        const expected = this._sasl_data['server-signature'];
+        if (!expected) return false;
+        let data: string;
+        try {
+            data = atob(getText(elem));
+        } catch {
+            return false;
+        }
+        return data.match(/(?:^|,)v=([^,]+)/)?.[1] === expected;
     }
 
     /**
@@ -1768,28 +1855,22 @@ class Connection {
      * _Private_ handler for succesful SASL authentication.
      * @private
      * @param elem - The matching stanza.
+     * @param exchange - The exchange the handler was added for.
      * @return `false` to remove the handler.
      */
-    _sasl_success_cb(elem: Element): boolean {
-        if (this._sasl_data['server-signature']) {
-            let serverSignature: string;
-            const success = atob(getText(elem));
-            const attribMatch = /([a-z]+)=([^,]+)(,|$)/;
-            const matches = success.match(attribMatch);
-            if (matches[1] === 'v') {
-                serverSignature = matches[2];
-            }
-            if (serverSignature !== this._sasl_data['server-signature']) {
-                // remove old handlers
-                this.deleteHandler(this._sasl_failure_handler);
-                this._sasl_failure_handler = null;
-                if (this._sasl_challenge_handler) {
-                    this.deleteHandler(this._sasl_challenge_handler);
-                    this._sasl_challenge_handler = null;
-                }
-                this._sasl_data = {};
-                return this._sasl_failure_cb(null);
-            }
+    _sasl_success_cb(elem: Element, exchange = this._sasl_exchange): boolean {
+        if (exchange !== this._sasl_exchange) return false;
+        // A SCRAM exchange (the only one with a client nonce) succeeds only if
+        // the server proves it knows the password (RFC 5802 § 3).
+        if (this._sasl_data.cnonce && !this._sasl_verify_server_signature(elem)) {
+            // The server considers us authenticated, so it won't send a
+            // <failure/>. Close the stream to the unverified server, before
+            // reporting AUTHFAIL, so that whatever the app does in response
+            // (disconnect, reconnect) comes last and isn't undone.
+            log.warn('Failing SCRAM authentication because the server signature is missing or wrong.');
+            this.disconnect(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE);
+            this._sasl_failure_cb(null, ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE);
+            return false;
         }
         log.info('SASL authentication succeeded.');
 
@@ -1800,13 +1881,7 @@ class Connection {
         if (this._sasl_mechanism) {
             this._sasl_mechanism.onSuccess();
         }
-        // remove old handlers
-        this.deleteHandler(this._sasl_failure_handler);
-        this._sasl_failure_handler = null;
-        if (this._sasl_challenge_handler) {
-            this.deleteHandler(this._sasl_challenge_handler);
-            this._sasl_challenge_handler = null;
-        }
+        this._sasl_end_exchange();
         const streamfeature_handlers: Handler[] = [];
 
         const wrapper = (handlers: Handler[], elem: Element) => {
@@ -2122,23 +2197,46 @@ class Connection {
     }
 
     /**
+     * _Private_ function that ends the current SASL exchange, if any.
+     *
+     * Removes its handlers and data, and moves on to a new exchange id, so
+     * that a handler of the old exchange which still runs (handlers are only
+     * removed before the next batch of stanzas) or an answer it computes
+     * afterwards does nothing.
+     * @private
+     */
+    _sasl_end_exchange(): void {
+        for (const handler of [this._sasl_success_handler, this._sasl_failure_handler, this._sasl_challenge_handler]) {
+            if (handler) this.deleteHandler(handler);
+        }
+        this._sasl_success_handler = null;
+        this._sasl_failure_handler = null;
+        this._sasl_challenge_handler = null;
+        this._sasl_data = {};
+        this._sasl_exchange++;
+    }
+
+    /**
      * _Private_ handler for SASL authentication failure.
-     * @param elem - The matching stanza.
+     * @param elem - The matching stanza, or `null` when the client failed
+     *  the exchange itself.
+     * @param condition - Why the client failed the exchange, when `elem` is `null`.
+     * @param exchange - The exchange the handler was added for.
      * @return `false` to remove the handler.
      */
-    _sasl_failure_cb(elem: Element | null): boolean {
-        // delete unneeded handlers
-        if (this._sasl_success_handler) {
-            this.deleteHandler(this._sasl_success_handler);
-            this._sasl_success_handler = null;
+    _sasl_failure_cb(elem: Element | null, condition: string | null = null, exchange = this._sasl_exchange): boolean {
+        if (exchange !== this._sasl_exchange) return false;
+        if (elem && this._sasl_aborts_pending > 0 && elem.getElementsByTagName('aborted').length) {
+            // The server's reply to an <abort/> that was already reported. The
+            // stream is ordered, so it precedes any answer to a newer <auth>,
+            // and the handler stays for whatever exchange is current now.
+            this._sasl_aborts_pending--;
+            return true;
         }
-        if (this._sasl_challenge_handler) {
-            this.deleteHandler(this._sasl_challenge_handler);
-            this._sasl_challenge_handler = null;
-        }
-
+        // end the exchange first, so that it's reported only once
+        this._sasl_end_exchange();
         if (this._sasl_mechanism) this._sasl_mechanism.onFailure();
-        this._changeConnectStatus(Status.AUTHFAIL, null, elem);
+        this._changeConnectStatus(Status.AUTHFAIL, condition, elem);
         return false;
     }
 
