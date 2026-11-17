@@ -94,6 +94,22 @@ class SASLMechanism {
     }
 
     /**
+     * Called by the protocol implementation on `<success>`, before the
+     * connection counts as authenticated. A mechanism that must check the
+     * server's final data (such as SCRAM's server signature) does it here.
+     *
+     * To fail the exchange, return `false` (reported as `UNKNOWN_REASON`) or
+     * throw a `SASLError` with the condition to report. Strophe then closes
+     * the stream, since the server already considers the client authenticated.
+     * @param _connection - Target Connection.
+     * @param _elem - The `<success>` element.
+     * @returns Whether the success is genuine.
+     */
+    verifySuccess(_connection: Connection, _elem: Element): boolean {
+        return true;
+    }
+
+    /**
      * Protocol informs mechanism implementation about SASL failure.
      */
     onFailure(): void {

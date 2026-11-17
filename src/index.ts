@@ -21,6 +21,7 @@ import WorkerWebsocket from './transports/worker-websocket.js';
 import log from './log.js';
 import { ElementType, ErrorCondition, LOG_LEVELS, LogLevel, NS, Status, XHTML } from './constants.js';
 import { stx, Stanza } from './stanza.js';
+import { SASLError } from './errors.js';
 
 type StropheType = {
     VERSION: string;
@@ -51,6 +52,7 @@ type StropheType = {
     LogLevel: typeof LOG_LEVELS;
     NS: typeof NS;
     SASLMechanism: typeof SASLMechanism;
+    SASLError: typeof SASLError;
     Status: typeof Status;
     TimedHandler: typeof TimedHandler;
     XHTML: typeof XHTML & {
@@ -115,6 +117,7 @@ const Strophe: StropheType = {
     LogLevel: LOG_LEVELS,
     NS,
     SASLMechanism,
+    SASLError,
     Status,
     TimedHandler,
 
@@ -154,6 +157,7 @@ const toStanza = Stanza.toElement;
 
 export {
     Builder,
+    SASLError,
     $build,
     $iq,
     $msg,
