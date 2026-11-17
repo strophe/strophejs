@@ -1737,7 +1737,14 @@ class Connection {
         } catch (e) {
             if (exchange !== this._sasl_exchange) return false;
             log.warn(`Failing SASL authentication because the challenge couldn't be answered: ${e}`);
-            this._sasl_abort(e instanceof SASLError ? e.condition : ErrorCondition.UNKNOWN_REASON);
+            if (e instanceof SASLError && e.disconnect) {
+                // The server can't be trusted with another attempt. Close the
+                // stream before reporting AUTHFAIL, as for a rejected <success>.
+                this.disconnect(e.condition);
+                this._sasl_failure_cb(null, e.condition);
+            } else {
+                this._sasl_abort(e instanceof SASLError ? e.condition : ErrorCondition.UNKNOWN_REASON);
+            }
             return false;
         }
         if (exchange !== this._sasl_exchange) return false;
