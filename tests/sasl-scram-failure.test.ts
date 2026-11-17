@@ -330,3 +330,83 @@ describe('SCRAM failures on the client side', () => {
         expect(conn.scram_keys?.name).toBe('SHA-1');
     });
 });
+
+// A server that doesn't send additional data with <success> sends the
+// server-final message as a challenge instead (RFC 6120 § 6.3.10).
+describe('A SCRAM server signature sent in a challenge', () => {
+    /** Answers the first challenge, so that the server-final message is next. */
+    async function answerFirstChallenge(scram: ReturnType<typeof startScram>) {
+        scram.recv(challenge(CHALLENGE));
+        await vi.waitFor(() => expect(scram.sent).toHaveLength(1));
+        scram.sent.length = 0;
+    }
+
+    it('is answered with an empty response, and an empty <success/> then authenticates', async () => {
+        const scram = startScram();
+        const { conn, sent, statuses, recv } = scram;
+        await answerFirstChallenge(scram);
+
+        recv(challenge(SERVER_SIGNATURE));
+        await vi.waitFor(() => expect(sent).toHaveLength(1));
+        expect(sent[0].nodeName).toBe('response');
+        expect(sent[0].textContent).toBe('');
+
+        recv(`<success xmlns="${Strophe.NS.SASL}"/>`);
+        expect(statuses).toEqual([]);
+        expect(conn.scram_keys?.name).toBe('SHA-1');
+    });
+
+    it.each([
+        ['is wrong', 'v=AAAAAAAAAAAAAAAAAAAAAAAAAAA='],
+        ['is a server error', 'e=invalid-proof'],
+    ])('aborts the exchange when it %s', async (_, data) => {
+        const scram = startScram();
+        const { conn, sent, statuses, recv } = scram;
+        await answerFirstChallenge(scram);
+
+        recv(challenge(data));
+        await vi.waitFor(() => expect(statuses).toHaveLength(1));
+        expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, null]);
+        expect(sent.map((el) => el.nodeName)).toEqual(['abort']);
+        expect(conn.scram_keys).toBeFalsy();
+    });
+
+    it('fails and disconnects when <success> then carries another signature', async () => {
+        const scram = startScram();
+        const { conn, sent, statuses, recv } = scram;
+        const close = connected(conn);
+        await answerFirstChallenge(scram);
+        recv(challenge(SERVER_SIGNATURE));
+        await vi.waitFor(() => expect(sent).toHaveLength(1));
+
+        recv(success('v=AAAAAAAAAAAAAAAAAAAAAAAAAAA='));
+        expect(statuses).toEqual([
+            [Status.DISCONNECTING, ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, undefined],
+            [Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, null],
+        ]);
+        expect(close).toHaveBeenCalledTimes(1);
+        expect(conn.scram_keys).toBeFalsy();
+    });
+
+    it('aborts with SCRAM_BAD_CHALLENGE when it comes before the first challenge', async () => {
+        const { sent, statuses, recv } = startScram();
+        recv(challenge(SERVER_SIGNATURE));
+        await vi.waitFor(() => expect(statuses).toHaveLength(1));
+
+        expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_CHALLENGE, null]);
+        expect(sent.map((el) => el.nodeName)).toEqual(['abort']);
+    });
+
+    it('aborts with SCRAM_BAD_CHALLENGE on a challenge after it', async () => {
+        const scram = startScram();
+        const { sent, statuses, recv } = scram;
+        await answerFirstChallenge(scram);
+        recv(challenge(SERVER_SIGNATURE));
+        await vi.waitFor(() => expect(sent).toHaveLength(1));
+
+        recv(challenge(SERVER_SIGNATURE));
+        await vi.waitFor(() => expect(statuses).toHaveLength(1));
+        expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_CHALLENGE, null]);
+        expect(sent.map((el) => el.nodeName)).toEqual(['response', 'abort']);
+    });
+});

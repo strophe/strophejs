@@ -147,6 +147,33 @@ function generate_cnonce(): string {
     return utils.arrayBufToBase64(crypto.getRandomValues(bytes).buffer);
 }
 
+/**
+ * @param message - A SCRAM server-final message.
+ * @returns The server signature (the `v` attribute), if there is one.
+ */
+function scramServerSignature(message: string): string | undefined {
+    return message.match(/(?:^|,)v=([^,]+)/)?.[1];
+}
+
+/**
+ * Checks the server-final message of a server that sends it in a challenge,
+ * instead of as additional data with `<success>` (RFC 6120 § 6.3.10).
+ * @param data - The data of the SASL exchange.
+ * @param challenge
+ * @returns The empty response that such a challenge is answered with.
+ */
+function scramFinalResponse(data: Connection['_sasl_data'], challenge: string): '' {
+    if (data['server-signature-verified']) {
+        throw new SASLError(ErrorCondition.SCRAM_BAD_CHALLENGE, 'The SCRAM exchange is already complete.');
+    }
+    if (scramServerSignature(challenge) !== data['server-signature']) {
+        log.warn('Failing SCRAM authentication because the server signature is missing or wrong.');
+        throw new SASLError(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, 'The server signature is missing or wrong.');
+    }
+    data['server-signature-verified'] = true;
+    return '';
+}
+
 const scram = {
     /**
      * Whether the Web Crypto `SubtleCrypto` API that SCRAM relies on is available.
@@ -162,6 +189,10 @@ const scram = {
      * connection._sasl_data.keys
      *
      * The server signature should be verified after this function completes..
+     *
+     * A later challenge is taken to be the server-final message, which a
+     * server may send that way instead of in `<success>`. It is answered with
+     * an empty response if its signature is right.
      *
      * On failure, throws a `SASLError` saying why, and the connection aborts
      * the SASL exchange.
@@ -179,6 +210,8 @@ const scram = {
         // Write results to this exchange's data, even if a new exchange has
         // started by the time the keys are derived.
         const data = connection._sasl_data;
+        if (data['server-signature']) return scramFinalResponse(data, challenge);
+
         const cnonce = data.cnonce as string;
         const challengeData = scramParseChallenge(challenge);
 
@@ -257,6 +290,9 @@ const scram = {
      * Checks that a `<success>` carries the server signature computed while
      * answering the server's challenge, so that the server has proven it
      * knows the password (RFC 5802 § 3).
+     *
+     * An empty `<success/>` is accepted if the server already sent the right
+     * signature in a challenge.
      * @param connection
      * @param elem - The `<success>` element.
      * @throws {SASLError} With `SCRAM_BAD_SERVER_SIGNATURE` if no challenge
@@ -264,13 +300,15 @@ const scram = {
      */
     verifySuccess(connection: Connection, elem: Element): true {
         const expected = connection._sasl_data['server-signature'];
-        let data: string | undefined;
+        const text = getText(elem) ?? '';
+        let signature: string | undefined;
         try {
-            data = atob(getText(elem) ?? '');
+            signature = scramServerSignature(atob(text));
         } catch {
             // not base64, so no signature
         }
-        if (!expected || data?.match(/(?:^|,)v=([^,]+)/)?.[1] !== expected) {
+        const verified = text ? signature === expected : connection._sasl_data['server-signature-verified'];
+        if (!expected || !verified) {
             throw new SASLError(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, 'The server signature is missing or wrong.');
         }
         return true;

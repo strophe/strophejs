@@ -13,6 +13,7 @@
 - New `SASLMechanism.verifySuccess()` hook lets a mechanism reject `<success>`.
 - A late answer to a SASL exchange that has already ended is dropped.
 - A SCRAM server nonce must extend the client nonce with its own part.
+- SCRAM accepts a server signature sent in a `<challenge>` (RFC 6120 § 6.3.10).
 
 ## Version 6.0.0 (2026-11-05)
 
