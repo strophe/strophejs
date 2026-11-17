@@ -1769,26 +1769,6 @@ class Connection {
     }
 
     /**
-     * _Private_ check that a SCRAM `<success>` carries the server signature
-     * computed while answering the server's challenge.
-     * @private
-     * @param elem - The `<success>` element.
-     * @return `false` if no challenge was answered, or the signature is
-     *  missing, malformed or wrong.
-     */
-    _sasl_verify_server_signature(elem: Element): boolean {
-        const expected = this._sasl_data['server-signature'];
-        if (!expected) return false;
-        let data: string;
-        try {
-            data = atob(getText(elem));
-        } catch {
-            return false;
-        }
-        return data.match(/(?:^|,)v=([^,]+)/)?.[1] === expected;
-    }
-
-    /**
      * Attempt legacy (i.e. non-SASL) authentication.
      * @private
      */
@@ -1860,16 +1840,23 @@ class Connection {
      */
     _sasl_success_cb(elem: Element, exchange = this._sasl_exchange): boolean {
         if (exchange !== this._sasl_exchange) return false;
-        // A SCRAM exchange (the only one with a client nonce) succeeds only if
-        // the server proves it knows the password (RFC 5802 § 3).
-        if (this._sasl_data.cnonce && !this._sasl_verify_server_signature(elem)) {
+        // The mechanism may still reject the success, e.g. SCRAM when the
+        // server doesn't prove it knows the password.
+        let condition: string | null = null;
+        try {
+            if (this._sasl_mechanism && !this._sasl_mechanism.verifySuccess(this, elem))
+                condition = ErrorCondition.UNKNOWN_REASON;
+        } catch (e) {
+            condition = e instanceof SASLError ? e.condition : ErrorCondition.UNKNOWN_REASON;
+        }
+        if (condition) {
             // The server considers us authenticated, so it won't send a
             // <failure/>. Close the stream to the unverified server, before
             // reporting AUTHFAIL, so that whatever the app does in response
             // (disconnect, reconnect) comes last and isn't undone.
-            log.warn('Failing SCRAM authentication because the server signature is missing or wrong.');
-            this.disconnect(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE);
-            this._sasl_failure_cb(null, ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE);
+            log.warn(`Failing SASL authentication because the server's success was rejected: ${condition}`);
+            this.disconnect(condition);
+            this._sasl_failure_cb(null, condition);
             return false;
         }
         log.info('SASL authentication succeeded.');
