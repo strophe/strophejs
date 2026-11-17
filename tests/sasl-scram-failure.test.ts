@@ -269,6 +269,57 @@ describe('SCRAM failures on the client side', () => {
         expect(statuses).toHaveLength(1);
     });
 
+    it("doesn't check a SCRAM signature for another mechanism that keeps a cnonce", () => {
+        class Nonced extends Strophe.SASLMechanism {
+            constructor() {
+                super('X-NONCED', false, 100);
+            }
+            onStart(connection: any) {
+                super.onStart(connection);
+                connection._sasl_data.cnonce = 'abc';
+            }
+        }
+        const { conn, statuses, recv } = startScram();
+        connected(conn);
+        const features = vi.spyOn(conn, '_onStreamFeaturesAfterSASL').mockImplementation(() => false);
+        conn._attemptSASLAuth([new Nonced()]);
+
+        recv(`<success xmlns="${Strophe.NS.SASL}"/>`);
+        recv(`<stream:features xmlns:stream="http://etherx.jabber.org/streams"/>`);
+        expect(statuses).toEqual([]);
+        expect(features).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+        [
+            'throws a SASLError',
+            () => {
+                throw new Strophe.SASLError('x-custom', 'no');
+            },
+            'x-custom',
+        ],
+        ['returns false', () => false, ErrorCondition.UNKNOWN_REASON],
+    ])("fails and disconnects when a mechanism's verifySuccess() %s", (_, verify, condition) => {
+        class Picky extends Strophe.SASLMechanism {
+            constructor() {
+                super('X-PICKY', false, 100);
+            }
+            verifySuccess(): boolean {
+                return verify();
+            }
+        }
+        const { conn, statuses, recv } = startScram();
+        const close = connected(conn);
+        conn._attemptSASLAuth([new Picky()]);
+
+        recv(`<success xmlns="${Strophe.NS.SASL}"/>`);
+        expect(statuses).toEqual([
+            [Status.DISCONNECTING, condition, undefined],
+            [Status.AUTHFAIL, condition, null],
+        ]);
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+
     it('accepts the right server signature', async () => {
         const { conn, sent, statuses, recv } = startScram();
         recv(challenge(CHALLENGE));

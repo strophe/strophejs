@@ -1,5 +1,5 @@
 import type Connection from './connection.js';
-import utils from './utils.js';
+import utils, { getText } from './utils.js';
 import log from './log.js';
 import { ErrorCondition } from './constants.js';
 import { SASLError } from './errors.js';
@@ -251,6 +251,29 @@ const scram = {
         connection._sasl_data.cnonce = cnonce;
         connection._sasl_data['client-first-message-bare'] = client_first_message_bare;
         return utils.utf16to8(`n,,${client_first_message_bare}`);
+    },
+
+    /**
+     * Checks that a `<success>` carries the server signature computed while
+     * answering the server's challenge, so that the server has proven it
+     * knows the password (RFC 5802 § 3).
+     * @param connection
+     * @param elem - The `<success>` element.
+     * @throws {SASLError} With `SCRAM_BAD_SERVER_SIGNATURE` if no challenge
+     *  was answered, or the signature is missing, malformed or wrong.
+     */
+    verifySuccess(connection: Connection, elem: Element): true {
+        const expected = connection._sasl_data['server-signature'];
+        let data: string | undefined;
+        try {
+            data = atob(getText(elem) ?? '');
+        } catch {
+            // not base64, so no signature
+        }
+        if (!expected || data?.match(/(?:^|,)v=([^,]+)/)?.[1] !== expected) {
+            throw new SASLError(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, 'The server signature is missing or wrong.');
+        }
+        return true;
     },
 };
 

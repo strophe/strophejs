@@ -10,6 +10,7 @@
 - `disconnect()` does nothing while the connection is already disconnecting.
 - If a mechanism's `onChallenge()` throws, the SASL exchange is aborted.
 - `Strophe.SASLError` lets a mechanism's `onChallenge()` pick the condition.
+- New `SASLMechanism.verifySuccess()` hook lets a mechanism reject `<success>`.
 - A late answer to a SASL exchange that has already ended is dropped.
 - A SCRAM server nonce must extend the client nonce with its own part.
 

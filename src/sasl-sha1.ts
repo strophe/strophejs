@@ -18,6 +18,10 @@ class SASLSHA1 extends SASLMechanism {
     clientChallenge(connection: Connection, test_cnonce?: string): string {
         return scram.clientChallenge(connection, test_cnonce);
     }
+
+    verifySuccess(connection: Connection, elem: Element): boolean {
+        return scram.verifySuccess(connection, elem);
+    }
 }
 
 export default SASLSHA1;
