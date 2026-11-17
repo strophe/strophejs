@@ -147,6 +147,44 @@ function generate_cnonce(): string {
     return utils.arrayBufToBase64(crypto.getRandomValues(bytes).buffer);
 }
 
+/**
+ * @param message - A SCRAM server-final message.
+ * @returns The server signature (the `v` attribute), if there is one.
+ */
+function scramServerSignature(message: string): string | undefined {
+    return message.match(/(?:^|,)v=([^,]+)/)?.[1];
+}
+
+/**
+ * Checks the server-final message of a server that sends it in a challenge,
+ * instead of as additional data with `<success>` (RFC 6120 § 6.3.10).
+ * @param data - The data of the SASL exchange.
+ * @param challenge
+ * @returns The empty response that such a challenge is answered with.
+ * @throws {SASLError} With `SCRAM_BAD_CHALLENGE` if the message has no
+ *  signature (e.g. it's a server error, `e=`), and `SCRAM_BAD_SERVER_SIGNATURE`
+ *  if the signature is wrong. The latter closes the stream, since the server
+ *  already has our proof and hasn't shown that it knows the password.
+ */
+function scramFinalResponse(data: Connection['_sasl_data'], challenge: string): '' {
+    if (data['server-signature-verified']) {
+        throw new SASLError(ErrorCondition.SCRAM_BAD_CHALLENGE, 'The SCRAM exchange is already complete.');
+    }
+    const signature = scramServerSignature(challenge);
+    if (!signature) {
+        log.warn(`Failing SCRAM authentication because the server-final message has no signature: ${challenge}`);
+        throw new SASLError(ErrorCondition.SCRAM_BAD_CHALLENGE, 'The server-final message has no signature.');
+    }
+    if (signature !== data['server-signature']) {
+        log.warn('Failing SCRAM authentication because the server signature is wrong.');
+        throw new SASLError(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, 'The server signature is wrong.', {
+            disconnect: true,
+        });
+    }
+    data['server-signature-verified'] = true;
+    return '';
+}
+
 const scram = {
     /**
      * Whether the Web Crypto `SubtleCrypto` API that SCRAM relies on is available.
@@ -163,8 +201,12 @@ const scram = {
      *
      * The server signature should be verified after this function completes..
      *
+     * A later challenge is taken to be the server-final message, which a
+     * server may send that way instead of in `<success>`. It is answered with
+     * an empty response if its signature is right.
+     *
      * On failure, throws a `SASLError` saying why, and the connection aborts
-     * the SASL exchange.
+     * the SASL exchange (or closes the stream, on a wrong server signature).
      * @param connection
      * @param challenge
      * @param hashName
@@ -179,6 +221,8 @@ const scram = {
         // Write results to this exchange's data, even if a new exchange has
         // started by the time the keys are derived.
         const data = connection._sasl_data;
+        if (data['server-signature']) return scramFinalResponse(data, challenge);
+
         const cnonce = data.cnonce as string;
         const challengeData = scramParseChallenge(challenge);
 
@@ -257,6 +301,10 @@ const scram = {
      * Checks that a `<success>` carries the server signature computed while
      * answering the server's challenge, so that the server has proven it
      * knows the password (RFC 5802 § 3).
+     *
+     * A `<success>` without additional data (empty, or `=` for zero-length
+     * data, RFC 6120 § 6.3.10) is accepted if the server already sent the
+     * right signature in a challenge.
      * @param connection
      * @param elem - The `<success>` element.
      * @throws {SASLError} With `SCRAM_BAD_SERVER_SIGNATURE` if no challenge
@@ -264,13 +312,21 @@ const scram = {
      */
     verifySuccess(connection: Connection, elem: Element): true {
         const expected = connection._sasl_data['server-signature'];
-        let data: string | undefined;
-        try {
-            data = atob(getText(elem) ?? '');
-        } catch {
-            // not base64, so no signature
+        const text = (getText(elem) ?? '').trim();
+        let verified: boolean;
+        if (text === '' || text === '=') {
+            // no additional data, so the signature must have come in a challenge
+            verified = !!connection._sasl_data['server-signature-verified'];
+        } else {
+            let signature: string | undefined;
+            try {
+                signature = scramServerSignature(atob(text));
+            } catch {
+                // not base64, so no signature
+            }
+            verified = signature === expected;
         }
-        if (!expected || data?.match(/(?:^|,)v=([^,]+)/)?.[1] !== expected) {
+        if (!expected || !verified) {
             throw new SASLError(ErrorCondition.SCRAM_BAD_SERVER_SIGNATURE, 'The server signature is missing or wrong.');
         }
         return true;

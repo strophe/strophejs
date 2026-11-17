@@ -114,9 +114,8 @@ export const ErrorCondition = {
     SCRAM_BAD_NONCE: 'x-strophe-scram-bad-nonce',
     /** The stored SCRAM keys don't match the server's hash, salt or iteration count. */
     SCRAM_STALE_KEYS: 'x-strophe-scram-stale-keys',
-    /** The server signature in `<success>` doesn't match, so the server isn't verified. */
-    SCRAM_BAD_SERVER_SIGNATURE: 'x-strophe-scram-bad-server-signature',
-} as const;
+    /** The server signature doesn't match, so the server isn't verified. */
+    SCRAM_BAD_SERVER_SIGNATURE: 'x-strophe-scram-bad-server-signature',} as const;
 
 /**
  * Logging level indicators.
