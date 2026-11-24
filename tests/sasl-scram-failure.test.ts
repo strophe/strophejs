@@ -57,6 +57,18 @@ describe('SCRAM failures on the client side', () => {
             'pencil',
             'SCRAM_BAD_NONCE',
         ],
+        [
+            'an iteration count with trailing garbage',
+            'r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=QSXCR+Q6sek8bf92,i=4096abc',
+            'pencil',
+            'SCRAM_BAD_CHALLENGE',
+        ],
+        [
+            'an iteration count above the ceiling',
+            'r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=QSXCR+Q6sek8bf92,i=10000001',
+            'pencil',
+            'SCRAM_BAD_CHALLENGE',
+        ],
         ['a salt that is not base64', 'r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=@@@,i=4096', 'pencil', 'SCRAM_BAD_CHALLENGE'],
         ['a nonce with no server part', `r=${CNONCE},s=QSXCR+Q6sek8bf92,i=4096`, 'pencil', 'SCRAM_BAD_NONCE'],
         [
@@ -441,6 +453,24 @@ describe('A SCRAM server signature sent in a challenge', () => {
 
         expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_CHALLENGE, null]);
         expect(sent.map((el) => el.nodeName)).toEqual(['abort']);
+    });
+
+    it.each([
+        ['the server signature', SERVER_SIGNATURE],
+        ['another server-first message', CHALLENGE.replace('QSXCR+Q6sek8bf92', 'b3RoZXJzYWx0')],
+    ])('aborts, sending no proof, when %s arrives while the keys are still being derived', async (_, data) => {
+        const { conn, sent, statuses, recv } = startScram();
+        // Both challenges are in before the first one's key derivation is done.
+        recv(challenge(CHALLENGE));
+        recv(challenge(data));
+        await vi.waitFor(() => expect(statuses).toHaveLength(1));
+
+        expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_CHALLENGE, null]);
+        // Let the first derivation finish: its answer must be dropped.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(sent.map((el) => el.nodeName)).toEqual(['abort']);
+        expect(statuses).toHaveLength(1);
+        expect(conn.scram_keys).toBeFalsy();
     });
 
     it('aborts with SCRAM_BAD_CHALLENGE on a challenge after it', async () => {

@@ -23,6 +23,16 @@ interface DerivedKeys {
     sk: ArrayBuffer;
 }
 
+/** Fewer iterations than this make the password too cheap to brute-force. */
+const MIN_ITERATIONS = 4096;
+
+/**
+ * More iterations than this are refused, because the key derivation can't be
+ * cancelled and a server could otherwise keep the client busy for hours. It's
+ * far above what servers use (typically 4096 to around a million).
+ */
+const MAX_ITERATIONS = 10_000_000;
+
 /**
  * @param authMessage
  * @param clientKey
@@ -70,7 +80,8 @@ function scramParseChallenge(challenge: string): ScramChallengeData | undefined 
                 }
                 break;
             case 'i':
-                iter = parseInt(matches[2], 10);
+                // digits only (RFC 5802 § 7), which parseInt() doesn't insist on
+                iter = /^[1-9]\d*$/.test(matches[2]) ? Number(matches[2]) : NaN;
                 break;
             case 'm':
                 return undefined;
@@ -79,8 +90,13 @@ function scramParseChallenge(challenge: string): ScramChallengeData | undefined 
         }
     }
 
-    if (isNaN(iter) || iter < 4096) {
-        log.warn('Failing SCRAM authentication because server supplied iteration count < 4096.');
+    if (isNaN(iter) || iter < MIN_ITERATIONS) {
+        log.warn(`Failing SCRAM authentication because server supplied iteration count < ${MIN_ITERATIONS}.`);
+        return undefined;
+    }
+
+    if (iter > MAX_ITERATIONS) {
+        log.warn(`Failing SCRAM authentication because server supplied iteration count > ${MAX_ITERATIONS}.`);
         return undefined;
     }
 
@@ -222,6 +238,17 @@ const scram = {
         // started by the time the keys are derived.
         const data = connection._sasl_data;
         if (data['server-signature']) return scramFinalResponse(data, challenge);
+        // The signature is only known once the keys are derived, so mark the
+        // first challenge as seen right away. Another one that arrives in the
+        // meantime can't be the server-final message, nor a second server-first.
+        if (data['challenge-seen']) {
+            log.warn('Failing SCRAM authentication because a challenge arrived before the first was answered.');
+            throw new SASLError(
+                ErrorCondition.SCRAM_BAD_CHALLENGE,
+                'A challenge arrived before the first was answered.',
+            );
+        }
+        data['challenge-seen'] = true;
 
         const cnonce = data.cnonce as string;
         const challengeData = scramParseChallenge(challenge);
