@@ -27,9 +27,10 @@ interface DerivedKeys {
 const MIN_ITERATIONS = 4096;
 
 /**
- * More iterations than this are refused, because the key derivation can't be
- * cancelled and a server could otherwise keep the client busy for hours. It's
- * far above what servers use (typically 4096 to around a million).
+ * More iterations than this are refused when deriving keys from a password,
+ * because the derivation can't be cancelled and a server could otherwise keep
+ * the client busy for hours. It's far above what servers use (typically 4096
+ * to around a million). Stored keys need no derivation, so they're exempt.
  */
 const MAX_ITERATIONS = 10_000_000;
 
@@ -80,7 +81,8 @@ function scramParseChallenge(challenge: string): ScramChallengeData | undefined 
                 }
                 break;
             case 'i':
-                // digits only (RFC 5802 § 7), which parseInt() doesn't insist on
+                // a positive number with no leading zero (RFC 5802 § 7), which
+                // parseInt() doesn't insist on
                 iter = /^[1-9]\d*$/.test(matches[2]) ? Number(matches[2]) : NaN;
                 break;
             case 'm':
@@ -90,13 +92,13 @@ function scramParseChallenge(challenge: string): ScramChallengeData | undefined 
         }
     }
 
-    if (isNaN(iter) || iter < MIN_ITERATIONS) {
-        log.warn(`Failing SCRAM authentication because server supplied iteration count < ${MIN_ITERATIONS}.`);
+    if (isNaN(iter)) {
+        log.warn('Failing SCRAM authentication because the iteration count is missing or not a number.');
         return undefined;
     }
 
-    if (iter > MAX_ITERATIONS) {
-        log.warn(`Failing SCRAM authentication because server supplied iteration count > ${MAX_ITERATIONS}.`);
+    if (iter < MIN_ITERATIONS) {
+        log.warn(`Failing SCRAM authentication because server supplied iteration count < ${MIN_ITERATIONS}.`);
         return undefined;
     }
 
@@ -250,65 +252,84 @@ const scram = {
         }
         data['challenge-seen'] = true;
 
-        const cnonce = data.cnonce as string;
-        const challengeData = scramParseChallenge(challenge);
+        try {
+            const cnonce = data.cnonce as string;
+            const challengeData = scramParseChallenge(challenge);
 
-        if (!challengeData) {
-            throw new SASLError(ErrorCondition.SCRAM_BAD_CHALLENGE, 'The SCRAM challenge is malformed or insecure.');
+            if (!challengeData) {
+                throw new SASLError(
+                    ErrorCondition.SCRAM_BAD_CHALLENGE,
+                    'The SCRAM challenge is malformed or insecure.',
+                );
+            }
+            // The server must extend our nonce with its own part (RFC 5802 § 5.1).
+            const { nonce } = challengeData;
+            if (!cnonce || !nonce?.startsWith(cnonce) || nonce.length <= cnonce.length) {
+                log.warn('Failing SCRAM authentication because server supplied incorrect nonce.');
+                throw new SASLError(ErrorCondition.SCRAM_BAD_NONCE, "The server's nonce doesn't extend ours.");
+            }
+
+            let clientKey: ArrayBuffer, serverKey: ArrayBuffer;
+
+            const { pass } = connection;
+
+            if (typeof connection.pass === 'string' || connection.pass instanceof String) {
+                // Only a derivation costs anything, so stored keys aren't held to the ceiling.
+                if (challengeData.iter > MAX_ITERATIONS) {
+                    log.warn(
+                        `Failing SCRAM authentication because server supplied iteration count > ${MAX_ITERATIONS}.`,
+                    );
+                    throw new SASLError(
+                        ErrorCondition.SCRAM_BAD_CHALLENGE,
+                        'The SCRAM iteration count is too high to derive keys for.',
+                    );
+                }
+                const keys = await scramDeriveKeys(
+                    pass as string,
+                    challengeData.salt,
+                    challengeData.iter,
+                    hashName,
+                    hashBits,
+                );
+                clientKey = keys.ck;
+                serverKey = keys.sk;
+            } else if (
+                (pass as Password)?.name === hashName &&
+                (pass as Password)?.salt === utils.arrayBufToBase64(challengeData.salt) &&
+                (pass as Password)?.iter === challengeData.iter
+            ) {
+                const { ck, sk } = pass as Password;
+                clientKey = utils.base64ToArrayBuf(ck);
+                serverKey = utils.base64ToArrayBuf(sk);
+            } else {
+                log.warn("Failing SCRAM authentication because the stored keys don't match the server's challenge.");
+                throw new SASLError(ErrorCondition.SCRAM_STALE_KEYS, "The stored keys don't match the challenge.");
+            }
+
+            const clientFirstMessageBare = data['client-first-message-bare'];
+            const serverFirstMessage = challenge;
+            const clientFinalMessageBare = `c=biws,r=${challengeData.nonce}`;
+
+            const authMessage = `${clientFirstMessageBare},${serverFirstMessage},${clientFinalMessageBare}`;
+
+            const clientProof = await scramClientProof(authMessage, clientKey, hashName);
+            const serverSignature = await scramServerSign(authMessage, serverKey, hashName);
+
+            data['server-signature'] = utils.arrayBufToBase64(serverSignature);
+            data.keys = {
+                name: hashName,
+                iter: challengeData.iter,
+                salt: utils.arrayBufToBase64(challengeData.salt),
+                ck: utils.arrayBufToBase64(clientKey),
+                sk: utils.arrayBufToBase64(serverKey),
+            };
+
+            return `${clientFinalMessageBare},p=${utils.arrayBufToBase64(clientProof)}`;
+        } catch (e) {
+            // Nothing was answered, so a retry on this exchange isn't an early challenge.
+            delete data['challenge-seen'];
+            throw e;
         }
-        // The server must extend our nonce with its own part (RFC 5802 § 5.1).
-        const { nonce } = challengeData;
-        if (!cnonce || !nonce?.startsWith(cnonce) || nonce.length <= cnonce.length) {
-            log.warn('Failing SCRAM authentication because server supplied incorrect nonce.');
-            throw new SASLError(ErrorCondition.SCRAM_BAD_NONCE, "The server's nonce doesn't extend ours.");
-        }
-
-        let clientKey: ArrayBuffer, serverKey: ArrayBuffer;
-
-        const { pass } = connection;
-
-        if (typeof connection.pass === 'string' || connection.pass instanceof String) {
-            const keys = await scramDeriveKeys(
-                pass as string,
-                challengeData.salt,
-                challengeData.iter,
-                hashName,
-                hashBits,
-            );
-            clientKey = keys.ck;
-            serverKey = keys.sk;
-        } else if (
-            (pass as Password)?.name === hashName &&
-            (pass as Password)?.salt === utils.arrayBufToBase64(challengeData.salt) &&
-            (pass as Password)?.iter === challengeData.iter
-        ) {
-            const { ck, sk } = pass as Password;
-            clientKey = utils.base64ToArrayBuf(ck);
-            serverKey = utils.base64ToArrayBuf(sk);
-        } else {
-            log.warn("Failing SCRAM authentication because the stored keys don't match the server's challenge.");
-            throw new SASLError(ErrorCondition.SCRAM_STALE_KEYS, "The stored keys don't match the challenge.");
-        }
-
-        const clientFirstMessageBare = data['client-first-message-bare'];
-        const serverFirstMessage = challenge;
-        const clientFinalMessageBare = `c=biws,r=${challengeData.nonce}`;
-
-        const authMessage = `${clientFirstMessageBare},${serverFirstMessage},${clientFinalMessageBare}`;
-
-        const clientProof = await scramClientProof(authMessage, clientKey, hashName);
-        const serverSignature = await scramServerSign(authMessage, serverKey, hashName);
-
-        data['server-signature'] = utils.arrayBufToBase64(serverSignature);
-        data.keys = {
-            name: hashName,
-            iter: challengeData.iter,
-            salt: utils.arrayBufToBase64(challengeData.salt),
-            ck: utils.arrayBufToBase64(clientKey),
-            sk: utils.arrayBufToBase64(serverKey),
-        };
-
-        return `${clientFinalMessageBare},p=${utils.arrayBufToBase64(clientProof)}`;
     },
 
     /**

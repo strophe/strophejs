@@ -64,6 +64,12 @@ describe('SCRAM failures on the client side', () => {
             'SCRAM_BAD_CHALLENGE',
         ],
         [
+            'an iteration count with a leading zero',
+            'r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=QSXCR+Q6sek8bf92,i=04096',
+            'pencil',
+            'SCRAM_BAD_CHALLENGE',
+        ],
+        [
             'an iteration count above the ceiling',
             'r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=QSXCR+Q6sek8bf92,i=10000001',
             'pencil',
@@ -90,6 +96,34 @@ describe('SCRAM failures on the client side', () => {
         // The server confirms the abort, which isn't reported again.
         recv(aborted);
         expect(statuses).toHaveLength(1);
+    });
+
+    it('answers with stored keys when the iteration count is above the ceiling', async () => {
+        // No keys are derived, so the count costs the client nothing.
+        const { sent, statuses, recv } = startScram({
+            name: 'SHA-1',
+            salt: 'QSXCR+Q6sek8bf92',
+            iter: 10000001,
+            ck: 'AAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+            sk: 'AAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+        });
+        recv(challenge('r=fyko+d2lbbFgONRv9qkxdawL3rfc,s=QSXCR+Q6sek8bf92,i=10000001'));
+        await vi.waitFor(() => expect(sent).toHaveLength(1));
+
+        expect(sent[0].nodeName).toBe('response');
+        expect(statuses).toHaveLength(0);
+    });
+
+    it('lets a mechanism retry a first challenge that it failed to answer', async () => {
+        const { conn } = startScram({ name: 'SHA-1', salt: 'b3RoZXJzYWx0', iter: 4096, ck: 'AAAA', sk: 'AAAA' });
+        const mechanism = conn._sasl_mechanism;
+        await expect(mechanism.onChallenge(conn, CHALLENGE)).rejects.toThrow("stored keys don't match");
+
+        // The RFC 5802 client-final message, now that the password is used.
+        conn.pass = 'pencil';
+        expect(await mechanism.onChallenge(conn, CHALLENGE)).toBe(
+            'c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=',
+        );
     });
 
     it("doesn't fail a retry with the server's reply to the abort", async () => {
@@ -460,14 +494,17 @@ describe('A SCRAM server signature sent in a challenge', () => {
         ['another server-first message', CHALLENGE.replace('QSXCR+Q6sek8bf92', 'b3RoZXJzYWx0')],
     ])('aborts, sending no proof, when %s arrives while the keys are still being derived', async (_, data) => {
         const { conn, sent, statuses, recv } = startScram();
+        const onChallenge = vi.spyOn(conn._sasl_mechanism, 'onChallenge');
         // Both challenges are in before the first one's key derivation is done.
-        recv(challenge(CHALLENGE));
+        const first = conn._sasl_challenge_cb(parse(challenge(CHALLENGE)));
         recv(challenge(data));
         await vi.waitFor(() => expect(statuses).toHaveLength(1));
 
         expect(statuses[0]).toEqual([Status.AUTHFAIL, ErrorCondition.SCRAM_BAD_CHALLENGE, null]);
+        // It's refused for coming early, whatever it holds.
+        await expect(onChallenge.mock.results[1].value).rejects.toThrow('before the first was answered');
         // Let the first derivation finish: its answer must be dropped.
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await first;
         expect(sent.map((el) => el.nodeName)).toEqual(['abort']);
         expect(statuses).toHaveLength(1);
         expect(conn.scram_keys).toBeFalsy();
