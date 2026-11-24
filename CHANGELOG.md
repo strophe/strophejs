@@ -15,6 +15,8 @@
 - A SCRAM server nonce must extend the client nonce with its own part.
 - SCRAM accepts a server signature sent in a `<challenge>` (RFC 6120 § 6.3.10).
 - `SASLError`'s `disconnect` option closes the stream instead of aborting.
+- A SCRAM iteration count must be digits only and at most 10,000,000.
+- A SCRAM challenge that arrives before the first is answered aborts auth.
 
 ## Version 6.0.0 (2026-11-05)
 
